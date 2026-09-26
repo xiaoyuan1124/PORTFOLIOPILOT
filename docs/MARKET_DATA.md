@@ -102,3 +102,16 @@ PortfolioPilot V0.8 also writes:
 It aggregates the latest 10 completed trading sessions from TWSE T86 and TPEx dailyTrade. The cache stores foreign net buying (excluding the foreign-dealer book for consistency) and investment-trust net buying in shares.
 
 See `docs/INSTITUTIONAL_GATE.md` for definitions and fail-closed rules.
+
+
+## Quarterly gross-margin cache
+
+PortfolioPilot V0.9 also writes:
+
+`public/data/tw-quarterly-margins.json`
+
+The cache is built from the official MOPS historical quarterly comprehensive-income statement endpoint for TWSE-listed and TPEx-listed companies. General-industry rows retain operating revenue, operating cost and gross profit. Q2-Q4 single-quarter values are derived by subtracting the prior same-year cumulative statement before gross margin is calculated.
+
+Companies that MOPS places in statement families without the `營業毛利（毛損）` field are explicitly recorded as not applicable instead of receiving a synthetic gross margin.
+
+See `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the derivation, source lineage and fail-closed rules.

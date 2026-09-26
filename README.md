@@ -14,11 +14,13 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Official TWSE / TPEx monthly-revenue research with MoM / YoY / cumulative YoY
 - Official MOPS 3-month revenue history and a real first Scanner gate (3 consecutive YoY > 20%)
 - Official TWSE / TPEx 10-trading-day foreign and investment-trust net-flow gates
+- Official MOPS single-quarter gross-margin history with strict three-quarter improvement gate
+- Official Scanner states: pass / fail / insufficient / not applicable, with expandable source/date/value details
 - Asset allocation
 - Transaction / cash-flow ledger (deposit, withdrawal, buy, sell, dividend, fee)
 - XIRR money-weighted return and transparent Modified Dietz TWR proxy
 - **Real local daily net-worth snapshots** instead of a fabricated trend line
-- Rule-based research scanner (currently clearly-labelled demo research data)
+- Four-gate Official Scanner using only official/non-demo Taiwan market data
 - Investment journal
 - Versioned JSON full backup/import with Zod validation
 - Holdings CSV import/export and downloadable template
@@ -28,7 +30,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Vitest calculation/import tests
 - GitHub Actions CI and GitHub Pages deployment
 
-> Monthly revenue and Taiwan closing prices now come from official TWSE / TPEx caches. The Scanner now has three official gates: 3-month revenue growth, foreign 10D net buying, and investment-trust 10D net buying. Quarterly gross-margin improvement remains pending, so results are labelled 3/4 rather than complete candidates. Your personal portfolio calculations use only the holdings, prices, costs and FX rate you enter yourself.
+> Taiwan closing prices, monthly revenue, institutional flows, and quarterly gross-margin inputs now come from official TWSE / TPEx / MOPS sources. The Scanner evaluates all four intended gates and marks special statement families such as financial/insurance as not applicable instead of forcing a general-industry gross-margin formula. Your personal portfolio calculations use only the holdings, prices, costs and FX rate you enter yourself.
 
 ## Zero-cost mode
 
@@ -61,7 +63,7 @@ A previously prepared Supabase integration remains in source for possible future
 - Sonner
 - Vitest
 
-See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, and `docs/MARKET_DATA.md` for the Taiwan quote / revenue caches.
+See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, and `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology.
 
 ## Local development
 
