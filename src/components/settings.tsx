@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { Download, RotateCcw, Upload } from "lucide-react";
 import { demoState } from "@/lib/demo-data";
 import type { AppState } from "@/lib/types";
+import { CloudAccount } from "./cloud-account";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
 export function Settings({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
@@ -34,10 +35,14 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
+      <CloudAccount state={state} onChange={onChange} />
+
       <Card>
         <CardContent>
           <h3 className="font-semibold">資料與備份</h3>
-          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">目前 MVP 將資料保存在這個瀏覽器。換手機、清除網站資料或無痕模式都可能造成資料遺失，請定期匯出備份。</p>
+          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
+            本地資料仍是第一層保護。即使之後開啟雲端同步，也建議在重大調整前匯出 JSON 備份。
+          </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={exportData}><Download size={16} />匯出 JSON</Button>
             <GhostButton onClick={() => fileRef.current?.click()}><Upload size={16} />匯入備份</GhostButton>
@@ -49,7 +54,7 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
       <Card>
         <CardContent>
           <h3 className="font-semibold">匯率設定</h3>
-          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">美股資產會依 USD/TWD 折算成台幣。正式版可再接可靠的匯率資料源。</p>
+          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">美股資產會依 USD/TWD 折算成台幣。正式版再接可商用且來源清楚的匯率資料源。</p>
           <label className="mt-5 block text-xs font-semibold text-black/45 dark:text-white/45">USD / TWD</label>
           <input
             className="field mt-2 max-w-[220px]"
@@ -67,7 +72,7 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h3 className="font-semibold">重設示範資料</h3>
-              <p className="mt-1 text-sm text-black/50 dark:text-white/50">會覆蓋目前瀏覽器內的 PortfolioPilot 資料。建議先匯出備份。</p>
+              <p className="mt-1 text-sm text-black/50 dark:text-white/50">只會覆蓋這台裝置目前的本地資料；雲端資料不會自動被重設。</p>
             </div>
             <GhostButton onClick={() => {
               if (window.confirm("確定要重設為示範資料嗎？")) onChange(demoState);

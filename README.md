@@ -14,6 +14,8 @@ PortfolioPilot is a **mobile-first investment portfolio and research PWA** built
 - JSON export/import
 - Dark mode
 - Installable PWA shell and offline cache
+- Optional Supabase email/password login and manual cross-device sync
+- Row Level Security migration for user-owned cloud data
 - GitHub Actions CI and GitHub Pages deployment
 
 > The current research dataset is illustrative demo data and is **not live market data or investment advice**.
@@ -26,6 +28,7 @@ PortfolioPilot is a **mobile-first investment portfolio and research PWA** built
 - Radix Dialog
 - Lucide icons
 - Recharts
+- Supabase JS (optional cloud sync)
 - Static export for GitHub Pages
 
 ## Local development
@@ -43,6 +46,25 @@ npm run typecheck
 npm run build
 ```
 
+## Cloud sync
+
+PortfolioPilot remains fully usable without a backend. To enable cross-device sync, create a **dedicated PortfolioPilot Supabase project**, apply:
+
+```
+supabase/migrations/202609270001_initial_user_sync.sql
+```
+
+and configure:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
+```
+
+See `docs/CLOUD_SYNC.md`.
+
+Never put a Supabase secret or service-role key in the frontend.
+
 ## GitHub Pages
 
 The repository includes a Pages workflow. In GitHub, set:
@@ -51,16 +73,19 @@ The repository includes a Pages workflow. In GitHub, set:
 
 Then pushing to `main` deploys the static site.
 
+For cloud sync, the two **publishable** Supabase environment variables must be available at build time. If that is inconvenient with Pages, Vercel can be used later without changing the product UI.
+
 ## Data / privacy
 
-The MVP stores portfolio and journal data in the current browser's `localStorage`. No brokerage credentials are requested. Do not treat browser-local storage as a permanent backup; use the Settings export feature.
+The base MVP stores portfolio and journal data in the current browser's `localStorage`. Cloud sync is manual and opt-in so another device never silently overwrites local investment records.
 
-A production backend (for sync, auth, and scheduled official market data) should be added only after a dedicated backend project and data licensing are confirmed.
+No brokerage credentials are requested.
 
 ## Product principles
 
 - Mobile first, desktop enhanced
 - Portfolio clarity before market noise
+- Local-first with explicit cloud sync
 - No automated trading
 - No brokerage credentials
 - No AI in the current roadmap
