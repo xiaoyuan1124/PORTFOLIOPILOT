@@ -1,4 +1,5 @@
 import { holdingValueTwd, portfolioSummary } from "./calc";
+import { ETF_WEIGHT_EPSILON } from "./schema";
 import type { EtfComposition, Holding, Market } from "./types";
 
 export type LookThroughContribution = {
@@ -147,6 +148,24 @@ export function calculateEtfLookThrough(
     }
 
     const rawCoveragePct = compositionCoveragePct(composition);
+    if (rawCoveragePct > 100 + ETF_WEIGHT_EPSILON) {
+      unresolvedEtfValueTwd += valueTwd;
+      etfs.push({
+        market: holding.market,
+        symbol: holding.symbol.toUpperCase(),
+        name: holding.name,
+        valueTwd,
+        status: "insufficient",
+        compositionCoveragePct: rawCoveragePct,
+        coveredValueTwd: 0,
+        unresolvedValueTwd: valueTwd,
+        asOf: composition.asOf,
+        sourceName: composition.sourceName,
+        sourceUrl: composition.sourceUrl
+      });
+      continue;
+    }
+
     const coveragePct = Math.min(rawCoveragePct, 100);
     const coveredValue = valueTwd * (coveragePct / 100);
     const unresolvedValue = Math.max(valueTwd - coveredValue, 0);
@@ -179,7 +198,7 @@ export function calculateEtfLookThrough(
       symbol: holding.symbol.toUpperCase(),
       name: holding.name,
       valueTwd,
-      status: coveragePct >= 99.5 ? "covered" : "partial",
+      status: coveragePct >= 100 - ETF_WEIGHT_EPSILON ? "covered" : "partial",
       compositionCoveragePct: rawCoveragePct,
       coveredValueTwd: coveredValue,
       unresolvedValueTwd: unresolvedValue,
