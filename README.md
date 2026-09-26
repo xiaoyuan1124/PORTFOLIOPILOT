@@ -12,6 +12,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - One-tap Taiwan closing-price refresh from a repository-cached official TWSE / TPEx dataset
 - Price provenance shown per holding (source + market date)
 - Official TWSE / TPEx monthly-revenue research with MoM / YoY / cumulative YoY
+- Official MOPS 3-month revenue history and a real first Scanner gate (3 consecutive YoY > 20%)
 - Asset allocation
 - Transaction / cash-flow ledger (deposit, withdrawal, buy, sell, dividend, fee)
 - XIRR money-weighted return and transparent Modified Dietz TWR proxy
@@ -26,7 +27,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Vitest calculation/import tests
 - GitHub Actions CI and GitHub Pages deployment
 
-> Monthly revenue and Taiwan closing prices now come from official TWSE / TPEx caches. The multi-factor Scanner still contains demo-only fields until historical revenue, quarterly margins, and institutional flows are all connected. Your personal portfolio calculations use only the holdings, prices, costs and FX rate you enter yourself.
+> Monthly revenue and Taiwan closing prices now come from official TWSE / TPEx caches. The Scanner's 3-month revenue gate is now official; quarterly margins and institutional-flow gates remain pending and are not presented as complete candidates. Your personal portfolio calculations use only the holdings, prices, costs and FX rate you enter yourself.
 
 ## Zero-cost mode
 

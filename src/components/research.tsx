@@ -30,7 +30,7 @@ export function Research({ state, onChange }: { state: AppState; onChange: (stat
       </div>
 
       {tab === "revenue" ? <RevenueResearch state={state} /> : null}
-      {tab === "scanner" ? <Scanner /> : null}
+      {tab === "scanner" ? <Scanner state={state} /> : null}
       {tab === "journal" ? <Journal state={state} onChange={onChange} /> : null}
     </div>
   );

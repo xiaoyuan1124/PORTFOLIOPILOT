@@ -27,16 +27,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Fetch official TWSE and TPEx market data
+      - name: Fetch official TWSE / TPEx / MOPS market data
         run: node scripts/update-market-data.mjs
       - name: Commit changed caches
         run: |
-          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json; then
+          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json; then
             echo "No market data changes."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add public/data/tw-quotes.json public/data/tw-revenue.json
+            git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json
             git commit -m "data: refresh Taiwan market data"
             git push
           fi
