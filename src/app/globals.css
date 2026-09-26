@@ -1,0 +1,136 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #f4f2ed;
+}
+
+html.dark {
+  background: #101412;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 88% -10%, rgba(116, 151, 131, .16), transparent 34rem),
+    radial-gradient(circle at 10% 110%, rgba(178, 163, 132, .10), transparent 36rem),
+    #f4f2ed;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+html.dark body {
+  background:
+    radial-gradient(circle at 88% -10%, rgba(78, 118, 95, .16), transparent 34rem),
+    #101412;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.field {
+  min-height: 46px;
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, .08);
+  background: rgba(255, 255, 255, .82);
+  padding: .7rem .9rem;
+  font-size: .875rem;
+  color: #1b241f;
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.field::placeholder {
+  color: rgba(27, 36, 31, .36);
+}
+
+.field:focus {
+  border-color: rgba(69, 107, 88, .6);
+  box-shadow: 0 0 0 3px rgba(69, 107, 88, .10);
+  background: #fff;
+}
+
+.dark .field {
+  border-color: rgba(255, 255, 255, .09);
+  background: rgba(255, 255, 255, .045);
+  color: #e7eee9;
+}
+
+.dark .field::placeholder {
+  color: rgba(231, 238, 233, .32);
+}
+
+.dark .field:focus {
+  border-color: rgba(167, 216, 184, .45);
+  box-shadow: 0 0 0 3px rgba(167, 216, 184, .08);
+  background: rgba(255, 255, 255, .065);
+}
+
+.mini-metric {
+  min-width: 0;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, .032);
+  padding: .75rem;
+}
+
+.mini-metric span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .68rem;
+  font-weight: 600;
+  color: rgba(27, 36, 31, .42);
+}
+
+.mini-metric strong {
+  display: block;
+  margin-top: .3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: .875rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.dark .mini-metric {
+  background: rgba(255, 255, 255, .05);
+}
+
+.dark .mini-metric span {
+  color: rgba(231, 238, 233, .42);
+}
+
+::selection {
+  background: rgba(69, 107, 88, .22);
+}
+
+@media (max-width: 420px) {
+  .mini-metric {
+    padding: .65rem;
+  }
+}

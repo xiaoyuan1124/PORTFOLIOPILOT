@@ -1,0 +1,17 @@
+{
+  "name": "PortfolioPilot",
+  "short_name": "PortfolioPilot",
+  "description": "Mobile-first investment portfolio and research dashboard",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f2ed",
+  "theme_color": "#1f332a",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
