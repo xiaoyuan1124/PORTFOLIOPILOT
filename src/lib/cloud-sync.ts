@@ -116,6 +116,7 @@ export async function loadCloudState(): Promise<{ state: AppState | null; update
   return {
     state: {
       holdings,
+      etfCompositions: [],
       journal,
       activities: [],
       snapshots: [],

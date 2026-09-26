@@ -3,6 +3,7 @@ export type AssetType = "stock" | "etf" | "cash";
 export type Currency = "TWD" | "USD";
 export type ActivityType = "deposit" | "withdrawal" | "buy" | "sell" | "dividend" | "fee";
 export type PriceSource = "manual" | "TWSE" | "TPEx";
+export type EtfCompositionSourceType = "user_import" | "official_issuer" | "official_exchange";
 
 export interface Holding {
   id: string;
@@ -17,6 +18,26 @@ export interface Holding {
   sector: string;
   priceSource?: PriceSource;
   priceAsOf?: string;
+}
+
+export interface EtfConstituent {
+  market: Market;
+  symbol: string;
+  name: string;
+  weightPct: number;
+  sector: string;
+}
+
+export interface EtfComposition {
+  id: string;
+  etfMarket: Market;
+  etfSymbol: string;
+  etfName: string;
+  asOf: string;
+  sourceName: string;
+  sourceUrl: string;
+  sourceType: EtfCompositionSourceType;
+  constituents: EtfConstituent[];
 }
 
 export interface ResearchStock {
@@ -64,6 +85,7 @@ export interface NetWorthSnapshot {
 
 export interface AppState {
   holdings: Holding[];
+  etfCompositions: EtfComposition[];
   journal: JournalEntry[];
   activities: PortfolioActivity[];
   snapshots: NetWorthSnapshot[];
