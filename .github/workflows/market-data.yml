@@ -1,0 +1,35 @@
+name: Refresh Taiwan Market Data
+
+on:
+  schedule:
+    - cron: "30 10 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-tw-market-data
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Fetch official TWSE and TPEx close data
+        run: node scripts/update-market-data.mjs
+      - name: Commit changed cache
+        run: |
+          if git diff --quiet -- public/data/tw-quotes.json; then
+            echo "No market data changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/tw-quotes.json
+          git commit -m "data: refresh Taiwan closing prices"
+          git push
