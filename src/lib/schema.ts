@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const ETF_WEIGHT_EPSILON = 1e-6;
+
 export const holdingSchema = z.object({
   id: z.string().min(1),
   symbol: z.string().min(1).max(32),
@@ -33,6 +35,15 @@ export const etfCompositionSchema = z.object({
   sourceUrl: z.string().url(),
   sourceType: z.enum(["user_import", "official_issuer", "official_exchange"]),
   constituents: z.array(etfConstituentSchema).min(1)
+}).superRefine((composition, ctx) => {
+  const totalWeight = composition.constituents.reduce((sum, item) => sum + item.weightPct, 0);
+  if (totalWeight > 100 + ETF_WEIGHT_EPSILON) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["constituents"],
+      message: `成分權重合計為 ${totalWeight.toFixed(2)}%，不可超過 100%。`
+    });
+  }
 });
 
 export const journalEntrySchema = z.object({
