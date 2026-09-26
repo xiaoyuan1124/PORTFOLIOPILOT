@@ -86,4 +86,40 @@ describe("ETF look-through exposure", () => {
     expect(result.portfolioValueTwd).toBe(9400);
     expect(nvidia?.portfolioPct).toBeCloseTo((4000 / 9400) * 100);
   });
+
+  it("keeps a 99.5% composition partial rather than calling unresolved weight fully covered", () => {
+    const changed = compositions.map((composition) => composition.etfSymbol === "ETFUS"
+      ? {
+          ...composition,
+          constituents: [
+            { market: "US" as const, symbol: "NVDA", name: "NVIDIA", weightPct: 24.5, sector: "半導體" },
+            { market: "US" as const, symbol: "MSFT", name: "Microsoft", weightPct: 75, sector: "軟體" }
+          ]
+        }
+      : composition
+    );
+    const result = calculateEtfLookThrough(holdings, changed, 32);
+    const usEtf = result.etfs.find((item) => item.symbol === "ETFUS");
+
+    expect(usEtf?.compositionCoveragePct).toBe(99.5);
+    expect(usEtf?.status).toBe("partial");
+    expect(usEtf?.unresolvedValueTwd).toBe(16);
+  });
+
+  it("fails closed if an invalid in-memory composition exceeds 100%", () => {
+    const invalid: EtfComposition[] = [{
+      ...compositions[0]!,
+      constituents: [
+        { market: "TW", symbol: "2330", name: "台積電", weightPct: 60, sector: "半導體" },
+        { market: "TW", symbol: "2317", name: "鴻海", weightPct: 50, sector: "電子" }
+      ]
+    }];
+    const onlyTwEtf = holdings.filter((holding) => holding.id === "tw-etf");
+    const result = calculateEtfLookThrough(onlyTwEtf, invalid, 32);
+
+    expect(result.etfs[0]?.status).toBe("insufficient");
+    expect(result.etfs[0]?.coveredValueTwd).toBe(0);
+    expect(result.etfs[0]?.unresolvedValueTwd).toBe(1000);
+    expect(result.exposures).toEqual([]);
+  });
 });
