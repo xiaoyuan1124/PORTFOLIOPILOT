@@ -1,42 +1,58 @@
 # Taiwan Market Data — Zero-Cost Cache
 
-PortfolioPilot V0.5 uses a repository-owned static cache for Taiwan closing prices.
+PortfolioPilot keeps Taiwan market data in repository-owned static JSON caches so the PWA can stay free, static, and independent from a paid backend.
 
-## Why a cache instead of browser-to-exchange requests
+## Current official adapters
 
-The website is a static PWA on GitHub Pages. Fetching the exchanges directly from every browser would make the UI depend on runtime CORS behavior and upstream availability.
-
-Instead, GitHub Actions fetches the official sources once, normalizes the fields, and writes one static file:
-
-`public/data/tw-quotes.json`
-
-The browser only reads that local file.
-
-## Official sources
+### Closing prices
 
 Listed market:
 
 `https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL`
 
-Fields currently used:
-
-- `Code`
-- `Name`
-- `ClosingPrice`
-- `Date`
-
 OTC market:
 
 `https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes`
 
-Fields currently used:
+Normalized cache:
 
-- `SecuritiesCompanyCode`
-- `CompanyName`
-- `Close`
-- `Date`
+`public/data/tw-quotes.json`
 
-The updater intentionally stores only the minimum fields PortfolioPilot needs.
+The PWA can apply the latest cached close to Taiwan non-cash holdings and stores `priceSource` plus `priceAsOf` on each updated holding.
+
+### Monthly revenue
+
+Listed market:
+
+`https://openapi.twse.com.tw/v1/opendata/t187ap05_L`
+
+OTC market:
+
+`https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap05_O`
+
+Normalized cache:
+
+`public/data/tw-revenue.json`
+
+PortfolioPilot keeps these fields when available:
+
+- company code / name
+- industry
+- data period
+- current-month revenue
+- prior-year same-month revenue
+- MoM %
+- YoY %
+- cumulative revenue
+- cumulative YoY %
+
+The UI keeps the official numeric revenue value as-is and does not silently invent a display unit.
+
+## Why a cache instead of browser-to-exchange requests
+
+The site is a static PWA on GitHub Pages. Fetching the exchanges directly from every browser would make the experience depend on runtime CORS behavior and upstream availability.
+
+GitHub Actions fetches the official sources once, normalizes the fields, validates minimum row counts, commits the changed JSON, builds the PWA with those caches, and deploys the refreshed Pages artifact in the same workflow.
 
 ## Refresh workflow
 
@@ -45,9 +61,8 @@ The updater intentionally stores only the minimum fields PortfolioPilot needs.
 runs:
 
 - weekdays at 18:30 Asia/Taipei equivalent (10:30 UTC);
-- manually through `workflow_dispatch`.
-
-If the normalized cache changes, the workflow commits the new JSON to `main`. That normal repository push then triggers the existing Pages deployment.
+- manually through `workflow_dispatch`;
+- once after market-data updater/workflow code changes land on `main`.
 
 ## Safety checks
 
@@ -56,32 +71,23 @@ The updater:
 - requires successful HTTP responses;
 - requires array-shaped payloads;
 - normalizes commas and missing numeric values;
-- normalizes Gregorian and ROC-style dates;
-- refuses to publish if the combined quote set is suspiciously small;
-- never changes user holdings directly.
+- normalizes Gregorian and ROC-style dates / year-month values;
+- refuses to publish suspiciously small quote or revenue sets;
+- stores only the minimum fields used by PortfolioPilot;
+- never changes browser-local user holdings by itself.
 
-The website updates only Taiwan non-cash holdings whose symbol exists in the cache.
+## Scope / limitations
 
-## Price provenance
-
-After a successful update, each holding stores:
-
-- `priceSource`: `TWSE` or `TPEx`;
-- `priceAsOf`: market date.
-
-Manual prices remain supported and are not mislabeled as official prices.
-
-## Scope
-
-This V0.5 cache is for **closing prices only**.
+V0.6 provides current cached closing prices and the latest monthly-revenue table.
 
 It does not yet provide:
 
 - intraday quotes;
 - US prices;
-- corporate actions;
-- monthly revenue;
-- institutional flows;
-- ETF constituent look-through.
+- three-month historical revenue series;
+- quarterly gross margin;
+- institutional 10-day flows;
+- ETF constituent look-through;
+- fully live Scanner results.
 
-Those should be added as separate adapters so the current holdings/accounting logic remains independent from any one data source.
+The Scanner therefore remains explicitly labelled as a prototype until every rule can be evaluated from official/non-demo data.
