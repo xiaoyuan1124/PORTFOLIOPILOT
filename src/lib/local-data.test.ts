@@ -81,6 +81,45 @@ describe("local data import/export", () => {
       "TW,009999,ETF,2026-09-26,Issuer,https://example.com/etf,TW,2330,台積電,60,半導體",
       "TW,009999,ETF,2026-09-26,Issuer,https://example.com/etf,TW,2317,鴻海,50,電子"
     ].join("\n");
-    expect(() => parseEtfCompositionCsv(csv)).toThrow(/100\.5/);
+    expect(() => parseEtfCompositionCsv(csv)).toThrow(/110\.00/);
+  });
+
+  it("rejects over-100 ETF weights in JSON backups too", () => {
+    const backup = {
+      version: 2,
+      exportedAt: "2026-09-27T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [{
+          id: "composition:TW:009999",
+          etfMarket: "TW",
+          etfSymbol: "009999",
+          etfName: "ETF",
+          asOf: "2026-09-26",
+          sourceName: "Issuer",
+          sourceUrl: "https://example.com/etf",
+          sourceType: "user_import",
+          constituents: [
+            { market: "TW", symbol: "2330", name: "台積電", weightPct: 60, sector: "半導體" },
+            { market: "TW", symbol: "2317", name: "鴻海", weightPct: 50, sector: "電子" }
+          ]
+        }],
+        journal: [],
+        activities: [],
+        snapshots: []
+      }
+    };
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/110\.00/);
+  });
+
+  it("accepts tiny floating-point noise around exactly 100%", () => {
+    const csv = [
+      "etfMarket,etfSymbol,etfName,asOf,sourceName,sourceUrl,componentMarket,componentSymbol,componentName,weightPct,sector",
+      "US,ETF,ETF,2026-09-26,Issuer,https://example.com/etf,US,AAA,A,33.3333334,Tech",
+      "US,ETF,ETF,2026-09-26,Issuer,https://example.com/etf,US,BBB,B,33.3333334,Tech",
+      "US,ETF,ETF,2026-09-26,Issuer,https://example.com/etf,US,CCC,C,33.3333334,Tech"
+    ].join("\n");
+    expect(parseEtfCompositionCsv(csv)).toHaveLength(1);
   });
 });
