@@ -120,7 +120,7 @@ export function Overview({ state }: { state: AppState }) {
             <div className="flex gap-3 rounded-2xl border border-black/6 p-4 dark:border-white/8">
               <AlertTriangle size={18} className="mt-0.5 shrink-0 text-[#8b6538]" />
               <p className="text-sm leading-6 text-black/55 dark:text-white/55">
-                Research / Scanner 仍是示範資料；真正個人使用的核心數字以你自己輸入的持股、價格、成本與匯率為準。
+                Official Scanner 已使用 TWSE、TPEx 與 MOPS 官方快取；個人投資組合數字仍以你自己輸入的持股、價格、成本與匯率為準。
               </p>
             </div>
           </CardContent>
