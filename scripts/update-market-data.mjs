@@ -76,7 +76,7 @@ function firstValue(row, keys) {
 async function fetchJson(source) {
   const response = await fetch(source.url, {
     headers: {
-      "user-agent": "PortfolioPilot/0.7 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
+      "user-agent": "PortfolioPilot/0.8 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
       accept: "application/json"
     },
     signal: AbortSignal.timeout(30_000)
@@ -218,7 +218,7 @@ function historyUrl(market, period, companyType) {
 async function fetchHistoryHtml(url) {
   const response = await fetch(url, {
     headers: {
-      "user-agent": "Mozilla/5.0 PortfolioPilot/0.7",
+      "user-agent": "Mozilla/5.0 PortfolioPilot/0.8",
       accept: "text/html,application/xhtml+xml"
     },
     signal: AbortSignal.timeout(30_000)
@@ -330,6 +330,187 @@ async function fetchRevenueHistory(latestRevenue) {
   };
 }
 
+function isoDateParts(date) {
+  const match = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) throw new Error(`Invalid ISO date: ${date}`);
+  return { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
+}
+
+function addCalendarDays(date, delta) {
+  const { year, month, day } = isoDateParts(date);
+  const next = new Date(Date.UTC(year, month - 1, day + delta));
+  return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}-${String(next.getUTCDate()).padStart(2, "0")}`;
+}
+
+function twseDateParam(date) {
+  return date.replaceAll("-", "");
+}
+
+function tpexDateParam(date) {
+  const { year, month, day } = isoDateParts(date);
+  return `${year - 1911}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
+}
+
+async function fetchObject(url, label) {
+  const response = await fetch(url, {
+    headers: {
+      "user-agent": "Mozilla/5.0 PortfolioPilot/0.8",
+      accept: "application/json,text/javascript,*/*"
+    },
+    signal: AbortSignal.timeout(30_000)
+  });
+
+  if (!response.ok) {
+    throw new Error(`${label} request failed: ${response.status} (${url})`);
+  }
+
+  const payload = await response.json();
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error(`${label} returned invalid payload (${url})`);
+  }
+  return payload;
+}
+
+function cleanInteger(value) {
+  const number = cleanNumber(value);
+  return number === null ? null : Math.trunc(number);
+}
+
+function fieldIndex(fields, candidates) {
+  for (const candidate of candidates) {
+    const index = fields.findIndex((field) => String(field).trim() === candidate);
+    if (index >= 0) return index;
+  }
+  return -1;
+}
+
+function parseTwseInstitutional(payload, date) {
+  if (String(payload.stat ?? "").toUpperCase() !== "OK") return [];
+  const fields = Array.isArray(payload.fields) ? payload.fields.map((field) => String(field).trim()) : [];
+  const rows = Array.isArray(payload.data) ? payload.data : [];
+  if (!fields.length || !rows.length) return [];
+
+  const codeIndex = fieldIndex(fields, ["證券代號", "股票代號"]);
+  const nameIndex = fieldIndex(fields, ["證券名稱", "股票名稱"]);
+  const foreignIndex = fieldIndex(fields, [
+    "外陸資買賣超股數(不含外資自營商)",
+    "外資及陸資買賣超股數(不含外資自營商)"
+  ]);
+  const trustIndex = fieldIndex(fields, ["投信買賣超股數"]);
+
+  if ([codeIndex, nameIndex, foreignIndex, trustIndex].some((index) => index < 0)) {
+    throw new Error(`TWSE T86 fields changed on ${date}`);
+  }
+
+  return rows.flatMap((row) => {
+    if (!Array.isArray(row)) return [];
+    const code = String(row[codeIndex] ?? "").trim();
+    const name = String(row[nameIndex] ?? "").trim();
+    const foreignNet = cleanInteger(row[foreignIndex]);
+    const trustNet = cleanInteger(row[trustIndex]);
+    if (!code || !name || foreignNet === null || trustNet === null) return [];
+    return [{ date, code, name, market: "TWSE", foreignNet, trustNet }];
+  });
+}
+
+function findTpexInstitutionalTable(payload) {
+  const tables = Array.isArray(payload.tables) ? payload.tables : [];
+  return tables.find((table) =>
+    Array.isArray(table?.data) &&
+    String(table?.title ?? "").includes("三大法人")
+  ) ?? tables.find((table) => Array.isArray(table?.data) && table.data.length > 0) ?? null;
+}
+
+function parseTpexInstitutional(payload, date) {
+  const table = findTpexInstitutionalTable(payload);
+  if (!table || !Array.isArray(table.data)) return [];
+
+  return table.data.flatMap((row) => {
+    if (!Array.isArray(row) || row.length < 8) return [];
+
+    const code = String(row[0] ?? "").trim();
+    const name = String(row[1] ?? "").trim();
+
+    // Current layout: [2-4] foreign/China ex foreign-dealer, [11-13] investment trust.
+    // Older layout: [2-4] foreign/China, [5-7] investment trust.
+    const trustIndex = row.length >= 14 ? 13 : 7;
+    const foreignNet = cleanInteger(row[4]);
+    const trustNet = cleanInteger(row[trustIndex]);
+
+    if (!code || !name || foreignNet === null || trustNet === null) return [];
+    return [{ date, code, name, market: "TPEx", foreignNet, trustNet }];
+  });
+}
+
+function aggregateInstitutionalDays(days) {
+  const map = new Map();
+
+  for (const day of days) {
+    for (const row of [...day.twse, ...day.tpex]) {
+      const key = `${row.market}:${row.code}`;
+      const current = map.get(key) ?? {
+        code: row.code,
+        name: row.name,
+        market: row.market,
+        foreign10d: 0,
+        trust10d: 0,
+        observedDays: 0
+      };
+      current.foreign10d += row.foreignNet;
+      current.trust10d += row.trustNet;
+      current.observedDays += 1;
+      map.set(key, current);
+    }
+  }
+
+  return [...map.values()].sort((a, b) => a.code.localeCompare(b.code, "en"));
+}
+
+async function fetchInstitutional10d(latestQuoteDate) {
+  const accepted = [];
+  let cursor = latestQuoteDate;
+
+  for (let checked = 0; checked < 32 && accepted.length < 10; checked += 1) {
+    const twseUrl = `https://www.twse.com.tw/rwd/zh/fund/T86?date=${twseDateParam(cursor)}&selectType=ALLBUT0999&response=json`;
+    const twsePayload = await fetchObject(twseUrl, "TWSE T86");
+    const twse = parseTwseInstitutional(twsePayload, cursor);
+
+    if (twse.length >= 100) {
+      const tpexUrl = `https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?type=Daily&sect=AL&date=${encodeURIComponent(tpexDateParam(cursor))}&response=json`;
+      const tpexPayload = await fetchObject(tpexUrl, "TPEx institutional");
+      const tpex = parseTpexInstitutional(tpexPayload, cursor);
+
+      if (tpex.length < 100) {
+        throw new Error(`Refusing incomplete TPEx institutional data on ${cursor}: ${tpex.length} rows`);
+      }
+
+      accepted.push({ date: cursor, twse, tpex });
+    }
+
+    cursor = addCalendarDays(cursor, -1);
+    await new Promise((resolve) => setTimeout(resolve, 120));
+  }
+
+  if (accepted.length !== 10) {
+    throw new Error(`Could only resolve ${accepted.length} institutional trading days`);
+  }
+
+  return {
+    tradingDates: accepted.map((day) => day.date),
+    rows: aggregateInstitutionalDays(accepted),
+    sources: [
+      {
+        name: "TWSE T86",
+        urlTemplate: "https://www.twse.com.tw/rwd/zh/fund/T86?date=YYYYMMDD&selectType=ALLBUT0999&response=json"
+      },
+      {
+        name: "TPEx dailyTrade",
+        urlTemplate: "https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?type=Daily&sect=AL&date=ROC/MM/DD&response=json"
+      }
+    ]
+  };
+}
+
 async function main() {
   const fetchedAt = new Date().toISOString();
   const [twseQuoteRows, tpexQuoteRows, twseRevenueRows, tpexRevenueRows] = await Promise.all([
@@ -354,6 +535,9 @@ async function main() {
   }
 
   const history = await fetchRevenueHistory(revenue);
+  const latestQuoteDate = quotes.map((row) => row.date).filter(Boolean).sort().at(-1);
+  if (!latestQuoteDate) throw new Error("Cannot determine latest quote date for institutional lookback.");
+  const institutional = await fetchInstitutional10d(latestQuoteDate);
 
   const quotePayload = {
     generatedAt: fetchedAt,
@@ -374,14 +558,23 @@ async function main() {
     rows: history.rows
   };
 
+  const institutionalPayload = {
+    generatedAt: fetchedAt,
+    tradingDates: institutional.tradingDates,
+    sources: institutional.sources,
+    rows: institutional.rows
+  };
+
   await mkdir("public/data", { recursive: true });
   await writeFile("public/data/tw-quotes.json", JSON.stringify(quotePayload, null, 2) + "\n", "utf8");
   await writeFile("public/data/tw-revenue.json", JSON.stringify(revenuePayload, null, 2) + "\n", "utf8");
   await writeFile("public/data/tw-revenue-history.json", JSON.stringify(revenueHistoryPayload, null, 2) + "\n", "utf8");
+  await writeFile("public/data/tw-institutional-10d.json", JSON.stringify(institutionalPayload, null, 2) + "\n", "utf8");
 
   console.log(`Wrote ${quotes.length} TWSE/TPEx quotes`);
   console.log(`Wrote ${revenue.length} TWSE/TPEx latest monthly revenue rows`);
   console.log(`Wrote ${history.rows.length} MOPS historical revenue rows for ${history.periods.join(", ")}`);
+  console.log(`Wrote ${institutional.rows.length} institutional 10D aggregates for ${institutional.tradingDates.join(", ")}`);
 }
 
 main().catch((error) => {

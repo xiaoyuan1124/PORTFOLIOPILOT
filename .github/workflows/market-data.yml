@@ -31,12 +31,12 @@ jobs:
         run: node scripts/update-market-data.mjs
       - name: Commit changed caches
         run: |
-          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json; then
+          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json; then
             echo "No market data changes."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json
+            git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json
             git commit -m "data: refresh Taiwan market data"
             git push
           fi
