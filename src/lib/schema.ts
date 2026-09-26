@@ -15,6 +15,26 @@ export const holdingSchema = z.object({
   priceAsOf: z.string().optional()
 });
 
+export const etfConstituentSchema = z.object({
+  market: z.enum(["TW", "US"]),
+  symbol: z.string().trim().min(1).max(32),
+  name: z.string().trim().min(1).max(160),
+  weightPct: z.number().finite().positive().max(100),
+  sector: z.string().trim().min(1).max(120)
+});
+
+export const etfCompositionSchema = z.object({
+  id: z.string().min(1),
+  etfMarket: z.enum(["TW", "US"]),
+  etfSymbol: z.string().trim().min(1).max(32),
+  etfName: z.string().trim().min(1).max(160),
+  asOf: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  sourceName: z.string().trim().min(1).max(240),
+  sourceUrl: z.string().url(),
+  sourceType: z.enum(["user_import", "official_issuer", "official_exchange"]),
+  constituents: z.array(etfConstituentSchema).min(1)
+});
+
 export const journalEntrySchema = z.object({
   id: z.string().min(1),
   date: z.string().min(1),
@@ -47,6 +67,7 @@ export const snapshotSchema = z.object({
 
 export const appStateSchema = z.object({
   holdings: z.array(holdingSchema),
+  etfCompositions: z.array(etfCompositionSchema).default([]),
   journal: z.array(journalEntrySchema),
   activities: z.array(activitySchema).default([]),
   snapshots: z.array(snapshotSchema).default([]),
@@ -55,7 +76,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.literal(1),
+    version: z.union([z.literal(1), z.literal(2)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),
@@ -71,5 +92,19 @@ export const holdingCsvRowSchema = z.object({
   price: z.coerce.number().finite().nonnegative(),
   averageCost: z.coerce.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
+  sector: z.string().trim().min(1).max(120)
+});
+
+export const etfCompositionCsvRowSchema = z.object({
+  etfMarket: z.enum(["TW", "US"]),
+  etfSymbol: z.string().trim().min(1).max(32),
+  etfName: z.string().trim().min(1).max(160),
+  asOf: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/),
+  sourceName: z.string().trim().min(1).max(240),
+  sourceUrl: z.string().trim().url(),
+  componentMarket: z.enum(["TW", "US"]),
+  componentSymbol: z.string().trim().min(1).max(32),
+  componentName: z.string().trim().min(1).max(160),
+  weightPct: z.coerce.number().finite().positive().max(100),
   sector: z.string().trim().min(1).max(120)
 });
