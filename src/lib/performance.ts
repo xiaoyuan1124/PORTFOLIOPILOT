@@ -82,21 +82,24 @@ export function calculateXirr(flows: DatedCashFlow[]) {
 
   if (low === null || high === null) return null;
 
-  let lowValue = xnpv(low, ordered);
+  let left: number = low;
+  let right: number = high;
+  let leftValue = xnpv(left, ordered);
+
   for (let i = 0; i < 180; i += 1) {
-    const mid = (low + high) / 2;
+    const mid: number = (left + right) / 2;
     const midValue = xnpv(mid, ordered);
     if (Math.abs(midValue) < 1e-9) return mid;
 
-    if (lowValue * midValue <= 0) {
-      high = mid;
+    if (leftValue * midValue <= 0) {
+      right = mid;
     } else {
-      low = mid;
-      lowValue = midValue;
+      left = mid;
+      leftValue = midValue;
     }
   }
 
-  return (low + high) / 2;
+  return (left + right) / 2;
 }
 
 export function portfolioXirr(state: AppState, valuationDate: string) {
