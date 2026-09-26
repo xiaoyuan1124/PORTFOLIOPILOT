@@ -3,6 +3,7 @@ import type { AppState, EtfComposition, Holding } from "./types";
 import {
   appStateSchema,
   backupSchema,
+  ETF_WEIGHT_EPSILON,
   etfCompositionCsvRowSchema,
   etfCompositionSchema,
   holdingCsvRowSchema
@@ -194,7 +195,7 @@ export function parseEtfCompositionCsv(text: string): EtfComposition[] {
   return [...groups.entries()].map(([groupKey, group]) => {
     const constituents = [...group.components.values()];
     const coveragePct = constituents.reduce((sum, component) => sum + component.weightPct, 0);
-    if (coveragePct > 100) {
+    if (coveragePct > 100 + ETF_WEIGHT_EPSILON) {
       throw new Error(`ETF ${group.metadata.etfSymbol} 的成分權重合計為 ${coveragePct.toFixed(2)}%，超過可接受的 100%。`);
     }
 
