@@ -9,6 +9,7 @@ export const demoState: AppState = {
     { id: "h4", symbol: "NVDA", name: "NVIDIA", market: "US", type: "stock", quantity: 1.5, price: 192, averageCost: 171, currency: "USD", sector: "半導體" },
     { id: "h5", symbol: "CASH-TWD", name: "台幣現金", market: "TW", type: "cash", quantity: 1, price: 18000, averageCost: 18000, currency: "TWD", sector: "現金" }
   ],
+  etfCompositions: [],
   journal: [
     {
       id: "j1",
@@ -36,6 +37,7 @@ export const demoState: AppState = {
 export const emptyState: AppState = {
   usdTwd: 31.8,
   holdings: [],
+  etfCompositions: [],
   journal: [],
   activities: [],
   snapshots: []
