@@ -3,18 +3,21 @@
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AlertTriangle, ArrowUpRight, Landmark, Layers3, WalletCards } from "lucide-react";
 import type { AppState } from "@/lib/types";
-import { allocationBySector, portfolioSummary } from "@/lib/calc";
+import { allocationBySector, dailySnapshotDelta, portfolioSummary } from "@/lib/calc";
 import { money, percent } from "@/lib/utils";
 import { Badge, Card, CardContent, CardHeader, Metric } from "./ui";
 
 export function Overview({ state }: { state: AppState }) {
   const summary = portfolioSummary(state.holdings, state.usdTwd);
   const sectors = allocationBySector(state.holdings, state.usdTwd);
-  const trend = [0.84, 0.87, 0.9, 0.94, 0.97, 1].map((ratio, index) => ({
-    month: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"][index],
-    value: Math.round(summary.total * ratio)
-  }));
+  const snapshots = [...state.snapshots].sort((a, b) => a.date.localeCompare(b.date)).slice(-30);
+  const delta = dailySnapshotDelta(snapshots);
   const top = sectors[0];
+
+  const trend = snapshots.map((snapshot) => ({
+    label: snapshot.date.slice(5).replace("-", "/"),
+    value: Math.round(snapshot.total)
+  }));
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -23,23 +26,33 @@ export function Overview({ state }: { state: AppState }) {
           <CardContent>
             <div className="flex items-start justify-between gap-4">
               <Metric label="總資產淨值" value={money(summary.total)} helper="依目前輸入價格估算" />
-              <Badge tone="good"><ArrowUpRight size={13} /> 本地資料</Badge>
+              <Badge tone="good"><ArrowUpRight size={13} /> 本機資料</Badge>
             </div>
             <div className="mt-7 h-36">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={trend} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="networth" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#456b58" stopOpacity={0.28} />
-                      <stop offset="100%" stopColor="#456b58" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#78817b" }} />
-                  <YAxis hide domain={["dataMin", "dataMax"]} />
-                  <Tooltip formatter={(value) => money(Number(value))} contentStyle={{ borderRadius: 14, border: "1px solid rgba(0,0,0,.08)", fontSize: 12 }} />
-                  <Area type="monotone" dataKey="value" stroke="#456b58" strokeWidth={2.5} fill="url(#networth)" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {trend.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trend} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="networth" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#456b58" stopOpacity={0.28} />
+                        <stop offset="100%" stopColor="#456b58" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#78817b" }} minTickGap={24} />
+                    <YAxis hide domain={["dataMin", "dataMax"]} />
+                    <Tooltip formatter={(value) => money(Number(value))} contentStyle={{ borderRadius: 14, border: "1px solid rgba(0,0,0,.08)", fontSize: 12 }} />
+                    <Area type="monotone" dataKey="value" stroke="#456b58" strokeWidth={2.5} fill="url(#networth)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="grid h-full place-items-center rounded-2xl border border-dashed border-black/10 text-sm text-black/35 dark:border-white/10 dark:text-white/35">
+                  今天開始記錄後，這裡會出現真實淨值曲線。
+                </div>
+              )}
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3 text-xs text-black/40 dark:text-white/40">
+              <span>每日自動保留 1 筆 · 最近 {snapshots.length} 天</span>
+              {delta ? <span className="tabular-nums">較 {delta.previousDate.slice(5)}：{percent(delta.pct)}</span> : null}
             </div>
           </CardContent>
         </Card>
@@ -56,7 +69,7 @@ export function Overview({ state }: { state: AppState }) {
 
         <Card>
           <CardContent>
-            <Metric label="USD / TWD" value={state.usdTwd.toFixed(2)} helper="可在設定中手動更新" />
+            <Metric label="USD / TWD" value={state.usdTwd.toFixed(2)} helper="目前採手動更新" />
             <div className="mt-6 flex items-center gap-2 text-xs text-black/50 dark:text-white/50">
               <Landmark size={15} />
               美股依此匯率折算
@@ -88,6 +101,7 @@ export function Overview({ state }: { state: AppState }) {
                 </div>
               </div>
             ))}
+            {!sectors.length ? <p className="py-8 text-center text-sm text-black/40 dark:text-white/40">新增自己的持股後顯示配置。</p> : null}
           </CardContent>
         </Card>
 
@@ -106,7 +120,7 @@ export function Overview({ state }: { state: AppState }) {
             <div className="flex gap-3 rounded-2xl border border-black/6 p-4 dark:border-white/8">
               <AlertTriangle size={18} className="mt-0.5 shrink-0 text-[#8b6538]" />
               <p className="text-sm leading-6 text-black/55 dark:text-white/55">
-                研究頁目前使用示範資料，不代表即時市場資訊，也不是投資建議。
+                Research / Scanner 仍是示範資料；真正個人使用的核心數字以你自己輸入的持股、價格、成本與匯率為準。
               </p>
             </div>
           </CardContent>

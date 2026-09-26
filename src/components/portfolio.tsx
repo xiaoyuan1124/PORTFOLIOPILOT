@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDownUp, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import type { AppState, AssetType, Currency, Holding, Market } from "@/lib/types";
-import { holdingValueTwd, portfolioSummary } from "@/lib/calc";
-import { money } from "@/lib/utils";
+import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
+import { money, percent } from "@/lib/utils";
 import { Button, Card, CardContent, GhostButton, Modal } from "./ui";
 
 const emptyHolding: Omit<Holding, "id"> = {
@@ -83,9 +84,29 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
   );
 }
 
+type SortMode = "value" | "gain" | "name";
+
 export function Portfolio({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<SortMode>("value");
   const summary = portfolioSummary(state.holdings, state.usdTwd);
-  const sorted = useMemo(() => [...state.holdings].sort((a, b) => holdingValueTwd(b, state.usdTwd) - holdingValueTwd(a, state.usdTwd)), [state.holdings, state.usdTwd]);
+
+  const sorted = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const filtered = state.holdings.filter((holding) =>
+      !needle || `${holding.symbol} ${holding.name} ${holding.sector}`.toLowerCase().includes(needle)
+    );
+
+    return [...filtered].sort((a, b) => {
+      if (sort === "name") return a.symbol.localeCompare(b.symbol);
+      if (sort === "gain") {
+        const aGain = holdingValueTwd(a, state.usdTwd) - holdingCostTwd(a, state.usdTwd);
+        const bGain = holdingValueTwd(b, state.usdTwd) - holdingCostTwd(b, state.usdTwd);
+        return bGain - aGain;
+      }
+      return holdingValueTwd(b, state.usdTwd) - holdingValueTwd(a, state.usdTwd);
+    });
+  }, [query, sort, state.holdings, state.usdTwd]);
 
   function upsert(holding: Holding) {
     const exists = state.holdings.some((item) => item.id === holding.id);
@@ -93,6 +114,7 @@ export function Portfolio({ state, onChange }: { state: AppState; onChange: (sta
       ...state,
       holdings: exists ? state.holdings.map((item) => item.id === holding.id ? holding : item) : [...state.holdings, holding]
     });
+    toast.success(exists ? "部位已更新" : "部位已新增");
   }
 
   return (
@@ -107,9 +129,27 @@ export function Portfolio({ state, onChange }: { state: AppState; onChange: (sta
         </Modal>
       </div>
 
+      <div className="grid gap-2 sm:grid-cols-[1fr_180px]">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 dark:text-white/30" size={17} />
+          <input className="field pl-11" placeholder="搜尋代號、名稱、產業" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </div>
+        <div className="relative">
+          <ArrowDownUp className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-black/30 dark:text-white/30" size={16} />
+          <select className="field pl-11" value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
+            <option value="value">依市值排序</option>
+            <option value="gain">依損益排序</option>
+            <option value="name">依代號排序</option>
+          </select>
+        </div>
+      </div>
+
       <div className="grid gap-3">
         {sorted.map((holding) => {
           const value = holdingValueTwd(holding, state.usdTwd);
+          const cost = holdingCostTwd(holding, state.usdTwd);
+          const gain = value - cost;
+          const gainPct = cost > 0 ? (gain / cost) * 100 : 0;
           const pct = summary.total ? (value / summary.total) * 100 : 0;
           return (
             <Card key={holding.id}>
@@ -129,15 +169,20 @@ export function Portfolio({ state, onChange }: { state: AppState; onChange: (sta
                     <GhostButton
                       className="h-10 min-h-10 w-10 px-0"
                       aria-label="刪除"
-                      onClick={() => onChange({ ...state, holdings: state.holdings.filter((item) => item.id !== holding.id) })}
+                      onClick={() => {
+                        if (!window.confirm(`刪除 ${holding.name}？`)) return;
+                        onChange({ ...state, holdings: state.holdings.filter((item) => item.id !== holding.id) });
+                        toast.success("部位已刪除");
+                      }}
                     >
                       <Trash2 size={15} />
                     </GhostButton>
                   </div>
                 </div>
-                <div className="mt-5 grid grid-cols-3 gap-3">
+                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <div className="mini-metric"><span>數量</span><strong>{holding.quantity.toLocaleString()}</strong></div>
                   <div className="mini-metric"><span>市值</span><strong>{money(value)}</strong></div>
+                  <div className="mini-metric"><span>損益</span><strong>{percent(gainPct)}</strong></div>
                   <div className="mini-metric"><span>占比</span><strong>{pct.toFixed(1)}%</strong></div>
                 </div>
               </CardContent>
@@ -145,7 +190,7 @@ export function Portfolio({ state, onChange }: { state: AppState; onChange: (sta
           );
         })}
       </div>
-      {!state.holdings.length ? <p className="py-16 text-center text-sm text-black/40 dark:text-white/40">目前沒有持股，新增第一個部位開始追蹤。</p> : null}
+      {!sorted.length ? <p className="py-16 text-center text-sm text-black/40 dark:text-white/40">{state.holdings.length ? "沒有符合搜尋條件的部位。" : "目前沒有持股，新增第一個部位開始追蹤。"}</p> : null}
     </div>
   );
 }

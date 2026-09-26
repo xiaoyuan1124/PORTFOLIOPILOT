@@ -18,7 +18,21 @@ export const demoState: AppState = {
       thesis: "作為台股長期核心配置，降低單押個股的決策頻率。",
       invalidation: "追蹤方法或成分規則出現重大改變時重新評估。"
     }
+  ],
+  snapshots: [
+    { date: "2026-09-22", total: 55320, cost: 51100, gain: 4220, usdTwd: 31.7 },
+    { date: "2026-09-23", total: 56140, cost: 51100, gain: 5040, usdTwd: 31.72 },
+    { date: "2026-09-24", total: 56880, cost: 51100, gain: 5780, usdTwd: 31.75 },
+    { date: "2026-09-25", total: 57460, cost: 51100, gain: 6360, usdTwd: 31.78 },
+    { date: "2026-09-26", total: 58220, cost: 51100, gain: 7120, usdTwd: 31.8 }
   ]
+};
+
+export const emptyState: AppState = {
+  usdTwd: 31.8,
+  holdings: [],
+  journal: [],
+  snapshots: []
 };
 
 export const demoResearch: ResearchStock[] = [
@@ -27,13 +41,4 @@ export const demoResearch: ResearchStock[] = [
   { symbol: "2454", name: "聯發科", sector: "IC設計", revenueYoY: [18.8, 22.4, 24.1], grossMargin: [48.2, 47.9, 48.5], foreign10d: 5400, trust10d: -120, pe: 22.4, pb: 5.7, statusNote: "示範資料：部分條件未通過。" },
   { symbol: "3037", name: "欣興", sector: "PCB", revenueYoY: [24.6, 27.1, 33.5], grossMargin: [18.2, 20.1, 22.9], foreign10d: 2880, trust10d: 410, pe: 31.6, pb: 4.8, statusNote: "示範資料：符合內建掃描規則。" },
   { symbol: "2890", name: "永豐金", sector: "金融", revenueYoY: [12.4, 15.1, 11.8], grossMargin: [0, 0, 0], foreign10d: 8220, trust10d: 510, pe: 14.2, pb: 1.6, statusNote: "示範資料：金融業不適用製造業毛利率條件。" }
-];
-
-export const demoNetWorthTrend = [
-  { label: "Apr", value: 41800 },
-  { label: "May", value: 46500 },
-  { label: "Jun", value: 49800 },
-  { label: "Jul", value: 53300 },
-  { label: "Aug", value: 56800 },
-  { label: "Sep", value: 60700 }
 ];

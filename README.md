@@ -1,24 +1,45 @@
 # PortfolioPilot
 
-PortfolioPilot is a **mobile-first investment portfolio and research PWA** built for phones and desktop browsers.
+PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio PWA** for personal use on phones and desktop browsers.
 
-## Current MVP
+## Current self-use build
 
 - Responsive dashboard with desktop sidebar and mobile bottom navigation
-- Local portfolio management with add/edit/delete holdings
+- Add/edit/delete TW / US stocks, ETFs and cash
+- Search and sort holdings
 - TWD / USD portfolio valuation
-- Asset allocation and net-worth charts
-- Taiwan-stock research cards using clearly labelled demo data
-- Rule-based scanner (no AI)
+- Per-holding and total unrealized return
+- Asset allocation
+- **Real local daily net-worth snapshots** instead of a fabricated trend line
+- Rule-based research scanner (currently clearly-labelled demo research data)
 - Investment journal
-- JSON export/import
+- Versioned JSON full backup/import with Zod validation
+- Holdings CSV import/export and downloadable template
 - Dark mode
 - Installable PWA shell and offline cache
-- Optional Supabase email/password login and manual cross-device sync
-- Row Level Security migration for user-owned cloud data
+- Sonner interaction feedback
+- Vitest calculation/import tests
 - GitHub Actions CI and GitHub Pages deployment
 
-> The current research dataset is illustrative demo data and is **not live market data or investment advice**.
+> Research / Scanner data is still illustrative demo data. Your personal portfolio calculations use only the holdings, prices, costs and FX rate you enter yourself.
+
+## Zero-cost mode
+
+The default product requires:
+
+- GitHub repository
+- GitHub Pages
+- browser localStorage
+
+It does **not** require:
+
+- paid database
+- paid market API
+- AI API
+- brokerage credentials
+- App Store account
+
+A previously prepared Supabase integration remains in source for possible future use but is **not enabled in the self-use UI** and no PortfolioPilot Supabase project is required.
 
 ## Stack
 
@@ -26,10 +47,14 @@ PortfolioPilot is a **mobile-first investment portfolio and research PWA** built
 - TypeScript
 - Tailwind CSS 4
 - Radix Dialog
-- Lucide icons
+- Lucide
 - Recharts
-- Supabase JS (optional cloud sync)
-- Static export for GitHub Pages
+- Zod
+- Papa Parse
+- Sonner
+- Vitest
+
+See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions.
 
 ## Local development
 
@@ -43,50 +68,36 @@ Quality gate:
 ```bash
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
 
-## Cloud sync
-
-PortfolioPilot remains fully usable without a backend. To enable cross-device sync, create a **dedicated PortfolioPilot Supabase project**, apply:
-
-```
-supabase/migrations/202609270001_initial_user_sync.sql
-```
-
-and configure:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
-```
-
-See `docs/CLOUD_SYNC.md`.
-
-Never put a Supabase secret or service-role key in the frontend.
-
 ## GitHub Pages
 
-The repository includes a Pages workflow. In GitHub, set:
+Set:
 
 **Settings → Pages → Build and deployment → Source → GitHub Actions**
 
 Then pushing to `main` deploys the static site.
 
-For cloud sync, the two **publishable** Supabase environment variables must be available at build time. If that is inconvenient with Pages, Vercel can be used later without changing the product UI.
+## Data safety
 
-## Data / privacy
+Portfolio data is stored in the current browser. Daily snapshots are updated automatically once per local calendar day (and updated when today's holdings change).
 
-The base MVP stores portfolio and journal data in the current browser's `localStorage`. Cloud sync is manual and opt-in so another device never silently overwrites local investment records.
+Before changing phones, clearing browser data, or making a large import, use:
 
-No brokerage credentials are requested.
+**我的 → 完整備份 → 匯出 JSON**
+
+CSV is intended for holdings editing/interchange. JSON is the authoritative full backup because it also includes journal entries and snapshot history.
 
 ## Product principles
 
-- Mobile first, desktop enhanced
-- Portfolio clarity before market noise
-- Local-first with explicit cloud sync
-- No automated trading
-- No brokerage credentials
-- No AI in the current roadmap
-- Research data must identify its source and freshness before production use
+- useful for the owner before monetization
+- zero-cost first
+- mobile first, desktop enhanced
+- local/private data ownership
+- explicit backup before cloud sync
+- no automated trading
+- no brokerage passwords
+- no AI in the current roadmap
+- market data must identify source, timestamp and usage rights before becoming production data

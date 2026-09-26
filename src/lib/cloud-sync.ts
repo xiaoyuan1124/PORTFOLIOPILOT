@@ -117,6 +117,7 @@ export async function loadCloudState(): Promise<{ state: AppState | null; update
     state: {
       holdings,
       journal,
+      snapshots: [],
       usdTwd: Number(preference?.usd_twd ?? 31.8)
     },
     updatedAt: preference?.updated_at ?? null

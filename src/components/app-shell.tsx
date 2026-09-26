@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, BriefcaseBusiness, Home, Moon, Search, Settings as SettingsIcon, Sun } from "lucide-react";
+import { Toaster } from "sonner";
 import type { AppState } from "@/lib/types";
 import { demoState } from "@/lib/demo-data";
+import { withTodaySnapshot } from "@/lib/calc";
 import { getInitialState, saveState } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { Overview } from "./overview";
@@ -25,7 +27,7 @@ const titles: Record<Section, { title: string; eyebrow: string }> = {
   home: { title: "投資總覽", eyebrow: "Portfolio Overview" },
   portfolio: { title: "投資組合", eyebrow: "Holdings" },
   research: { title: "研究中心", eyebrow: "Research" },
-  settings: { title: "設定與資料", eyebrow: "Settings" }
+  settings: { title: "設定與資料", eyebrow: "Local Data" }
 };
 
 export function AppShell() {
@@ -36,7 +38,10 @@ export function AppShell() {
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      setState(getInitialState());
+      const initial = withTodaySnapshot(getInitialState());
+      setState(initial);
+      saveState(initial);
+
       const saved = window.localStorage.getItem("portfoliopilot:theme");
       const shouldDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
       setDark(shouldDark);
@@ -52,8 +57,9 @@ export function AppShell() {
   }, []);
 
   function updateState(next: AppState) {
-    setState(next);
-    saveState(next);
+    const prepared = withTodaySnapshot(next);
+    setState(prepared);
+    saveState(prepared);
   }
 
   function toggleTheme() {
@@ -65,10 +71,12 @@ export function AppShell() {
 
   return (
     <div className="min-h-dvh text-[#1b241f] dark:text-[#e7eee9]">
+      <Toaster theme={dark ? "dark" : "light"} position="top-center" richColors closeButton />
+
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] border-r border-black/6 bg-[#efeee9]/85 px-4 py-5 backdrop-blur-xl dark:border-white/7 dark:bg-[#0d1210]/90 md:flex md:flex-col">
         <div className="flex items-center gap-3 px-2">
           <div className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]"><BarChart3 size={20} /></div>
-          <div><p className="font-semibold tracking-tight">PortfolioPilot</p><p className="text-[11px] text-black/40 dark:text-white/40">Investment clarity</p></div>
+          <div><p className="font-semibold tracking-tight">PortfolioPilot</p><p className="text-[11px] text-black/40 dark:text-white/40">Local investment cockpit</p></div>
         </div>
         <nav className="mt-9 space-y-1">
           {nav.map((item) => {
@@ -77,8 +85,8 @@ export function AppShell() {
           })}
         </nav>
         <div className="mt-auto rounded-2xl border border-black/6 bg-white/60 p-4 dark:border-white/7 dark:bg-white/4">
-          <p className="text-xs font-semibold">Local-first MVP</p>
-          <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">持股與筆記目前只存在你的瀏覽器，沒有上傳券商帳密。</p>
+          <p className="text-xs font-semibold">Zero-cost / Local-first</p>
+          <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">不需要帳號、不需要付費 API。重要資料請定期匯出 JSON。</p>
         </div>
       </aside>
 
@@ -90,7 +98,7 @@ export function AppShell() {
               <h1 className="mt-0.5 text-xl font-semibold tracking-tight md:text-2xl">{title.title}</h1>
             </div>
             <div className="flex items-center gap-2">
-              <Badge>DEMO</Badge>
+              <Badge>LOCAL</Badge>
               <button onClick={toggleTheme} className="grid h-11 w-11 place-items-center rounded-full border border-black/6 bg-white/80 transition hover:bg-white dark:border-white/8 dark:bg-white/6 dark:hover:bg-white/10" aria-label="切換深色模式">
                 {dark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
