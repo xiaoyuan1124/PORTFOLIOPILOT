@@ -91,3 +91,14 @@ It does not yet provide:
 - fully live Scanner results.
 
 The Scanner therefore remains explicitly labelled as a prototype until every rule can be evaluated from official/non-demo data.
+
+
+## Institutional 10-day cache
+
+PortfolioPilot V0.8 also writes:
+
+`public/data/tw-institutional-10d.json`
+
+It aggregates the latest 10 completed trading sessions from TWSE T86 and TPEx dailyTrade. The cache stores foreign net buying (excluding the foreign-dealer book for consistency) and investment-trust net buying in shares.
+
+See `docs/INSTITUTIONAL_GATE.md` for definitions and fail-closed rules.
