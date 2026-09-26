@@ -12,13 +12,15 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
-  group: refresh-tw-market-data
+  group: market-data-pages
   cancel-in-progress: true
 
 jobs:
-  refresh:
+  refresh-and-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,10 +33,29 @@ jobs:
         run: |
           if git diff --quiet -- public/data/tw-quotes.json; then
             echo "No market data changes."
-            exit 0
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add public/data/tw-quotes.json
+            git commit -m "data: refresh Taiwan closing prices"
+            git push
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data/tw-quotes.json
-          git commit -m "data: refresh Taiwan closing prices"
-          git push
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Build site with refreshed cache
+        run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: refresh-and-build
+    steps:
+      - name: Deploy refreshed market cache
+        id: deployment
+        uses: actions/deploy-pages@v4
