@@ -75,7 +75,7 @@ describe("local data import/export", () => {
     expect(parseEtfCompositionCsv(etfCompositionsToCsv(rows))).toEqual(rows);
   });
 
-  it("rejects ETF composition weights over 100.5% instead of normalizing them", () => {
+  it("rejects ETF composition weights over 100% instead of normalizing them", () => {
     const csv = [
       "etfMarket,etfSymbol,etfName,asOf,sourceName,sourceUrl,componentMarket,componentSymbol,componentName,weightPct,sector",
       "TW,009999,ETF,2026-09-26,Issuer,https://example.com/etf,TW,2330,台積電,60,半導體",
