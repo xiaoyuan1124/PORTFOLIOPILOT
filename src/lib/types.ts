@@ -2,6 +2,7 @@ export type Market = "TW" | "US";
 export type AssetType = "stock" | "etf" | "cash";
 export type Currency = "TWD" | "USD";
 export type ActivityType = "deposit" | "withdrawal" | "buy" | "sell" | "dividend" | "fee";
+export type PriceSource = "manual" | "TWSE" | "TPEx";
 
 export interface Holding {
   id: string;
@@ -14,6 +15,8 @@ export interface Holding {
   averageCost: number;
   currency: Currency;
   sector: string;
+  priceSource?: PriceSource;
+  priceAsOf?: string;
 }
 
 export interface ResearchStock {

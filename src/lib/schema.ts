@@ -10,7 +10,9 @@ export const holdingSchema = z.object({
   price: z.number().finite().nonnegative(),
   averageCost: z.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
-  sector: z.string().min(1).max(120)
+  sector: z.string().min(1).max(120),
+  priceSource: z.enum(["manual", "TWSE", "TPEx"]).optional(),
+  priceAsOf: z.string().optional()
 });
 
 export const journalEntrySchema = z.object({

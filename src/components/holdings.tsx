@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowDownUp, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowDownUp, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { AppState, AssetType, Currency, Holding, Market } from "@/lib/types";
 import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
 import { money, percent } from "@/lib/utils";
+import { applyTwQuotes, cacheFreshnessLabel, loadBundledTwQuotes } from "@/lib/market-data";
 import { Button, Card, CardContent, GhostButton, Modal } from "./ui";
 
 const emptyHolding: Omit<Holding, "id"> = {
@@ -89,6 +90,7 @@ type SortMode = "value" | "gain" | "name";
 export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("value");
+  const [refreshing, setRefreshing] = useState(false);
   const summary = portfolioSummary(state.holdings, state.usdTwd);
 
   const sorted = useMemo(() => {
@@ -117,6 +119,24 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
     toast.success(exists ? "部位已更新" : "部位已新增");
   }
 
+  async function refreshTaiwanPrices() {
+    setRefreshing(true);
+    try {
+      const cache = await loadBundledTwQuotes();
+      const result = applyTwQuotes(state.holdings, cache);
+      if (!result.updated) {
+        toast.info("目前持股沒有可更新的 TWSE／TPEx 報價");
+        return;
+      }
+      onChange({ ...state, holdings: result.holdings });
+      toast.success(`已更新 ${result.updated} 個台股部位 · 資料日 ${cacheFreshnessLabel(cache)}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法載入官方台股資料");
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -124,9 +144,15 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
           <p className="text-sm text-black/45 dark:text-white/45">目前總淨值</p>
           <p className="mt-1 text-3xl font-semibold tracking-tight">{money(summary.total)}</p>
         </div>
-        <Modal title="新增投資部位" trigger={<Button><Plus size={16} />新增部位</Button>}>
-          <HoldingForm onSave={upsert} />
-        </Modal>
+        <div className="flex flex-wrap gap-2">
+          <GhostButton type="button" disabled={refreshing} onClick={refreshTaiwanPrices}>
+            <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+            {refreshing ? "更新中" : "更新台股收盤價"}
+          </GhostButton>
+          <Modal title="新增投資部位" trigger={<Button><Plus size={16} />新增部位</Button>}>
+            <HoldingForm onSave={upsert} />
+          </Modal>
+        </div>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-[1fr_180px]">
@@ -161,6 +187,11 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
                       <span className="text-xs text-black/40 dark:text-white/40">{holding.symbol}</span>
                     </div>
                     <p className="mt-1 text-sm text-black/45 dark:text-white/45">{holding.sector} · {holding.market} · {holding.currency}</p>
+                    {holding.priceSource && holding.priceAsOf ? (
+                      <p className="mt-1 text-[11px] text-black/35 dark:text-white/35">
+                        價格來源 {holding.priceSource} · {holding.priceAsOf}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 gap-1">
                     <Modal title={`編輯 ${holding.name}`} trigger={<GhostButton className="h-10 min-h-10 w-10 px-0" aria-label="編輯"><Pencil size={15} /></GhostButton>}>

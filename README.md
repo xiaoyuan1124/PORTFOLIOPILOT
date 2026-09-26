@@ -9,6 +9,8 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Search and sort holdings
 - TWD / USD portfolio valuation
 - Per-holding and total unrealized return
+- One-tap Taiwan closing-price refresh from a repository-cached official TWSE / TPEx dataset
+- Price provenance shown per holding (source + market date)
 - Asset allocation
 - Transaction / cash-flow ledger (deposit, withdrawal, buy, sell, dividend, fee)
 - XIRR money-weighted return and transparent Modified Dietz TWR proxy
@@ -23,7 +25,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Vitest calculation/import tests
 - GitHub Actions CI and GitHub Pages deployment
 
-> Research / Scanner data is still illustrative demo data. Your personal portfolio calculations use only the holdings, prices, costs and FX rate you enter yourself.
+> Research / Scanner fundamentals are still illustrative demo data; Taiwan closing prices can now be refreshed from official TWSE / TPEx cache. Your personal portfolio calculations use only the holdings, prices, costs and FX rate you enter yourself.
 
 ## Zero-cost mode
 
@@ -56,7 +58,7 @@ A previously prepared Supabase integration remains in source for possible future
 - Sonner
 - Vitest
 
-See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions.
+See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, and `docs/MARKET_DATA.md` for the Taiwan market-data cache.
 
 ## Local development
 
