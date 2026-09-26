@@ -1,6 +1,7 @@
 export type Market = "TW" | "US";
 export type AssetType = "stock" | "etf" | "cash";
 export type Currency = "TWD" | "USD";
+export type ActivityType = "deposit" | "withdrawal" | "buy" | "sell" | "dividend" | "fee";
 
 export interface Holding {
   id: string;
@@ -37,6 +38,19 @@ export interface JournalEntry {
   invalidation: string;
 }
 
+export interface PortfolioActivity {
+  id: string;
+  date: string;
+  type: ActivityType;
+  symbol: string;
+  amount: number;
+  currency: Currency;
+  fxRate: number;
+  quantity: number;
+  price: number;
+  note: string;
+}
+
 export interface NetWorthSnapshot {
   date: string;
   total: number;
@@ -48,6 +62,7 @@ export interface NetWorthSnapshot {
 export interface AppState {
   holdings: Holding[];
   journal: JournalEntry[];
+  activities: PortfolioActivity[];
   snapshots: NetWorthSnapshot[];
   usdTwd: number;
 }

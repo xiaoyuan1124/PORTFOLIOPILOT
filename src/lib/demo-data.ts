@@ -19,6 +19,11 @@ export const demoState: AppState = {
       invalidation: "追蹤方法或成分規則出現重大改變時重新評估。"
     }
   ],
+  activities: [
+    { id: "a1", date: "2026-04-01", type: "deposit", symbol: "", amount: 45000, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "初始投入" },
+    { id: "a2", date: "2026-07-01", type: "deposit", symbol: "", amount: 6000, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "定期投入" },
+    { id: "a3", date: "2026-09-10", type: "dividend", symbol: "2330", amount: 120, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "示範股息" }
+  ],
   snapshots: [
     { date: "2026-09-22", total: 55320, cost: 51100, gain: 4220, usdTwd: 31.7 },
     { date: "2026-09-23", total: 56140, cost: 51100, gain: 5040, usdTwd: 31.72 },
@@ -32,6 +37,7 @@ export const emptyState: AppState = {
   usdTwd: 31.8,
   holdings: [],
   journal: [],
+  activities: [],
   snapshots: []
 };
 
