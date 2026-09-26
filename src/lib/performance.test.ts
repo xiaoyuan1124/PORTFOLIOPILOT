@@ -16,6 +16,7 @@ describe("performance math", () => {
     const state: AppState = {
       usdTwd: 32,
       holdings: [],
+      etfCompositions: [],
       journal: [],
       snapshots: [],
       activities: [
@@ -33,6 +34,7 @@ describe("performance math", () => {
       holdings: [
         { id: "cash", symbol: "CASH-TWD", name: "Cash", market: "TW", type: "cash", quantity: 1, price: 1100, averageCost: 1000, currency: "TWD", sector: "現金" }
       ],
+      etfCompositions: [],
       journal: [],
       snapshots: [],
       activities: [
@@ -46,6 +48,7 @@ describe("performance math", () => {
     const state: AppState = {
       usdTwd: 1,
       holdings: [],
+      etfCompositions: [],
       journal: [],
       activities: [
         { id: "flow", date: "2026-01-02", type: "deposit", symbol: "", amount: 50, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "" }
