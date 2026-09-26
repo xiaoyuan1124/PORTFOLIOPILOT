@@ -35,16 +35,20 @@ export function AppShell() {
   const title = useMemo(() => titles[section], [section]);
 
   useEffect(() => {
-    setState(getInitialState());
-    const saved = window.localStorage.getItem("portfoliopilot:theme");
-    const shouldDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setDark(shouldDark);
-    document.documentElement.classList.toggle("dark", shouldDark);
+    const frame = window.requestAnimationFrame(() => {
+      setState(getInitialState());
+      const saved = window.localStorage.getItem("portfoliopilot:theme");
+      const shouldDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setDark(shouldDark);
+      document.documentElement.classList.toggle("dark", shouldDark);
+    });
 
     if ("serviceWorker" in navigator) {
       const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
       navigator.serviceWorker.register(`${base}/sw.js`).catch(() => undefined);
     }
+
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   function updateState(next: AppState) {
