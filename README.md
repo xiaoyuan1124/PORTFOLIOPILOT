@@ -17,6 +17,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Official MOPS single-quarter gross-margin history with strict three-quarter improvement gate
 - Official Scanner states: pass / fail / insufficient / not applicable, with expandable source/date/value details
 - Asset allocation
+- Local ETF look-through: direct holdings + imported ETF-implied company exposure, with source/date provenance and unresolved-weight tracking
 - Transaction / cash-flow ledger (deposit, withdrawal, buy, sell, dividend, fee)
 - XIRR money-weighted return and transparent Modified Dietz TWR proxy
 - **Real local daily net-worth snapshots** instead of a fabricated trend line
@@ -24,6 +25,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Investment journal
 - Versioned JSON full backup/import with Zod validation
 - Holdings CSV import/export and downloadable template
+- ETF composition CSV import/export with strict weight validation and no automatic normalization
 - Dark mode
 - Installable PWA shell and offline cache
 - Sonner interaction feedback
@@ -63,7 +65,7 @@ A previously prepared Supabase integration remains in source for possible future
 - Sonner
 - Vitest
 
-See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, and `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology.
+See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, and `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation.
 
 ## Local development
 
@@ -97,7 +99,7 @@ Before changing phones, clearing browser data, or making a large import, use:
 
 **我的 → 完整備份 → 匯出 JSON**
 
-CSV is intended for holdings editing/interchange. JSON is the authoritative full backup because it also includes activities, journal entries and snapshot history.
+CSV is intended for holdings and ETF-composition interchange. JSON is the authoritative full backup because it also includes ETF source data, activities, journal entries and snapshot history.
 
 ## Product principles
 
