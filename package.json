@@ -1,6 +1,6 @@
 {
   "name": "portfoliopilot",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "market:update": "node scripts/update-market-data.mjs"
+    "market:update": "node scripts/update-market-data.mjs && node scripts/update-quarterly-financials.mjs",
+    "market:quarterly": "node scripts/update-quarterly-financials.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
