@@ -194,8 +194,8 @@ export function parseEtfCompositionCsv(text: string): EtfComposition[] {
   return [...groups.entries()].map(([groupKey, group]) => {
     const constituents = [...group.components.values()];
     const coveragePct = constituents.reduce((sum, component) => sum + component.weightPct, 0);
-    if (coveragePct > 100.5) {
-      throw new Error(`ETF ${group.metadata.etfSymbol} 的成分權重合計為 ${coveragePct.toFixed(2)}%，超過可接受的 100.5%。`);
+    if (coveragePct > 100) {
+      throw new Error(`ETF ${group.metadata.etfSymbol} 的成分權重合計為 ${coveragePct.toFixed(2)}%，超過可接受的 100%。`);
     }
 
     return etfCompositionSchema.parse({
