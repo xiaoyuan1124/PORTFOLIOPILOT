@@ -1,4 +1,4 @@
-import type { Holding } from "./types";
+import type { AppState, Holding, NetWorthSnapshot } from "./types";
 
 export function holdingValueTwd(holding: Holding, usdTwd: number) {
   const fx = holding.currency === "USD" ? usdTwd : 1;
@@ -30,6 +30,43 @@ export function allocationBySector(holdings: Holding[], usdTwd: number) {
   return [...map.entries()]
     .map(([name, value]) => ({ name, value, pct: total ? (value / total) * 100 : 0 }))
     .sort((a, b) => b.value - a.value);
+}
+
+export function localDateKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function makeSnapshot(state: AppState, date = new Date()): NetWorthSnapshot {
+  const summary = portfolioSummary(state.holdings, state.usdTwd);
+  return {
+    date: localDateKey(date),
+    total: summary.total,
+    cost: summary.cost,
+    gain: summary.gain,
+    usdTwd: state.usdTwd
+  };
+}
+
+export function withTodaySnapshot(state: AppState, date = new Date()): AppState {
+  const next = makeSnapshot(state, date);
+  const snapshots = state.snapshots.filter((item) => item.date !== next.date);
+  return {
+    ...state,
+    snapshots: [...snapshots, next].sort((a, b) => a.date.localeCompare(b.date)).slice(-1825)
+  };
+}
+
+export function dailySnapshotDelta(snapshots: NetWorthSnapshot[]) {
+  const sorted = [...snapshots].sort((a, b) => a.date.localeCompare(b.date));
+  if (sorted.length < 2) return null;
+  const current = sorted.at(-1)!;
+  const previous = sorted.at(-2)!;
+  const amount = current.total - previous.total;
+  const pct = previous.total > 0 ? (amount / previous.total) * 100 : 0;
+  return { amount, pct, previousDate: previous.date };
 }
 
 export function passesGrowthScanner(item: {

@@ -37,8 +37,17 @@ export interface JournalEntry {
   invalidation: string;
 }
 
+export interface NetWorthSnapshot {
+  date: string;
+  total: number;
+  cost: number;
+  gain: number;
+  usdTwd: number;
+}
+
 export interface AppState {
   holdings: Holding[];
   journal: JournalEntry[];
+  snapshots: NetWorthSnapshot[];
   usdTwd: number;
 }
