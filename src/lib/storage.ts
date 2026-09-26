@@ -9,6 +9,7 @@ function migrateLegacyState(value: unknown): AppState {
   const record = value as Record<string, unknown>;
   return appStateSchema.parse({
     holdings: Array.isArray(record.holdings) ? record.holdings : [],
+    etfCompositions: Array.isArray(record.etfCompositions) ? record.etfCompositions : [],
     journal: Array.isArray(record.journal) ? record.journal : [],
     activities: Array.isArray(record.activities) ? record.activities : [],
     snapshots: Array.isArray(record.snapshots) ? record.snapshots : [],
