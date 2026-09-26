@@ -10,6 +10,8 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - TWD / USD portfolio valuation
 - Per-holding and total unrealized return
 - Asset allocation
+- Transaction / cash-flow ledger (deposit, withdrawal, buy, sell, dividend, fee)
+- XIRR money-weighted return and transparent Modified Dietz TWR proxy
 - **Real local daily net-worth snapshots** instead of a fabricated trend line
 - Rule-based research scanner (currently clearly-labelled demo research data)
 - Investment journal
@@ -88,7 +90,7 @@ Before changing phones, clearing browser data, or making a large import, use:
 
 **我的 → 完整備份 → 匯出 JSON**
 
-CSV is intended for holdings editing/interchange. JSON is the authoritative full backup because it also includes journal entries and snapshot history.
+CSV is intended for holdings editing/interchange. JSON is the authoritative full backup because it also includes activities, journal entries and snapshot history.
 
 ## Product principles
 

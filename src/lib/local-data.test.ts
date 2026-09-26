@@ -8,6 +8,7 @@ describe("local data import/export", () => {
       usdTwd: 31.8,
       holdings: [],
       journal: [],
+      activities: [],
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     expect(parseBackup(serializeBackup(state))).toEqual(state);
@@ -19,6 +20,7 @@ describe("local data import/export", () => {
       journal: [],
       usdTwd: 31.8
     }));
+    expect(parsed.activities).toEqual([]);
     expect(parsed.snapshots).toEqual([]);
   });
 

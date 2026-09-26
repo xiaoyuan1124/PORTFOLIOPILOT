@@ -22,6 +22,19 @@ export const journalEntrySchema = z.object({
   invalidation: z.string()
 });
 
+export const activitySchema = z.object({
+  id: z.string().min(1),
+  date: z.string().min(1),
+  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee"]),
+  symbol: z.string(),
+  amount: z.number().finite().nonnegative(),
+  currency: z.enum(["TWD", "USD"]),
+  fxRate: z.number().finite().positive(),
+  quantity: z.number().finite().nonnegative(),
+  price: z.number().finite().nonnegative(),
+  note: z.string()
+});
+
 export const snapshotSchema = z.object({
   date: z.string().min(1),
   total: z.number().finite().nonnegative(),
@@ -33,6 +46,7 @@ export const snapshotSchema = z.object({
 export const appStateSchema = z.object({
   holdings: z.array(holdingSchema),
   journal: z.array(journalEntrySchema),
+  activities: z.array(activitySchema).default([]),
   snapshots: z.array(snapshotSchema).default([]),
   usdTwd: z.number().finite().positive()
 });

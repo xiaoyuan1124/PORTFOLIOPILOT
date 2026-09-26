@@ -9,6 +9,7 @@ const state: AppState = {
     { id: "us", symbol: "QQQM", name: "QQQM", market: "US", type: "etf", quantity: 1, price: 100, averageCost: 80, currency: "USD", sector: "美國科技" }
   ],
   journal: [],
+  activities: [],
   snapshots: []
 };
 

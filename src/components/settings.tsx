@@ -77,7 +77,7 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
             <div>
               <h3 className="font-semibold">零成本本機模式</h3>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-black/50 dark:text-white/50">
-                PortfolioPilot 現在不需要帳號、Supabase 或任何付費 API。持股、筆記與每日淨值快照都存在這台裝置。
+                PortfolioPilot 現在不需要帳號、Supabase 或任何付費 API。持股、交易／現金流、筆記與每日淨值快照都存在這台裝置。
               </p>
               <p className="mt-2 text-xs text-black/38 dark:text-white/38">
                 換手機前先匯出 JSON 備份；持股也可另外輸出 CSV。
@@ -91,7 +91,7 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
         <CardContent>
           <h3 className="font-semibold">完整備份</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
-            JSON 會包含持股、投資筆記、匯率與歷史淨值快照，匯入時會先用 schema 驗證格式。
+            JSON 會包含持股、交易／現金流、投資筆記、匯率與歷史淨值快照，匯入時會先用 schema 驗證格式。
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={exportJson}><Download size={16} />匯出 JSON</Button>
@@ -139,7 +139,7 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">想正式開始使用時，可以直接清空示範資料；若只是想看看預設畫面，也可以恢復示範資料。</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <GhostButton onClick={() => {
-              if (!window.confirm("確定要清空本機的持股、筆記與淨值歷史嗎？建議先匯出 JSON。")) return;
+              if (!window.confirm("確定要清空本機的持股、交易／現金流、筆記與淨值歷史嗎？建議先匯出 JSON。")) return;
               onChange(emptyState);
               toast.success("本機資料已清空");
             }}><Trash2 size={16} />清空資料</GhostButton>

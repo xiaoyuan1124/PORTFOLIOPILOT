@@ -10,6 +10,7 @@ function migrateLegacyState(value: unknown): AppState {
   return appStateSchema.parse({
     holdings: Array.isArray(record.holdings) ? record.holdings : [],
     journal: Array.isArray(record.journal) ? record.journal : [],
+    activities: Array.isArray(record.activities) ? record.activities : [],
     snapshots: Array.isArray(record.snapshots) ? record.snapshots : [],
     usdTwd: record.usdTwd ?? 31.8
   });
