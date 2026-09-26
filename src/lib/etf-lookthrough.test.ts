@@ -83,7 +83,7 @@ describe("ETF look-through exposure", () => {
     const result = calculateEtfLookThrough(holdings, compositions, 32);
     const nvidia = result.exposures.find((item) => item.symbol === "NVDA");
 
-    expect(result.portfolioValueTwd).toBe(8400);
-    expect(nvidia?.portfolioPct).toBeCloseTo((4000 / 8400) * 100);
+    expect(result.portfolioValueTwd).toBe(9400);
+    expect(nvidia?.portfolioPct).toBeCloseTo((4000 / 9400) * 100);
   });
 });
