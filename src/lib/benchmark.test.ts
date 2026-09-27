@@ -43,4 +43,16 @@ describe("benchmark comparison windows", () => {
     expect(result.status).toBe("insufficient");
     expect(result.returnPct).toBeNull();
   });
+
+  it("refuses to replace a much earlier portfolio start with the cache first row", () => {
+    const result = benchmarkWindow(series, "2026-08-01", "2026-09-24");
+    expect(result.status).toBe("insufficient");
+    expect(result.reason).toMatch(/未完整覆蓋/);
+  });
+
+  it("refuses stale benchmark coverage far before the target end", () => {
+    const result = benchmarkWindow(series, "2026-09-21", "2026-10-20");
+    expect(result.status).toBe("insufficient");
+    expect(result.reason).toMatch(/未完整覆蓋/);
+  });
 });
