@@ -21,6 +21,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Portfolio Risk: company / sector / TW-US market exposure, cash and unresolved ETF shares, Top 5 / Top 3 concentration, and resolved-company HHI
 - Transaction / cash-flow ledger (deposit, withdrawal, buy, sell, dividend, fee)
 - XIRR money-weighted return, event-boundary Exact TWR when complete, and transparent Modified Dietz TWR proxy fallback
+- Official TAIEX Total Return benchmark comparison with explicit actual trading-date alignment
 - **Real local daily net-worth snapshots** instead of a fabricated trend line
 - Four-gate Official Scanner using only official/non-demo Taiwan market data
 - Investment journal
@@ -66,7 +67,7 @@ A previously prepared Supabase integration remains in source for possible future
 - Sonner
 - Vitest
 
-See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation, `docs/PORTFOLIO_RISK.md` for concentration methodology and coverage boundaries, and `docs/EXACT_TWR.md` for event-boundary performance methodology.
+See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation, `docs/PORTFOLIO_RISK.md` for concentration methodology and coverage boundaries, `docs/EXACT_TWR.md` for event-boundary performance methodology, and `docs/BENCHMARK.md` for official benchmark source and alignment rules.
 
 ## Local development
 
