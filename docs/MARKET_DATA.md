@@ -115,3 +115,16 @@ The cache is built from the official MOPS historical quarterly comprehensive-inc
 Companies that MOPS places in statement families without the `營業毛利（毛損）` field are explicitly recorded as not applicable instead of receiving a synthetic gross margin.
 
 See `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the derivation, source lineage and fail-closed rules.
+
+
+## Official benchmark cache
+
+PortfolioPilot V0.13 also writes:
+
+`public/data/tw-benchmarks.json`
+
+The first automated benchmark is the official TWSE TAIEX Total Return Index (發行量加權股價報酬指數), fetched from the monthly MFI94U history endpoint. The cache stores the official trading date and total-return index value for the rolling history window.
+
+The benchmark updater is fail-closed for missing historical months and suspiciously small datasets. The current month alone may be temporarily empty before its first available trading observation.
+
+See `docs/BENCHMARK.md` for date-alignment and comparison rules.
