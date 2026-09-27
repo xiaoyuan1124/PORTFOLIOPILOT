@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppState } from "./types";
-import { calculateXirr, modifiedDietzReturn, netExternalContributions, portfolioXirr } from "./performance";
+import { calculateXirr, exactTimeWeightedReturn, modifiedDietzReturn, netExternalContributions, portfolioXirr } from "./performance";
 
 describe("performance math", () => {
   it("solves a simple one-year 10% XIRR", () => {
@@ -60,5 +60,104 @@ describe("performance math", () => {
     };
 
     expect(modifiedDietzReturn(state)).toBeCloseTo(0.12, 6);
+  });
+
+  it("chains exact TWR across bounded external cash-flow events", () => {
+    const state: AppState = {
+      usdTwd: 1,
+      holdings: [
+        { id: "cash", symbol: "CASH-TWD", name: "Cash", market: "TW", type: "cash", quantity: 1, price: 176, averageCost: 100, currency: "TWD", sector: "現金" }
+      ],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      activities: [
+        { id: "1", date: "2026-01-01", time: "09:00", type: "deposit", symbol: "", amount: 100, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "", preFlowValueTwd: 0 },
+        { id: "2", date: "2026-01-10", time: "09:00", type: "deposit", symbol: "", amount: 50, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "", preFlowValueTwd: 110 }
+      ]
+    };
+
+    const result = exactTimeWeightedReturn(state, "2026-01-20");
+    expect(result.status).toBe("exact");
+    expect(result.value).toBeCloseTo(0.21, 10);
+    expect(result.periods).toBe(2);
+    expect(result.coverageStartsAfterFirstFlow).toBe(true);
+  });
+
+  it("reports insufficient when any external cash flow lacks a pre-flow valuation", () => {
+    const state: AppState = {
+      usdTwd: 1,
+      holdings: [],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      activities: [
+        { id: "1", date: "2026-01-01", type: "deposit", symbol: "", amount: 100, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "" }
+      ]
+    };
+
+    const result = exactTimeWeightedReturn(state, "2026-01-20");
+    expect(result.status).toBe("insufficient");
+    expect(result.missingBoundaryIds).toEqual(["1"]);
+  });
+
+  it("requires times for multiple external flows on the same day", () => {
+    const state: AppState = {
+      usdTwd: 1,
+      holdings: [
+        { id: "cash", symbol: "CASH-TWD", name: "Cash", market: "TW", type: "cash", quantity: 1, price: 170, averageCost: 100, currency: "TWD", sector: "現金" }
+      ],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      activities: [
+        { id: "1", date: "2026-01-01", type: "deposit", symbol: "", amount: 100, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "", preFlowValueTwd: 0 },
+        { id: "2", date: "2026-01-01", type: "deposit", symbol: "", amount: 50, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "", preFlowValueTwd: 110 }
+      ]
+    };
+
+    const result = exactTimeWeightedReturn(state, "2026-01-20");
+    expect(result.status).toBe("insufficient");
+    expect(result.ambiguousDates).toEqual(["2026-01-01"]);
+  });
+
+  it("rejects a withdrawal that would make post-flow portfolio value negative", () => {
+    const state: AppState = {
+      usdTwd: 1,
+      holdings: [],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      activities: [
+        { id: "1", date: "2026-01-01", type: "withdrawal", symbol: "", amount: 120, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "", preFlowValueTwd: 100 }
+      ]
+    };
+
+    const result = exactTimeWeightedReturn(state, "2026-01-20");
+    expect(result.status).toBe("insufficient");
+    expect(result.reason).toMatch(/小於 0/);
+  });
+
+  it("uses a prior snapshot to include the period before the first bounded cash flow", () => {
+    const state: AppState = {
+      usdTwd: 1,
+      holdings: [
+        { id: "cash", symbol: "CASH-TWD", name: "Cash", market: "TW", type: "cash", quantity: 1, price: 165, averageCost: 100, currency: "TWD", sector: "現金" }
+      ],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [
+        { date: "2025-12-20", total: 100, cost: 100, gain: 0, usdTwd: 1 }
+      ],
+      activities: [
+        { id: "1", date: "2026-01-01", type: "deposit", symbol: "", amount: 50, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "", preFlowValueTwd: 110 }
+      ]
+    };
+
+    const result = exactTimeWeightedReturn(state, "2026-01-20");
+    expect(result.status).toBe("exact");
+    expect(result.value).toBeCloseTo(0.134375, 10);
+    expect(result.startDate).toBe("2025-12-20");
+    expect(result.coverageStartsAfterFirstFlow).toBe(false);
   });
 });
