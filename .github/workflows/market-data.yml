@@ -7,6 +7,8 @@ on:
       - "scripts/update-market-data.mjs"
       - "scripts/update-quarterly-financials.mjs"
       - "scripts/lib/quarterly-financials.mjs"
+      - "scripts/update-benchmarks.mjs"
+      - "scripts/lib/benchmark-data.mjs"
       - ".github/workflows/market-data.yml"
   schedule:
     - cron: "30 10 * * 1-5"
@@ -33,14 +35,16 @@ jobs:
         run: node scripts/update-market-data.mjs
       - name: Fetch official MOPS quarterly financials
         run: node scripts/update-quarterly-financials.mjs
+      - name: Fetch official TWSE benchmark history
+        run: node scripts/update-benchmarks.mjs
       - name: Commit changed caches
         run: |
-          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-quarterly-margins.json; then
+          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json; then
             echo "No market data changes."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-quarterly-margins.json
+            git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json
             git commit -m "data: refresh Taiwan market data"
             git push
           fi
