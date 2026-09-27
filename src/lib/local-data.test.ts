@@ -25,10 +25,110 @@ describe("local data import/export", () => {
         constituents: [{ market: "US", symbol: "AAA", name: "A", weightPct: 50, sector: "Tech" }]
       }],
       journal: [],
-      activities: [],
+      activities: [{
+        id: "flow-1",
+        date: "2026-09-27",
+        time: "09:30",
+        type: "deposit",
+        symbol: "",
+        amount: 1000,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 0,
+        price: 0,
+        note: "boundary",
+        preFlowValueTwd: 5000
+      }],
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
-    expect(parseBackup(serializeBackup(state))).toEqual(state);
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(3);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("keeps version 2 backups compatible without TWR boundary fields", () => {
+    const parsed = parseBackup(JSON.stringify({
+      version: 2,
+      exportedAt: "2026-09-26T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [{
+          id: "legacy-flow",
+          date: "2026-09-01",
+          type: "deposit",
+          symbol: "",
+          amount: 1000,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 0,
+          price: 0,
+          note: ""
+        }],
+        snapshots: []
+      }
+    }));
+    expect(parsed.activities[0]?.preFlowValueTwd).toBeUndefined();
+    expect(parsed.activities[0]?.time).toBeUndefined();
+  });
+
+  it("rejects TWR boundaries attached to internal buy/sell records", () => {
+    const backup = {
+      version: 3,
+      exportedAt: "2026-09-27T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [{
+          id: "bad-boundary",
+          date: "2026-09-27",
+          type: "buy",
+          symbol: "2330",
+          amount: 1000,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 1,
+          price: 1000,
+          note: "",
+          preFlowValueTwd: 5000
+        }],
+        snapshots: []
+      }
+    };
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/只適用於入金或出金/);
+  });
+
+  it("rejects invalid external-flow time values", () => {
+    const backup = {
+      version: 3,
+      exportedAt: "2026-09-27T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [{
+          id: "bad-time",
+          date: "2026-09-27",
+          time: "25:61",
+          type: "deposit",
+          symbol: "",
+          amount: 1000,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 0,
+          price: 0,
+          note: "",
+          preFlowValueTwd: 5000
+        }],
+        snapshots: []
+      }
+    };
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow();
   });
 
   it("accepts legacy backup data without snapshots or ETF compositions", () => {
