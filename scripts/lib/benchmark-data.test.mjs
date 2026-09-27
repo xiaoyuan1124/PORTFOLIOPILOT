@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { parseTwseTaiexTotalReturn, rocDateToIso, rollingMonthStarts, twseMonthUrl } from "./benchmark-data.mjs";
+import {
+  isTransientTwseRequestError,
+  parseTwseTaiexTotalReturn,
+  retryTransientTwseRequest,
+  rocDateToIso,
+  rollingMonthStarts,
+  twseMonthUrl
+} from "./benchmark-data.mjs";
 
 describe("TWSE TAIEX total-return benchmark parser", () => {
   it("converts ROC dates", () => {
@@ -29,5 +36,50 @@ describe("TWSE TAIEX total-return benchmark parser", () => {
       "2026-09-01"
     ]);
     expect(twseMonthUrl("2026-09-01")).toContain("date=20260901");
+  });
+});
+
+describe("TWSE benchmark transient retry", () => {
+  it("retries transient network errors with bounded exponential backoff", async () => {
+    let calls = 0;
+    const sleeps = [];
+    const result = await retryTransientTwseRequest(
+      async () => {
+        calls += 1;
+        if (calls < 3) {
+          const error = new TypeError("fetch failed");
+          error.cause = { code: "UND_ERR_CONNECT_TIMEOUT" };
+          throw error;
+        }
+        return "ok";
+      },
+      {
+        attempts: 4,
+        baseDelayMs: 100,
+        sleepImpl: async (ms) => { sleeps.push(ms); }
+      }
+    );
+
+    expect(result).toBe("ok");
+    expect(calls).toBe(3);
+    expect(sleeps).toEqual([100, 200]);
+  });
+
+  it("retries HTTP 429 and 5xx but not ordinary 4xx", () => {
+    expect(isTransientTwseRequestError(Object.assign(new Error("rate limit"), { status: 429 }))).toBe(true);
+    expect(isTransientTwseRequestError(Object.assign(new Error("server"), { status: 503 }))).toBe(true);
+    expect(isTransientTwseRequestError(Object.assign(new Error("bad request"), { status: 400 }))).toBe(false);
+  });
+
+  it("does not retry parser or completeness failures", async () => {
+    let calls = 0;
+    await expect(retryTransientTwseRequest(
+      async () => {
+        calls += 1;
+        throw new Error("TWSE MFI94U returned no valid rows");
+      },
+      { sleepImpl: async () => {} }
+    )).rejects.toThrow(/no valid rows/);
+    expect(calls).toBe(1);
   });
 });
