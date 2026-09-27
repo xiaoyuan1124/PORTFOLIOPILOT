@@ -58,6 +58,7 @@ export const journalEntrySchema = z.object({
 export const activitySchema = z.object({
   id: z.string().min(1),
   date: z.string().min(1),
+  time: z.string().regex(/^(?:[01]\\d|2[0-3]):[0-5]\\d$/).optional(),
   type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee"]),
   symbol: z.string(),
   amount: z.number().finite().nonnegative(),
@@ -65,7 +66,16 @@ export const activitySchema = z.object({
   fxRate: z.number().finite().positive(),
   quantity: z.number().finite().nonnegative(),
   price: z.number().finite().nonnegative(),
-  note: z.string()
+  note: z.string(),
+  preFlowValueTwd: z.number().finite().nonnegative().optional()
+}).superRefine((activity, ctx) => {
+  if (activity.preFlowValueTwd !== undefined && activity.type !== "deposit" && activity.type !== "withdrawal") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["preFlowValueTwd"],
+      message: "TWR 邊界估值只適用於入金或出金。"
+    });
+  }
 });
 
 export const snapshotSchema = z.object({
@@ -87,7 +97,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),
