@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "scripts/update-market-data.mjs"
+      - "scripts/lib/valuation-data.mjs"
       - "scripts/update-quarterly-financials.mjs"
       - "scripts/lib/quarterly-financials.mjs"
       - "scripts/update-benchmarks.mjs"
@@ -39,12 +40,12 @@ jobs:
         run: node scripts/update-benchmarks.mjs
       - name: Commit changed caches
         run: |
-          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json; then
+          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json; then
             echo "No market data changes."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json
+            git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json
             git commit -m "data: refresh Taiwan market data"
             git push
           fi
