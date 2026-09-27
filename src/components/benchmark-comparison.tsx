@@ -116,6 +116,12 @@ export function BenchmarkComparison({ exactTwr, proxyReturn, snapshots }: Props)
           </div>
         ) : null}
 
+        {!error && !loading && !benchmark ? (
+          <p className="mt-5 rounded-2xl border border-[#b98b57]/20 bg-[#f5ece1] p-4 text-sm leading-6 text-[#6f4c26] dark:border-[#b98b57]/15 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+            官方 Benchmark cache 尚未產生。market-data Action 成功抓取 TWSE MFI94U 後才會顯示比較，不使用 seed 或 Demo 數值代替。
+          </p>
+        ) : null}
+
         {!error && !loading && !portfolioWindow ? (
           <p className="mt-5 rounded-2xl border border-black/6 p-4 text-sm text-black/45 dark:border-white/8 dark:text-white/45">
             目前沒有可比較的 Portfolio TWR 區間。先累積 Exact TWR 邊界，或至少兩筆每日快照讓 TWR Proxy 有有效期間。
