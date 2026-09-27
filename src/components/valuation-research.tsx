@@ -4,12 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, RefreshCw, Scale, Search } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { loadBundledValuations, valuationSource, type ValuationCache } from "@/lib/valuation-data";
-import { percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 
 function ratio(value: number | null) {
   if (value === null) return "—";
   return `${value.toLocaleString("zh-TW", { maximumFractionDigits: 2 })}x`;
+}
+
+function yieldPercent(value: number | null) {
+  if (value === null) return "—";
+  return `${value.toFixed(2)}%`;
 }
 
 export function ValuationResearch({ state }: { state: AppState }) {
@@ -37,7 +41,25 @@ export function ValuationResearch({ state }: { state: AppState }) {
     }
   }
 
-  useEffect(() => { void reload(); }, []);
+  useEffect(() => {
+    let active = true;
+
+    void loadBundledValuations()
+      .then((next) => {
+        if (!active) return;
+        setCache(next);
+        setError("");
+      })
+      .catch((cause) => {
+        if (!active) return;
+        setError(cause instanceof Error ? cause.message : "無法載入官方估值資料。");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => { active = false; };
+  }, []);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -91,7 +113,7 @@ export function ValuationResearch({ state }: { state: AppState }) {
             <div className="mt-4 grid grid-cols-3 gap-2">
               <div className="mini-metric"><span>本益比 PE</span><strong>{ratio(row.pe)}</strong></div>
               <div className="mini-metric"><span>股價淨值比 PB</span><strong>{ratio(row.pb)}</strong></div>
-              <div className="mini-metric"><span>殖利率</span><strong>{row.dividendYield === null ? "—" : percent(row.dividendYield, 2)}</strong></div>
+              <div className="mini-metric"><span>殖利率</span><strong>{yieldPercent(row.dividendYield)}</strong></div>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-5 text-black/40 dark:text-white/40">
               <span>官方資料日期 {row.date}</span>
