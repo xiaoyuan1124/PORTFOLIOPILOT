@@ -158,3 +158,228 @@ export function modifiedDietzReturn(state: AppState) {
 
   return usablePeriods ? growth - 1 : null;
 }
+
+
+export type ExactTwrResult = {
+  status: "exact" | "insufficient";
+  value: number | null;
+  startDate: string | null;
+  endDate: string;
+  periods: number;
+  externalFlowCount: number;
+  boundedFlowCount: number;
+  missingBoundaryIds: string[];
+  ambiguousDates: string[];
+  coverageStartsAfterFirstFlow: boolean;
+  reason: string;
+};
+
+function isExternalFlow(activity: PortfolioActivity) {
+  return activity.type === "deposit" || activity.type === "withdrawal";
+}
+
+function signedExternalFlowTwd(activity: PortfolioActivity) {
+  const amount = activityAmountTwd(activity);
+  return activity.type === "deposit" ? amount : -amount;
+}
+
+function exactInsufficient(
+  valuationDate: string,
+  externalFlowCount: number,
+  boundedFlowCount: number,
+  reason: string,
+  missingBoundaryIds: string[] = [],
+  ambiguousDates: string[] = []
+): ExactTwrResult {
+  return {
+    status: "insufficient",
+    value: null,
+    startDate: null,
+    endDate: valuationDate,
+    periods: 0,
+    externalFlowCount,
+    boundedFlowCount,
+    missingBoundaryIds,
+    ambiguousDates,
+    coverageStartsAfterFirstFlow: false,
+    reason
+  };
+}
+
+export function exactTimeWeightedReturn(state: AppState, valuationDate: string): ExactTwrResult {
+  const currentValue = portfolioSummary(state.holdings, state.usdTwd).total;
+  const external = state.activities
+    .map((activity, index) => ({ activity, index }))
+    .filter(({ activity }) => isExternalFlow(activity) && activity.date <= valuationDate);
+
+  const externalFlowCount = external.length;
+  const boundedFlowCount = external.filter(({ activity }) => activity.preFlowValueTwd !== undefined).length;
+
+  const byDate = new Map<string, Array<{ activity: PortfolioActivity; index: number }>>();
+  for (const item of external) {
+    const group = byDate.get(item.activity.date) ?? [];
+    group.push(item);
+    byDate.set(item.activity.date, group);
+  }
+
+  const ambiguousDates = [...byDate.entries()].flatMap(([date, items]) => {
+    if (items.length <= 1) return [];
+    const times = items.map(({ activity }) => activity.time).filter((time): time is string => Boolean(time));
+    if (times.length !== items.length || new Set(times).size !== times.length) return [date];
+    return [];
+  });
+
+  if (ambiguousDates.length) {
+    return exactInsufficient(
+      valuationDate,
+      externalFlowCount,
+      boundedFlowCount,
+      "同一天有多筆入金／出金時，每一筆都需要不同的發生時間，才能建立可排序的 TWR 邊界。",
+      [],
+      ambiguousDates
+    );
+  }
+
+  const ordered = [...external].sort((a, b) => {
+    const dateCompare = a.activity.date.localeCompare(b.activity.date);
+    if (dateCompare !== 0) return dateCompare;
+    const timeCompare = (a.activity.time ?? "").localeCompare(b.activity.time ?? "");
+    if (timeCompare !== 0) return timeCompare;
+    return a.index - b.index;
+  });
+
+  const missingBoundaryIds = ordered
+    .filter(({ activity }) => activity.preFlowValueTwd === undefined)
+    .map(({ activity }) => activity.id);
+
+  if (missingBoundaryIds.length) {
+    return exactInsufficient(
+      valuationDate,
+      externalFlowCount,
+      boundedFlowCount,
+      `仍有 ${missingBoundaryIds.length} 筆外部現金流缺少「現金流前淨值」。`,
+      missingBoundaryIds
+    );
+  }
+
+  if (ordered.length === 0) {
+    const start = [...state.snapshots]
+      .filter((snapshot) => snapshot.date < valuationDate && snapshot.total > 0)
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+
+    if (!start) {
+      return exactInsufficient(
+        valuationDate,
+        0,
+        0,
+        "沒有外部現金流時，至少需要一筆早於目前估值日的正值淨值快照，才能計算區間 TWR。"
+      );
+    }
+
+    const value = currentValue / start.total - 1;
+    if (!Number.isFinite(value) || value < -1) {
+      return exactInsufficient(valuationDate, 0, 0, "起始或目前淨值無法形成有效的 TWR 區間。");
+    }
+
+    return {
+      status: "exact",
+      value,
+      startDate: start.date,
+      endDate: valuationDate,
+      periods: 1,
+      externalFlowCount: 0,
+      boundedFlowCount: 0,
+      missingBoundaryIds: [],
+      ambiguousDates: [],
+      coverageStartsAfterFirstFlow: false,
+      reason: "區間內沒有外部現金流，因此以起始快照與目前淨值直接計算時間加權報酬。"
+    };
+  }
+
+  let growth = 1;
+  let periods = 0;
+  const first = ordered[0]!.activity;
+  const firstPreFlow = first.preFlowValueTwd!;
+  const priorSnapshot = [...state.snapshots]
+    .filter((snapshot) => snapshot.date < first.date && snapshot.total > 0)
+    .sort((a, b) => a.date.localeCompare(b.date))[0] ?? null;
+  let startDate = first.date;
+  let coverageStartsAfterFirstFlow = true;
+
+  if (priorSnapshot) {
+    const firstPeriodReturn = firstPreFlow / priorSnapshot.total - 1;
+    if (!Number.isFinite(firstPeriodReturn) || firstPeriodReturn < -1) {
+      return exactInsufficient(
+        valuationDate,
+        externalFlowCount,
+        boundedFlowCount,
+        "第一個現金流前淨值與起始快照無法形成有效子期間。"
+      );
+    }
+    growth *= 1 + firstPeriodReturn;
+    periods += 1;
+    startDate = priorSnapshot.date;
+    coverageStartsAfterFirstFlow = false;
+  }
+
+  for (let index = 0; index < ordered.length; index += 1) {
+    const activity = ordered[index]!.activity;
+    const preFlow = activity.preFlowValueTwd!;
+    const afterFlow = preFlow + signedExternalFlowTwd(activity);
+
+    if (!Number.isFinite(afterFlow) || afterFlow < 0) {
+      return exactInsufficient(
+        valuationDate,
+        externalFlowCount,
+        boundedFlowCount,
+        `${activity.date}${activity.time ? ` ${activity.time}` : ""} 的現金流會使邊界後淨值小於 0，請檢查金額或現金流前淨值。`
+      );
+    }
+
+    const next = ordered[index + 1]?.activity;
+    const endValue = next ? next.preFlowValueTwd! : currentValue;
+
+    if (afterFlow === 0) {
+      if (endValue === 0) {
+        growth *= 1;
+        periods += 1;
+        continue;
+      }
+      return exactInsufficient(
+        valuationDate,
+        externalFlowCount,
+        boundedFlowCount,
+        `${activity.date} 的現金流後淨值為 0，但下一個邊界／目前淨值不是 0，無法定義該子期間報酬。`
+      );
+    }
+
+    const periodReturn = endValue / afterFlow - 1;
+    if (!Number.isFinite(periodReturn) || periodReturn < -1) {
+      return exactInsufficient(
+        valuationDate,
+        externalFlowCount,
+        boundedFlowCount,
+        `${activity.date} 之後的子期間無法形成有效 TWR。`
+      );
+    }
+
+    growth *= 1 + periodReturn;
+    periods += 1;
+  }
+
+  return {
+    status: "exact",
+    value: growth - 1,
+    startDate,
+    endDate: valuationDate,
+    periods,
+    externalFlowCount,
+    boundedFlowCount,
+    missingBoundaryIds: [],
+    ambiguousDates: [],
+    coverageStartsAfterFirstFlow,
+    reason: coverageStartsAfterFirstFlow
+      ? "所有外部現金流都有邊界估值；因第一筆現金流之前沒有更早的正值快照，TWR 從第一筆現金流完成後開始。"
+      : "所有外部現金流都有邊界估值，並從更早的淨值快照開始鏈結所有子期間。"
+  };
+}
