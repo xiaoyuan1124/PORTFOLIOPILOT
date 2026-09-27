@@ -13,6 +13,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Price provenance shown per holding (source + market date)
 - Official TWSE / TPEx monthly-revenue research with MoM / YoY / cumulative YoY
 - Official TWSE / TPEx valuation research with P/E, P/B and dividend yield, preserving source date and missing official fields
+- Company Snapshot research home combining official price, valuation, revenue, margin and 10D institutional data without guessing missing values
 - Official MOPS 3-month revenue history and a real first Scanner gate (3 consecutive YoY > 20%)
 - Official TWSE / TPEx 10-trading-day foreign and investment-trust net-flow gates
 - Official MOPS single-quarter gross-margin history with strict three-quarter improvement gate
@@ -68,7 +69,7 @@ A previously prepared Supabase integration remains in source for possible future
 - Sonner
 - Vitest
 
-See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation, `docs/PORTFOLIO_RISK.md` for concentration methodology and coverage boundaries, `docs/EXACT_TWR.md` for event-boundary performance methodology, `docs/BENCHMARK.md` for official benchmark source and alignment rules, and `docs/VALUATION_DATA.md` for valuation cache provenance and trust rules.
+See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation, `docs/PORTFOLIO_RISK.md` for concentration methodology and coverage boundaries, `docs/EXACT_TWR.md` for event-boundary performance methodology, `docs/BENCHMARK.md` for official benchmark source and alignment rules, `docs/VALUATION_DATA.md` for valuation cache provenance and trust rules, and `docs/COMPANY_SNAPSHOT.md` for cross-cache company research join and display rules.
 
 ## Local development
 
