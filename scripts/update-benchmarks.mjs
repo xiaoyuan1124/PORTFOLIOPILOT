@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import {
   parseTwseTaiexTotalReturn,
+  retryTransientTwseRequest,
   rollingMonthStarts,
   twseMonthUrl
 } from "./lib/benchmark-data.mjs";
@@ -13,15 +14,35 @@ function sleep(ms) {
 
 async function fetchMonth(monthStart, allowEmpty = false) {
   const url = twseMonthUrl(monthStart);
-  const response = await fetch(url, {
-    headers: {
-      "user-agent": "Mozilla/5.0 PortfolioPilot/0.13 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
-      accept: "application/json,text/plain,*/*"
+  const payload = await retryTransientTwseRequest(
+    async () => {
+      const response = await fetch(url, {
+        headers: {
+          "user-agent": "Mozilla/5.0 PortfolioPilot/0.13 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
+          accept: "application/json,text/plain,*/*"
+        },
+        signal: AbortSignal.timeout(30_000)
+      });
+
+      if (!response.ok) {
+        const error = new Error(`TWSE MFI94U request failed: ${response.status} (${url})`);
+        error.status = response.status;
+        throw error;
+      }
+
+      return response.json();
     },
-    signal: AbortSignal.timeout(30_000)
-  });
-  if (!response.ok) throw new Error(`TWSE MFI94U request failed: ${response.status} (${url})`);
-  const payload = await response.json();
+    {
+      attempts: 4,
+      baseDelayMs: 1000,
+      onRetry: ({ nextAttempt, delayMs, error }) => {
+        console.warn(
+          `Transient TWSE benchmark failure; retrying attempt ${nextAttempt}/4 in ${delayMs}ms: ${error?.message ?? error}`
+        );
+      }
+    }
+  );
+
   const rows = parseTwseTaiexTotalReturn(payload);
   if (!rows.length && !allowEmpty) throw new Error(`TWSE MFI94U returned no valid rows for ${monthStart}`);
   return { url, rows };
