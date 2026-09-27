@@ -31,6 +31,7 @@ const icons: Record<ActivityType, typeof Banknote> = {
 function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: PortfolioActivity) => void }) {
   const [type, setType] = useState<ActivityType>("deposit");
   const [date, setDate] = useState(localDateKey());
+  const [time, setTime] = useState("");
   const [symbol, setSymbol] = useState("");
   const [amount, setAmount] = useState(0);
   const [currency, setCurrency] = useState<Currency>("TWD");
@@ -38,8 +39,10 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
   const [note, setNote] = useState("");
+  const [preFlowValueTwd, setPreFlowValueTwd] = useState<number | null>(null);
 
-  const valid = Boolean(date) && amount > 0 && fxRate > 0;
+  const external = type === "deposit" || type === "withdrawal";
+  const valid = Boolean(date) && amount > 0 && fxRate > 0 && (preFlowValueTwd === null || preFlowValueTwd >= 0);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -48,6 +51,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
     onSave({
       id: `activity-${Date.now()}`,
       date,
+      ...(external && time ? { time } : {}),
       type,
       symbol: symbol.trim().toUpperCase(),
       amount,
@@ -55,7 +59,8 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
       fxRate: currency === "USD" ? fxRate : 1,
       quantity,
       price,
-      note: note.trim()
+      note: note.trim(),
+      ...(external && preFlowValueTwd !== null ? { preFlowValueTwd } : {})
     });
   }
 
@@ -67,6 +72,36 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
         </select>
         <input className="field" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
       </div>
+
+      {external ? (
+        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3.5 dark:border-white/8 dark:bg-white/[.025]">
+          <p className="text-sm font-semibold">Exact TWR 邊界（選填，但建議記錄）</p>
+          <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+            填入這筆入金／出金發生「前一刻」的整體投資組合淨值（TWD）。這不是入金金額，也不是成本。只有每筆外部現金流都有邊界估值時，系統才會顯示 Exact TWR。
+          </p>
+          <div className="mt-3 grid grid-cols-[120px_1fr] gap-3">
+            <input
+              className="field"
+              type="time"
+              value={time}
+              onChange={(event) => setTime(event.target.value)}
+              aria-label="現金流時間"
+            />
+            <input
+              className="field"
+              type="number"
+              min="0"
+              step="any"
+              placeholder="現金流前總淨值（TWD）"
+              value={preFlowValueTwd ?? ""}
+              onChange={(event) => setPreFlowValueTwd(event.target.value === "" ? null : Number(event.target.value))}
+            />
+          </div>
+          <p className="mt-2 text-[11px] leading-5 text-black/38 dark:text-white/38">
+            同一天若有兩筆以上入金／出金，請替每筆填不同時間，否則無法確定 TWR 邊界順序。
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-[1fr_120px] gap-3">
         <input className="field" type="number" min="0" step="any" placeholder="金額" value={amount || ""} onChange={(event) => setAmount(Number(event.target.value))} />
@@ -92,7 +127,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        買進／賣出目前只做交易紀錄，不會自動改動持股；持股仍由「持股」頁維護，避免自動計算錯誤。
+        買進／賣出目前只做交易紀錄，不會自動改動持股；持股仍由「持股」頁維護，避免自動計算錯誤。Exact TWR 邊界只適用於真正的入金／出金。
       </p>
 
       <Dialog.Close asChild>
@@ -113,7 +148,11 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
         if (filter === "income") return activity.type === "dividend" || activity.type === "fee";
         return true;
       })
-      .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+      .sort((a, b) =>
+        b.date.localeCompare(a.date) ||
+        (b.time ?? "").localeCompare(a.time ?? "") ||
+        b.id.localeCompare(a.id)
+      );
   }, [filter, state.activities]);
 
   function add(activity: PortfolioActivity) {
@@ -160,13 +199,15 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="font-semibold">{labels[activity.type]}</p>
                       {activity.symbol ? <span className="text-xs text-black/40 dark:text-white/40">{activity.symbol}</span> : null}
                       {external ? <Badge tone="good">外部現金流</Badge> : <Badge>內部紀錄</Badge>}
+                      {external ? (activity.preFlowValueTwd !== undefined ? <Badge tone="good">TWR 邊界已記</Badge> : <Badge tone="warn">缺 TWR 邊界</Badge>) : null}
                     </div>
-                    <p className="mt-1 text-xs text-black/40 dark:text-white/40">{activity.date}</p>
+                    <p className="mt-1 text-xs text-black/40 dark:text-white/40">{activity.date}{activity.time ? ` · ${activity.time}` : ""}</p>
                     <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                       <p className="text-lg font-semibold tabular-nums">{activity.currency} {activity.amount.toLocaleString()}</p>
                       {activity.currency === "USD" ? <span className="text-xs text-black/40 dark:text-white/40">≈ {money(twd)}</span> : null}
                     </div>
                     {(activity.quantity > 0 || activity.price > 0) ? <p className="mt-2 text-xs text-black/45 dark:text-white/45">數量 {activity.quantity || "—"} · 成交價 {activity.price || "—"}</p> : null}
+                    {external && activity.preFlowValueTwd !== undefined ? <p className="mt-2 text-xs text-black/45 dark:text-white/45">現金流前淨值：{money(activity.preFlowValueTwd)}</p> : null}
                     {activity.note ? <p className="mt-2 text-sm leading-6 text-black/55 dark:text-white/55">{activity.note}</p> : null}
                   </div>
                   <GhostButton
