@@ -18,6 +18,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Official Scanner states: pass / fail / insufficient / not applicable, with expandable source/date/value details
 - Asset allocation
 - Local ETF look-through: direct holdings + imported ETF-implied company exposure, with source/date provenance and unresolved-weight tracking
+- Portfolio Risk: company / sector / TW-US market exposure, cash and unresolved ETF shares, Top 5 / Top 3 concentration, and resolved-company HHI
 - Transaction / cash-flow ledger (deposit, withdrawal, buy, sell, dividend, fee)
 - XIRR money-weighted return and transparent Modified Dietz TWR proxy
 - **Real local daily net-worth snapshots** instead of a fabricated trend line
@@ -65,7 +66,7 @@ A previously prepared Supabase integration remains in source for possible future
 - Sonner
 - Vitest
 
-See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, and `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation.
+See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation, and `docs/PORTFOLIO_RISK.md` for concentration methodology and coverage boundaries.
 
 ## Local development
 
