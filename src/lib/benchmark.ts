@@ -34,6 +34,18 @@ export type BenchmarkPoint = z.infer<typeof benchmarkPointSchema>;
 export type BenchmarkSeries = z.infer<typeof benchmarkSeriesSchema>;
 export type BenchmarkCache = z.infer<typeof benchmarkCacheSchema>;
 
+const DAY_MS = 86_400_000;
+const MAX_TRADING_GAP_DAYS = 10;
+
+function utcDay(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  return Date.UTC(year, (month ?? 1) - 1, day ?? 1);
+}
+
+function calendarDaysBetween(start: string, end: string) {
+  return (utcDay(end) - utcDay(start)) / DAY_MS;
+}
+
 export type BenchmarkWindow = {
   status: "available" | "insufficient";
   targetStart: string;
@@ -80,9 +92,31 @@ export function benchmarkWindow(
     };
   }
 
-  const points = [...series.points]
-    .filter((point) => point.date >= targetStart && point.date <= targetEnd)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const allPoints = [...series.points].sort((a, b) => a.date.localeCompare(b.date));
+  const firstAvailable = allPoints[0] ?? null;
+  const lastAvailable = allPoints.at(-1) ?? null;
+
+  if (
+    !firstAvailable ||
+    !lastAvailable ||
+    (firstAvailable.date > targetStart && calendarDaysBetween(targetStart, firstAvailable.date) > MAX_TRADING_GAP_DAYS) ||
+    (lastAvailable.date < targetEnd && calendarDaysBetween(lastAvailable.date, targetEnd) > MAX_TRADING_GAP_DAYS)
+  ) {
+    return {
+      status: "insufficient",
+      targetStart,
+      targetEnd,
+      actualStart: firstAvailable?.date ?? null,
+      actualEnd: lastAvailable?.date ?? null,
+      startValue: firstAvailable?.value ?? null,
+      endValue: lastAvailable?.value ?? null,
+      returnPct: null,
+      calendarDatesExact: false,
+      reason: "官方 Benchmark cache 未完整覆蓋目標起訖期間，拒絕用截短區間替代。"
+    };
+  }
+
+  const points = allPoints.filter((point) => point.date >= targetStart && point.date <= targetEnd);
 
   const start = points[0] ?? null;
   const end = points.at(-1) ?? null;
