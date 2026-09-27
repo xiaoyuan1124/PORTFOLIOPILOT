@@ -3,7 +3,8 @@ import {
   deriveSingleQuarterRows,
   parseMopsQuarterlyBytes,
   quarterKey,
-  quarterNumber
+  quarterNumber,
+  retryTransientMopsRequest
 } from "./lib/quarterly-financials.mjs";
 
 const MOPS_URL = "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04";
@@ -40,35 +41,51 @@ function formBody(typek, year, quarter) {
 
 async function fetchQuarter(source, year, quarter) {
   const period = quarterKey(year, quarter);
-  const response = await fetch(MOPS_URL, {
-    method: "POST",
-    redirect: "follow",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-      "user-agent": "Mozilla/5.0 PortfolioPilot/0.9",
-      referer: "https://mopsov.twse.com.tw/",
-      accept: "text/html,application/xhtml+xml"
+
+  return retryTransientMopsRequest(
+    async () => {
+      const response = await fetch(MOPS_URL, {
+        method: "POST",
+        redirect: "follow",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          "user-agent": "Mozilla/5.0 PortfolioPilot/0.13",
+          referer: "https://mopsov.twse.com.tw/",
+          accept: "text/html,application/xhtml+xml"
+        },
+        body: formBody(source.typek, year, quarter),
+        signal: AbortSignal.timeout(45_000)
+      });
+
+      if (!response.ok) {
+        const error = new Error(`MOPS ${source.market} ${period} request failed: ${response.status}`);
+        error.status = response.status;
+        throw error;
+      }
+
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const parsed = parseMopsQuarterlyBytes(bytes);
+      const companyRows = parsed.generalRows.length + parsed.notApplicable.length;
+
+      if (parsed.statementTables === 0 || companyRows === 0) {
+        return null;
+      }
+      if (companyRows < MIN_COMPANY_ROWS) {
+        throw new Error(`Refusing incomplete MOPS ${source.market} ${period}: ${companyRows} company rows`);
+      }
+
+      return { period, ...parsed };
     },
-    body: formBody(source.typek, year, quarter),
-    signal: AbortSignal.timeout(45_000)
-  });
-
-  if (!response.ok) {
-    throw new Error(`MOPS ${source.market} ${period} request failed: ${response.status}`);
-  }
-
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  const parsed = parseMopsQuarterlyBytes(bytes);
-  const companyRows = parsed.generalRows.length + parsed.notApplicable.length;
-
-  if (parsed.statementTables === 0 || companyRows === 0) {
-    return null;
-  }
-  if (companyRows < MIN_COMPANY_ROWS) {
-    throw new Error(`Refusing incomplete MOPS ${source.market} ${period}: ${companyRows} company rows`);
-  }
-
-  return { period, ...parsed };
+    {
+      attempts: 4,
+      baseDelayMs: 1500,
+      onRetry: ({ nextAttempt, delayMs, error }) => {
+        console.warn(
+          `Transient MOPS ${source.market} ${period} failure; retrying attempt ${nextAttempt}/4 in ${delayMs}ms: ${error?.message ?? error}`
+        );
+      }
+    }
+  );
 }
 
 function uniqueNotApplicable(rawByMarket, periods) {
