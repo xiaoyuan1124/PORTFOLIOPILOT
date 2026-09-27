@@ -1,4 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import { parseTpexValuations, parseTwseValuations } from "./lib/valuation-data.mjs";
 
 const QUOTE_SOURCES = [
   {
@@ -19,6 +20,17 @@ const REVENUE_SOURCES = [
   {
     name: "TPEx",
     url: "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap05_O"
+  }
+];
+
+const VALUATION_SOURCES = [
+  {
+    name: "TWSE",
+    url: "https://openapi.twse.com.tw/v1/exchangeReport/BWIBBU_ALL"
+  },
+  {
+    name: "TPEx",
+    url: "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_peratio_analysis"
   }
 ];
 
@@ -513,11 +525,20 @@ async function fetchInstitutional10d(latestQuoteDate) {
 
 async function main() {
   const fetchedAt = new Date().toISOString();
-  const [twseQuoteRows, tpexQuoteRows, twseRevenueRows, tpexRevenueRows] = await Promise.all([
+  const [
+    twseQuoteRows,
+    tpexQuoteRows,
+    twseRevenueRows,
+    tpexRevenueRows,
+    twseValuationRows,
+    tpexValuationRows
+  ] = await Promise.all([
     fetchJson(QUOTE_SOURCES[0]),
     fetchJson(QUOTE_SOURCES[1]),
     fetchJson(REVENUE_SOURCES[0]),
-    fetchJson(REVENUE_SOURCES[1])
+    fetchJson(REVENUE_SOURCES[1]),
+    fetchJson(VALUATION_SOURCES[0]),
+    fetchJson(VALUATION_SOURCES[1])
   ]);
 
   const quotes = [...parseTwseQuotes(twseQuoteRows), ...parseTpexQuotes(tpexQuoteRows)]
@@ -534,6 +555,17 @@ async function main() {
     throw new Error(`Refusing to publish suspiciously small revenue set: ${revenue.length}`);
   }
 
+  const twseValuations = parseTwseValuations(twseValuationRows);
+  const tpexValuations = parseTpexValuations(tpexValuationRows);
+  if (twseValuations.length < 500) {
+    throw new Error(`Refusing incomplete TWSE valuation data: ${twseValuations.length} rows`);
+  }
+  if (tpexValuations.length < 400) {
+    throw new Error(`Refusing incomplete TPEx valuation data: ${tpexValuations.length} rows`);
+  }
+  const valuations = [...twseValuations, ...tpexValuations]
+    .sort((a, b) => a.code.localeCompare(b.code, "en"));
+
   const history = await fetchRevenueHistory(revenue);
   const latestQuoteDate = quotes.map((row) => row.date).filter(Boolean).sort().at(-1);
   if (!latestQuoteDate) throw new Error("Cannot determine latest quote date for institutional lookback.");
@@ -549,6 +581,25 @@ async function main() {
     generatedAt: fetchedAt,
     sources: REVENUE_SOURCES.map((source) => ({ ...source, fetchedAt })),
     rows: revenue
+  };
+
+  const valuationPayload = {
+    generatedAt: fetchedAt,
+    sources: [
+      {
+        ...VALUATION_SOURCES[0],
+        fetchedAt,
+        asOf: twseValuations.map((row) => row.date).sort().at(-1),
+        rowCount: twseValuations.length
+      },
+      {
+        ...VALUATION_SOURCES[1],
+        fetchedAt,
+        asOf: tpexValuations.map((row) => row.date).sort().at(-1),
+        rowCount: tpexValuations.length
+      }
+    ],
+    rows: valuations
   };
 
   const revenueHistoryPayload = {
@@ -568,11 +619,13 @@ async function main() {
   await mkdir("public/data", { recursive: true });
   await writeFile("public/data/tw-quotes.json", JSON.stringify(quotePayload, null, 2) + "\n", "utf8");
   await writeFile("public/data/tw-revenue.json", JSON.stringify(revenuePayload, null, 2) + "\n", "utf8");
+  await writeFile("public/data/tw-valuations.json", JSON.stringify(valuationPayload, null, 2) + "\n", "utf8");
   await writeFile("public/data/tw-revenue-history.json", JSON.stringify(revenueHistoryPayload, null, 2) + "\n", "utf8");
   await writeFile("public/data/tw-institutional-10d.json", JSON.stringify(institutionalPayload, null, 2) + "\n", "utf8");
 
   console.log(`Wrote ${quotes.length} TWSE/TPEx quotes`);
   console.log(`Wrote ${revenue.length} TWSE/TPEx latest monthly revenue rows`);
+  console.log(`Wrote ${valuations.length} TWSE/TPEx official valuation rows`);
   console.log(`Wrote ${history.rows.length} MOPS historical revenue rows for ${history.periods.join(", ")}`);
   console.log(`Wrote ${institutional.rows.length} institutional 10D aggregates for ${institutional.tradingDates.join(", ")}`);
 }
