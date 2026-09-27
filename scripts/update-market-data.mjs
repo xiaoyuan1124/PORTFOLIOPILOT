@@ -88,7 +88,7 @@ function firstValue(row, keys) {
 async function fetchJson(source) {
   const response = await fetch(source.url, {
     headers: {
-      "user-agent": "PortfolioPilot/0.8 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
+      "user-agent": "PortfolioPilot/0.14 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
       accept: "application/json"
     },
     signal: AbortSignal.timeout(30_000)
@@ -230,7 +230,7 @@ function historyUrl(market, period, companyType) {
 async function fetchHistoryHtml(url) {
   const response = await fetch(url, {
     headers: {
-      "user-agent": "Mozilla/5.0 PortfolioPilot/0.8",
+      "user-agent": "Mozilla/5.0 PortfolioPilot/0.14",
       accept: "text/html,application/xhtml+xml"
     },
     signal: AbortSignal.timeout(30_000)
@@ -366,7 +366,7 @@ function tpexDateParam(date) {
 async function fetchObject(url, label) {
   const response = await fetch(url, {
     headers: {
-      "user-agent": "Mozilla/5.0 PortfolioPilot/0.8",
+      "user-agent": "Mozilla/5.0 PortfolioPilot/0.14",
       accept: "application/json,text/javascript,*/*"
     },
     signal: AbortSignal.timeout(30_000)
