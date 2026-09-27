@@ -65,6 +65,7 @@ export interface JournalEntry {
 export interface PortfolioActivity {
   id: string;
   date: string;
+  time?: string;
   type: ActivityType;
   symbol: string;
   amount: number;
@@ -73,6 +74,7 @@ export interface PortfolioActivity {
   quantity: number;
   price: number;
   note: string;
+  preFlowValueTwd?: number;
 }
 
 export interface NetWorthSnapshot {
