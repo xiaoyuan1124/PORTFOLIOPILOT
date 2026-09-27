@@ -1,6 +1,6 @@
 import { holdingValueTwd } from "./calc";
 import { calculateEtfLookThrough, type CompanyExposure } from "./etf-lookthrough";
-import type { EtfComposition, Holding, Market } from "./types";
+import type { EtfComposition, Holding } from "./types";
 
 export type RiskSlice = {
   key: string;
