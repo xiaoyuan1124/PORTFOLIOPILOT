@@ -11,6 +11,7 @@ import {
   portfolioXirr
 } from "@/lib/performance";
 import { money, percent } from "@/lib/utils";
+import { BenchmarkComparison } from "./benchmark-comparison";
 import { Badge, Card, CardContent, CardHeader, Metric } from "./ui";
 
 export function Performance({ state }: { state: AppState }) {
@@ -47,6 +48,8 @@ export function Performance({ state }: { state: AppState }) {
         </Card>
         <Card><CardContent><Metric label="TWR Proxy" value={dietz === null ? "資料不足" : percent(dietz * 100, 2)} helper="每日快照 Modified Dietz · 近似" /></CardContent></Card>
       </section>
+
+      <BenchmarkComparison exactTwr={exactTwr} proxyReturn={dietz} snapshots={state.snapshots} />
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>
