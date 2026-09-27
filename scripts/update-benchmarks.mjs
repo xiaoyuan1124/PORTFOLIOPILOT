@@ -11,7 +11,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchMonth(monthStart) {
+async function fetchMonth(monthStart, allowEmpty = false) {
   const url = twseMonthUrl(monthStart);
   const response = await fetch(url, {
     headers: {
@@ -23,7 +23,7 @@ async function fetchMonth(monthStart) {
   if (!response.ok) throw new Error(`TWSE MFI94U request failed: ${response.status} (${url})`);
   const payload = await response.json();
   const rows = parseTwseTaiexTotalReturn(payload);
-  if (!rows.length) throw new Error(`TWSE MFI94U returned no valid rows for ${monthStart}`);
+  if (!rows.length && !allowEmpty) throw new Error(`TWSE MFI94U returned no valid rows for ${monthStart}`);
   return { url, rows };
 }
 
@@ -34,7 +34,7 @@ async function main() {
   const monthlySources = [];
 
   for (const monthStart of months) {
-    const result = await fetchMonth(monthStart);
+    const result = await fetchMonth(monthStart, monthStart === months.at(-1));
     for (const row of result.rows) points.set(row.date, row);
     monthlySources.push({ month: monthStart.slice(0, 7), url: result.url });
     await sleep(REQUEST_DELAY_MS);
