@@ -3,10 +3,11 @@
 import { useState } from "react";
 import type { AppState } from "@/lib/types";
 import { RevenueResearch } from "./revenue-research";
+import { ValuationResearch } from "./valuation-research";
 import { Scanner } from "./scanner";
 import { Journal } from "./journal";
 
-type ResearchTab = "revenue" | "scanner" | "journal";
+type ResearchTab = "revenue" | "valuation" | "scanner" | "journal";
 
 export function Research({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
   const [tab, setTab] = useState<ResearchTab>("revenue");
@@ -16,6 +17,7 @@ export function Research({ state, onChange }: { state: AppState; onChange: (stat
       <div className="inline-flex max-w-full overflow-x-auto rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
         {[
           ["revenue", "官方營收"],
+          ["valuation", "官方估值"],
           ["scanner", "策略 Scanner"],
           ["journal", "投資筆記"]
         ].map(([key, label]) => (
@@ -30,6 +32,7 @@ export function Research({ state, onChange }: { state: AppState; onChange: (stat
       </div>
 
       {tab === "revenue" ? <RevenueResearch state={state} /> : null}
+      {tab === "valuation" ? <ValuationResearch state={state} /> : null}
       {tab === "scanner" ? <Scanner state={state} /> : null}
       {tab === "journal" ? <Journal state={state} onChange={onChange} /> : null}
     </div>
