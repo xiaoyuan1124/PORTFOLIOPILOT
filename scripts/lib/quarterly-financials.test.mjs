@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   deriveSingleQuarterRows,
   evaluateGrossMarginTrend,
-  parseMopsQuarterlyHtml
+  isTransientMopsRequestError,
+  parseMopsQuarterlyHtml,
+  retryTransientMopsRequest
 } from "./quarterly-financials.mjs";
 
 const sampleHtml = `
@@ -73,5 +75,51 @@ describe("gross-margin trend gate", () => {
       ["2025-Q4", "2026-Q1", "2026-Q2"]
     );
     expect(result.status).toBe("insufficient");
+  });
+});
+
+
+describe("MOPS transient retry", () => {
+  it("retries a transient fetch failure and eventually returns", async () => {
+    let calls = 0;
+    const sleeps = [];
+    const result = await retryTransientMopsRequest(
+      async () => {
+        calls += 1;
+        if (calls < 3) {
+          const error = new TypeError("fetch failed");
+          error.cause = { code: "UND_ERR_CONNECT_TIMEOUT" };
+          throw error;
+        }
+        return "ok";
+      },
+      {
+        attempts: 4,
+        baseDelayMs: 100,
+        sleepImpl: async (ms) => { sleeps.push(ms); }
+      }
+    );
+
+    expect(result).toBe("ok");
+    expect(calls).toBe(3);
+    expect(sleeps).toEqual([100, 200]);
+  });
+
+  it("does not retry a schema or completeness error", async () => {
+    let calls = 0;
+    await expect(retryTransientMopsRequest(
+      async () => {
+        calls += 1;
+        throw new Error("MOPS quarterly financials: general-industry header is missing a required field");
+      },
+      { sleepImpl: async () => {} }
+    )).rejects.toThrow(/header/);
+    expect(calls).toBe(1);
+  });
+
+  it("treats HTTP 429 and 5xx as transient but not ordinary 4xx", () => {
+    expect(isTransientMopsRequestError(Object.assign(new Error("rate limit"), { status: 429 }))).toBe(true);
+    expect(isTransientMopsRequestError(Object.assign(new Error("server"), { status: 503 }))).toBe(true);
+    expect(isTransientMopsRequestError(Object.assign(new Error("bad request"), { status: 400 }))).toBe(false);
   });
 });
