@@ -40,3 +40,52 @@ export function rollingMonthStarts(now = new Date(), months = 24) {
 export function twseMonthUrl(monthStart) {
   return `https://www.twse.com.tw/indicesReport/MFI94U?response=json&date=${monthStart.replaceAll("-", "")}`;
 }
+
+export function isTransientTwseRequestError(error) {
+  const status = Number(error?.status);
+  if (status === 429 || status >= 500) return true;
+
+  const codes = new Set([
+    "UND_ERR_CONNECT_TIMEOUT",
+    "UND_ERR_HEADERS_TIMEOUT",
+    "UND_ERR_BODY_TIMEOUT",
+    "ETIMEDOUT",
+    "ECONNRESET",
+    "EAI_AGAIN"
+  ]);
+  if (codes.has(error?.code) || codes.has(error?.cause?.code)) return true;
+
+  const name = String(error?.name ?? "");
+  if (name === "AbortError" || name === "TimeoutError") return true;
+
+  const message = String(error?.message ?? "");
+  return error instanceof TypeError && /fetch failed|network|timeout/i.test(message);
+}
+
+export async function retryTransientTwseRequest(
+  operation,
+  {
+    attempts = 4,
+    baseDelayMs = 1000,
+    sleepImpl = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    onRetry = () => {}
+  } = {}
+) {
+  if (typeof operation !== "function") throw new Error("retry operation must be a function");
+  if (!Number.isInteger(attempts) || attempts < 1) throw new Error("attempts must be a positive integer");
+
+  let lastError = null;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await operation(attempt);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts || !isTransientTwseRequestError(error)) throw error;
+      const delayMs = baseDelayMs * (2 ** (attempt - 1));
+      onRetry({ attempt, nextAttempt: attempt + 1, delayMs, error });
+      await sleepImpl(delayMs);
+    }
+  }
+
+  throw lastError;
+}
