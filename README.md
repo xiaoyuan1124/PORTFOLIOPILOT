@@ -20,11 +20,11 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Local ETF look-through: direct holdings + imported ETF-implied company exposure, with source/date provenance and unresolved-weight tracking
 - Portfolio Risk: company / sector / TW-US market exposure, cash and unresolved ETF shares, Top 5 / Top 3 concentration, and resolved-company HHI
 - Transaction / cash-flow ledger (deposit, withdrawal, buy, sell, dividend, fee)
-- XIRR money-weighted return and transparent Modified Dietz TWR proxy
+- XIRR money-weighted return, event-boundary Exact TWR when complete, and transparent Modified Dietz TWR proxy fallback
 - **Real local daily net-worth snapshots** instead of a fabricated trend line
 - Four-gate Official Scanner using only official/non-demo Taiwan market data
 - Investment journal
-- Versioned JSON full backup/import with Zod validation
+- Versioned JSON full backup/import with Zod validation (v3 stores optional TWR boundary time/value; v1/v2 remain readable)
 - Holdings CSV import/export and downloadable template
 - ETF composition CSV import/export with strict weight validation and no automatic normalization
 - Dark mode
@@ -66,7 +66,7 @@ A previously prepared Supabase integration remains in source for possible future
 - Sonner
 - Vitest
 
-See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation, and `docs/PORTFOLIO_RISK.md` for concentration methodology and coverage boundaries.
+See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation, `docs/PORTFOLIO_RISK.md` for concentration methodology and coverage boundaries, and `docs/EXACT_TWR.md` for event-boundary performance methodology.
 
 ## Local development
 
