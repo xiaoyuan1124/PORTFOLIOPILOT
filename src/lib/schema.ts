@@ -58,7 +58,7 @@ export const journalEntrySchema = z.object({
 export const activitySchema = z.object({
   id: z.string().min(1),
   date: z.string().min(1),
-  time: z.string().regex(/^(?:[01]\\d|2[0-3]):[0-5]\\d$/).optional(),
+  time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).optional(),
   type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee"]),
   symbol: z.string(),
   amount: z.number().finite().nonnegative(),
