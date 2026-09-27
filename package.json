@@ -1,6 +1,6 @@
 {
   "name": "portfoliopilot",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,8 +9,9 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "market:update": "node scripts/update-market-data.mjs && node scripts/update-quarterly-financials.mjs",
-    "market:quarterly": "node scripts/update-quarterly-financials.mjs"
+    "market:update": "node scripts/update-market-data.mjs && node scripts/update-quarterly-financials.mjs && node scripts/update-benchmarks.mjs",
+    "market:quarterly": "node scripts/update-quarterly-financials.mjs",
+    "market:benchmarks": "node scripts/update-benchmarks.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
