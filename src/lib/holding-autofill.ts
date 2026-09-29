@@ -35,7 +35,7 @@ export function buildHoldingLookupCatalog(
       const type = inferType(quote.code, Boolean(revenueRow));
       return {
         code: quote.code,
-        name: revenueRow?.name || quote.name,
+        name: quote.name,
         venue: quote.market,
         close: quote.close,
         date: quote.date,
