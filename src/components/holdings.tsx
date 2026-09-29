@@ -305,7 +305,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
         />
       </div>
 
-      {form.market === "TW" && form.type !== "cash" ? (
+      {form.market === "TW" ? (
         <div className="space-y-2">
           {manualIdentity ? (
             <div className="flex items-start justify-between gap-3 rounded-xl border border-black/6 bg-black/[.018] px-3 py-2.5 dark:border-white/8 dark:bg-white/[.025]">
