@@ -193,3 +193,10 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Switching an officially populated Taiwan holding to the US market clears the Taiwan official price, sector and provenance before saving.
 - Editing an existing holding's symbol clears stale price/provenance so an old security price cannot remain attached to a new symbol.
 - The form explicitly explains that US quote/name data remains manual in the zero-cost build.
+
+
+## V0.26 cash P/L and recovery finalization
+
+- Cash holdings contribute their current value as both value and cost basis, so cash never creates fake unrealized gains or losses.
+- Portfolio unrealized P/L and gain percentage therefore reflect investment positions rather than idle cash.
+- Clearing a local-data recovery backup now first writes the currently visible valid state as the new primary baseline, preventing the old invalid primary payload from recreating the warning on the next launch.
