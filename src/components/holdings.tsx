@@ -81,13 +81,14 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     [catalog, lookupField, lookupQuery, smartLookupActive]
   );
 
-  const costValid = form.type === "cash" ? form.averageCost >= 0 : form.averageCost > 0;
-  const valid = Boolean(form.name.trim()) &&
-    Boolean(form.symbol.trim()) &&
-    form.quantity > 0 &&
-    form.price > 0 &&
-    costValid &&
-    accountName(form.account).length > 0;
+  const valid = form.type === "cash"
+    ? form.price >= 0 && Number.isFinite(form.price) && accountName(form.account).length > 0
+    : Boolean(form.name.trim()) &&
+      Boolean(form.symbol.trim()) &&
+      form.quantity > 0 &&
+      form.price > 0 &&
+      form.averageCost > 0 &&
+      accountName(form.account).length > 0;
 
   function applyCandidate(candidate: HoldingLookupCandidate) {
     setForm((current) => ({
@@ -162,8 +163,112 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     if (exact) applyCandidate(exact);
   }
 
+  function changeMarket(market: Market) {
+    const leavingOfficialTaiwan =
+      market === "US" &&
+      (form.priceSource === "TWSE" || form.priceSource === "TPEx");
+
+    setForm({
+      ...form,
+      market,
+      currency: market === "TW" ? "TWD" : "USD",
+      ...(leavingOfficialTaiwan
+        ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
+        : {})
+    });
+    clearLookupIntent();
+    if (market === "TW") {
+      setManualIdentity(false);
+      setLookupUnavailable(false);
+      if (!catalog?.length) setCatalog(null);
+    } else {
+      setManualIdentity(true);
+    }
+  }
+
+  function changeAssetType(type: AssetType) {
+    const enteringCash = type === "cash";
+    const leavingCash = form.type === "cash" && !enteringCash;
+
+    if (enteringCash) {
+      const currency = form.currency;
+      setForm({
+        ...form,
+        type,
+        market: currency === "USD" ? "US" : "TW",
+        symbol: `CASH-${currency}`,
+        name: `${currency} 現金`,
+        quantity: 1,
+        price: 0,
+        averageCost: 0,
+        sector: "現金",
+        priceSource: undefined,
+        priceAsOf: undefined
+      });
+      clearLookupIntent();
+      setManualIdentity(true);
+      return;
+    }
+
+    setForm({
+      ...form,
+      type,
+      ...(leavingCash
+        ? {
+            symbol: "",
+            name: "",
+            quantity: 0,
+            price: 0,
+            averageCost: 0,
+            sector: "",
+            priceSource: undefined,
+            priceAsOf: undefined
+          }
+        : {})
+    });
+    clearLookupIntent();
+    if (form.market === "TW") {
+      setManualIdentity(false);
+      setLookupUnavailable(false);
+      if (!catalog?.length) setCatalog(null);
+    }
+  }
+
+  function changeCashCurrency(currency: Currency) {
+    setForm({
+      ...form,
+      currency,
+      market: currency === "USD" ? "US" : "TW",
+      symbol: `CASH-${currency}`,
+      name: `${currency} 現金`,
+      quantity: 1,
+      price: 0,
+      averageCost: 0,
+      sector: "現金",
+      priceSource: undefined,
+      priceAsOf: undefined
+    });
+  }
+
   function persistHolding() {
     if (!valid) return false;
+
+    if (form.type === "cash") {
+      return onSave({
+        id: initial?.id ?? `h-${Date.now()}`,
+        ...form,
+        market: form.currency === "USD" ? "US" : "TW",
+        symbol: `CASH-${form.currency}`,
+        name: `${form.currency} 現金`,
+        quantity: 1,
+        averageCost: form.price,
+        sector: "現金",
+        priceSource: undefined,
+        priceAsOf: undefined,
+        account: accountName(form.account)
+      });
+    }
+
     return onSave({
       id: initial?.id ?? `h-${Date.now()}`,
       ...form,
