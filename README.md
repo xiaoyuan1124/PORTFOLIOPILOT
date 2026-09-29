@@ -185,3 +185,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - A matched holding that is already current now reports “already latest” instead of pretending it was updated.
 - Refresh feedback shows TWSE and TPEx official dates separately so one market cannot hide another market's older date.
 - Global search distinguishes official-data load failures from genuine no-result searches and provides an inline retry action.
+
+
+## V0.25 manual US holding flow
+
+- New US holdings can keep symbol and name simultaneously; manual typing no longer clears the opposite field.
+- Switching an officially populated Taiwan holding to the US market clears the Taiwan official price, sector and provenance before saving.
+- Editing an existing holding's symbol clears stale price/provenance so an old security price cannot remain attached to a new symbol.
+- The form explicitly explains that US quote/name data remains manual in the zero-cost build.
