@@ -47,10 +47,29 @@ describe("company snapshot", () => {
     expect(snapshots.every((row) => row.strategy?.overallStatus === "pass")).toBe(true);
   });
 
+  it("includes official quote-only ETFs without fabricating company fundamentals", () => {
+    const snapshots = buildCompanySnapshots({
+      quotes: {
+        generatedAt: "2026-09-29T00:00:00Z", sources: [],
+        quotes: [{ code: "00935", name: "野村臺灣新科技50", market: "TWSE", close: 32.5, date: "2026-09-29" }]
+      },
+      revenue: { generatedAt: "2026-09-29T00:00:00Z", sources: [], rows: [] },
+      valuations: { generatedAt: "2026-09-29T00:00:00Z", sources: [], rows: [] },
+      strategies: []
+    });
+
+    expect(snapshots).toHaveLength(1);
+    expect(snapshots[0]?.type).toBe("etf");
+    expect(snapshots[0]?.industry).toBe("ETF");
+    expect(snapshots[0]?.revenue).toBeNull();
+    expect(snapshots[0]?.strategy).toBeNull();
+    expect(snapshots[0]?.quote?.close).toBe(32.5);
+  });
+
   it("puts held symbols first and can restrict the result to holdings", () => {
     const base = [
-      { code: "1101", name: "台泥", market: "TWSE" as const, industry: "水泥", quote: null, valuation: null, revenue: { code: "1101", name: "台泥", market: "TWSE" as const, industry: "水泥", period: "2026-08", revenue: 1, lastYearRevenue: null, momPct: null, yoyPct: null, cumulativeRevenue: null, cumulativeYoyPct: null }, strategy: null },
-      { code: "2330", name: "台積電", market: "TWSE" as const, industry: "半導體", quote: null, valuation: null, revenue: { code: "2330", name: "台積電", market: "TWSE" as const, industry: "半導體", period: "2026-08", revenue: 1, lastYearRevenue: null, momPct: null, yoyPct: null, cumulativeRevenue: null, cumulativeYoyPct: null }, strategy: null }
+      { code: "1101", name: "台泥", market: "TWSE" as const, industry: "水泥", type: "stock" as const, quote: null, valuation: null, revenue: { code: "1101", name: "台泥", market: "TWSE" as const, industry: "水泥", period: "2026-08", revenue: 1, lastYearRevenue: null, momPct: null, yoyPct: null, cumulativeRevenue: null, cumulativeYoyPct: null }, strategy: null },
+      { code: "2330", name: "台積電", market: "TWSE" as const, industry: "半導體", type: "stock" as const, quote: null, valuation: null, revenue: { code: "2330", name: "台積電", market: "TWSE" as const, industry: "半導體", period: "2026-08", revenue: 1, lastYearRevenue: null, momPct: null, yoyPct: null, cumulativeRevenue: null, cumulativeYoyPct: null }, strategy: null }
     ];
     const held = new Set(["2330"]);
     expect(companySnapshotsForView(base, "", held).map((row) => row.code)).toEqual(["2330", "1101"]);
