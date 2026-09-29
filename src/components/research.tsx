@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { AppState } from "@/lib/types";
 import { CompanySnapshotResearch } from "./company-snapshot-research";
 import { RevenueResearch } from "./revenue-research";
@@ -10,12 +10,8 @@ import { Journal } from "./journal";
 
 type ResearchTab = "snapshot" | "revenue" | "valuation" | "scanner" | "journal";
 
-export function Research({ state, onChange, researchKey, researchRequestId = 0 }: { state: AppState; onChange: (state: AppState) => void; researchKey?: string; researchRequestId?: number }) {
+export function Research({ state, onChange, researchKey }: { state: AppState; onChange: (state: AppState) => void; researchKey?: string }) {
   const [tab, setTab] = useState<ResearchTab>("snapshot");
-
-  useEffect(() => {
-    if (researchKey) setTab("snapshot");
-  }, [researchKey, researchRequestId]);
 
   return (
     <div className="space-y-4">
