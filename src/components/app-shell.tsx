@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, BriefcaseBusiness, Home, Moon, Search, Settings as SettingsIcon, Sun } from "lucide-react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import type { AppState } from "@/lib/types";
 import { emptyState } from "@/lib/demo-data";
 import { withTodaySnapshot } from "@/lib/calc";
-import { getInitialState, saveState } from "@/lib/storage";
+import { loadInitialState, saveState } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { Overview } from "./overview";
 import { Portfolio } from "./portfolio";
@@ -38,13 +38,25 @@ export function AppShell() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [researchKey, setResearchKey] = useState<string | undefined>();
   const [researchRequestId, setResearchRequestId] = useState(0);
+  const [hasRecoveryBackup, setHasRecoveryBackup] = useState(false);
+  const [storageWriteBlocked, setStorageWriteBlocked] = useState(false);
   const title = useMemo(() => titles[section], [section]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      const initial = withTodaySnapshot(getInitialState());
+      const loaded = loadInitialState();
+      const initial = withTodaySnapshot(loaded.state);
       setState(initial);
-      saveState(initial);
+      setHasRecoveryBackup(loaded.recoveryPreserved);
+      setStorageWriteBlocked(loaded.invalidStoredState && !loaded.recoveryPreserved);
+
+      if (!loaded.invalidStoredState) {
+        try {
+          saveState(initial);
+        } catch {
+          setStorageWriteBlocked(true);
+        }
+      }
 
       const saved = window.localStorage.getItem("portfoliopilot:theme");
       const shouldDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -72,9 +84,20 @@ export function AppShell() {
   }, []);
 
   function updateState(next: AppState) {
+    if (storageWriteBlocked) {
+      toast.error("本機儲存目前不可安全寫入；請先到「我的」處理資料復原提示。");
+      setSection("settings");
+      return;
+    }
+
     const prepared = withTodaySnapshot(next);
-    setState(prepared);
-    saveState(prepared);
+    try {
+      saveState(prepared);
+      setState(prepared);
+    } catch {
+      setStorageWriteBlocked(true);
+      toast.error("本機儲存失敗，這次變更沒有套用。請先匯出備份並檢查瀏覽器儲存空間。");
+    }
   }
 
   function navigate(next: Section, nextResearchKey?: string) {
@@ -139,10 +162,19 @@ export function AppShell() {
         </header>
 
         <div className="mx-auto max-w-[1360px] px-4 py-5 md:px-8 md:py-8">
+          {hasRecoveryBackup || storageWriteBlocked ? (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+              <div>
+                <p className="text-sm font-semibold">{storageWriteBlocked ? "本機儲存暫停寫入" : "已保留一份本機資料復原備份"}</p>
+                <p className="mt-0.5 text-xs opacity-80">{storageWriteBlocked ? "偵測到資料異常且無法安全建立復原副本，為避免覆蓋原始資料，已停止儲存新變更。" : "曾有一次本機資料無法通過驗證；原始內容沒有直接丟棄，可到「我的」匯出復原檔。"}</p>
+              </div>
+              <button onClick={() => setSection("settings")} className="min-h-10 rounded-xl border border-current/20 px-3 text-sm font-semibold">前往處理</button>
+            </div>
+          ) : null}
           {section === "home" ? <Overview state={state} onNavigate={(target, key) => navigate(target, key)} /> : null}
           {section === "portfolio" ? <Portfolio state={state} onChange={updateState} onResearch={(key) => navigate("research", key)} /> : null}
           {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} /> : null}
-          {section === "settings" ? <Settings state={state} onChange={updateState} /> : null}
+          {section === "settings" ? <Settings state={state} onChange={updateState} hasRecoveryBackup={hasRecoveryBackup} onRecoveryBackupCleared={() => setHasRecoveryBackup(false)} storageWriteBlocked={storageWriteBlocked} /> : null}
         </div>
       </main>
 
