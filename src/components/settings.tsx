@@ -56,8 +56,9 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
     if (!file) return;
     try {
       const incoming = parseHoldingsCsv(await file.text());
-      const merged = mergeHoldings(state.holdings, incoming);
-      onChange({ ...state, holdings: merged });
+      const base = state.dataMode === "demo" ? emptyState : state;
+      const merged = mergeHoldings(base.holdings, incoming);
+      onChange({ ...base, dataMode: "personal", holdings: merged });
       toast.success(`已匯入 ${incoming.length} 筆持股`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "CSV 格式不正確");
