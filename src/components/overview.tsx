@@ -32,7 +32,7 @@ export function Overview({
   onNavigate
 }: {
   state: AppState;
-  onNavigate?: (section: "portfolio" | "research") => void;
+  onNavigate?: (section: "portfolio" | "research", researchKey?: string) => void;
 }) {
   const [range, setRange] = useState<SnapshotRange>("3M");
   const summary = portfolioSummary(state.holdings, state.usdTwd);
@@ -178,7 +178,11 @@ export function Overview({
             </div>
           </CardHeader>
           <CardContent className="space-y-2 pt-4">
-            {topPositions.map((item, index) => <button key={item.holding.id} onClick={() => onNavigate?.(item.holding.market === "TW" ? "research" : "portfolio")} className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-black/[.03] dark:hover:bg-white/[.04]"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-black/[.04] text-xs font-semibold dark:bg-white/[.06]">{index + 1}</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{item.holding.symbol} · {item.holding.name}</strong><span className="text-xs text-black/38 dark:text-white/38">{money(item.value)}</span></span><span className="text-sm font-semibold tabular-nums">{item.pct.toFixed(1)}%</span></button>)}
+            {topPositions.map((item, index) => {
+              const sourceMarket = item.holding.priceSource === "TWSE" || item.holding.priceSource === "TPEx" ? item.holding.priceSource : undefined;
+              const researchKey = item.holding.market === "TW" && sourceMarket ? `${sourceMarket}:${item.holding.symbol}` : undefined;
+              return <button key={item.holding.id} onClick={() => onNavigate?.(item.holding.market === "TW" ? "research" : "portfolio", researchKey)} className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-black/[.03] dark:hover:bg-white/[.04]"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-black/[.04] text-xs font-semibold dark:bg-white/[.06]">{index + 1}</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{item.holding.symbol} · {item.holding.name}</strong><span className="text-xs text-black/38 dark:text-white/38">{money(item.value)}</span></span><span className="text-sm font-semibold tabular-nums">{item.pct.toFixed(1)}%</span></button>;
+            })}
             {!topPositions.length ? <p className="py-6 text-center text-sm text-black/40 dark:text-white/40">尚無投資標的。</p> : null}
           </CardContent>
         </Card>
