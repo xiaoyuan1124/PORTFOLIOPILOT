@@ -28,18 +28,18 @@ const emptyHolding: Omit<Holding, "id"> = {
 
 function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding: Holding) => boolean }) {
   const [form, setForm] = useState<Omit<Holding, "id">>(initial ? {
-    symbol: initial.symbol,
-    name: initial.name,
-    market: initial.market,
+    symbol: initial.type === "cash" ? `CASH-${initial.currency}` : initial.symbol,
+    name: initial.type === "cash" ? `${initial.currency} 現金` : initial.name,
+    market: initial.type === "cash" ? (initial.currency === "USD" ? "US" : "TW") : initial.market,
     type: initial.type,
-    quantity: initial.quantity,
-    price: initial.price,
-    averageCost: initial.averageCost,
+    quantity: initial.type === "cash" ? 1 : initial.quantity,
+    price: initial.type === "cash" ? initial.quantity * initial.price : initial.price,
+    averageCost: initial.type === "cash" ? initial.quantity * initial.price : initial.averageCost,
     currency: initial.currency,
-    sector: initial.sector,
+    sector: initial.type === "cash" ? "現金" : initial.sector,
     account: accountName(initial.account),
-    priceSource: initial.priceSource,
-    priceAsOf: initial.priceAsOf
+    priceSource: initial.type === "cash" ? undefined : initial.priceSource,
+    priceAsOf: initial.type === "cash" ? undefined : initial.priceAsOf
   } : emptyHolding);
   const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
   const [lookupQuery, setLookupQuery] = useState("");
@@ -82,7 +82,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
   );
 
   const valid = form.type === "cash"
-    ? form.price >= 0 && Number.isFinite(form.price) && accountName(form.account).length > 0
+    ? form.price > 0 && Number.isFinite(form.price) && accountName(form.account).length > 0
     : Boolean(form.name.trim()) &&
       Boolean(form.symbol.trim()) &&
       form.quantity > 0 &&
