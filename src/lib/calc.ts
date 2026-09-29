@@ -166,7 +166,11 @@ export function makeSnapshot(state: AppState, date = new Date()): NetWorthSnapsh
 }
 
 export function withTodaySnapshot(state: AppState, date = new Date()): AppState {
-  if (!state.holdings.length) return state;
+  // A brand-new empty portfolio does not need a meaningless zero snapshot.
+  // Once history exists, however, transitioning to zero holdings must write
+  // today's zero-value snapshot so the timeline does not retain a stale value.
+  if (!state.holdings.length && !state.snapshots.length) return state;
+
   const next = makeSnapshot(state, date);
   const snapshots = state.snapshots.filter((item) => item.date !== next.date);
   return {
