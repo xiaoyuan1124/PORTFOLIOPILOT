@@ -117,7 +117,24 @@ describe("MOPS transient retry", () => {
     expect(calls).toBe(1);
   });
 
+  it("retries an empty MOPS statement payload so another official host can be tried", async () => {
+    let calls = 0;
+    const result = await retryTransientMopsRequest(
+      async () => {
+        calls += 1;
+        if (calls === 1) {
+          throw Object.assign(new Error("empty statement"), { code: "MOPS_EMPTY_PAYLOAD" });
+        }
+        return "fallback-ok";
+      },
+      { attempts: 2, sleepImpl: async () => {} }
+    );
+    expect(result).toBe("fallback-ok");
+    expect(calls).toBe(2);
+  });
+
   it("treats HTTP 429 and 5xx as transient but not ordinary 4xx", () => {
+    expect(isTransientMopsRequestError(Object.assign(new Error("empty"), { code: "MOPS_EMPTY_PAYLOAD" }))).toBe(true);
     expect(isTransientMopsRequestError(Object.assign(new Error("rate limit"), { status: 429 }))).toBe(true);
     expect(isTransientMopsRequestError(Object.assign(new Error("server"), { status: 503 }))).toBe(true);
     expect(isTransientMopsRequestError(Object.assign(new Error("bad request"), { status: 400 }))).toBe(false);

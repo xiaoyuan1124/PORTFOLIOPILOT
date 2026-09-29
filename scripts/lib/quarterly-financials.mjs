@@ -217,7 +217,8 @@ export function isTransientMopsRequestError(error) {
     "UND_ERR_BODY_TIMEOUT",
     "ETIMEDOUT",
     "ECONNRESET",
-    "EAI_AGAIN"
+    "EAI_AGAIN",
+    "MOPS_EMPTY_PAYLOAD"
   ]);
   if (codes.has(error?.code) || codes.has(error?.cause?.code)) return true;
 
