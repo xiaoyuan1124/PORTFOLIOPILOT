@@ -4,26 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { BriefcaseBusiness, Home, Search, Settings, X } from "lucide-react";
 import type { AppState } from "@/lib/types";
-import { loadBundledRevenue, type RevenueRow } from "@/lib/revenue-data";
+import { loadBundledRevenue } from "@/lib/revenue-data";
+import { loadBundledTwQuotes } from "@/lib/market-data";
+import { buildHoldingLookupCatalog, searchHoldingLookupCatalog, type HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { accountName } from "@/lib/local-data";
 import { Badge } from "./ui";
 
 export type AppSection = "home" | "portfolio" | "research" | "settings";
-
-function score(row: RevenueRow, query: string) {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return 0;
-  const code = row.code.toLowerCase();
-  const name = row.name.toLowerCase();
-  const industry = row.industry.toLowerCase();
-  if (code === needle) return 100;
-  if (code.startsWith(needle)) return 90;
-  if (name.startsWith(needle)) return 80;
-  if (code.includes(needle)) return 70;
-  if (name.includes(needle)) return 60;
-  if (industry.includes(needle)) return 40;
-  return -1;
-}
 
 export function QuickSearch({
   state,
@@ -37,29 +24,23 @@ export function QuickSearch({
   onNavigate: (section: AppSection, researchKey?: string) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [companies, setCompanies] = useState<RevenueRow[] | null>(null);
+  const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
 
   useEffect(() => {
-    if (!open || companies !== null) return;
+    if (!open || catalog !== null) return;
     let active = true;
-    void loadBundledRevenue()
-      .then((cache) => { if (active) setCompanies(cache.rows); })
-      .catch(() => { if (active) setCompanies([]); });
+    void Promise.all([loadBundledTwQuotes(), loadBundledRevenue()])
+      .then(([quotes, revenue]) => { if (active) setCatalog(buildHoldingLookupCatalog(quotes, revenue)); })
+      .catch(() => { if (active) setCatalog([]); });
     return () => { active = false; };
-  }, [companies, open]);
+  }, [catalog, open]);
 
-  const loading = open && companies === null;
+  const loading = open && catalog === null;
 
-  const companyResults = useMemo(() => {
-    const needle = query.trim();
-    if (!needle) return [];
-    return (companies ?? [])
-      .map((row) => ({ row, score: score(row, needle) }))
-      .filter((entry) => entry.score >= 0)
-      .sort((a, b) => b.score - a.score || a.row.code.localeCompare(b.row.code, "en"))
-      .slice(0, 10)
-      .map((entry) => entry.row);
-  }, [companies, query]);
+  const securityResults = useMemo(
+    () => query.trim() ? searchHoldingLookupCatalog(catalog ?? [], query, 10) : [],
+    [catalog, query]
+  );
 
   const holdingResults = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -115,7 +96,7 @@ export function QuickSearch({
                     return <button key={item.section} onClick={() => go(item.section)} className="flex min-h-16 items-center gap-3 rounded-2xl px-3 text-left transition hover:bg-black/[.04] dark:hover:bg-white/[.05]"><span className="grid h-10 w-10 place-items-center rounded-xl bg-black/[.04] dark:bg-white/[.06]"><Icon size={18} /></span><span><strong className="block text-sm">{item.label}</strong><span className="text-xs text-black/40 dark:text-white/40">{item.detail}</span></span></button>;
                   })}
                 </div>
-                <p className="mt-3 px-2 text-xs leading-5 text-black/38 dark:text-white/38">快捷鍵：⌘K / Ctrl+K。輸入台股代號可直接打開官方個股總覽。</p>
+                <p className="mt-3 px-2 text-xs leading-5 text-black/38 dark:text-white/38">快捷鍵：⌘K / Ctrl+K。輸入台股或 ETF 代號可直接打開官方研究頁。</p>
               </div>
             ) : null}
 
@@ -124,22 +105,22 @@ export function QuickSearch({
                 <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[.14em] text-black/35 dark:text-white/35">我的持股</p>
                 {holdingResults.map((holding) => <button key={holding.id} onClick={() => {
                   if (holding.market === "TW") {
-                    const match = companies?.find((row) => row.code.toUpperCase() === holding.symbol.toUpperCase());
-                    if (match) return go("research", `${match.market}:${match.code}`);
+                    const match = catalog?.find((row) => row.code.toUpperCase() === holding.symbol.toUpperCase());
+                    if (match) return go("research", `${match.venue}:${match.code}`);
                   }
                   go("portfolio");
                 }} className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-black/[.04] dark:hover:bg-white/[.05]"><span className="min-w-0"><strong className="block truncate text-sm">{holding.symbol} · {holding.name}</strong><span className="mt-0.5 block truncate text-xs text-black/40 dark:text-white/40">{holding.sector} · {accountName(holding.account)}</span></span><Badge>持有</Badge></button>)}
               </div>
             ) : null}
 
-            {companyResults.length ? (
+            {securityResults.length ? (
               <div>
-                <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[.14em] text-black/35 dark:text-white/35">官方台股研究</p>
-                {companyResults.map((row) => <button key={`${row.market}:${row.code}`} onClick={() => go("research", `${row.market}:${row.code}`)} className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-black/[.04] dark:hover:bg-white/[.05]"><span className="min-w-0"><strong className="block truncate text-sm">{row.code} · {row.name}</strong><span className="mt-0.5 block truncate text-xs text-black/40 dark:text-white/40">{row.industry || row.market} · {row.period}</span></span><span className="text-xs text-black/35 dark:text-white/35">{row.market}</span></button>)}
+                <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[.14em] text-black/35 dark:text-white/35">官方台股／ETF 研究</p>
+                {securityResults.map((row) => <button key={`${row.venue}:${row.code}`} onClick={() => go("research", `${row.venue}:${row.code}`)} className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-black/[.04] dark:hover:bg-white/[.05]"><span className="min-w-0"><strong className="block truncate text-sm">{row.code} · {row.name}</strong><span className="mt-0.5 block truncate text-xs text-black/40 dark:text-white/40">{row.industry} · {row.type === "etf" ? "ETF" : "個股"} · 收盤 {row.close.toLocaleString()}</span></span><span className="shrink-0 text-right text-xs text-black/35 dark:text-white/35">{row.venue}<span className="mt-0.5 block text-[10px]">{row.date}</span></span></button>)}
               </div>
             ) : null}
 
-            {query.trim() && !holdingResults.length && !companyResults.length && !loading ? <p className="px-3 py-10 text-center text-sm text-black/40 dark:text-white/40">找不到符合的持股或官方台股資料。</p> : null}
+            {query.trim() && !holdingResults.length && !securityResults.length && !loading ? <p className="px-3 py-10 text-center text-sm text-black/40 dark:text-white/40">找不到符合的持股、個股或 ETF 官方資料。</p> : null}
             {query.trim() && loading ? <p className="px-3 py-10 text-center text-sm text-black/40 dark:text-white/40">正在載入官方公司清單…</p> : null}
           </div>
         </Dialog.Content>

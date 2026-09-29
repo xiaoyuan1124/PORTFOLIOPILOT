@@ -30,10 +30,12 @@ export function buildHoldingLookupCatalog(
   );
 
   return quotes.quotes
-    .map((quote) => {
+    .flatMap((quote) => {
       const revenueRow = revenueByKey.get(key(quote.market, quote.code));
+      const looksLikeEtf = /^00[0-9A-Z]{2,4}$/i.test(quote.code);
+      if (!revenueRow && !looksLikeEtf) return [];
       const type = inferType(quote.code, Boolean(revenueRow));
-      return {
+      return [{
         code: quote.code,
         name: quote.name,
         venue: quote.market,
@@ -41,7 +43,7 @@ export function buildHoldingLookupCatalog(
         date: quote.date,
         industry: revenueRow?.industry?.trim() || (type === "etf" ? "ETF" : "未分類"),
         type
-      };
+      }];
     })
     .sort((a, b) => a.code.localeCompare(b.code, "en"));
 }
