@@ -184,7 +184,7 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
     <div className="rounded-[24px] border border-black/6 bg-[#1f332a] p-5 text-white shadow-sm dark:border-white/8 dark:bg-[#dce9e2] dark:text-[#122018]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">Company Snapshot · Official Data</p><h3 className="mt-2 text-xl font-semibold">一頁看完台股個股／ETF 的核心資料</h3><p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">把已驗證的 TWSE、TPEx、MOPS 快取集中在同一頁。不同指標保留各自日期與來源；缺值、不適用與資料不足不補猜。</p></div>
-        <div className="text-right"><p className="text-3xl font-semibold">{snapshots.length}</p><p className="text-xs opacity-60">可研究標的</p></div>
+        <div className="text-right"><p className="text-3xl font-semibold">{loading ? "…" : error && !caches ? "—" : snapshots.length}</p><p className="text-xs opacity-60">{loading ? "讀取官方資料" : "可研究標的"}</p></div>
       </div>
     </div>
 
