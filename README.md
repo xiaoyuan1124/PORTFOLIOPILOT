@@ -240,3 +240,13 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - If the official catalog is unavailable or has no match, the form provides a real manual-entry mode where symbol and name can coexist.
 - Manual mode can retry the official catalog or return to official search in one tap.
 - Switching a holding to cash clears exchange price provenance; changing any manual symbol, including US holdings, clears stale security metadata.
+
+
+## V0.32 cash balance entry
+
+- Cash holdings now use a dedicated mobile-friendly flow: account + currency + current balance.
+- Users no longer need to invent a cash symbol/name or understand quantity, market price and average-cost fields for cash.
+- Cash is normalized internally to quantity 1 × balance, with the same balance as cost basis, so it never creates unrealized P/L.
+- TWD cash maps to the Taiwan/TWD bucket and USD cash maps to the US/USD bucket for existing portfolio calculations.
+- Editing legacy cash positions first preserves quantity × price as the full balance before normalizing to the simpler format.
+- Changing cash currency clears the old numeric balance so a TWD amount cannot silently become the same number of USD.
