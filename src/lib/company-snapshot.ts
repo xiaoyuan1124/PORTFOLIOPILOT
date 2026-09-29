@@ -27,8 +27,7 @@ function key(market: "TWSE" | "TPEx", code: string) {
 }
 
 export function isHeldCompanySnapshot(row: Pick<CompanySnapshot, "market" | "code">, heldKeys: Set<string>) {
-  const code = row.code.toUpperCase();
-  return heldKeys.has(companySnapshotKey(row.market, code)) || heldKeys.has(code);
+  return heldKeys.has(companySnapshotKey(row.market, row.code));
 }
 
 export function buildCompanySnapshots({
