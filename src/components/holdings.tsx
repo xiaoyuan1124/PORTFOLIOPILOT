@@ -41,22 +41,24 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     priceSource: initial.priceSource,
     priceAsOf: initial.priceAsOf
   } : emptyHolding);
-  const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(initial ? [] : null);
+  const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupField, setLookupField] = useState<"symbol" | "name" | null>(null);
   const [lookupUnavailable, setLookupUnavailable] = useState(false);
+  const [manualIdentity, setManualIdentity] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const lookupFieldRef = useRef<"symbol" | "name" | null>(null);
   const lookupQueryRef = useRef("");
 
   useEffect(() => {
-    if (initial || form.market !== "TW" || catalog !== null) return;
+    if (form.market !== "TW" || form.type === "cash" || manualIdentity || catalog !== null) return;
     let active = true;
     void Promise.all([loadBundledTwQuotes(), loadBundledRevenue()])
       .then(([quotes, revenue]) => {
         if (!active) return;
         const nextCatalog = buildHoldingLookupCatalog(quotes, revenue);
         setCatalog(nextCatalog);
+        setLookupUnavailable(false);
         const field = lookupFieldRef.current;
         const query = lookupQueryRef.current;
         const exact = field && query ? findExactHoldingLookupCandidate(nextCatalog, field, query) : null;
@@ -66,14 +68,17 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
         if (active) {
           setCatalog([]);
           setLookupUnavailable(true);
+          setManualIdentity(true);
         }
       });
     return () => { active = false; };
-  }, [catalog, form.market, initial]);
+  }, [catalog, form.market, form.type, manualIdentity]);
+
+  const smartLookupActive = form.market === "TW" && form.type !== "cash" && !manualIdentity;
 
   const lookupResults = useMemo(
-    () => lookupField && lookupQuery.trim() ? searchHoldingLookupCatalog(catalog ?? [], lookupQuery) : [],
-    [catalog, lookupField, lookupQuery]
+    () => smartLookupActive && lookupField && lookupQuery.trim() ? searchHoldingLookupCatalog(catalog ?? [], lookupQuery) : [],
+    [catalog, lookupField, lookupQuery, smartLookupActive]
   );
 
   const costValid = form.type === "cash" ? form.averageCost >= 0 : form.averageCost > 0;
@@ -101,30 +106,41 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     lookupQueryRef.current = "";
     setLookupField(null);
     setLookupQuery("");
+    setManualIdentity(false);
+  }
+
+  function clearLookupIntent() {
+    lookupFieldRef.current = null;
+    lookupQueryRef.current = "";
+    setLookupField(null);
+    setLookupQuery("");
+  }
+
+  function useManualIdentity() {
+    clearLookupIntent();
+    setManualIdentity(true);
+  }
+
+  function retryOfficialIdentity() {
+    setLookupUnavailable(false);
+    setManualIdentity(false);
+    if (!catalog?.length) setCatalog(null);
   }
 
   function updateLookup(field: "symbol" | "name", value: string) {
-    if (initial) {
-      const symbolChanged =
-        field === "symbol" &&
-        value.trim().toUpperCase() !== initial.symbol.trim().toUpperCase();
-
-      setForm((current) => ({
-        ...current,
-        [field]: value,
-        ...(symbolChanged
-          ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
-          : {})
-      }));
-      return;
-    }
-
-    if (form.market !== "TW") {
-      setForm((current) => ({ ...current, [field]: value }));
-      lookupFieldRef.current = null;
-      lookupQueryRef.current = "";
-      setLookupField(null);
-      setLookupQuery("");
+    if (!smartLookupActive) {
+      setForm((current) => {
+        const symbolChanged =
+          field === "symbol" &&
+          value.trim().toUpperCase() !== current.symbol.trim().toUpperCase();
+        return {
+          ...current,
+          [field]: value,
+          ...(symbolChanged && current.market === "TW"
+            ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
+            : {})
+        };
+      });
       return;
     }
 
