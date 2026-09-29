@@ -5,6 +5,7 @@ import { Database, Download, ExternalLink, FileSpreadsheet, Trash2, Upload } fro
 import { toast } from "sonner";
 import type { AppState, EtfComposition } from "@/lib/types";
 import { calculateEtfLookThrough } from "@/lib/etf-lookthrough";
+import { localDateKey } from "@/lib/calc";
 import {
   downloadText,
   etfCompositionCsvTemplate,
@@ -74,7 +75,7 @@ export function EtfLookThrough({ state, onChange }: { state: AppState; onChange:
               <GhostButton onClick={() => downloadText("portfoliopilot-etf-composition-template.csv", etfCompositionCsvTemplate(), "text/csv;charset=utf-8")}><FileSpreadsheet size={16} />空白範本</GhostButton>
               {state.etfCompositions.length ? (
                 <GhostButton onClick={() => downloadText(
-                  `portfoliopilot-etf-compositions-${new Date().toISOString().slice(0, 10)}.csv`,
+                  `portfoliopilot-etf-compositions-${localDateKey()}.csv`,
                   etfCompositionsToCsv(state.etfCompositions),
                   "text/csv;charset=utf-8"
                 )}><Download size={16} />匯出成分</GhostButton>
