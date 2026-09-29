@@ -35,18 +35,32 @@ function addDays(date, delta) {
 }
 
 async function fetchPayload(url, label) {
-  const response = await fetch(url, {
-    headers: {
-      "user-agent": "PortfolioPilot/0.18 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
-      accept: "application/json"
-    },
-    signal: AbortSignal.timeout(30_000)
-  });
+  let lastError;
 
-  if (!response.ok) {
-    throw new Error(`${label} request failed: ${response.status}`);
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "user-agent": "PortfolioPilot/0.18 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
+          accept: "application/json"
+        },
+        signal: AbortSignal.timeout(30_000)
+      });
+
+      if (!response.ok) {
+        throw new Error(`${label} request failed: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      lastError = error;
+      if (attempt === 4) break;
+      const delayMs = attempt * 1_500;
+      console.warn(`${label} attempt ${attempt}/4 failed; retrying in ${delayMs}ms`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
   }
-  return response.json();
+
+  throw lastError instanceof Error ? lastError : new Error(`${label} request failed after retries`);
 }
 
 async function fetchArray(source) {
