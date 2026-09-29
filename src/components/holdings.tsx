@@ -136,7 +136,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
         return {
           ...current,
           [field]: value,
-          ...(symbolChanged && current.market === "TW"
+          ...(symbolChanged
             ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
             : {})
         };
