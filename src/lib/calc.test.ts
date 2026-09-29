@@ -33,6 +33,36 @@ describe("portfolio calculations", () => {
     expect(second.snapshots[0]?.total).toBe(5400);
   });
 
+  it("keeps a brand-new empty portfolio free of zero snapshots", () => {
+    const empty: AppState = {
+      usdTwd: 32,
+      holdings: [],
+      etfCompositions: [],
+      journal: [],
+      activities: [],
+      snapshots: []
+    };
+
+    expect(withTodaySnapshot(empty, new Date(2026, 8, 30, 10, 0)).snapshots).toEqual([]);
+  });
+
+  it("replaces today's stale snapshot with zero after the last holding is removed", () => {
+    const cleared: AppState = {
+      ...state,
+      holdings: [],
+      snapshots: [
+        { date: "2026-09-29", total: 5000, cost: 4500, gain: 500, usdTwd: 32 },
+        { date: "2026-09-30", total: 5200, cost: 4500, gain: 700, usdTwd: 32 }
+      ]
+    };
+
+    const result = withTodaySnapshot(cleared, new Date(2026, 8, 30, 18, 0));
+    expect(result.snapshots).toEqual([
+      { date: "2026-09-29", total: 5000, cost: 4500, gain: 500, usdTwd: 32 },
+      { date: "2026-09-30", total: 0, cost: 0, gain: 0, usdTwd: 32 }
+    ]);
+  });
+
   it("calculates change between the latest two snapshot days", () => {
     const result = dailySnapshotDelta([
       { date: "2026-09-26", total: 100, cost: 90, gain: 10, usdTwd: 32 },
