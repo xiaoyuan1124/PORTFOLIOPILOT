@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, RefreshCw, Search } from "lucide-react";
 import type { AppState } from "@/lib/types";
-import { buildCompanySnapshots, companySnapshotsForView } from "@/lib/company-snapshot";
+import { buildCompanySnapshots, companySnapshotsForView, companySnapshotKey, isHeldCompanySnapshot } from "@/lib/company-snapshot";
 import { loadBundledInstitutional10d, type InstitutionalCache } from "@/lib/institutional-data";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { loadBundledQuarterlyMargins, type GateStatus, type QuarterlyMarginCache } from "@/lib/quarterly-financials";
@@ -74,7 +74,19 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const heldCodes = useMemo(() => new Set(state.holdings.filter((holding) => holding.market === "TW" && holding.type !== "cash").map((holding) => holding.symbol.toUpperCase())), [state.holdings]);
+  const heldKeys = useMemo(() => {
+    const keys = new Set<string>();
+    for (const holding of state.holdings) {
+      if (holding.market !== "TW" || holding.type === "cash") continue;
+      const code = holding.symbol.toUpperCase();
+      if (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") {
+        keys.add(companySnapshotKey(holding.priceSource, code));
+      } else {
+        keys.add(code);
+      }
+    }
+    return keys;
+  }, [state.holdings]);
 
   async function fetchCaches() {
     const [quotes, revenue, valuations, revenueHistory, institutional, quarterly] = await Promise.all([
@@ -107,14 +119,14 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
 
   const strategies = useMemo(() => caches ? evaluateOfficialStrategy(caches.revenueHistory, caches.institutional, caches.quarterly) : [], [caches]);
   const snapshots = useMemo(() => caches ? buildCompanySnapshots({ quotes: caches.quotes, revenue: caches.revenue, valuations: caches.valuations, strategies }) : [], [caches, strategies]);
-  const visible = useMemo(() => companySnapshotsForView(snapshots, query, heldCodes, heldOnly, 80), [snapshots, query, heldCodes, heldOnly]);
+  const visible = useMemo(() => companySnapshotsForView(snapshots, query, heldKeys, heldOnly, 80), [snapshots, query, heldKeys, heldOnly]);
   const selected = useMemo(() => {
     if (selectedKey) {
       const chosen = snapshots.find((row) => `${row.market}:${row.code}` === selectedKey);
       if (chosen) return chosen;
     }
-    return snapshots.find((row) => heldCodes.has(row.code.toUpperCase())) ?? visible[0] ?? null;
-  }, [snapshots, selectedKey, heldCodes, visible]);
+    return snapshots.find((row) => isHeldCompanySnapshot(row, heldKeys)) ?? visible[0] ?? null;
+  }, [snapshots, selectedKey, heldKeys, visible]);
 
   const quoteSource = selected && caches ? caches.quotes.sources.find((source) => source.name.toUpperCase().includes(selected.market.toUpperCase())) ?? null : null;
   const revenueSource = selected?.revenue && caches ? caches.revenue.sources.find((source) => source.name.toUpperCase().includes(selected.market.toUpperCase())) ?? null : null;
@@ -140,14 +152,14 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
       {visible.slice(0, 16).map((row) => {
         const rowKey = `${row.market}:${row.code}`;
         const active = selected ? `${selected.market}:${selected.code}` === rowKey : false;
-        return <button key={rowKey} onClick={() => setSelectedKey(rowKey)} className={`min-w-[150px] rounded-2xl border p-3 text-left transition ${active ? "border-[#315f49]/35 bg-[#e7f1e9] dark:border-[#8ec7a3]/30 dark:bg-[#173426]" : "border-black/6 bg-white/60 hover:bg-white dark:border-white/8 dark:bg-white/4 dark:hover:bg-white/7"}`}><div className="flex items-center justify-between gap-2"><strong className="text-sm">{row.code}</strong>{heldCodes.has(row.code.toUpperCase()) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 truncate text-sm">{row.name}</p><p className="mt-1 truncate text-[11px] text-black/40 dark:text-white/40">{row.industry || row.market}</p></button>;
+        return <button key={rowKey} onClick={() => setSelectedKey(rowKey)} className={`min-w-[150px] rounded-2xl border p-3 text-left transition ${active ? "border-[#315f49]/35 bg-[#e7f1e9] dark:border-[#8ec7a3]/30 dark:bg-[#173426]" : "border-black/6 bg-white/60 hover:bg-white dark:border-white/8 dark:bg-white/4 dark:hover:bg-white/7"}`}><div className="flex items-center justify-between gap-2"><strong className="text-sm">{row.code}</strong>{isHeldCompanySnapshot(row, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 truncate text-sm">{row.name}</p><p className="mt-1 truncate text-[11px] text-black/40 dark:text-white/40">{row.industry || row.market}</p></button>;
       })}
     </div> : null}
 
     {!loading && !error && !selected ? <div className="rounded-2xl border border-black/6 p-8 text-center dark:border-white/8"><Search className="mx-auto text-black/25 dark:text-white/25" size={28} /><p className="mt-3 text-sm font-semibold">選一家公司開始研究</p><p className="mt-1 text-xs text-black/40 dark:text-white/40">有台股持倉時會自動優先顯示持有標的；否則請從上方搜尋或快速選擇。</p></div> : null}
 
     {selected ? <>
-      <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{heldCodes.has(selected.code.toUpperCase()) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>
+      <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{isHeldCompanySnapshot(selected, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card><CardContent className="p-4 md:p-5"><SectionHeader title="市場與估值" detail="官方收盤 / 估值快照" /><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"><div className="mini-metric"><span>收盤價</span><strong>{selected.quote ? money(selected.quote.close, "TWD") : "—"}</strong></div><div className="mini-metric"><span>PE</span><strong>{ratio(selected.valuation?.pe)}</strong></div><div className="mini-metric"><span>PB</span><strong>{ratio(selected.valuation?.pb)}</strong></div><div className="mini-metric"><span>殖利率</span><strong>{yieldPercent(selected.valuation?.dividendYield)}</strong></div></div><div className="mt-4 space-y-1 text-[11px] leading-5 text-black/40 dark:text-white/40"><p>收盤資料日：{selected.quote?.date ?? "—"} {quoteSource ? <a href={quoteSource.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 underline underline-offset-2">{quoteSource.name}<ExternalLink size={10} /></a> : null}</p><p>估值資料日：{selected.valuation?.date ?? "—"} {valuationMeta ? <a href={valuationMeta.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 underline underline-offset-2">{valuationMeta.name}<ExternalLink size={10} /></a> : null}</p></div></CardContent></Card>
