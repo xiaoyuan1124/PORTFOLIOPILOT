@@ -18,8 +18,17 @@ export type CompanySnapshot = {
   strategy: OfficialStrategyResult | null;
 };
 
-function key(market: "TWSE" | "TPEx", code: string) {
+export function companySnapshotKey(market: "TWSE" | "TPEx", code: string) {
   return `${market}:${code.toUpperCase()}`;
+}
+
+function key(market: "TWSE" | "TPEx", code: string) {
+  return companySnapshotKey(market, code);
+}
+
+export function isHeldCompanySnapshot(row: Pick<CompanySnapshot, "market" | "code">, heldKeys: Set<string>) {
+  const code = row.code.toUpperCase();
+  return heldKeys.has(companySnapshotKey(row.market, code)) || heldKeys.has(code);
 }
 
 export function buildCompanySnapshots({
@@ -60,16 +69,16 @@ export function buildCompanySnapshots({
 export function companySnapshotsForView(
   snapshots: CompanySnapshot[],
   query: string,
-  heldCodes: Set<string>,
+  heldKeys: Set<string>,
   heldOnly = false,
   limit = 80
 ) {
   const needle = query.trim().toLowerCase();
   return snapshots
-    .filter((row) => !heldOnly || heldCodes.has(row.code.toUpperCase()))
+    .filter((row) => !heldOnly || isHeldCompanySnapshot(row, heldKeys))
     .filter((row) => !needle || `${row.code} ${row.name} ${row.industry} ${row.market}`.toLowerCase().includes(needle))
     .sort((a, b) => {
-      const heldDifference = Number(heldCodes.has(b.code.toUpperCase())) - Number(heldCodes.has(a.code.toUpperCase()));
+      const heldDifference = Number(isHeldCompanySnapshot(b, heldKeys)) - Number(isHeldCompanySnapshot(a, heldKeys));
       if (heldDifference !== 0) return heldDifference;
       return a.code.localeCompare(b.code, "en");
     })
