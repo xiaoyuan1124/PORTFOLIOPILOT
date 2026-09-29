@@ -14,7 +14,7 @@ import {
   parseHoldingsCsv,
   serializeBackup
 } from "@/lib/local-data";
-import { clearRecoveryBackup, getRecoveryBackupRaw } from "@/lib/storage";
+import { clearRecoveryBackup, getRecoveryBackupRaw, saveState } from "@/lib/storage";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
 export function Settings({ state, onChange, hasRecoveryBackup = false, onRecoveryBackupCleared, storageWriteBlocked = false }: { state: AppState; onChange: (state: AppState) => void; hasRecoveryBackup?: boolean; onRecoveryBackupCleared?: () => void; storageWriteBlocked?: boolean }) {
@@ -37,13 +37,22 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
   }
 
   function removeRecoveryBackup() {
-    if (!window.confirm("確定要清除復原備份嗎？清除後無法從 PortfolioPilot 取回這份原始內容。")) return;
-    if (!clearRecoveryBackup()) {
-      toast.error("無法清除復原備份；瀏覽器儲存目前不可用。");
+    if (!window.confirm("確定要清除復原備份嗎？系統會先把目前畫面中的有效資料設為新的本機基準，再刪除舊的原始復原副本。此動作無法復原。")) return;
+
+    try {
+      saveState(state);
+    } catch {
+      toast.error("無法先儲存目前資料，因此沒有清除復原備份。");
       return;
     }
+
+    if (!clearRecoveryBackup()) {
+      toast.error("目前資料已安全儲存，但瀏覽器暫時無法清除舊復原備份。");
+      return;
+    }
+
     onRecoveryBackupCleared?.();
-    toast.success("復原備份已清除");
+    toast.success("目前資料已設為新基準，舊復原備份已清除");
   }
 
   function exportJson() {
