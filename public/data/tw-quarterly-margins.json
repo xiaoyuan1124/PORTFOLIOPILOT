@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T13:15:30.452Z",
+  "generatedAt": "2026-09-29T16:37:24.861Z",
   "periods": [
     "2025-Q4",
     "2026-Q1",
@@ -12,7 +12,7 @@
       "period": "2025-Q3",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-09-29T13:15:30.452Z",
+      "fetchedAt": "2026-09-29T16:37:24.861Z",
       "generalRows": 1044,
       "notApplicableRows": 35
     },
@@ -22,7 +22,7 @@
       "period": "2025-Q3",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-09-29T13:15:30.452Z",
+      "fetchedAt": "2026-09-29T16:37:24.861Z",
       "generalRows": 882,
       "notApplicableRows": 7
     },
@@ -32,7 +32,7 @@
       "period": "2025-Q4",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-09-29T13:15:30.452Z",
+      "fetchedAt": "2026-09-29T16:37:24.861Z",
       "generalRows": 1049,
       "notApplicableRows": 35
     },
@@ -42,7 +42,7 @@
       "period": "2025-Q4",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-09-29T13:15:30.452Z",
+      "fetchedAt": "2026-09-29T16:37:24.861Z",
       "generalRows": 885,
       "notApplicableRows": 7
     },
@@ -52,7 +52,7 @@
       "period": "2026-Q1",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-09-29T13:15:30.452Z",
+      "fetchedAt": "2026-09-29T16:37:24.861Z",
       "generalRows": 1048,
       "notApplicableRows": 35
     },
@@ -62,7 +62,7 @@
       "period": "2026-Q1",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-09-29T13:15:30.452Z",
+      "fetchedAt": "2026-09-29T16:37:24.861Z",
       "generalRows": 885,
       "notApplicableRows": 7
     },
@@ -72,7 +72,7 @@
       "period": "2026-Q2",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-09-29T13:15:30.452Z",
+      "fetchedAt": "2026-09-29T16:37:24.861Z",
       "generalRows": 1049,
       "notApplicableRows": 35
     },
@@ -82,7 +82,7 @@
       "period": "2026-Q2",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-09-29T13:15:30.452Z",
+      "fetchedAt": "2026-09-29T16:37:24.861Z",
       "generalRows": 885,
       "notApplicableRows": 7
     }

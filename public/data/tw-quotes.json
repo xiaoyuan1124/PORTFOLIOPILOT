@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-09-29T13:13:52.143Z",
+  "generatedAt": "2026-09-29T16:36:20.976Z",
   "sources": [
     {
       "name": "TWSE",
       "url": "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL",
-      "fetchedAt": "2026-09-29T13:13:52.143Z"
+      "fetchedAt": "2026-09-29T16:36:20.976Z"
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes",
-      "fetchedAt": "2026-09-29T13:13:52.143Z"
+      "fetchedAt": "2026-09-29T16:36:20.976Z"
     }
   ],
   "quotes": [

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T13:18:39.686Z",
+  "generatedAt": "2026-09-29T16:39:23.325Z",
   "benchmarks": [
     {
       "id": "TWSE:TAIEX-TR",
@@ -12,7 +12,7 @@
       "sourceName": "TWSE MFI94U",
       "sourceUrl": "https://www.twse.com.tw/zh/indices/taiex/mfi94u.html",
       "sourceUrlTemplate": "https://www.twse.com.tw/indicesReport/MFI94U?response=json&date=YYYYMM01",
-      "fetchedAt": "2026-09-29T13:18:39.686Z",
+      "fetchedAt": "2026-09-29T16:39:23.325Z",
       "asOf": "2026-09-29",
       "points": [
         {
