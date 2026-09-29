@@ -37,6 +37,7 @@ export function AppShell() {
   const [dark, setDark] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [researchKey, setResearchKey] = useState<string | undefined>();
+  const [researchRequestId, setResearchRequestId] = useState(0);
   const title = useMemo(() => titles[section], [section]);
 
   useEffect(() => {
@@ -77,7 +78,10 @@ export function AppShell() {
   }
 
   function navigate(next: Section, nextResearchKey?: string) {
-    if (next === "research" && nextResearchKey) setResearchKey(nextResearchKey);
+    if (next === "research" && nextResearchKey) {
+      setResearchKey(nextResearchKey);
+      setResearchRequestId((value) => value + 1);
+    }
     setSection(next);
   }
 
@@ -135,9 +139,9 @@ export function AppShell() {
         </header>
 
         <div className="mx-auto max-w-[1360px] px-4 py-5 md:px-8 md:py-8">
-          {section === "home" ? <Overview state={state} onNavigate={(target) => navigate(target)} /> : null}
+          {section === "home" ? <Overview state={state} onNavigate={(target, key) => navigate(target, key)} /> : null}
           {section === "portfolio" ? <Portfolio state={state} onChange={updateState} /> : null}
-          {section === "research" ? <Research state={state} onChange={updateState} researchKey={researchKey} /> : null}
+          {section === "research" ? <Research state={state} onChange={updateState} researchKey={researchKey} researchRequestId={researchRequestId} /> : null}
           {section === "settings" ? <Settings state={state} onChange={updateState} /> : null}
         </div>
       </main>
