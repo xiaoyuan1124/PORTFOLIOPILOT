@@ -8,6 +8,9 @@ export function holdingValueTwd(holding: Holding, usdTwd: number) {
 }
 
 export function holdingCostTwd(holding: Holding, usdTwd: number) {
+  if (holding.type === "cash") {
+    return holdingValueTwd(holding, usdTwd);
+  }
   const fx = holding.currency === "USD" ? usdTwd : 1;
   return holding.quantity * holding.averageCost * fx;
 }

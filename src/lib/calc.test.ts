@@ -64,6 +64,17 @@ describe("portfolio calculations", () => {
     });
   });
 
+  it("never treats cash balance as unrealized investment gain", () => {
+    const result = portfolioSummary([
+      { id: "cash", symbol: "CASH-TWD", name: "現金", market: "TW", type: "cash", quantity: 1, price: 1000, averageCost: 0, currency: "TWD", sector: "現金" }
+    ], 32);
+
+    expect(result.total).toBe(1000);
+    expect(result.cost).toBe(1000);
+    expect(result.gain).toBe(0);
+    expect(result.gainPct).toBe(0);
+  });
+
   it("separates cash from invested assets", () => {
     const result = portfolioCashSummary([
       ...state.holdings,
