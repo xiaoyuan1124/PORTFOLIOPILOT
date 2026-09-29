@@ -586,18 +586,23 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
           const gain = value - cost;
           const gainPct = cost > 0 ? (gain / cost) * 100 : 0;
           const pct = summary.total ? (value / summary.total) * 100 : 0;
+          const isCash = holding.type === "cash";
+          const nativeCashBalance = isCash ? holding.quantity * holding.price : 0;
           return (
             <Card key={holding.id}>
               <CardContent className="p-4 md:p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <p className="font-semibold">{holding.name}</p>
-                      <span className="text-xs text-black/40 dark:text-white/40">{holding.symbol}</span>
+                      <p className="font-semibold">{isCash ? `${holding.currency} 現金` : holding.name}</p>
+                      {!isCash ? <span className="text-xs text-black/40 dark:text-white/40">{holding.symbol}</span> : null}
                       <Badge>{accountName(holding.account)}</Badge>
+                      {isCash ? <Badge tone="good">現金</Badge> : null}
                     </div>
-                    <p className="mt-1 text-sm text-black/45 dark:text-white/45">{holding.sector} · {holding.market} · {holding.currency}</p>
-                    {holding.priceSource && holding.priceAsOf ? (
+                    <p className="mt-1 text-sm text-black/45 dark:text-white/45">
+                      {isCash ? `${holding.currency} 餘額 · 不計未實現損益` : `${holding.sector} · ${holding.market} · ${holding.currency}`}
+                    </p>
+                    {!isCash && holding.priceSource && holding.priceAsOf ? (
                       <p className="mt-1 text-[11px] text-black/35 dark:text-white/35">
                         價格來源 {holding.priceSource} · {holding.priceAsOf}
                       </p>
@@ -630,12 +635,21 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
                     </GhostButton>
                   </div>
                 </div>
-                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <div className="mini-metric"><span>數量</span><strong>{holding.quantity.toLocaleString()}</strong></div>
-                  <div className="mini-metric"><span>市值</span><strong>{money(value)}</strong></div>
-                  <div className="mini-metric"><span>損益</span><strong>{percent(gainPct)}</strong></div>
-                  <div className="mini-metric"><span>占比</span><strong>{pct.toFixed(1)}%</strong></div>
-                </div>
+                {isCash ? (
+                  <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="mini-metric"><span>餘額</span><strong>{holding.currency} {nativeCashBalance.toLocaleString("zh-TW", { maximumFractionDigits: 2 })}</strong></div>
+                    <div className="mini-metric"><span>台幣換算</span><strong>{money(value)}</strong></div>
+                    <div className="mini-metric"><span>未實現損益</span><strong>不計算</strong></div>
+                    <div className="mini-metric"><span>總資產占比</span><strong>{pct.toFixed(1)}%</strong></div>
+                  </div>
+                ) : (
+                  <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="mini-metric"><span>數量</span><strong>{holding.quantity.toLocaleString()}</strong></div>
+                    <div className="mini-metric"><span>市值</span><strong>{money(value)}</strong></div>
+                    <div className="mini-metric"><span>損益</span><strong>{percent(gainPct)}</strong></div>
+                    <div className="mini-metric"><span>占比</span><strong>{pct.toFixed(1)}%</strong></div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );
