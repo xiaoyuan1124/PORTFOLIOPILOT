@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownUp, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,8 @@ import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
 import { accountName } from "@/lib/local-data";
 import { money, percent } from "@/lib/utils";
 import { applyTwQuotes, cacheFreshnessLabel, loadBundledTwQuotes } from "@/lib/market-data";
+import { loadBundledRevenue } from "@/lib/revenue-data";
+import { buildHoldingLookupCatalog, findExactHoldingLookupCandidate, searchHoldingLookupCatalog, type HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { Badge, Button, Card, CardContent, GhostButton, Modal } from "./ui";
 
 const emptyHolding: Omit<Holding, "id"> = {
@@ -35,10 +37,76 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     averageCost: initial.averageCost,
     currency: initial.currency,
     sector: initial.sector,
-    account: accountName(initial.account)
+    account: accountName(initial.account),
+    priceSource: initial.priceSource,
+    priceAsOf: initial.priceAsOf
   } : emptyHolding);
+  const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(initial ? [] : null);
+  const [lookupQuery, setLookupQuery] = useState("");
+  const [lookupField, setLookupField] = useState<"symbol" | "name" | null>(null);
+  const [lookupUnavailable, setLookupUnavailable] = useState(false);
+
+  useEffect(() => {
+    if (initial || form.market !== "TW" || catalog !== null) return;
+    let active = true;
+    void Promise.all([loadBundledTwQuotes(), loadBundledRevenue()])
+      .then(([quotes, revenue]) => {
+        if (active) setCatalog(buildHoldingLookupCatalog(quotes, revenue));
+      })
+      .catch(() => {
+        if (active) {
+          setCatalog([]);
+          setLookupUnavailable(true);
+        }
+      });
+    return () => { active = false; };
+  }, [catalog, form.market, initial]);
+
+  const lookupResults = useMemo(
+    () => lookupField && lookupQuery.trim() ? searchHoldingLookupCatalog(catalog ?? [], lookupQuery) : [],
+    [catalog, lookupField, lookupQuery]
+  );
 
   const valid = form.name.trim() && form.symbol.trim() && form.quantity >= 0 && form.price >= 0 && form.averageCost >= 0 && accountName(form.account).length > 0;
+
+  function applyCandidate(candidate: HoldingLookupCandidate) {
+    setForm((current) => ({
+      ...current,
+      symbol: candidate.code,
+      name: candidate.name,
+      market: "TW",
+      type: candidate.type,
+      price: candidate.close,
+      currency: "TWD",
+      sector: candidate.industry,
+      priceSource: candidate.venue,
+      priceAsOf: candidate.date
+    }));
+    setLookupField(null);
+    setLookupQuery("");
+  }
+
+  function updateLookup(field: "symbol" | "name", value: string) {
+    if (initial) {
+      setForm((current) => ({ ...current, [field]: value }));
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+      ...(field === "symbol" ? { name: "" } : { symbol: "" }),
+      price: 0,
+      sector: "",
+      priceSource: undefined,
+      priceAsOf: undefined
+    }));
+    setLookupField(field);
+    setLookupQuery(value);
+
+    const exact = findExactHoldingLookupCandidate(catalog ?? [], field, value);
+    if (exact) applyCandidate(exact);
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,12 +124,64 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="grid grid-cols-[120px_1fr] gap-3">
-        <input className="field" placeholder="代號" value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })} />
-        <input className="field" placeholder="名稱" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        <input
+          className="field"
+          placeholder="代號"
+          value={form.symbol}
+          onChange={(e) => updateLookup("symbol", e.target.value)}
+          autoComplete="off"
+        />
+        <input
+          className="field"
+          placeholder="名稱"
+          value={form.name}
+          onChange={(e) => updateLookup("name", e.target.value)}
+          autoComplete="off"
+        />
       </div>
+
+      {!initial && form.market === "TW" ? (
+        <div className="space-y-2">
+          {catalog === null ? (
+            <p className="px-1 text-xs text-black/40 dark:text-white/40">正在載入 TWSE／TPEx 官方清單…</p>
+          ) : lookupUnavailable ? (
+            <p className="px-1 text-xs text-amber-700 dark:text-amber-300">目前無法載入官方清單，仍可改用手動輸入。</p>
+          ) : lookupQuery.trim() && lookupResults.length ? (
+            <div className="overflow-hidden rounded-2xl border border-black/8 bg-black/[.02] dark:border-white/10 dark:bg-white/[.03]">
+              {lookupResults.map((candidate) => (
+                <button
+                  key={`${candidate.venue}:${candidate.code}`}
+                  type="button"
+                  onClick={() => applyCandidate(candidate)}
+                  className="flex w-full items-center justify-between gap-3 border-b border-black/6 px-4 py-3 text-left last:border-b-0 hover:bg-black/[.04] dark:border-white/8 dark:hover:bg-white/[.05]"
+                >
+                  <span className="min-w-0">
+                    <strong className="block truncate text-sm">{candidate.code} · {candidate.name}</strong>
+                    <span className="mt-0.5 block truncate text-xs text-black/40 dark:text-white/40">{candidate.venue} · {candidate.industry} · {candidate.type === "etf" ? "ETF" : "個股"}</span>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <strong className="block text-sm">{candidate.close.toLocaleString()}</strong>
+                    <span className="text-[11px] text-black/35 dark:text-white/35">{candidate.date}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : lookupQuery.trim() && catalog.length ? (
+            <p className="px-1 text-xs text-black/40 dark:text-white/40">找不到相符的官方台股資料，可繼續手動輸入。</p>
+          ) : (
+            <p className="px-1 text-xs text-black/40 dark:text-white/40">代號或名稱只要輸入其中一邊；完整吻合時會自動帶入另一欄與公開市場資料。</p>
+          )}
+        </div>
+      ) : null}
+
       <input className="field" placeholder="帳戶，例如：台股證券、複委託、銀行現金" value={form.account ?? ""} onChange={(e) => setForm({ ...form, account: e.target.value })} />
       <div className="grid grid-cols-2 gap-3">
-        <select className="field" value={form.market} onChange={(e) => setForm({ ...form, market: e.target.value as Market })}>
+        <select className="field" value={form.market} onChange={(e) => {
+          const market = e.target.value as Market;
+          setForm({ ...form, market, currency: market === "TW" ? "TWD" : "USD" });
+          setLookupField(null);
+          setLookupQuery("");
+        }}>
           <option value="TW">台灣</option>
           <option value="US">美國</option>
         </select>
@@ -79,9 +199,14 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
         </select>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <input className="field" type="number" step="any" min="0" placeholder="目前價格" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+        <input className="field" type="number" step="any" min="0" placeholder="目前價格" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value), priceSource: "manual", priceAsOf: undefined })} />
         <input className="field" type="number" step="any" min="0" placeholder="平均成本" value={form.averageCost || ""} onChange={(e) => setForm({ ...form, averageCost: Number(e.target.value) })} />
       </div>
+      {form.priceSource && form.priceSource !== "manual" && form.priceAsOf ? (
+        <p className="px-1 text-xs text-black/40 dark:text-white/40">目前價格已由 {form.priceSource} 官方資料自動帶入 · 資料日 {form.priceAsOf}。平均成本屬於你的實際交易資料，不會用市價假造。</p>
+      ) : (
+        <p className="px-1 text-xs text-black/35 dark:text-white/35">平均成本無法從公開市場資料取得，請填你的實際持有成本。</p>
+      )}
       <input className="field" placeholder="產業 / 類別" value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} />
       <Dialog.Close asChild>
         <Button disabled={!valid} type="submit" className="w-full">{initial ? "儲存修改" : "新增部位"}</Button>
