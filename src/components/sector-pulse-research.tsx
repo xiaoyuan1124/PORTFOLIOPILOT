@@ -9,6 +9,7 @@ import {
   filterRevenueSectorPulse,
   heldRevenueIndustries
 } from "@/lib/sector-pulse";
+import { resolveHeldTwSecurityKeys } from "@/lib/research-holdings";
 import { percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 
@@ -22,15 +23,6 @@ export function SectorPulseResearch({ state }: { state: AppState }) {
   const [heldOnly, setHeldOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const heldCodes = useMemo(
-    () => new Set(
-      state.holdings
-        .filter((holding) => holding.market === "TW" && holding.type !== "cash")
-        .map((holding) => holding.symbol.toUpperCase())
-    ),
-    [state.holdings]
-  );
 
   useEffect(() => {
     let active = true;
@@ -64,7 +56,14 @@ export function SectorPulseResearch({ state }: { state: AppState }) {
 
   const period = cache ? latestRevenuePeriod(cache) : null;
   const allRows = useMemo(() => cache ? buildRevenueSectorPulse(cache) : [], [cache]);
-  const heldIndustries = useMemo(() => cache ? heldRevenueIndustries(cache, heldCodes) : new Set<string>(), [cache, heldCodes]);
+  const heldKeys = useMemo(
+    () => resolveHeldTwSecurityKeys(state.holdings, cache?.rows ?? []),
+    [cache, state.holdings]
+  );
+  const heldIndustries = useMemo(
+    () => cache ? heldRevenueIndustries(cache, heldKeys) : new Set<string>(),
+    [cache, heldKeys]
+  );
   const rows = useMemo(
     () => filterRevenueSectorPulse(allRows, query, heldIndustries, heldOnly),
     [allRows, heldIndustries, heldOnly, query]
@@ -82,8 +81,8 @@ export function SectorPulseResearch({ state }: { state: AppState }) {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-semibold">{allRows.length}</p>
-            <p className="text-xs opacity-60">符合樣本門檻的產業</p>
+            <p className="text-3xl font-semibold">{loading ? "…" : error ? "—" : allRows.length}</p>
+            <p className="text-xs opacity-60">{loading ? "讀取官方營收" : "符合樣本門檻的產業"}</p>
           </div>
         </div>
       </div>
@@ -148,11 +147,19 @@ export function SectorPulseResearch({ state }: { state: AppState }) {
       ) : null}
 
       {!loading && !error && heldOnly && heldIndustries.size === 0 ? (
-        <p className="py-12 text-center text-sm text-black/40 dark:text-white/40">目前持股沒有可對應到官方最新營收產業分類的台股。</p>
+        <div className="py-12 text-center">
+          <p className="text-sm text-black/40 dark:text-white/40">目前持股沒有可對應到官方最新營收產業分類的台股。</p>
+          <GhostButton className="mt-4" onClick={() => setHeldOnly(false)}>顯示全部族群</GhostButton>
+        </div>
       ) : null}
 
       {!loading && !error && rows.length === 0 && (!heldOnly || heldIndustries.size > 0) ? (
-        <p className="py-12 text-center text-sm text-black/40 dark:text-white/40">目前沒有符合搜尋與樣本門檻的產業。</p>
+        <div className="py-12 text-center">
+          <p className="text-sm text-black/40 dark:text-white/40">目前沒有符合搜尋與樣本門檻的產業。</p>
+          {(query || heldOnly) ? (
+            <GhostButton className="mt-4" onClick={() => { setQuery(""); setHeldOnly(false); }}>清除搜尋與篩選</GhostButton>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="grid gap-3 xl:grid-cols-2">
