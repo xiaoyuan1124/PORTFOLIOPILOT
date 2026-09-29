@@ -4,6 +4,7 @@ export type Currency = "TWD" | "USD";
 export type ActivityType = "deposit" | "withdrawal" | "buy" | "sell" | "dividend" | "fee";
 export type PriceSource = "manual" | "TWSE" | "TPEx";
 export type EtfCompositionSourceType = "user_import" | "official_issuer" | "official_exchange";
+export type DataMode = "personal" | "demo";
 
 export interface Holding {
   id: string;
@@ -16,6 +17,7 @@ export interface Holding {
   averageCost: number;
   currency: Currency;
   sector: string;
+  account?: string;
   priceSource?: PriceSource;
   priceAsOf?: string;
 }
@@ -74,6 +76,7 @@ export interface PortfolioActivity {
   quantity: number;
   price: number;
   note: string;
+  account?: string;
   preFlowValueTwd?: number;
 }
 
@@ -92,4 +95,5 @@ export interface AppState {
   activities: PortfolioActivity[];
   snapshots: NetWorthSnapshot[];
   usdTwd: number;
+  dataMode?: DataMode;
 }
