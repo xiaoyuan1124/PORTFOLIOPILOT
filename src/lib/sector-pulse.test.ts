@@ -45,10 +45,22 @@ describe("revenue sector pulse", () => {
   });
 
   it("can identify and filter to industries related to held stocks", () => {
-    const held = heldRevenueIndustries(cache, new Set(["1002"]));
+    const held = heldRevenueIndustries(cache, new Set(["TWSE:1002"]));
     expect([...held]).toEqual(["半導體"]);
     const rows = filterRevenueSectorPulse(buildRevenueSectorPulse(cache), "", held, true);
     expect(rows.map((row) => row.industry)).toEqual(["半導體"]);
+  });
+
+  it("does not map a same-code holding to the other market's industry", () => {
+    const split: RevenueCache = {
+      ...cache,
+      rows: [
+        ...cache.rows,
+        { code: "1002", name: "Same code TPEx", market: "TPEx", industry: "錯誤族群", period: "2026-08", revenue: 1, lastYearRevenue: 1, momPct: 0, yoyPct: 10, cumulativeRevenue: 1, cumulativeYoyPct: 1 }
+      ]
+    };
+    const held = heldRevenueIndustries(split, new Set(["TWSE:1002"]));
+    expect([...held]).toEqual(["半導體"]);
   });
 
   it("can search industry names without changing metric ordering", () => {
