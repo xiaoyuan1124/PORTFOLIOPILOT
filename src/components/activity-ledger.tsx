@@ -29,7 +29,7 @@ const icons: Record<ActivityType, typeof Banknote> = {
   fee: ReceiptText
 };
 
-function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: PortfolioActivity) => void }) {
+function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: PortfolioActivity) => boolean }) {
   const [type, setType] = useState<ActivityType>("deposit");
   const today = localDateKey();
   const [date, setDate] = useState(today);
@@ -52,7 +52,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
     event.preventDefault();
     if (!valid) return;
 
-    onSave({
+    const saved = onSave({
       id: `activity-${Date.now()}`,
       date,
       ...(external && time ? { time } : {}),
@@ -67,6 +67,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
       account: accountName(account),
       ...(external && preFlowValueTwd !== null ? { preFlowValueTwd } : {})
     });
+    if (!saved) return;
     closeRef.current?.click();
   }
 
@@ -142,7 +143,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
   );
 }
 
-function BoundaryForm({ activity, onSave }: { activity: PortfolioActivity; onSave: (activity: PortfolioActivity) => void }) {
+function BoundaryForm({ activity, onSave }: { activity: PortfolioActivity; onSave: (activity: PortfolioActivity) => boolean }) {
   const [time, setTime] = useState(activity.time ?? "");
   const [preFlowValueTwd, setPreFlowValueTwd] = useState<number | null>(activity.preFlowValueTwd ?? null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -151,11 +152,12 @@ function BoundaryForm({ activity, onSave }: { activity: PortfolioActivity; onSav
   function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!valid || preFlowValueTwd === null) return;
-    onSave({
+    const saved = onSave({
       ...activity,
       ...(time ? { time } : { time: undefined }),
       preFlowValueTwd
     });
+    if (!saved) return;
     closeRef.current?.click();
   }
 
@@ -176,7 +178,7 @@ function BoundaryForm({ activity, onSave }: { activity: PortfolioActivity; onSav
   );
 }
 
-export function ActivityLedger({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
+export function ActivityLedger({ state, onChange }: { state: AppState; onChange: (state: AppState) => boolean }) {
   const [filter, setFilter] = useState<"all" | "cash" | "trade" | "income">("all");
   const [accountFilter, setAccountFilter] = useState("all");
 
@@ -202,16 +204,20 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
   }, [accountFilter, filter, state.activities]);
 
   function add(activity: PortfolioActivity) {
-    onChange({ ...state, activities: [...state.activities, activity] });
+    const saved = onChange({ ...state, activities: [...state.activities, activity] });
+    if (!saved) return false;
     toast.success("交易／現金流已記錄");
+    return true;
   }
 
   function updateBoundary(activity: PortfolioActivity) {
-    onChange({
+    const saved = onChange({
       ...state,
       activities: state.activities.map((item) => item.id === activity.id ? activity : item)
     });
+    if (!saved) return false;
     toast.success("TWR 邊界已更新");
+    return true;
   }
 
   return (
@@ -285,7 +291,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       aria-label="刪除紀錄"
                       onClick={() => {
                         if (!window.confirm("刪除這筆交易／現金流紀錄？")) return;
-                        onChange({ ...state, activities: state.activities.filter((item) => item.id !== activity.id) });
+                        if (!onChange({ ...state, activities: state.activities.filter((item) => item.id !== activity.id) })) return;
                         toast.success("紀錄已刪除");
                       }}
                     >

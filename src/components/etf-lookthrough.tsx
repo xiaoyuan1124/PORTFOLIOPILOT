@@ -25,7 +25,7 @@ function coverageStatus(status: "covered" | "partial" | "insufficient") {
   return <Badge>資料不足</Badge>;
 }
 
-export function EtfLookThrough({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
+export function EtfLookThrough({ state, onChange }: { state: AppState; onChange: (state: AppState) => boolean }) {
   const importRef = useRef<HTMLInputElement>(null);
   const result = useMemo(
     () => calculateEtfLookThrough(state.holdings, state.etfCompositions, state.usdTwd),
@@ -38,7 +38,7 @@ export function EtfLookThrough({ state, onChange }: { state: AppState; onChange:
     try {
       const incoming = parseEtfCompositionCsv(await file.text());
       const merged = mergeEtfCompositions(state.etfCompositions, incoming);
-      onChange({ ...state, etfCompositions: merged });
+      if (!onChange({ ...state, etfCompositions: merged })) return;
       toast.success(`已匯入 ${incoming.length} 檔 ETF 成分資料`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "ETF 成分 CSV 格式不正確");
@@ -50,10 +50,10 @@ export function EtfLookThrough({ state, onChange }: { state: AppState; onChange:
   function removeComposition(market: "TW" | "US", symbol: string) {
     const key = `${market}:${symbol.toUpperCase()}`;
     if (!window.confirm(`移除 ${symbol} 的 ETF 成分資料？持股本身不會被刪除。`)) return;
-    onChange({
+    if (!onChange({
       ...state,
       etfCompositions: state.etfCompositions.filter((composition) => compositionKey(composition) !== key)
-    });
+    })) return;
     toast.success("ETF 成分資料已移除");
   }
 

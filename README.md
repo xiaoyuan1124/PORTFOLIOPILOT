@@ -215,3 +215,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - A brand-new empty portfolio still avoids creating meaningless zero-value daily snapshots.
 - Once snapshot history exists, removing the final holding writes today's portfolio value as zero instead of leaving the pre-delete value behind.
 - Today's snapshot is replaced in-place, preserving earlier history while keeping the current timeline consistent with the current portfolio.
+
+
+## V0.29 persistence-confirmed UX
+
+- App-level state mutations now return whether localStorage persistence actually succeeded.
+- Holdings, Taiwan quote updates, activities, TWR boundaries, ETF composition changes, journal entries, JSON/CSV imports, FX changes and reset/demo actions only show success after persistence succeeds.
+- Forms and dialogs stay open when persistence fails, so unsaved user input is not silently discarded.
+- Journal fields are cleared only after a successful save.
+- Theme changes remain usable even when browser storage is unavailable; the UI warns that the preference could not be remembered instead of throwing.

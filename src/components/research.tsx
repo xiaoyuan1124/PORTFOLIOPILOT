@@ -11,7 +11,7 @@ import { Journal } from "./journal";
 
 type ResearchTab = "snapshot" | "sectorPulse" | "revenue" | "valuation" | "scanner" | "journal";
 
-export function Research({ state, onChange, researchKey }: { state: AppState; onChange: (state: AppState) => void; researchKey?: string }) {
+export function Research({ state, onChange, researchKey }: { state: AppState; onChange: (state: AppState) => boolean; researchKey?: string }) {
   const [tab, setTab] = useState<ResearchTab>("snapshot");
 
   return (

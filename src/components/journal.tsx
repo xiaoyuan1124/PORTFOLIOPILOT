@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import type { AppState, JournalEntry } from "@/lib/types";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
-export function Journal({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
+export function Journal({ state, onChange }: { state: AppState; onChange: (state: AppState) => boolean }) {
   const [symbol, setSymbol] = useState("");
   const [title, setTitle] = useState("");
   const [thesis, setThesis] = useState("");
@@ -23,7 +23,7 @@ export function Journal({ state, onChange }: { state: AppState; onChange: (state
       thesis: thesis.trim(),
       invalidation: invalidation.trim()
     };
-    onChange({ ...state, journal: [entry, ...state.journal] });
+    if (!onChange({ ...state, journal: [entry, ...state.journal] })) return;
     setSymbol(""); setTitle(""); setThesis(""); setInvalidation("");
     toast.success("投資筆記已儲存");
   }
@@ -68,7 +68,7 @@ export function Journal({ state, onChange }: { state: AppState; onChange: (state
                   className="h-10 min-h-10 w-10 shrink-0 px-0"
                   onClick={() => {
                     if (!window.confirm(`刪除「${entry.title}」這篇投資筆記？`)) return;
-                    onChange({ ...state, journal: state.journal.filter((item) => item.id !== entry.id) });
+                    if (!onChange({ ...state, journal: state.journal.filter((item) => item.id !== entry.id) })) return;
                     toast.success("投資筆記已刪除");
                   }}
                 >

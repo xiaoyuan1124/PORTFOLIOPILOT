@@ -17,7 +17,7 @@ import {
 import { clearRecoveryBackup, getRecoveryBackupRaw, saveState } from "@/lib/storage";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
-export function Settings({ state, onChange, hasRecoveryBackup = false, onRecoveryBackupCleared, storageWriteBlocked = false }: { state: AppState; onChange: (state: AppState) => void; hasRecoveryBackup?: boolean; onRecoveryBackupCleared?: () => void; storageWriteBlocked?: boolean }) {
+export function Settings({ state, onChange, hasRecoveryBackup = false, onRecoveryBackupCleared, storageWriteBlocked = false }: { state: AppState; onChange: (state: AppState) => boolean; hasRecoveryBackup?: boolean; onRecoveryBackupCleared?: () => void; storageWriteBlocked?: boolean }) {
   const jsonRef = useRef<HTMLInputElement>(null);
   const csvRef = useRef<HTMLInputElement>(null);
   const [usdDraft, setUsdDraft] = useState<string | null>(null);
@@ -69,7 +69,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
     try {
       const parsed = parseBackup(await file.text());
       if (!window.confirm("匯入 JSON 會覆蓋目前本機資料，確定繼續？")) return;
-      onChange(parsed);
+      if (!onChange(parsed)) return;
       toast.success("JSON 備份已匯入");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "JSON 格式不正確");
@@ -93,7 +93,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
       const incoming = parseHoldingsCsv(await file.text());
       const base = state.dataMode === "demo" ? emptyState : state;
       const merged = mergeHoldings(base.holdings, incoming);
-      onChange({ ...base, dataMode: "personal", holdings: merged });
+      if (!onChange({ ...base, dataMode: "personal", holdings: merged })) return;
       toast.success(`已匯入 ${incoming.length} 筆持股`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "CSV 格式不正確");
@@ -194,12 +194,13 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
               if (usdDraft === null) return;
               const value = Number(usdDraft);
               if (Number.isFinite(value) && value > 0) {
-                onChange({ ...state, usdTwd: value });
+                if (!onChange({ ...state, usdTwd: value })) return;
                 toast.success(`USD/TWD 已更新為 ${value.toFixed(2)}`);
+                setUsdDraft(null);
               } else {
                 toast.error("請輸入大於 0 的有效 USD/TWD 匯率");
+                setUsdDraft(null);
               }
-              setUsdDraft(null);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") e.currentTarget.blur();
@@ -221,12 +222,12 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
           <div className="mt-5 flex flex-wrap gap-2">
             <GhostButton onClick={() => {
               if (!window.confirm("確定要清空本機的持股、ETF 成分來源、交易／現金流、筆記與淨值歷史嗎？建議先匯出 JSON。")) return;
-              onChange(emptyState);
+              if (!onChange(emptyState)) return;
               toast.success("本機資料已清空");
             }}><Trash2 size={16} />清空資料</GhostButton>
             <GhostButton onClick={() => {
               if (!window.confirm("確定要恢復示範資料嗎？目前本機資料會被覆蓋。")) return;
-              onChange(demoState);
+              if (!onChange(demoState)) return;
               toast.success("已恢復示範資料");
             }}><RotateCcw size={16} />示範資料</GhostButton>
           </div>

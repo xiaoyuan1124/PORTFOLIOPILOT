@@ -282,7 +282,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
 
 type SortMode = "value" | "gain" | "name";
 
-export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => void; onResearch?: (researchKey: string) => void }) {
+export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => boolean; onResearch?: (researchKey: string) => void }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("value");
   const [account, setAccount] = useState("all");
@@ -319,10 +319,11 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
       return false;
     }
 
-    onChange({
+    const saved = onChange({
       ...state,
       holdings: exists ? state.holdings.map((item) => item.id === holding.id ? holding : item) : [...state.holdings, holding]
     });
+    if (!saved) return false;
     toast.success(exists ? "部位已更新" : "部位已新增");
     return true;
   }
@@ -353,7 +354,7 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
         }
         return;
       }
-      onChange({ ...state, holdings: result.holdings });
+      if (!onChange({ ...state, holdings: result.holdings })) return;
       toast.success(`實際更新 ${result.updated}/${result.matched} 個台股部位 · ${dateLabel || `官方資料日 ${asOf}`}`);
       if (result.skippedStale || result.skippedAmbiguous) {
         toast.info(`另有 ${result.skippedStale + result.skippedAmbiguous} 筆因舊日期或市場不明而保留原價`);
@@ -446,7 +447,7 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
                       aria-label="刪除"
                       onClick={() => {
                         if (!window.confirm(`刪除 ${holding.name}？`)) return;
-                        onChange({ ...state, holdings: state.holdings.filter((item) => item.id !== holding.id) });
+                        if (!onChange({ ...state, holdings: state.holdings.filter((item) => item.id !== holding.id) })) return;
                         toast.success("部位已刪除");
                       }}
                     >
