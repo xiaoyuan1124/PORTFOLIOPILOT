@@ -250,3 +250,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - TWD cash maps to the Taiwan/TWD bucket and USD cash maps to the US/USD bucket for existing portfolio calculations.
 - Editing legacy cash positions first preserves quantity × price as the full balance before normalizing to the simpler format.
 - Changing cash currency clears the old numeric balance so a TWD amount cannot silently become the same number of USD.
+
+
+## V0.33 cash card UX
+
+- Cash holdings render as balances rather than stock positions.
+- Cash cards show native-currency balance, TWD-converted value and total-asset weight.
+- Quantity, ticker and percentage-gain fields are hidden for cash, and the card explicitly states that unrealized P/L is not calculated.
+- Legacy cash positions display their full quantity × price balance even before the user opens the simplified editor.
