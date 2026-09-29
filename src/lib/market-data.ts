@@ -41,6 +41,7 @@ export function applyTwQuotes(holdings: Holding[], cache: TwQuoteCache) {
     quoteMap.set(code, [...(quoteMap.get(code) ?? []), quote]);
   }
 
+  let matched = 0;
   let updated = 0;
   let skippedStale = 0;
   let skippedAmbiguous = 0;
@@ -71,22 +72,46 @@ export function applyTwQuotes(holdings: Holding[], cache: TwQuoteCache) {
       return holding;
     }
 
+    matched += 1;
+    const nextName = holding.name || quote.name;
+    const changed =
+      holding.price !== quote.close ||
+      holding.priceSource !== quote.market ||
+      holding.priceAsOf !== quote.date ||
+      holding.name !== nextName;
+
+    if (!changed) return holding;
+
     updated += 1;
     return {
       ...holding,
-      name: holding.name || quote.name,
+      name: nextName,
       price: quote.close,
       priceSource: quote.market,
       priceAsOf: quote.date
     };
   });
 
-  return { holdings: next, updated, skippedStale, skippedAmbiguous };
+  return { holdings: next, matched, updated, skippedStale, skippedAmbiguous };
 }
 
 export function cacheFreshnessLabel(cache: TwQuoteCache) {
   const newest = [...cache.quotes].map((quote) => quote.date).sort().at(-1);
   return newest ?? cache.generatedAt.slice(0, 10);
+}
+
+export function cacheMarketFreshness(cache: TwQuoteCache) {
+  const latestFor = (market: "TWSE" | "TPEx") =>
+    cache.quotes
+      .filter((quote) => quote.market === market)
+      .map((quote) => quote.date)
+      .sort()
+      .at(-1) ?? null;
+
+  return {
+    TWSE: latestFor("TWSE"),
+    TPEx: latestFor("TPEx")
+  };
 }
 
 function taipeiParts(now: Date) {
