@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Holding } from "./types";
-import { applyTwQuotes, cacheFreshnessLabel, shouldRejectStaleClosingCache, type TwQuoteCache } from "./market-data";
+import { applyTwQuotes, cacheFreshnessLabel, cacheMarketFreshness, shouldRejectStaleClosingCache, type TwQuoteCache } from "./market-data";
 
 const holdings: Holding[] = [
   { id: "1", symbol: "2330", name: "台積電", market: "TW", type: "stock", quantity: 2, price: 1000, averageCost: 900, currency: "TWD", sector: "半導體" },
@@ -24,6 +24,7 @@ const cache: TwQuoteCache = {
 describe("official Taiwan quote cache", () => {
   it("updates only TW non-cash holdings", () => {
     const result = applyTwQuotes(holdings, cache);
+    expect(result.matched).toBe(2);
     expect(result.updated).toBe(2);
     expect(result.holdings[0]?.price).toBe(1215);
     expect(result.holdings[0]?.priceSource).toBe("TWSE");
@@ -76,6 +77,31 @@ describe("official Taiwan quote cache", () => {
     expect(result.updated).toBe(0);
     expect(result.skippedAmbiguous).toBe(1);
     expect(result.holdings[0]?.price).toBe(150);
+  });
+
+  it("does not report unchanged official holdings as updated", () => {
+    const current = [
+      { ...holdings[0]!, price: 1215, priceSource: "TWSE" as const, priceAsOf: "2026-09-27" },
+      { ...holdings[1]!, price: 438, priceSource: "TPEx" as const, priceAsOf: "2026-09-27" }
+    ];
+    const result = applyTwQuotes(current, cache);
+
+    expect(result.matched).toBe(2);
+    expect(result.updated).toBe(0);
+  });
+
+  it("reports freshness separately for TWSE and TPEx", () => {
+    const split: TwQuoteCache = {
+      ...cache,
+      quotes: [
+        { code: "2330", name: "台積電", market: "TWSE", close: 1215, date: "2026-09-29" },
+        { code: "6488", name: "環球晶", market: "TPEx", close: 438, date: "2026-09-28" }
+      ]
+    };
+    expect(cacheMarketFreshness(split)).toEqual({
+      TWSE: "2026-09-29",
+      TPEx: "2026-09-28"
+    });
   });
 
   it("reports the latest market date", () => {
