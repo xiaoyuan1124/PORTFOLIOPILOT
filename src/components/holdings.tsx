@@ -41,22 +41,24 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     priceSource: initial.priceSource,
     priceAsOf: initial.priceAsOf
   } : emptyHolding);
-  const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(initial ? [] : null);
+  const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupField, setLookupField] = useState<"symbol" | "name" | null>(null);
   const [lookupUnavailable, setLookupUnavailable] = useState(false);
+  const [manualIdentity, setManualIdentity] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const lookupFieldRef = useRef<"symbol" | "name" | null>(null);
   const lookupQueryRef = useRef("");
 
   useEffect(() => {
-    if (initial || form.market !== "TW" || catalog !== null) return;
+    if (form.market !== "TW" || form.type === "cash" || manualIdentity || catalog !== null) return;
     let active = true;
     void Promise.all([loadBundledTwQuotes(), loadBundledRevenue()])
       .then(([quotes, revenue]) => {
         if (!active) return;
         const nextCatalog = buildHoldingLookupCatalog(quotes, revenue);
         setCatalog(nextCatalog);
+        setLookupUnavailable(false);
         const field = lookupFieldRef.current;
         const query = lookupQueryRef.current;
         const exact = field && query ? findExactHoldingLookupCandidate(nextCatalog, field, query) : null;
@@ -66,14 +68,17 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
         if (active) {
           setCatalog([]);
           setLookupUnavailable(true);
+          setManualIdentity(true);
         }
       });
     return () => { active = false; };
-  }, [catalog, form.market, initial]);
+  }, [catalog, form.market, form.type, manualIdentity]);
+
+  const smartLookupActive = form.market === "TW" && form.type !== "cash" && !manualIdentity;
 
   const lookupResults = useMemo(
-    () => lookupField && lookupQuery.trim() ? searchHoldingLookupCatalog(catalog ?? [], lookupQuery) : [],
-    [catalog, lookupField, lookupQuery]
+    () => smartLookupActive && lookupField && lookupQuery.trim() ? searchHoldingLookupCatalog(catalog ?? [], lookupQuery) : [],
+    [catalog, lookupField, lookupQuery, smartLookupActive]
   );
 
   const costValid = form.type === "cash" ? form.averageCost >= 0 : form.averageCost > 0;
@@ -101,30 +106,41 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     lookupQueryRef.current = "";
     setLookupField(null);
     setLookupQuery("");
+    setManualIdentity(false);
+  }
+
+  function clearLookupIntent() {
+    lookupFieldRef.current = null;
+    lookupQueryRef.current = "";
+    setLookupField(null);
+    setLookupQuery("");
+  }
+
+  function useManualIdentity() {
+    clearLookupIntent();
+    setManualIdentity(true);
+  }
+
+  function retryOfficialIdentity() {
+    setLookupUnavailable(false);
+    setManualIdentity(false);
+    if (!catalog?.length) setCatalog(null);
   }
 
   function updateLookup(field: "symbol" | "name", value: string) {
-    if (initial) {
-      const symbolChanged =
-        field === "symbol" &&
-        value.trim().toUpperCase() !== initial.symbol.trim().toUpperCase();
-
-      setForm((current) => ({
-        ...current,
-        [field]: value,
-        ...(symbolChanged
-          ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
-          : {})
-      }));
-      return;
-    }
-
-    if (form.market !== "TW") {
-      setForm((current) => ({ ...current, [field]: value }));
-      lookupFieldRef.current = null;
-      lookupQueryRef.current = "";
-      setLookupField(null);
-      setLookupQuery("");
+    if (!smartLookupActive) {
+      setForm((current) => {
+        const symbolChanged =
+          field === "symbol" &&
+          value.trim().toUpperCase() !== current.symbol.trim().toUpperCase();
+        return {
+          ...current,
+          [field]: value,
+          ...(symbolChanged
+            ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
+            : {})
+        };
+      });
       return;
     }
 
@@ -183,12 +199,21 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
         />
       </div>
 
-      {!initial && form.market === "TW" ? (
+      {form.market === "TW" && form.type !== "cash" ? (
         <div className="space-y-2">
-          {catalog === null ? (
+          {manualIdentity ? (
+            <div className="flex items-start justify-between gap-3 rounded-xl border border-black/6 bg-black/[.018] px-3 py-2.5 dark:border-white/8 dark:bg-white/[.025]">
+              <p className="text-xs leading-5 text-black/45 dark:text-white/45">
+                {lookupUnavailable
+                  ? "官方 TWSE／TPEx 清單目前無法載入，已切換手動輸入；代號與名稱不會互相清除。"
+                  : "目前是手動輸入模式；代號與名稱可分別修改，系統不會猜測或覆寫公開市場資料。"}
+              </p>
+              <button type="button" onClick={retryOfficialIdentity} className="shrink-0 text-xs font-semibold underline underline-offset-2">
+                {lookupUnavailable ? "重試官方清單" : "回到官方搜尋"}
+              </button>
+            </div>
+          ) : catalog === null ? (
             <p className="px-1 text-xs text-black/40 dark:text-white/40">正在載入 TWSE／TPEx 官方清單…</p>
-          ) : lookupUnavailable ? (
-            <p className="px-1 text-xs text-amber-700 dark:text-amber-300">目前無法載入官方清單，仍可改用手動輸入。</p>
           ) : lookupQuery.trim() && lookupResults.length ? (
             <div className="overflow-hidden rounded-2xl border border-black/8 bg-black/[.02] dark:border-white/10 dark:bg-white/[.03]">
               {lookupResults.map((candidate) => (
@@ -210,13 +235,23 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
               ))}
             </div>
           ) : lookupQuery.trim() && catalog.length ? (
-            <p className="px-1 text-xs text-black/40 dark:text-white/40">找不到相符的官方台股資料，可繼續手動輸入。</p>
+            <div className="flex items-center justify-between gap-3 px-1">
+              <p className="text-xs text-black/40 dark:text-white/40">找不到相符的官方台股資料。</p>
+              <button type="button" onClick={useManualIdentity} className="shrink-0 text-xs font-semibold underline underline-offset-2">改用手動輸入</button>
+            </div>
           ) : (
-            <p className="px-1 text-xs text-black/40 dark:text-white/40">代號或名稱只要輸入其中一邊；完整吻合時會自動帶入另一欄與公開市場資料。</p>
+            <div className="flex items-start justify-between gap-3 px-1">
+              <p className="text-xs leading-5 text-black/40 dark:text-white/40">
+                {initial
+                  ? "修改代號或名稱時會重新比對官方清單；選中結果後才會更新公司名稱、產業、收盤價與來源。"
+                  : "代號或名稱只要輸入其中一邊；完整吻合時會自動帶入另一欄與公開市場資料。"}
+              </p>
+              <button type="button" onClick={useManualIdentity} className="shrink-0 text-xs font-semibold underline underline-offset-2">手動輸入</button>
+            </div>
           )}
         </div>
       ) : null}
-      {!initial && form.market === "US" ? (
+      {form.market === "US" ? (
         <p className="px-1 text-xs leading-5 text-black/40 dark:text-white/40">
           美股目前不使用付費或授權不明的即時資料源；請手動填代號、名稱、目前價格與實際平均成本，兩個文字欄位不會互相清除。
         </p>
@@ -238,15 +273,37 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
               ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
               : {})
           });
-          lookupFieldRef.current = null;
-          lookupQueryRef.current = "";
-          setLookupField(null);
-          setLookupQuery("");
+          clearLookupIntent();
+          if (market === "TW" && form.type !== "cash") {
+            setManualIdentity(false);
+            setLookupUnavailable(false);
+            if (!catalog?.length) setCatalog(null);
+          } else {
+            setManualIdentity(true);
+          }
         }}>
           <option value="TW">台灣</option>
           <option value="US">美國</option>
         </select>
-        <select className="field" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as AssetType })}>
+        <select className="field" value={form.type} onChange={(e) => {
+          const type = e.target.value as AssetType;
+          const enteringCash = type === "cash";
+          setForm({
+            ...form,
+            type,
+            ...(enteringCash
+              ? { sector: "現金", priceSource: undefined, priceAsOf: undefined }
+              : {})
+          });
+          clearLookupIntent();
+          if (form.market === "TW" && !enteringCash) {
+            setManualIdentity(false);
+            setLookupUnavailable(false);
+            if (!catalog?.length) setCatalog(null);
+          } else {
+            setManualIdentity(true);
+          }
+        }}>
           <option value="stock">個股</option>
           <option value="etf">ETF</option>
           <option value="cash">現金</option>
@@ -266,7 +323,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
       {form.priceSource && form.priceSource !== "manual" && form.priceAsOf ? (
         <p className="px-1 text-xs text-black/40 dark:text-white/40">目前價格已由 {form.priceSource} 官方資料自動帶入 · 資料日 {form.priceAsOf}。平均成本屬於你的實際交易資料，不會用市價假造。</p>
       ) : (
-        <p className="px-1 text-xs text-black/35 dark:text-white/35">目前價格若不是官方帶入，請確認後再新增。</p>
+        <p className="px-1 text-xs text-black/35 dark:text-white/35">目前價格若不是官方帶入，請在儲存前確認數值與標的身分。</p>
       )}
       <p className="px-1 text-xs text-black/35 dark:text-white/35">
         股數必須大於 0；{form.type === "cash" ? "現金可用數量 × 價格表示金額。" : "平均成本必須大於 0，才能避免產生錯誤的未實現損益。"}

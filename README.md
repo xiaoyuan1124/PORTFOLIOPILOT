@@ -231,3 +231,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Investment journal entries use the device's local calendar date instead of UTC, preventing after-midnight entries from being recorded as the previous day.
 - Recovery, JSON backup, holdings CSV and ETF composition export filenames use the same local-date convention.
 - Local date formatting is covered by calculation tests.
+
+
+## V0.31 Taiwan holding identity editing
+
+- Official TWSE / TPEx symbol-name lookup now works while editing existing Taiwan holdings, not only when adding a new one.
+- Changing a security identity clears stale price, sector and provenance until the new identity is confirmed.
+- If the official catalog is unavailable or has no match, the form provides a real manual-entry mode where symbol and name can coexist.
+- Manual mode can retry the official catalog or return to official search in one tap.
+- Switching a holding to cash clears exchange price provenance; changing any manual symbol, including US holdings, clears stale security metadata.
