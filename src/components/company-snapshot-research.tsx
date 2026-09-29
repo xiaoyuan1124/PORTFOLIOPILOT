@@ -70,18 +70,11 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
   const [caches, setCaches] = useState<Caches | null>(null);
   const [query, setQuery] = useState("");
   const [heldOnly, setHeldOnly] = useState(false);
-  const [selectedKey, setSelectedKey] = useState("");
+  const [selectedKey, setSelectedKey] = useState(requestedKey ?? "");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const heldCodes = useMemo(() => new Set(state.holdings.filter((holding) => holding.market === "TW" && holding.type !== "cash").map((holding) => holding.symbol.toUpperCase())), [state.holdings]);
-
-  useEffect(() => {
-    if (!requestedKey) return;
-    setSelectedKey(requestedKey);
-    setQuery("");
-    setHeldOnly(false);
-  }, [requestedKey]);
 
   async function fetchCaches() {
     const [quotes, revenue, valuations, revenueHistory, institutional, quarterly] = await Promise.all([
