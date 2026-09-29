@@ -1,11 +1,11 @@
-import { demoState } from "./demo-data";
+import { emptyState } from "./demo-data";
 import type { AppState } from "./types";
 import { appStateSchema } from "./schema";
 
 const KEY = "portfoliopilot:v1";
 
 function migrateLegacyState(value: unknown): AppState {
-  if (!value || typeof value !== "object") return demoState;
+  if (!value || typeof value !== "object") return emptyState;
   const record = value as Record<string, unknown>;
   return appStateSchema.parse({
     holdings: Array.isArray(record.holdings) ? record.holdings : [],
@@ -13,19 +13,20 @@ function migrateLegacyState(value: unknown): AppState {
     journal: Array.isArray(record.journal) ? record.journal : [],
     activities: Array.isArray(record.activities) ? record.activities : [],
     snapshots: Array.isArray(record.snapshots) ? record.snapshots : [],
-    usdTwd: record.usdTwd ?? 31.8
+    usdTwd: record.usdTwd ?? 31.8,
+    dataMode: record.dataMode ?? "personal"
   });
 }
 
 export function getInitialState(): AppState {
-  if (typeof window === "undefined") return demoState;
+  if (typeof window === "undefined") return emptyState;
   const raw = window.localStorage.getItem(KEY);
-  if (!raw) return demoState;
+  if (!raw) return emptyState;
 
   try {
     return migrateLegacyState(JSON.parse(raw));
   } catch {
-    return demoState;
+    return emptyState;
   }
 }
 
