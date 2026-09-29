@@ -170,11 +170,11 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
   const visible = useMemo(() => companySnapshotsForView(snapshots, query, heldKeys, heldOnly, 80), [snapshots, query, heldKeys, heldOnly]);
   const selected = useMemo(() => {
     if (selectedKey) {
-      const chosen = snapshots.find((row) => `${row.market}:${row.code}` === selectedKey);
-      if (chosen) return chosen;
+      return snapshots.find((row) => `${row.market}:${row.code}` === selectedKey) ?? null;
     }
     return snapshots.find((row) => isHeldCompanySnapshot(row, heldKeys)) ?? visible[0] ?? null;
   }, [snapshots, selectedKey, heldKeys, visible]);
+  const requestedMissing = Boolean(selectedKey && !loading && !error && snapshots.length && !selected);
 
   const quoteSource = selected && caches ? caches.quotes.sources.find((source) => source.name.toUpperCase().includes(selected.market.toUpperCase())) ?? null : null;
   const revenueSource = selected?.revenue && caches ? caches.revenue.sources.find((source) => source.name.toUpperCase().includes(selected.market.toUpperCase())) ?? null : null;
@@ -213,7 +213,15 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
       })}
     </div> : null}
 
-    {!loading && !error && !selected ? <div className="rounded-2xl border border-black/6 p-8 text-center dark:border-white/8"><Search className="mx-auto text-black/25 dark:text-white/25" size={28} /><p className="mt-3 text-sm font-semibold">選一家公司開始研究</p><p className="mt-1 text-xs text-black/40 dark:text-white/40">有台股持倉時會自動優先顯示持有標的；否則請從上方搜尋或快速選擇。</p></div> : null}
+    {requestedMissing ? (
+      <div className="rounded-2xl border border-[#b98b57]/20 bg-[#f8f1e8] p-6 text-center text-[#6f4c26] dark:border-[#b98b57]/15 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+        <Search className="mx-auto opacity-50" size={28} />
+        <p className="mt-3 text-sm font-semibold">指定標的目前不在官方研究清單</p>
+        <p className="mt-1 text-xs leading-5 opacity-80">要求的研究鍵：{selectedKey}。系統不會自動改顯示另一家公司，避免你誤以為看到的是原本指定標的。</p>
+        <GhostButton className="mt-4 border-current/20 bg-transparent" onClick={() => setSelectedKey("")}>改看其他標的</GhostButton>
+      </div>
+    ) : null}
+    {!loading && !error && !selected && !requestedMissing ? <div className="rounded-2xl border border-black/6 p-8 text-center dark:border-white/8"><Search className="mx-auto text-black/25 dark:text-white/25" size={28} /><p className="mt-3 text-sm font-semibold">選一家公司開始研究</p><p className="mt-1 text-xs text-black/40 dark:text-white/40">有台股持倉時會自動優先顯示持有標的；否則請從上方搜尋或快速選擇。</p></div> : null}
 
     {selected ? <>
       <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{isHeldCompanySnapshot(selected, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>
