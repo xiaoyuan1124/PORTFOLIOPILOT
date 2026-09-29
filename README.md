@@ -276,3 +276,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Scanner also tolerates individual revenue-history, institutional or quarterly cache failures and keeps unaffected gates usable.
 - Reload preserves already loaded optional data when one source temporarily fails.
 - A requested research security is never silently replaced by a different company when the requested key is unavailable.
+
+
+## V0.36 venue-aware research holdings
+
+- Research "held" identity now uses TWSE/TPEx + security code rather than code alone.
+- Known exchange provenance never marks a same-code security on the other market as held.
+- Holdings without exchange provenance resolve automatically only when the official research dataset contains exactly one venue for that code; ambiguous same-code cases fail closed.
+- Company Snapshot, monthly revenue, official valuation and Scanner now share the same venue-aware held logic.
