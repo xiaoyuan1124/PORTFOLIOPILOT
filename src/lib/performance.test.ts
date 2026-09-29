@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppState } from "./types";
-import { calculateXirr, exactTimeWeightedReturn, modifiedDietzReturn, netExternalContributions, portfolioXirr } from "./performance";
+import { calculateXirr, exactTimeWeightedReturn, incomeAfterFees, modifiedDietzReturn, netExternalContributions, portfolioXirr } from "./performance";
 
 describe("performance math", () => {
   it("solves a simple one-year 10% XIRR", () => {
@@ -26,6 +26,22 @@ describe("performance math", () => {
       ]
     };
     expect(netExternalContributions(state.activities)).toBe(800);
+  });
+
+  it("excludes future external cash flows from current contribution totals", () => {
+    const activities = [
+      { id: "past", date: "2026-09-29", type: "deposit" as const, symbol: "", amount: 1000, currency: "TWD" as const, fxRate: 1, quantity: 0, price: 0, note: "" },
+      { id: "future", date: "2026-10-05", type: "deposit" as const, symbol: "", amount: 500, currency: "TWD" as const, fxRate: 1, quantity: 0, price: 0, note: "" }
+    ];
+    expect(netExternalContributions(activities, "2026-09-30")).toBe(1000);
+  });
+
+  it("excludes future dividends and fees from current income totals", () => {
+    const activities = [
+      { id: "dividend", date: "2026-09-29", type: "dividend" as const, symbol: "2330", amount: 100, currency: "TWD" as const, fxRate: 1, quantity: 0, price: 0, note: "" },
+      { id: "future-fee", date: "2026-10-05", type: "fee" as const, symbol: "", amount: 50, currency: "TWD" as const, fxRate: 1, quantity: 0, price: 0, note: "" }
+    ];
+    expect(incomeAfterFees(activities, "2026-09-30")).toBe(100);
   });
 
   it("calculates portfolio XIRR from external flows and terminal value", () => {
