@@ -7,7 +7,10 @@ import {
   retryTransientMopsRequest
 } from "./lib/quarterly-financials.mjs";
 
-const MOPS_URL = "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04";
+const MOPS_URLS = [
+  "https://mops.twse.com.tw/mops/web/ajax_t163sb04",
+  "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04"
+];
 const MARKETS = [
   { market: "TWSE", typek: "sii" },
   { market: "TPEx", typek: "otc" }
@@ -43,14 +46,15 @@ async function fetchQuarter(source, year, quarter) {
   const period = quarterKey(year, quarter);
 
   return retryTransientMopsRequest(
-    async () => {
-      const response = await fetch(MOPS_URL, {
+    async (attempt) => {
+      const url = MOPS_URLS[(attempt - 1) % MOPS_URLS.length];
+      const response = await fetch(url, {
         method: "POST",
         redirect: "follow",
         headers: {
           "content-type": "application/x-www-form-urlencoded",
-          "user-agent": "Mozilla/5.0 PortfolioPilot/0.13",
-          referer: "https://mopsov.twse.com.tw/",
+          "user-agent": "Mozilla/5.0 PortfolioPilot/0.20",
+          referer: `${new URL(url).origin}/`,
           accept: "text/html,application/xhtml+xml"
         },
         body: formBody(source.typek, year, quarter),
@@ -74,14 +78,14 @@ async function fetchQuarter(source, year, quarter) {
         throw new Error(`Refusing incomplete MOPS ${source.market} ${period}: ${companyRows} company rows`);
       }
 
-      return { period, ...parsed };
+      return { period, sourceUrl: url, ...parsed };
     },
     {
-      attempts: 4,
-      baseDelayMs: 1500,
+      attempts: 6,
+      baseDelayMs: 1800,
       onRetry: ({ nextAttempt, delayMs, error }) => {
         console.warn(
-          `Transient MOPS ${source.market} ${period} failure; retrying attempt ${nextAttempt}/4 in ${delayMs}ms: ${error?.message ?? error}`
+          `Transient MOPS ${source.market} ${period} failure; retrying attempt ${nextAttempt}/6 in ${delayMs}ms: ${error?.message ?? error}`
         );
       }
     }
@@ -177,7 +181,7 @@ async function main() {
         name: "MOPS 公開資訊觀測站－綜合損益表",
         market: source.market,
         period,
-        url: MOPS_URL,
+        url: raw.sourceUrl ?? MOPS_URLS[0],
         method: "POST",
         fetchedAt: generatedAt,
         generalRows: raw.generalRows.length,
