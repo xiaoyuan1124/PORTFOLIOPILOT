@@ -61,3 +61,32 @@ export function cacheFreshnessLabel(cache: TwQuoteCache) {
   const newest = [...cache.quotes].map((quote) => quote.date).sort().at(-1);
   return newest ?? cache.generatedAt.slice(0, 10);
 }
+
+function taipeiParts(now: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+    weekday: "short"
+  }).formatToParts(now);
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  return {
+    date: `${value("year")}-${value("month")}-${value("day")}`,
+    hour: Number(value("hour")),
+    weekday: value("weekday")
+  };
+}
+
+export function shouldRejectStaleClosingCache(cache: TwQuoteCache, now = new Date()) {
+  const latest = cacheFreshnessLabel(cache);
+  const taipei = taipeiParts(now);
+  const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri"].includes(taipei.weekday);
+
+  // Before the Taiwan market's end-of-day publishing window, the previous
+  // trading day's close is expected. After 17:00 on a weekday, do not let
+  // an older static cache overwrite a user's current values.
+  return weekday && taipei.hour >= 17 && latest < taipei.date;
+}
