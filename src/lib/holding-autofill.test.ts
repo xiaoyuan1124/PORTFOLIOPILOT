@@ -13,7 +13,8 @@ const quotes: TwQuoteCache = {
   quotes: [
     { code: "2330", name: "台積電", market: "TWSE", close: 1250, date: "2026-09-29" },
     { code: "00935", name: "野村臺灣新科技50", market: "TWSE", close: 32.5, date: "2026-09-29" },
-    { code: "6488", name: "環球晶", market: "TPEx", close: 445, date: "2026-09-29" }
+    { code: "6488", name: "環球晶", market: "TPEx", close: 445, date: "2026-09-29" },
+    { code: "03001P", name: "測試權證", market: "TWSE", close: 1.2, date: "2026-09-29" }
   ]
 };
 
@@ -72,6 +73,11 @@ describe("holding autofill catalog", () => {
 
     expect(etf?.type).toBe("etf");
     expect(etf?.industry).toBe("ETF");
+  });
+
+  it("excludes quote-only non-equity instruments from smart holding search", () => {
+    const catalog = buildHoldingLookupCatalog(quotes, revenue);
+    expect(catalog.some((item) => item.code === "03001P")).toBe(false);
   });
 
   it("searches by either code or name and exact-matches one field", () => {
