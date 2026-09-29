@@ -123,7 +123,14 @@ export function ValuationResearch({ state }: { state: AppState }) {
         })}
       </div>
 
-      {!loading && !error && cache && cache.rows.length > 0 && visible.length === 0 ? <p className="py-14 text-center text-sm text-black/40 dark:text-white/40">目前沒有符合篩選條件的官方估值資料。</p> : null}
+      {!loading && !error && cache && cache.rows.length > 0 && visible.length === 0 ? (
+        <div className="py-14 text-center">
+          <p className="text-sm text-black/40 dark:text-white/40">目前沒有符合搜尋／持股篩選條件的官方估值資料。</p>
+          {(query || heldOnly) ? (
+            <GhostButton className="mt-4" onClick={() => { setQuery(""); setHeldOnly(false); }}>清除搜尋與篩選</GhostButton>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
