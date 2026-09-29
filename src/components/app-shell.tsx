@@ -58,7 +58,12 @@ export function AppShell() {
         }
       }
 
-      const saved = window.localStorage.getItem("portfoliopilot:theme");
+      let saved: string | null = null;
+      try {
+        saved = window.localStorage.getItem("portfoliopilot:theme");
+      } catch {
+        saved = null;
+      }
       const shouldDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
       setDark(shouldDark);
       document.documentElement.classList.toggle("dark", shouldDark);
@@ -87,16 +92,18 @@ export function AppShell() {
     if (storageWriteBlocked) {
       toast.error("本機儲存目前不可安全寫入；請先到「我的」處理資料復原提示。");
       setSection("settings");
-      return;
+      return false;
     }
 
     const prepared = withTodaySnapshot(next);
     try {
       saveState(prepared);
       setState(prepared);
+      return true;
     } catch {
       setStorageWriteBlocked(true);
       toast.error("本機儲存失敗，這次變更沒有套用。請先匯出備份並檢查瀏覽器儲存空間。");
+      return false;
     }
   }
 
@@ -112,7 +119,11 @@ export function AppShell() {
     const next = !dark;
     setDark(next);
     document.documentElement.classList.toggle("dark", next);
-    window.localStorage.setItem("portfoliopilot:theme", next ? "dark" : "light");
+    try {
+      window.localStorage.setItem("portfoliopilot:theme", next ? "dark" : "light");
+    } catch {
+      toast.info("主題已套用，但瀏覽器目前無法記住這個偏好。");
+    }
   }
 
   return (
