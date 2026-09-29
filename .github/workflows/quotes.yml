@@ -16,13 +16,15 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: taiwan-closing-quotes
   cancel-in-progress: true
 
 jobs:
-  refresh:
+  refresh-and-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,3 +44,22 @@ jobs:
             git commit -m "data: refresh Taiwan closing quotes"
             git push
           fi
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Build site with refreshed closing quotes
+        run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: refresh-and-build
+    steps:
+      - name: Deploy refreshed closing quotes
+        id: deployment
+        uses: actions/deploy-pages@v4
