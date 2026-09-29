@@ -25,13 +25,24 @@ export function QuickSearch({
 }) {
   const [query, setQuery] = useState("");
   const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     if (!open || catalog !== null) return;
     let active = true;
     void Promise.all([loadBundledTwQuotes(), loadBundledRevenue()])
-      .then(([quotes, revenue]) => { if (active) setCatalog(buildHoldingLookupCatalog(quotes, revenue)); })
-      .catch(() => { if (active) setCatalog([]); });
+      .then(([quotes, revenue]) => {
+        if (active) {
+          setCatalog(buildHoldingLookupCatalog(quotes, revenue));
+          setLoadError("");
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setCatalog([]);
+          setLoadError("官方台股／ETF 清單載入失敗，可能是網路或資料快取暫時無法取得。");
+        }
+      });
     return () => { active = false; };
   }, [catalog, open]);
 
@@ -71,6 +82,12 @@ export function QuickSearch({
     onNavigate(section, researchKey);
   }
 
+  function retryCatalog() {
+    setLoadError("");
+    setCatalog(null);
+  }
+
+
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
@@ -107,6 +124,12 @@ export function QuickSearch({
                   })}
                 </div>
                 <p className="mt-3 px-2 text-xs leading-5 text-black/38 dark:text-white/38">快捷鍵：⌘K / Ctrl+K。輸入台股或 ETF 代號可直接打開官方研究頁。</p>
+                {loadError ? (
+                  <div className="mx-2 mt-3 flex items-center justify-between gap-3 rounded-xl border border-[#b98b57]/20 bg-[#f5ece1] px-3 py-2 text-xs text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+                    <span>{loadError}</span>
+                    <button type="button" onClick={retryCatalog} className="shrink-0 font-semibold underline underline-offset-2">重試</button>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
@@ -136,8 +159,15 @@ export function QuickSearch({
               </div>
             ) : null}
 
-            {query.trim() && !holdingResults.length && !visibleSecurityResults.length && !loading ? <p className="px-3 py-10 text-center text-sm text-black/40 dark:text-white/40">找不到符合的持股、個股或 ETF 官方資料。</p> : null}
-            {query.trim() && loading ? <p className="px-3 py-10 text-center text-sm text-black/40 dark:text-white/40">正在載入官方公司清單…</p> : null}
+            {query.trim() && loadError ? (
+              <div className="px-3 py-8 text-center">
+                <p className="text-sm font-semibold text-[#7d5729] dark:text-[#e5bd86]">官方搜尋資料目前無法載入</p>
+                <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-black/45 dark:text-white/45">{loadError}</p>
+                <button type="button" onClick={retryCatalog} className="mt-4 min-h-10 rounded-xl border border-black/8 px-4 text-sm font-semibold dark:border-white/10">重新載入</button>
+              </div>
+            ) : null}
+            {query.trim() && !loadError && !holdingResults.length && !visibleSecurityResults.length && !loading ? <p className="px-3 py-10 text-center text-sm text-black/40 dark:text-white/40">找不到符合的持股、個股或 ETF 官方資料。</p> : null}
+            {query.trim() && loading ? <p className="px-3 py-10 text-center text-sm text-black/40 dark:text-white/40">正在載入官方台股／ETF 清單…</p> : null}
           </div>
         </Dialog.Content>
       </Dialog.Portal>
