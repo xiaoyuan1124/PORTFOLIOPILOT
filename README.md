@@ -200,3 +200,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Cash holdings contribute their current value as both value and cost basis, so cash never creates fake unrealized gains or losses.
 - Portfolio unrealized P/L and gain percentage therefore reflect investment positions rather than idle cash.
 - Clearing a local-data recovery backup now first writes the currently visible valid state as the new primary baseline, preventing the old invalid primary payload from recreating the warning on the next launch.
+
+
+## V0.27 performance date integrity
+
+- New transaction/cash-flow entries cannot use a future date.
+- Current net contributions and dividend-minus-fee summaries ignore future-dated records from older backups or imported data.
+- The performance page warns when future records exist instead of silently including them in today's metrics.
+- XIRR and Exact TWR remain valuation-date bounded, so all major performance summaries now use a consistent current-date boundary.
