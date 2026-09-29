@@ -5,6 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownCircle, ArrowUpCircle, Banknote, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
+import { isExternalActivityType, isTradeActivityType, normalizeActivitySecurityFields } from "@/lib/activity-data";
 import { localDateKey } from "@/lib/calc";
 import { accountName } from "@/lib/local-data";
 import { activityAmountTwd } from "@/lib/performance";
@@ -45,24 +46,48 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
   const [preFlowValueTwd, setPreFlowValueTwd] = useState<number | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  const external = type === "deposit" || type === "withdrawal";
-  const valid = Boolean(date) && date <= today && amount > 0 && fxRate > 0 && accountName(account).length > 0 && (preFlowValueTwd === null || preFlowValueTwd >= 0);
+  const external = isExternalActivityType(type);
+  const trade = isTradeActivityType(type);
+  const valid = Boolean(date) &&
+    date <= today &&
+    amount > 0 &&
+    fxRate > 0 &&
+    accountName(account).length > 0 &&
+    (!trade || Boolean(symbol.trim())) &&
+    (preFlowValueTwd === null || preFlowValueTwd >= 0);
+
+  function changeType(nextType: ActivityType) {
+    setType(nextType);
+
+    if (isExternalActivityType(nextType)) {
+      setSymbol("");
+      setQuantity(0);
+      setPrice(0);
+      return;
+    }
+
+    setTime("");
+    setPreFlowValueTwd(null);
+    if (!isTradeActivityType(nextType)) {
+      setQuantity(0);
+      setPrice(0);
+    }
+  }
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!valid) return;
 
+    const security = normalizeActivitySecurityFields(type, symbol, quantity, price);
     const saved = onSave({
       id: `activity-${Date.now()}`,
       date,
       ...(external && time ? { time } : {}),
       type,
-      symbol: symbol.trim().toUpperCase(),
+      ...security,
       amount,
       currency,
       fxRate: currency === "USD" ? fxRate : 1,
-      quantity,
-      price,
       note: note.trim(),
       account: accountName(account),
       ...(external && preFlowValueTwd !== null ? { preFlowValueTwd } : {})
@@ -74,7 +99,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <select className="field" value={type} onChange={(event) => setType(event.target.value as ActivityType)}>
+        <select className="field" value={type} onChange={(event) => changeType(event.target.value as ActivityType)}>
           {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
         <input className="field" type="date" max={today} value={date} onChange={(event) => setDate(event.target.value)} />
@@ -120,9 +145,19 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
         <input className="field" type="number" min="0.0001" step="0.01" placeholder="當日 USD/TWD 匯率" value={fxRate || ""} onChange={(event) => setFxRate(Number(event.target.value))} />
       ) : null}
 
-      <input className="field" placeholder="股票代號（入金/出金可留空）" value={symbol} onChange={(event) => setSymbol(event.target.value)} />
+      {!external ? (
+        <div>
+          <input
+            className="field"
+            placeholder={trade ? "股票代號（買進／賣出必填）" : "股票代號（選填）"}
+            value={symbol}
+            onChange={(event) => setSymbol(event.target.value)}
+          />
+          {trade && !symbol.trim() ? <p className="mt-1 px-1 text-[11px] text-black/35 dark:text-white/35">買進／賣出紀錄需要股票代號，避免之後無法辨識交易標的。</p> : null}
+        </div>
+      ) : null}
 
-      {(type === "buy" || type === "sell") ? (
+      {trade ? (
         <div className="grid grid-cols-2 gap-3">
           <input className="field" type="number" min="0" step="any" placeholder="數量（選填）" value={quantity || ""} onChange={(event) => setQuantity(Number(event.target.value))} />
           <input className="field" type="number" min="0" step="any" placeholder="成交價（選填）" value={price || ""} onChange={(event) => setPrice(Number(event.target.value))} />
@@ -251,7 +286,8 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
         {activities.map((activity) => {
           const Icon = icons[activity.type];
           const twd = activityAmountTwd(activity);
-          const external = activity.type === "deposit" || activity.type === "withdrawal";
+          const external = isExternalActivityType(activity.type);
+          const trade = isTradeActivityType(activity.type);
 
           return (
             <Card key={activity.id}>
@@ -263,7 +299,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold">{labels[activity.type]}</p>
-                      {activity.symbol ? <span className="text-xs text-black/40 dark:text-white/40">{activity.symbol}</span> : null}
+                      {!external && activity.symbol ? <span className="text-xs text-black/40 dark:text-white/40">{activity.symbol}</span> : null}
                       <Badge>{accountName(activity.account)}</Badge>
                       {external ? <Badge tone="good">外部現金流</Badge> : <Badge>內部紀錄</Badge>}
                       {external ? (activity.preFlowValueTwd !== undefined ? <Badge tone="good">TWR 邊界已記</Badge> : <Badge tone="warn">缺 TWR 邊界</Badge>) : null}
@@ -273,7 +309,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="text-lg font-semibold tabular-nums">{activity.currency} {activity.amount.toLocaleString()}</p>
                       {activity.currency === "USD" ? <span className="text-xs text-black/40 dark:text-white/40">≈ {money(twd)}</span> : null}
                     </div>
-                    {(activity.quantity > 0 || activity.price > 0) ? <p className="mt-2 text-xs text-black/45 dark:text-white/45">數量 {activity.quantity || "—"} · 成交價 {activity.price || "—"}</p> : null}
+                    {trade && (activity.quantity > 0 || activity.price > 0) ? <p className="mt-2 text-xs text-black/45 dark:text-white/45">數量 {activity.quantity || "—"} · 成交價 {activity.price || "—"}</p> : null}
                     {external && activity.preFlowValueTwd !== undefined ? <p className="mt-2 text-xs text-black/45 dark:text-white/45">現金流前淨值：{money(activity.preFlowValueTwd)}</p> : null}
                     {activity.note ? <p className="mt-2 text-sm leading-6 text-black/55 dark:text-white/55">{activity.note}</p> : null}
                   </div>
