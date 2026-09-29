@@ -9,6 +9,7 @@ import {
   revenueRowsForView,
   type RevenueCache
 } from "@/lib/revenue-data";
+import { isHeldTwSecurity, resolveHeldTwSecurityKeys } from "@/lib/research-holdings";
 import { percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 
@@ -22,15 +23,6 @@ export function RevenueResearch({ state }: { state: AppState }) {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const heldCodes = useMemo(
-    () => new Set(
-      state.holdings
-        .filter((holding) => holding.market === "TW" && holding.type !== "cash")
-        .map((holding) => holding.symbol.toUpperCase())
-    ),
-    [state.holdings]
-  );
 
   useEffect(() => {
     let active = true;
@@ -66,9 +58,14 @@ export function RevenueResearch({ state }: { state: AppState }) {
     }
   }
 
+  const heldKeys = useMemo(
+    () => resolveHeldTwSecurityKeys(state.holdings, cache?.rows ?? []),
+    [cache, state.holdings]
+  );
+
   const rows = useMemo(
-    () => cache ? revenueRowsForView(cache, query, heldCodes) : [],
-    [cache, heldCodes, query]
+    () => cache ? revenueRowsForView(cache, query, heldKeys) : [],
+    [cache, heldKeys, query]
   );
 
   const period = cache ? latestRevenuePeriod(cache) : null;
@@ -117,11 +114,11 @@ export function RevenueResearch({ state }: { state: AppState }) {
         </div>
       ) : null}
 
-      {!loading && !error && !query && heldCodes.size === 0 ? (
+      {!loading && !error && !query && heldKeys.size === 0 ? (
         <p className="py-12 text-center text-sm text-black/40 dark:text-white/40">先在投資組合新增台股，或直接搜尋公司代號。</p>
       ) : null}
 
-      {!loading && !error && rows.length === 0 && (query || heldCodes.size > 0) ? (
+      {!loading && !error && rows.length === 0 && (query || heldKeys.size > 0) ? (
         <p className="py-12 text-center text-sm text-black/40 dark:text-white/40">目前快取沒有符合條件的月營收資料。</p>
       ) : null}
 
@@ -134,7 +131,7 @@ export function RevenueResearch({ state }: { state: AppState }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-semibold">{row.name}</h3>
                     <span className="text-xs text-black/40 dark:text-white/40">{row.code}</span>
-                    {heldCodes.has(row.code.toUpperCase()) ? <Badge tone="good">持有</Badge> : null}
+                    {isHeldTwSecurity(heldKeys, row.market, row.code) ? <Badge tone="good">持有</Badge> : null}
                   </div>
                   <p className="mt-1 text-sm text-black/45 dark:text-white/45">{row.industry || "未分類"} · {row.market}</p>
                 </div>
