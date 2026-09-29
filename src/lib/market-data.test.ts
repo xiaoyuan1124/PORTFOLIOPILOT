@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Holding } from "./types";
-import { applyTwQuotes, cacheFreshnessLabel, type TwQuoteCache } from "./market-data";
+import { applyTwQuotes, cacheFreshnessLabel, shouldRejectStaleClosingCache, type TwQuoteCache } from "./market-data";
 
 const holdings: Holding[] = [
   { id: "1", symbol: "2330", name: "台積電", market: "TW", type: "stock", quantity: 2, price: 1000, averageCost: 900, currency: "TWD", sector: "半導體" },
@@ -35,5 +35,17 @@ describe("official Taiwan quote cache", () => {
 
   it("reports the latest market date", () => {
     expect(cacheFreshnessLabel(cache)).toBe("2026-09-27");
+  });
+
+  it("rejects an older cache after the Taiwan close publishing window", () => {
+    expect(shouldRejectStaleClosingCache(cache, new Date("2026-09-29T12:00:00.000Z"))).toBe(true);
+  });
+
+  it("allows the previous close before the Taiwan publishing window", () => {
+    expect(shouldRejectStaleClosingCache(cache, new Date("2026-09-28T04:00:00.000Z"))).toBe(false);
+  });
+
+  it("allows Friday close data during the weekend", () => {
+    expect(shouldRejectStaleClosingCache(cache, new Date("2026-10-03T12:00:00.000Z"))).toBe(false);
   });
 });
