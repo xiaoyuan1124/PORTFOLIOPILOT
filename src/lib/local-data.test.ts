@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   etfCompositionsToCsv,
+  mergeHoldings,
   parseBackup,
   parseEtfCompositionCsv,
   parseHoldingsCsv,
@@ -11,6 +12,7 @@ import type { AppState } from "./types";
 describe("local data import/export", () => {
   it("round-trips a versioned JSON backup including ETF compositions", () => {
     const state: AppState = {
+      dataMode: "personal",
       usdTwd: 31.8,
       holdings: [],
       etfCompositions: [{
