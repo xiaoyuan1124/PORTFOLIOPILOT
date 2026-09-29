@@ -1,5 +1,6 @@
 import type { RevenueCache, RevenueRow } from "./revenue-data";
 import { latestRevenuePeriod } from "./revenue-data";
+import { twSecurityKey } from "./research-holdings";
 
 export type RevenueSectorPulse = {
   industry: string;
@@ -71,12 +72,12 @@ export function buildRevenueSectorPulse(
     .sort((a, b) => b.medianYoyPct - a.medianYoyPct || b.positiveYoySharePct - a.positiveYoySharePct || a.industry.localeCompare(b.industry, "zh-Hant"));
 }
 
-export function heldRevenueIndustries(cache: RevenueCache, heldCodes: Set<string>) {
+export function heldRevenueIndustries(cache: RevenueCache, heldKeys: Set<string>) {
   const period = latestRevenuePeriod(cache);
-  if (!period || !heldCodes.size) return new Set<string>();
+  if (!period || !heldKeys.size) return new Set<string>();
   return new Set(
     cache.rows
-      .filter((row) => row.period === period && heldCodes.has(row.code.toUpperCase()))
+      .filter((row) => row.period === period && heldKeys.has(twSecurityKey(row.market, row.code)))
       .map((row) => normalizedIndustry(row))
       .filter((industry) => !GENERIC_INDUSTRIES.has(industry))
   );
