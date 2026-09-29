@@ -94,7 +94,9 @@ async function fetchQuarter(source, year, quarter) {
       const companyRows = parsed.generalRows.length + parsed.notApplicable.length;
 
       if (parsed.statementTables === 0 || companyRows === 0) {
-        return null;
+        const error = new Error(`MOPS ${source.market} ${period} returned an empty/non-statement payload from ${url}`);
+        error.code = "MOPS_EMPTY_PAYLOAD";
+        throw error;
       }
       if (companyRows < MIN_COMPANY_ROWS) {
         throw new Error(`Refusing incomplete MOPS ${source.market} ${period}: ${companyRows} company rows`);
