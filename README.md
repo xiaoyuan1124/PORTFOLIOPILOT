@@ -284,3 +284,13 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Known exchange provenance never marks a same-code security on the other market as held.
 - Holdings without exchange provenance resolve automatically only when the official research dataset contains exactly one venue for that code; ambiguous same-code cases fail closed.
 - Company Snapshot, monthly revenue, official valuation and Scanner now share the same venue-aware held logic.
+
+
+## V0.37 activity type integrity
+
+- Switching activity type clears fields that no longer apply, preventing hidden trade values from leaking into deposits, withdrawals, dividends or fees.
+- Save-time normalization enforces the same rules even if stale UI state exists.
+- Deposits/withdrawals store no security symbol, quantity or trade price.
+- Dividends/fees may keep a symbol but never keep trade quantity/price.
+- Buy/sell entries require a security symbol.
+- Legacy external-flow rows with stale quantity/price no longer render those stock-trade fields in the activity card.
