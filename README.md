@@ -267,3 +267,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Performance shows how many future snapshots were excluded instead of silently letting them affect today's return.
 - Performance completeness counts only snapshots currently eligible for today's metrics.
 - Activity filters now distinguish a genuinely empty ledger from an empty filtered result and offer one-tap filter clearing.
+
+
+## V0.35 research partial-failure resilience
+
+- Company Snapshot treats official quotes + latest monthly revenue as core data, while valuation, revenue history, institutional flow and quarterly-margin caches may fail independently.
+- Optional research cache failures no longer blank the entire company page; available official sections remain visible and unavailable gates fail closed as insufficient.
+- Scanner also tolerates individual revenue-history, institutional or quarterly cache failures and keeps unaffected gates usable.
+- Reload preserves already loaded optional data when one source temporarily fails.
+- A requested research security is never silently replaced by a different company when the requested key is unavailable.
