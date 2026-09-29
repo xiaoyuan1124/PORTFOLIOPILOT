@@ -86,25 +86,42 @@ function firstValue(row, keys) {
   return undefined;
 }
 
+async function withRetry(label, task, attempts = 4) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await task();
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts) break;
+      const delayMs = attempt * 1_500;
+      console.warn(`${label} attempt ${attempt}/${attempts} failed; retrying in ${delayMs}ms`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(`${label} failed after retries`);
+}
+
 async function fetchJson(source) {
-  const response = await fetch(source.url, {
-    headers: {
-      "user-agent": "PortfolioPilot/0.14 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
-      accept: "application/json"
-    },
-    signal: AbortSignal.timeout(30_000)
+  return withRetry(source.name, async () => {
+    const response = await fetch(source.url, {
+      headers: {
+        "user-agent": "PortfolioPilot/0.19 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
+        accept: "application/json"
+      },
+      signal: AbortSignal.timeout(30_000)
+    });
+
+    if (!response.ok) {
+      throw new Error(`${source.name} request failed: ${response.status} (${source.url})`);
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      throw new Error(`${source.name} returned non-array payload (${source.url})`);
+    }
+    return data;
   });
-
-  if (!response.ok) {
-    throw new Error(`${source.name} request failed: ${response.status} (${source.url})`);
-  }
-
-  const data = await response.json();
-  if (!Array.isArray(data)) {
-    throw new Error(`${source.name} returned non-array payload (${source.url})`);
-  }
-
-  return data;
 }
 
 function parseTwseQuotes(rows) {
@@ -229,21 +246,23 @@ function historyUrl(market, period, companyType) {
 }
 
 async function fetchHistoryHtml(url) {
-  const response = await fetch(url, {
-    headers: {
-      "user-agent": "Mozilla/5.0 PortfolioPilot/0.14",
-      accept: "text/html,application/xhtml+xml"
-    },
-    signal: AbortSignal.timeout(30_000)
+  return withRetry("MOPS history", async () => {
+    const response = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 PortfolioPilot/0.19",
+        accept: "text/html,application/xhtml+xml"
+      },
+      signal: AbortSignal.timeout(30_000)
+    });
+
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`MOPS history request failed: ${response.status} (${url})`);
+
+    const buffer = await response.arrayBuffer();
+    const html = new TextDecoder("big5").decode(buffer);
+    if (html.includes("查無資料")) return null;
+    return html;
   });
-
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`MOPS history request failed: ${response.status} (${url})`);
-
-  const buffer = await response.arrayBuffer();
-  const html = new TextDecoder("big5").decode(buffer);
-  if (html.includes("查無資料")) return null;
-  return html;
 }
 
 function parseHistoryRows(html, market, period, industryByCode) {
@@ -365,23 +384,25 @@ function tpexDateParam(date) {
 }
 
 async function fetchObject(url, label) {
-  const response = await fetch(url, {
-    headers: {
-      "user-agent": "Mozilla/5.0 PortfolioPilot/0.14",
-      accept: "application/json,text/javascript,*/*"
-    },
-    signal: AbortSignal.timeout(30_000)
+  return withRetry(label, async () => {
+    const response = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 PortfolioPilot/0.19",
+        accept: "application/json,text/javascript,*/*"
+      },
+      signal: AbortSignal.timeout(30_000)
+    });
+
+    if (!response.ok) {
+      throw new Error(`${label} request failed: ${response.status} (${url})`);
+    }
+
+    const payload = await response.json();
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw new Error(`${label} returned invalid payload (${url})`);
+    }
+    return payload;
   });
-
-  if (!response.ok) {
-    throw new Error(`${label} request failed: ${response.status} (${url})`);
-  }
-
-  const payload = await response.json();
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    throw new Error(`${label} returned invalid payload (${url})`);
-  }
-  return payload;
 }
 
 function cleanInteger(value) {
