@@ -42,7 +42,13 @@ export function loadInitialState(): InitialStateLoad {
     return { state: emptyState, invalidStoredState: false, recoveryPreserved: false };
   }
 
-  const raw = window.localStorage.getItem(KEY);
+  let raw: string | null;
+  try {
+    raw = window.localStorage.getItem(KEY);
+  } catch {
+    return { state: emptyState, invalidStoredState: true, recoveryPreserved: false };
+  }
+
   if (!raw) {
     return { state: emptyState, invalidStoredState: false, recoveryPreserved: false };
   }
@@ -73,12 +79,21 @@ export function saveState(state: AppState) {
 
 export function getRecoveryBackupRaw() {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(RECOVERY_KEY);
+  try {
+    return window.localStorage.getItem(RECOVERY_KEY);
+  } catch {
+    return null;
+  }
 }
 
 export function clearRecoveryBackup() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(RECOVERY_KEY);
+  if (typeof window === "undefined") return false;
+  try {
+    window.localStorage.removeItem(RECOVERY_KEY);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function resetState() {
