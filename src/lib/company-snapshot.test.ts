@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCompanySnapshots, companySnapshotsForView } from "./company-snapshot";
+import { buildCompanySnapshots, companySnapshotsForView, isHeldCompanySnapshot } from "./company-snapshot";
 import type { OfficialStrategyResult } from "./strategy-gates";
 
 function strategy(market: "TWSE" | "TPEx", code: string): OfficialStrategyResult {
@@ -45,6 +45,16 @@ describe("company snapshot", () => {
     expect(snapshots.find((row) => row.market === "TPEx")?.quote?.close).toBe(20);
     expect(snapshots.find((row) => row.market === "TPEx")?.valuation?.pe).toBe(20);
     expect(snapshots.every((row) => row.strategy?.overallStatus === "pass")).toBe(true);
+  });
+
+  it("keeps held identity venue-aware when the same code exists in two markets", () => {
+    const twse = { code: "1234", name: "上市甲", market: "TWSE" as const, industry: "A", type: "stock" as const, quote: null, valuation: null, revenue: null, strategy: null };
+    const tpex = { code: "1234", name: "上櫃甲", market: "TPEx" as const, industry: "B", type: "stock" as const, quote: null, valuation: null, revenue: null, strategy: null };
+    const held = new Set(["TWSE:1234"]);
+
+    expect(isHeldCompanySnapshot(twse, held)).toBe(true);
+    expect(isHeldCompanySnapshot(tpex, held)).toBe(false);
+    expect(companySnapshotsForView([tpex, twse], "", held, true)).toEqual([twse]);
   });
 
   it("includes official quote-only ETFs without fabricating company fundamentals", () => {

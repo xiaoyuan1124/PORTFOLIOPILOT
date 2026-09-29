@@ -67,11 +67,28 @@ export function Overview({
 
       {!state.holdings.length ? (
         <Card>
-          <CardContent className="py-10 text-center">
-            <WalletCards className="mx-auto text-black/25 dark:text-white/25" size={32} />
-            <h2 className="mt-4 text-lg font-semibold">先建立你的第一個資產部位</h2>
-            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-black/48 dark:text-white/48">不需要補完所有歷史交易。先輸入目前券商庫存、現金與帳戶，就能開始看淨值、配置與研究；要算精確績效時再補現金流。</p>
-            <GhostButton onClick={() => onNavigate?.("portfolio")} className="mt-5">前往投資組合 <ArrowRight size={15} /></GhostButton>
+          <CardContent className="py-8 md:py-10">
+            <div className="mx-auto max-w-2xl text-center">
+              <WalletCards className="mx-auto text-black/25 dark:text-white/25" size={32} />
+              <h2 className="mt-4 text-lg font-semibold">3 步開始使用 PortfolioPilot</h2>
+              <p className="mt-2 text-sm leading-6 text-black/48 dark:text-white/48">不用先補歷史交易。先建立現在真正持有的部位，就能開始看淨值、配置與官方研究。</p>
+            </div>
+            <div className="mx-auto mt-5 grid max-w-2xl gap-2 text-left sm:grid-cols-3">
+              {[
+                ["1", "新增部位", "輸入代號或名稱，自動帶入台股官方資料"],
+                ["2", "確認持有資料", "只需補股數、實際平均成本與帳戶"],
+                ["3", "更新與研究", "更新官方收盤價，再從持股一鍵進研究"]
+              ].map(([step, label, detail]) => (
+                <div key={step} className="rounded-2xl border border-black/6 p-3 dark:border-white/8">
+                  <span className="text-xs font-semibold text-black/35 dark:text-white/35">STEP {step}</span>
+                  <strong className="mt-1 block text-sm">{label}</strong>
+                  <span className="mt-1 block text-xs leading-5 text-black/45 dark:text-white/45">{detail}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 flex justify-center">
+              <GhostButton onClick={() => onNavigate?.("portfolio")}>新增第一個部位 <ArrowRight size={15} /></GhostButton>
+            </div>
           </CardContent>
         </Card>
       ) : null}
