@@ -78,6 +78,23 @@ describe("performance math", () => {
     expect(modifiedDietzReturn(state)).toBeCloseTo(0.12, 6);
   });
 
+  it("excludes future snapshots from the current Modified Dietz proxy", () => {
+    const state: AppState = {
+      usdTwd: 1,
+      holdings: [],
+      etfCompositions: [],
+      journal: [],
+      activities: [],
+      snapshots: [
+        { date: "2026-09-28", total: 100, cost: 100, gain: 0, usdTwd: 1 },
+        { date: "2026-09-29", total: 110, cost: 100, gain: 10, usdTwd: 1 },
+        { date: "2026-10-05", total: 220, cost: 100, gain: 120, usdTwd: 1 }
+      ]
+    };
+
+    expect(modifiedDietzReturn(state, "2026-09-30")).toBeCloseTo(0.1, 10);
+  });
+
   it("chains exact TWR across bounded external cash-flow events", () => {
     const state: AppState = {
       usdTwd: 1,

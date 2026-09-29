@@ -305,7 +305,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
         })}
       </div>
 
-      {!activities.length ? <p className="py-16 text-center text-sm text-black/40 dark:text-white/40">目前沒有符合條件的交易／現金流紀錄。</p> : null}
+      {!activities.length ? (
+        <div className="py-14 text-center">
+          <p className="text-sm text-black/40 dark:text-white/40">
+            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流紀錄。" : "目前尚未記錄任何交易／現金流。"}
+          </p>
+          {state.activities.length && (filter !== "all" || accountFilter !== "all") ? (
+            <GhostButton className="mt-4" onClick={() => { setFilter("all"); setAccountFilter("all"); }}>
+              清除篩選
+            </GhostButton>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

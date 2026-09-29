@@ -119,8 +119,10 @@ export function portfolioXirr(state: AppState, valuationDate: string) {
   return calculateXirr(flows);
 }
 
-export function modifiedDietzReturn(state: AppState) {
-  const snapshots = [...state.snapshots].sort((a, b) => a.date.localeCompare(b.date));
+export function modifiedDietzReturn(state: AppState, throughDate?: string) {
+  const snapshots = [...state.snapshots]
+    .filter((snapshot) => !throughDate || snapshot.date <= throughDate)
+    .sort((a, b) => a.date.localeCompare(b.date));
   if (snapshots.length < 2) return null;
 
   let growth = 1;

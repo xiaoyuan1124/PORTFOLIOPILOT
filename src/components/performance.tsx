@@ -21,9 +21,11 @@ export function Performance({ state }: { state: AppState }) {
   const income = incomeAfterFees(state.activities, valuationDate);
   const xirr = portfolioXirr(state, valuationDate);
   const exactTwr = exactTimeWeightedReturn(state, valuationDate);
-  const dietz = modifiedDietzReturn(state);
+  const currentSnapshots = state.snapshots.filter((snapshot) => snapshot.date <= valuationDate);
+  const dietz = modifiedDietzReturn(state, valuationDate);
   const externalCount = state.activities.filter((activity) => (activity.type === "deposit" || activity.type === "withdrawal") && activity.date <= valuationDate).length;
   const futureActivityCount = state.activities.filter((activity) => activity.date > valuationDate).length;
+  const futureSnapshotCount = state.snapshots.filter((snapshot) => snapshot.date > valuationDate).length;
 
   const exactHelper = exactTwr.status === "exact"
     ? `${exactTwr.startDate ?? "—"} → ${exactTwr.endDate} · ${exactTwr.periods} 子期間`
@@ -50,13 +52,14 @@ export function Performance({ state }: { state: AppState }) {
         <Card><CardContent><Metric label="TWR Proxy" value={dietz === null ? "資料不足" : percent(dietz * 100, 2)} helper="每日快照 Modified Dietz · 近似" /></CardContent></Card>
       </section>
 
-      {futureActivityCount ? (
+      {futureActivityCount || futureSnapshotCount ? (
         <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-sm text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
-          有 {futureActivityCount} 筆未來日期的交易／現金流紀錄；今天的淨投入、股息／費用與績效計算已自動排除。
+          {futureActivityCount ? <p>有 {futureActivityCount} 筆未來日期的交易／現金流紀錄；今天的淨投入、股息／費用與績效計算已自動排除。</p> : null}
+          {futureSnapshotCount ? <p className={futureActivityCount ? "mt-1" : ""}>有 {futureSnapshotCount} 筆未來日期的淨值快照；今天的 TWR Proxy 與 Benchmark 區間已自動排除。</p> : null}
         </div>
       ) : null}
 
-      <BenchmarkComparison exactTwr={exactTwr} proxyReturn={dietz} snapshots={state.snapshots} />
+      <BenchmarkComparison exactTwr={exactTwr} proxyReturn={dietz} snapshots={currentSnapshots} />
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -81,7 +84,7 @@ export function Performance({ state }: { state: AppState }) {
             </div>
           </CardHeader>
           <CardContent className="grid gap-3 pt-4 sm:grid-cols-2">
-            <div className="mini-metric"><span>每日快照</span><strong>{state.snapshots.length.toLocaleString()} 筆</strong></div>
+            <div className="mini-metric"><span>目前可用快照</span><strong>{currentSnapshots.length.toLocaleString()} 筆</strong></div>
             <div className="mini-metric"><span>交易／現金流</span><strong>{state.activities.length.toLocaleString()} 筆</strong></div>
             <div className="mini-metric"><span>TWR 邊界</span><strong>{exactTwr.boundedFlowCount}/{exactTwr.externalFlowCount}</strong></div>
             <div className="mini-metric"><span>Exact 子期間</span><strong>{exactTwr.status === "exact" ? exactTwr.periods : "—"}</strong></div>
