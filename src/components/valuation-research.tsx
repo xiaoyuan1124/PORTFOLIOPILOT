@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, RefreshCw, Scale, Search } from "lucide-react";
 import type { AppState } from "@/lib/types";
+import { isHeldTwSecurity, resolveHeldTwSecurityKeys } from "@/lib/research-holdings";
 import { loadBundledValuations, valuationSource, type ValuationCache } from "@/lib/valuation-data";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 
@@ -22,12 +23,6 @@ export function ValuationResearch({ state }: { state: AppState }) {
   const [heldOnly, setHeldOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const heldCodes = useMemo(() => new Set(
-    state.holdings
-      .filter((holding) => holding.market === "TW" && holding.type !== "cash")
-      .map((holding) => holding.symbol.toUpperCase())
-  ), [state.holdings]);
 
   async function reload() {
     setLoading(true);
@@ -61,20 +56,25 @@ export function ValuationResearch({ state }: { state: AppState }) {
     return () => { active = false; };
   }, []);
 
+  const heldKeys = useMemo(
+    () => resolveHeldTwSecurityKeys(state.holdings, cache?.rows ?? []),
+    [cache, state.holdings]
+  );
+
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return [...(cache?.rows ?? [])]
-      .filter((row) => !heldOnly || heldCodes.has(row.code.toUpperCase()))
+      .filter((row) => !heldOnly || isHeldTwSecurity(heldKeys, row.market, row.code))
       .filter((row) => !needle || `${row.code} ${row.name} ${row.market}`.toLowerCase().includes(needle))
-      .sort((a, b) => Number(heldCodes.has(b.code.toUpperCase())) - Number(heldCodes.has(a.code.toUpperCase())) || a.code.localeCompare(b.code, "en"))
+      .sort((a, b) => Number(isHeldTwSecurity(heldKeys, b.market, b.code)) - Number(isHeldTwSecurity(heldKeys, a.market, a.code)) || a.code.localeCompare(b.code, "en"))
       .slice(0, 120);
-  }, [cache, heldCodes, heldOnly, query]);
+  }, [cache, heldKeys, heldOnly, query]);
 
   const counts = useMemo(() => ({
     twse: cache?.rows.filter((row) => row.market === "TWSE").length ?? 0,
     tpex: cache?.rows.filter((row) => row.market === "TPEx").length ?? 0,
-    held: cache?.rows.filter((row) => heldCodes.has(row.code.toUpperCase())).length ?? 0
-  }), [cache, heldCodes]);
+    held: cache?.rows.filter((row) => isHeldTwSecurity(heldKeys, row.market, row.code)).length ?? 0
+  }), [cache, heldKeys]);
 
   return (
     <div className="space-y-4">
@@ -104,7 +104,7 @@ export function ValuationResearch({ state }: { state: AppState }) {
       <div className="grid gap-3 xl:grid-cols-2">
         {visible.map((row) => {
           const source = cache ? valuationSource(cache, row.market) : null;
-          const held = heldCodes.has(row.code.toUpperCase());
+          const held = isHeldTwSecurity(heldKeys, row.market, row.code);
           return <Card key={`${row.market}:${row.code}`}><CardContent className="p-4 md:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{row.name}</p><span className="text-xs text-black/40 dark:text-white/40">{row.code}</span>{held ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{row.market}</p></div>
