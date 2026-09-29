@@ -41,19 +41,15 @@ export function QuickSearch({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!open || companies.length) return;
+    if (!open || companies !== null) return;
     let active = true;
-    setLoading(true);
     void loadBundledRevenue()
       .then((cache) => { if (active) setCompanies(cache.rows); })
-      .catch(() => { if (active) setCompanies([]); })
-      .finally(() => { if (active) setLoading(false); });
+      .catch(() => { if (active) setCompanies([]); });
     return () => { active = false; };
-  }, [companies.length, open]);
+  }, [companies, open]);
 
-  useEffect(() => {
-    if (!open) setQuery("");
-  }, [open]);
+  const loading = open && companies === null;
 
   const companyResults = useMemo(() => {
     const needle = query.trim();
@@ -74,13 +70,19 @@ export function QuickSearch({
       .slice(0, 6);
   }, [query, state.holdings]);
 
+  function setOpen(next: boolean) {
+    if (!next) setQuery("");
+    onOpenChange(next);
+  }
+
   function go(section: AppSection, researchKey?: string) {
+    setQuery("");
     onOpenChange(false);
     onNavigate(section, researchKey);
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/35 backdrop-blur-sm" />
         <Dialog.Content className="fixed left-1/2 top-[10vh] z-50 w-[calc(100%-1.5rem)] max-w-[680px] -translate-x-1/2 overflow-hidden rounded-[26px] border border-black/10 bg-[#f8f7f3] shadow-2xl outline-none dark:border-white/10 dark:bg-[#111614]">
@@ -123,7 +125,7 @@ export function QuickSearch({
                 <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[.14em] text-black/35 dark:text-white/35">我的持股</p>
                 {holdingResults.map((holding) => <button key={holding.id} onClick={() => {
                   if (holding.market === "TW") {
-                    const match = companies.find((row) => row.code.toUpperCase() === holding.symbol.toUpperCase());
+                    const match = companies?.find((row) => row.code.toUpperCase() === holding.symbol.toUpperCase());
                     if (match) return go("research", `${match.market}:${match.code}`);
                   }
                   go("portfolio");
