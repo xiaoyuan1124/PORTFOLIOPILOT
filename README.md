@@ -208,3 +208,10 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Current net contributions and dividend-minus-fee summaries ignore future-dated records from older backups or imported data.
 - The performance page warns when future records exist instead of silently including them in today's metrics.
 - XIRR and Exact TWR remain valuation-date bounded, so all major performance summaries now use a consistent current-date boundary.
+
+
+## V0.28 snapshot zero-state integrity
+
+- A brand-new empty portfolio still avoids creating meaningless zero-value daily snapshots.
+- Once snapshot history exists, removing the final holding writes today's portfolio value as zero instead of leaving the pre-delete value behind.
+- Today's snapshot is replaced in-place, preserving earlier history while keeping the current timeline consistent with the current portfolio.
