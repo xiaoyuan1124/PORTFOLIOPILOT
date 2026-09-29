@@ -213,7 +213,7 @@ export function Scanner({ state }: { state: AppState }) {
             <h3 className="mt-2 text-xl font-semibold">成長＋毛利改善＋雙法人共振</h3>
             <p className="mt-2 max-w-2xl text-sm leading-6 opacity-70">全部條件皆來自 TWSE、TPEx 或 MOPS 官方公開資料。季毛利率使用單季數字；Q2～Q4 由同年累計財報差分後計算，不把累計毛利率冒充單季毛利率。</p>
           </div>
-          <div className="text-right"><p className="text-3xl font-semibold">{counts.pass}</p><p className="text-xs opacity-60">四關正式通過</p></div>
+          <div className="text-right"><p className="text-3xl font-semibold">{loading ? "…" : error ? "—" : counts.pass}</p><p className="text-xs opacity-60">{loading ? "讀取官方 Gate" : "四關正式通過"}</p></div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2 text-xs opacity-70">
           <span>通過 {counts.pass}</span><span>·</span><span>未通過 {counts.fail}</span><span>·</span><span>資料不足 {counts.insufficient}</span><span>·</span><span>不適用 {counts.notApplicable}</span>
