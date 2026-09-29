@@ -8,7 +8,7 @@ import {
   allocationByAccount,
   allocationBySector,
   dailySnapshotDelta,
-  latestOfficialPriceDate,
+  officialPriceCoverage,
   portfolioCashSummary,
   portfolioSummary,
   snapshotPeriodDelta,
@@ -44,7 +44,7 @@ export function Overview({
   const snapshots = useMemo(() => snapshotsForRange(allSnapshots, range), [allSnapshots, range]);
   const daily = dailySnapshotDelta(allSnapshots);
   const period = snapshotPeriodDelta(snapshots);
-  const latestPriceDate = latestOfficialPriceDate(state.holdings);
+  const priceCoverage = officialPriceCoverage(state.holdings);
   const topSector = sectors[0];
 
   const trend = snapshots.map((snapshot) => ({
@@ -215,7 +215,15 @@ export function Overview({
             </div>
             <div className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
               <p className="text-sm font-semibold">官方台股資料</p>
-              <p className="mt-1 text-sm leading-6 text-black/55 dark:text-white/55">{latestPriceDate ? `持股官方收盤價最新資料日：${latestPriceDate}。` : "尚無由官方快取更新的台股持股價格。"}</p>
+              <p className="mt-1 text-sm leading-6 text-black/55 dark:text-white/55">
+                {priceCoverage.covered === 0
+                  ? "尚無由官方快取更新的台股持股價格。"
+                  : priceCoverage.manualOrUnknown > 0
+                    ? `已有 ${priceCoverage.covered}/${priceCoverage.total} 檔使用官方收盤價；另有 ${priceCoverage.manualOrUnknown} 檔仍是手動或來源未確認。`
+                    : priceCoverage.aligned
+                      ? `全部 ${priceCoverage.covered} 檔台股官方收盤價資料日一致：${priceCoverage.newestDate}。`
+                      : `官方價日期分布：${priceCoverage.oldestDate} ～ ${priceCoverage.newestDate}；部分持股資料日不同。`}
+              </p>
             </div>
             <button onClick={() => onNavigate?.("research")} className="flex min-h-16 items-center justify-between rounded-2xl border border-black/6 p-4 text-left transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]"><span><strong className="block text-sm">研究我的持股</strong><span className="mt-1 block text-xs text-black/45 dark:text-white/45">營收、估值、法人、Scanner 集中在一頁</span></span><Search size={18} /></button>
             <button onClick={() => onNavigate?.("portfolio")} className="flex min-h-16 items-center justify-between rounded-2xl border border-black/6 p-4 text-left transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]"><span><strong className="block text-sm">檢查帳戶與績效</strong><span className="mt-1 block text-xs text-black/45 dark:text-white/45">持股、ETF 穿透、風險、現金流、績效</span></span><ArrowRight size={18} /></button>

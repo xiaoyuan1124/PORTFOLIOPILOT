@@ -159,3 +159,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Held-security research routing preserves the known TWSE/TPEx venue and fails closed when a legacy holding is ambiguous.
 - Mobile dialogs use the full dynamic viewport, respect iPhone safe-area padding, contain overscroll, and keep the title/close control sticky while long forms scroll.
 - Empty personal home now presents a three-step onboarding path: add a holding, confirm personal fields, then update/research.
+
+
+## V0.22 data safety / trust UX
+
+- Invalid localStorage is preserved into a separate raw recovery backup before the app falls back to an empty safe state.
+- If browser storage cannot safely preserve or write data, new mutations fail closed instead of pretending they were saved.
+- Settings exposes recovery-backup export and explicit cleanup controls.
+- The global shell surfaces a clear recovery/storage warning instead of silently hiding the problem.
+- Home now reports Taiwan official-price coverage across all Taiwan investments, including manual/unknown holdings and mixed price dates, rather than showing only the newest date.

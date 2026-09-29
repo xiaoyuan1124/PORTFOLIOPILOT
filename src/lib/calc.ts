@@ -83,12 +83,29 @@ export function topHoldings(holdings: Holding[], usdTwd: number, limit = 5) {
     .slice(0, limit);
 }
 
+export function officialPriceCoverage(holdings: Holding[]) {
+  const taiwanInvestments = holdings.filter(
+    (holding) => holding.market === "TW" && holding.type !== "cash"
+  );
+  const official = taiwanInvestments.filter(
+    (holding) =>
+      (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") &&
+      Boolean(holding.priceAsOf)
+  );
+  const dates = official.map((holding) => holding.priceAsOf!).sort();
+
+  return {
+    total: taiwanInvestments.length,
+    covered: official.length,
+    manualOrUnknown: taiwanInvestments.length - official.length,
+    oldestDate: dates[0] ?? null,
+    newestDate: dates.at(-1) ?? null,
+    aligned: dates.length > 0 && dates[0] === dates.at(-1)
+  };
+}
+
 export function latestOfficialPriceDate(holdings: Holding[]) {
-  return holdings
-    .filter((holding) => holding.market === "TW" && holding.priceSource && holding.priceSource !== "manual" && holding.priceAsOf)
-    .map((holding) => holding.priceAsOf!)
-    .sort()
-    .at(-1) ?? null;
+  return officialPriceCoverage(holdings).newestDate;
 }
 
 function utcDate(value: string) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { DatabaseBackup, Download, FileSpreadsheet, RotateCcw, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, DatabaseBackup, Download, FileSpreadsheet, RotateCcw, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { demoState, emptyState } from "@/lib/demo-data";
 import type { AppState } from "@/lib/types";
@@ -14,12 +14,37 @@ import {
   parseHoldingsCsv,
   serializeBackup
 } from "@/lib/local-data";
+import { clearRecoveryBackup, getRecoveryBackupRaw } from "@/lib/storage";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
-export function Settings({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
+export function Settings({ state, onChange, hasRecoveryBackup = false, onRecoveryBackupCleared, storageWriteBlocked = false }: { state: AppState; onChange: (state: AppState) => void; hasRecoveryBackup?: boolean; onRecoveryBackupCleared?: () => void; storageWriteBlocked?: boolean }) {
   const jsonRef = useRef<HTMLInputElement>(null);
   const csvRef = useRef<HTMLInputElement>(null);
   const [usdDraft, setUsdDraft] = useState<string | null>(null);
+
+  function exportRecoveryBackup() {
+    const raw = getRecoveryBackupRaw();
+    if (!raw) {
+      toast.error("目前找不到復原備份。");
+      return;
+    }
+    downloadText(
+      `portfoliopilot-recovery-raw-${new Date().toISOString().slice(0, 10)}.txt`,
+      raw,
+      "text/plain;charset=utf-8"
+    );
+    toast.success("原始復原資料已匯出");
+  }
+
+  function removeRecoveryBackup() {
+    if (!window.confirm("確定要清除復原備份嗎？清除後無法從 PortfolioPilot 取回這份原始內容。")) return;
+    if (!clearRecoveryBackup()) {
+      toast.error("無法清除復原備份；瀏覽器儲存目前不可用。");
+      return;
+    }
+    onRecoveryBackupCleared?.();
+    toast.success("復原備份已清除");
+  }
 
   function exportJson() {
     downloadText(
@@ -70,6 +95,31 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
+      {hasRecoveryBackup || storageWriteBlocked ? (
+        <Card className="lg:col-span-2">
+          <CardContent>
+            <div className="flex items-start gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#f5ece1] text-[#7d5729] dark:bg-[#382817] dark:text-[#e5bd86]">
+                <AlertTriangle size={19} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold">{storageWriteBlocked ? "本機資料需要人工處理" : "本機資料復原備份"}</h3>
+                <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
+                  {storageWriteBlocked
+                    ? "瀏覽器無法安全建立復原副本，因此 PortfolioPilot 已停止寫入新變更，避免覆蓋原始資料。建議先不要清除網站資料。"
+                    : "系統曾偵測到本機資料無法通過目前 schema 驗證，已另外保留當時的原始內容。現在使用中的資料不會把這份副本一起刪掉。"}
+                </p>
+                {hasRecoveryBackup ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button onClick={exportRecoveryBackup}><Download size={16} />匯出原始復原檔</Button>
+                    <GhostButton onClick={removeRecoveryBackup}><Trash2 size={16} />清除復原備份</GhostButton>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
       <Card className="lg:col-span-2">
         <CardContent>
           <div className="flex items-start gap-3">

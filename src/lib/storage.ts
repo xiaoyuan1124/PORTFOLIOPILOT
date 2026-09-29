@@ -3,6 +3,13 @@ import type { AppState } from "./types";
 import { appStateSchema } from "./schema";
 
 const KEY = "portfoliopilot:v1";
+const RECOVERY_KEY = "portfoliopilot:recovery:v1";
+
+export type InitialStateLoad = {
+  state: AppState;
+  invalidStoredState: boolean;
+  recoveryPreserved: boolean;
+};
 
 function migrateLegacyState(value: unknown): AppState {
   if (!value || typeof value !== "object") return emptyState;
@@ -18,21 +25,75 @@ function migrateLegacyState(value: unknown): AppState {
   });
 }
 
-export function getInitialState(): AppState {
-  if (typeof window === "undefined") return emptyState;
-  const raw = window.localStorage.getItem(KEY);
-  if (!raw) return emptyState;
+function preserveRecovery(raw: string) {
+  if (typeof window === "undefined") return false;
+  try {
+    if (!window.localStorage.getItem(RECOVERY_KEY)) {
+      window.localStorage.setItem(RECOVERY_KEY, raw);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function loadInitialState(): InitialStateLoad {
+  if (typeof window === "undefined") {
+    return { state: emptyState, invalidStoredState: false, recoveryPreserved: false };
+  }
+
+  let raw: string | null;
+  try {
+    raw = window.localStorage.getItem(KEY);
+  } catch {
+    return { state: emptyState, invalidStoredState: true, recoveryPreserved: false };
+  }
+
+  if (!raw) {
+    return { state: emptyState, invalidStoredState: false, recoveryPreserved: false };
+  }
 
   try {
-    return migrateLegacyState(JSON.parse(raw));
+    return {
+      state: migrateLegacyState(JSON.parse(raw)),
+      invalidStoredState: false,
+      recoveryPreserved: Boolean(window.localStorage.getItem(RECOVERY_KEY))
+    };
   } catch {
-    return emptyState;
+    return {
+      state: emptyState,
+      invalidStoredState: true,
+      recoveryPreserved: preserveRecovery(raw)
+    };
   }
+}
+
+export function getInitialState(): AppState {
+  return loadInitialState().state;
 }
 
 export function saveState(state: AppState) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(KEY, JSON.stringify(appStateSchema.parse(state)));
+}
+
+export function getRecoveryBackupRaw() {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(RECOVERY_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function clearRecoveryBackup() {
+  if (typeof window === "undefined") return false;
+  try {
+    window.localStorage.removeItem(RECOVERY_KEY);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function resetState() {
