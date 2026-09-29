@@ -96,14 +96,14 @@ export function parseHoldingsCsv(text: string): Holding[] {
   });
 }
 
-function holdingKey(holding: Pick<Holding, "market" | "symbol" | "account">) {
-  return `${holding.market}:${holding.symbol.toUpperCase()}:${accountName(holding.account).toLowerCase()}`;
+export function holdingIdentityKey(holding: Pick<Holding, "market" | "symbol" | "account">) {
+  return `${holding.market}:${holding.symbol.trim().toUpperCase()}:${accountName(holding.account).toLowerCase()}`;
 }
 
 export function mergeHoldings(existing: Holding[], incoming: Holding[]) {
-  const map = new Map(existing.map((holding) => [holdingKey(holding), holding]));
+  const map = new Map(existing.map((holding) => [holdingIdentityKey(holding), holding]));
   for (const holding of incoming) {
-    const key = holdingKey(holding);
+    const key = holdingIdentityKey(holding);
     const previous = map.get(key);
     map.set(key, previous ? { ...holding, id: previous.id } : holding);
   }
