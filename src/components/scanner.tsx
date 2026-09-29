@@ -283,7 +283,17 @@ export function Scanner({ state }: { state: AppState }) {
         ))}
       </div>
 
-      {!loading && !error && !visible.length ? <p className="py-14 text-center text-sm text-black/40 dark:text-white/40">目前沒有符合顯示條件的公司。可切換「查看全部狀態」檢查未通過、資料不足與不適用。</p> : null}
+      {!loading && !error && !visible.length ? (
+        <div className="py-14 text-center">
+          <p className="text-sm text-black/40 dark:text-white/40">
+            {query ? "目前沒有符合搜尋條件的公司。" : "目前沒有公司符合四關正式通過條件。可查看全部狀態確認未通過、資料不足與不適用。"}
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {query ? <GhostButton onClick={() => setQuery("")}>清除搜尋</GhostButton> : null}
+            {!showAll ? <GhostButton onClick={() => setShowAll(true)}>查看全部狀態</GhostButton> : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
