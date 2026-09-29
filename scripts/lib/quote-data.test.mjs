@@ -4,6 +4,7 @@ import {
   latestQuoteDate,
   normalizeQuoteDate,
   parseTpexQuoteRows,
+  parseTwseMiIndexPayload,
   parseTwseQuoteRows
 } from "./quote-data.mjs";
 
@@ -14,7 +15,33 @@ describe("Taiwan quote refresh helpers", () => {
     expect(normalizeQuoteDate("115/09/29")).toBe("2026-09-29");
   });
 
-  it("parses TWSE and TPEx closing-price payloads", () => {
+  it("parses TWSE MI_INDEX tables", () => {
+    const payload = {
+      stat: "OK",
+      tables: [
+        { fields: ["指數", "收盤"], data: [["發行量加權股價指數", "1"]] },
+        {
+          fields: ["證券代號", "證券名稱", "成交股數", "收盤價"],
+          data: [["2330", "台積電", "12,345", "1,250.00"]]
+        }
+      ]
+    };
+
+    expect(parseTwseMiIndexPayload(payload, "2026-09-29")).toEqual([
+      { code: "2330", name: "台積電", market: "TWSE", close: 1250, date: "2026-09-29" }
+    ]);
+  });
+
+  it("supports legacy TWSE MI_INDEX fields9/data9 payloads", () => {
+    const payload = {
+      stat: "OK",
+      fields9: ["證券代號", "證券名稱", "收盤價"],
+      data9: [["2330", "台積電", "1,251.00"]]
+    };
+    expect(parseTwseMiIndexPayload(payload, "2026-09-29")[0]?.close).toBe(1251);
+  });
+
+  it("parses TWSE OpenAPI fallback and TPEx closing-price payloads", () => {
     const twse = parseTwseQuoteRows([
       { Date: "1150929", Code: "2330", Name: "台積電", ClosingPrice: "1,250.00" }
     ]);
