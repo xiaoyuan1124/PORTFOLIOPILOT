@@ -50,6 +50,16 @@ export function QuickSearch({
       .slice(0, 6);
   }, [query, state.holdings]);
 
+  const visibleSecurityResults = useMemo(() => {
+    return securityResults.filter((security) => !holdingResults.some((holding) => {
+      if (holding.market !== "TW" || holding.symbol.toUpperCase() !== security.code.toUpperCase()) return false;
+      if (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") {
+        return holding.priceSource === security.venue;
+      }
+      return true;
+    }));
+  }, [holdingResults, securityResults]);
+
   function setOpen(next: boolean) {
     if (!next) setQuery("");
     onOpenChange(next);
@@ -105,7 +115,13 @@ export function QuickSearch({
                 <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[.14em] text-black/35 dark:text-white/35">我的持股</p>
                 {holdingResults.map((holding) => <button key={holding.id} onClick={() => {
                   if (holding.market === "TW") {
-                    const match = catalog?.find((row) => row.code.toUpperCase() === holding.symbol.toUpperCase());
+                    const matches = (catalog ?? []).filter((row) => row.code.toUpperCase() === holding.symbol.toUpperCase());
+                    const match =
+                      holding.priceSource === "TWSE" || holding.priceSource === "TPEx"
+                        ? matches.find((row) => row.venue === holding.priceSource)
+                        : matches.length === 1
+                          ? matches[0]
+                          : undefined;
                     if (match) return go("research", `${match.venue}:${match.code}`);
                   }
                   go("portfolio");
@@ -113,14 +129,14 @@ export function QuickSearch({
               </div>
             ) : null}
 
-            {securityResults.length ? (
+            {visibleSecurityResults.length ? (
               <div>
                 <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[.14em] text-black/35 dark:text-white/35">官方台股／ETF 研究</p>
-                {securityResults.map((row) => <button key={`${row.venue}:${row.code}`} onClick={() => go("research", `${row.venue}:${row.code}`)} className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-black/[.04] dark:hover:bg-white/[.05]"><span className="min-w-0"><strong className="block truncate text-sm">{row.code} · {row.name}</strong><span className="mt-0.5 block truncate text-xs text-black/40 dark:text-white/40">{row.industry} · {row.type === "etf" ? "ETF" : "個股"} · 收盤 {row.close.toLocaleString()}</span></span><span className="shrink-0 text-right text-xs text-black/35 dark:text-white/35">{row.venue}<span className="mt-0.5 block text-[10px]">{row.date}</span></span></button>)}
+                {visibleSecurityResults.map((row) => <button key={`${row.venue}:${row.code}`} onClick={() => go("research", `${row.venue}:${row.code}`)} className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-black/[.04] dark:hover:bg-white/[.05]"><span className="min-w-0"><strong className="block truncate text-sm">{row.code} · {row.name}</strong><span className="mt-0.5 block truncate text-xs text-black/40 dark:text-white/40">{row.industry} · {row.type === "etf" ? "ETF" : "個股"} · 收盤 {row.close.toLocaleString()}</span></span><span className="shrink-0 text-right text-xs text-black/35 dark:text-white/35">{row.venue}<span className="mt-0.5 block text-[10px]">{row.date}</span></span></button>)}
               </div>
             ) : null}
 
-            {query.trim() && !holdingResults.length && !securityResults.length && !loading ? <p className="px-3 py-10 text-center text-sm text-black/40 dark:text-white/40">找不到符合的持股、個股或 ETF 官方資料。</p> : null}
+            {query.trim() && !holdingResults.length && !visibleSecurityResults.length && !loading ? <p className="px-3 py-10 text-center text-sm text-black/40 dark:text-white/40">找不到符合的持股、個股或 ETF 官方資料。</p> : null}
             {query.trim() && loading ? <p className="px-3 py-10 text-center text-sm text-black/40 dark:text-white/40">正在載入官方公司清單…</p> : null}
           </div>
         </Dialog.Content>
