@@ -119,7 +119,12 @@ export function RevenueResearch({ state }: { state: AppState }) {
       ) : null}
 
       {!loading && !error && rows.length === 0 && (query || heldKeys.size > 0) ? (
-        <p className="py-12 text-center text-sm text-black/40 dark:text-white/40">目前快取沒有符合條件的月營收資料。</p>
+        <div className="py-12 text-center">
+          <p className="text-sm text-black/40 dark:text-white/40">
+            {query ? "目前快取沒有符合搜尋條件的月營收資料。" : "目前持股沒有可對應的公司型月營收資料；ETF 不會被當成公司營收。"}
+          </p>
+          {query ? <GhostButton className="mt-4" onClick={() => setQuery("")}>清除搜尋</GhostButton> : null}
+        </div>
       ) : null}
 
       <div className="grid gap-3 xl:grid-cols-2">
