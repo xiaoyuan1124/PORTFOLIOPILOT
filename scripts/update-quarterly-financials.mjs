@@ -29,6 +29,28 @@ function previousPeriod(period) {
   return quarter === 1 ? null : `${match[1]}-Q${quarter - 1}`;
 }
 
+function recentCompletedQuarters(count = 6, now = new Date()) {
+  let year = now.getUTCFullYear();
+  let quarter = Math.floor(now.getUTCMonth() / 3) + 1;
+
+  quarter -= 1;
+  if (quarter === 0) {
+    quarter = 4;
+    year -= 1;
+  }
+
+  const periods = [];
+  for (let index = 0; index < count; index += 1) {
+    periods.push({ year, quarter });
+    quarter -= 1;
+    if (quarter === 0) {
+      quarter = 4;
+      year -= 1;
+    }
+  }
+  return periods.reverse();
+}
+
 function formBody(typek, year, quarter) {
   return new URLSearchParams({
     encodeURIComponent: "1",
@@ -118,17 +140,14 @@ function uniqueNotApplicable(rawByMarket, periods) {
 
 async function main() {
   const generatedAt = new Date().toISOString();
-  const currentYear = new Date().getUTCFullYear();
-  const years = [currentYear - 1, currentYear];
+  const candidatePeriods = recentCompletedQuarters(6);
   const rawByMarket = new Map(MARKETS.map(({ market }) => [market, new Map()]));
 
-  for (const year of years) {
-    for (let quarter = 1; quarter <= 4; quarter += 1) {
-      for (const source of MARKETS) {
-        const result = await fetchQuarter(source, year, quarter);
-        if (result) rawByMarket.get(source.market).set(result.period, result);
-        await sleep(REQUEST_DELAY_MS);
-      }
+  for (const { year, quarter } of candidatePeriods) {
+    for (const source of MARKETS) {
+      const result = await fetchQuarter(source, year, quarter);
+      if (result) rawByMarket.get(source.market).set(result.period, result);
+      await sleep(REQUEST_DELAY_MS);
     }
   }
 
