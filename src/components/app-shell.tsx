@@ -141,7 +141,7 @@ export function AppShell() {
         <div className="mx-auto max-w-[1360px] px-4 py-5 md:px-8 md:py-8">
           {section === "home" ? <Overview state={state} onNavigate={(target, key) => navigate(target, key)} /> : null}
           {section === "portfolio" ? <Portfolio state={state} onChange={updateState} /> : null}
-          {section === "research" ? <Research state={state} onChange={updateState} researchKey={researchKey} researchRequestId={researchRequestId} /> : null}
+          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} /> : null}
           {section === "settings" ? <Settings state={state} onChange={updateState} /> : null}
         </div>
       </main>
