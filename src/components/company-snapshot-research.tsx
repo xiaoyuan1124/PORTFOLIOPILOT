@@ -23,6 +23,20 @@ type Caches = {
   quarterly: QuarterlyMarginCache;
 };
 
+const emptyValuations: ValuationCache = { generatedAt: "", sources: [], rows: [] };
+const emptyRevenueHistory: RevenueHistoryCache = { generatedAt: "", periods: [], sources: [], rows: [] };
+const emptyInstitutional: InstitutionalCache = { generatedAt: "", tradingDates: [], sources: [], rows: [] };
+const emptyQuarterly: QuarterlyMarginCache = { generatedAt: "", periods: [], sources: [], rows: [], notApplicable: [] };
+
+async function optionalCache<T>(label: string, loader: () => Promise<T>, fallback: T) {
+  try {
+    return { value: await loader(), warning: "" };
+  } catch (cause) {
+    const detail = cause instanceof Error ? cause.message : "載入失敗";
+    return { value: fallback, warning: `${label}：${detail}` };
+  }
+}
+
 function statusLabel(status: GateStatus) {
   if (status === "pass") return "通過";
   if (status === "fail") return "未通過";
@@ -73,6 +87,7 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
   const [selectedKey, setSelectedKey] = useState(requestedKey ?? "");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   const heldKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -88,23 +103,50 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
     return keys;
   }, [state.holdings]);
 
-  async function fetchCaches() {
-    const [quotes, revenue, valuations, revenueHistory, institutional, quarterly] = await Promise.all([
+  async function fetchCaches(previous?: Caches | null) {
+    const [quotes, revenue] = await Promise.all([
       loadBundledTwQuotes(),
-      loadBundledRevenue(),
-      loadBundledValuations(),
-      loadBundledRevenueHistory(),
-      loadBundledInstitutional10d(),
-      loadBundledQuarterlyMargins()
+      loadBundledRevenue()
     ]);
-    return { quotes, revenue, valuations, revenueHistory, institutional, quarterly };
+
+    const [valuationsResult, revenueHistoryResult, institutionalResult, quarterlyResult] = await Promise.all([
+      optionalCache("官方估值", loadBundledValuations, previous?.valuations ?? emptyValuations),
+      optionalCache("三個月營收歷史", loadBundledRevenueHistory, previous?.revenueHistory ?? emptyRevenueHistory),
+      optionalCache("法人 10D", loadBundledInstitutional10d, previous?.institutional ?? emptyInstitutional),
+      optionalCache("季度毛利率", loadBundledQuarterlyMargins, previous?.quarterly ?? emptyQuarterly)
+    ]);
+
+    return {
+      caches: {
+        quotes,
+        revenue,
+        valuations: valuationsResult.value,
+        revenueHistory: revenueHistoryResult.value,
+        institutional: institutionalResult.value,
+        quarterly: quarterlyResult.value
+      },
+      warnings: [
+        valuationsResult.warning,
+        revenueHistoryResult.warning,
+        institutionalResult.warning,
+        quarterlyResult.warning
+      ].filter(Boolean)
+    };
   }
 
   useEffect(() => {
     let active = true;
     void fetchCaches()
-      .then((next) => { if (active) { setCaches(next); setError(""); } })
-      .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "無法載入官方個股資料。"); })
+      .then((next) => {
+        if (!active) return;
+        setCaches(next.caches);
+        setWarnings(next.warnings);
+        setError("");
+      })
+      .catch((cause) => {
+        if (!active) return;
+        setError(cause instanceof Error ? cause.message : "無法載入官方個股資料。");
+      })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
@@ -112,9 +154,15 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
   async function reload() {
     setLoading(true);
     setError("");
-    try { setCaches(await fetchCaches()); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "無法載入官方個股資料。"); }
-    finally { setLoading(false); }
+    try {
+      const next = await fetchCaches(caches);
+      setCaches(next.caches);
+      setWarnings(next.warnings);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "無法載入官方個股資料。");
+    } finally {
+      setLoading(false);
+    }
   }
 
   const strategies = useMemo(() => caches ? evaluateOfficialStrategy(caches.revenueHistory, caches.institutional, caches.quarterly) : [], [caches]);
@@ -147,6 +195,15 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
     </div>
 
     {error ? <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">{error}</div> : null}
+    {!error && warnings.length ? (
+      <div className="rounded-2xl border border-[#b98b57]/20 bg-[#f8f1e8] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/15 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+        <p className="font-semibold">部分官方研究資料暫時不可用</p>
+        <p className="mt-1 text-xs leading-5 opacity-80">收盤價與最新月營收仍可正常使用；以下區塊會保留先前已載入資料，若沒有舊資料則顯示資料不足，不用假資料補齊。</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">
+          {warnings.map((warning) => <li key={warning}>{warning}</li>)}
+        </ul>
+      </div>
+    ) : null}
 
     {!loading && !error ? <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
       {visible.slice(0, 16).map((row) => {
