@@ -150,3 +150,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Quarterly MOPS requests alternate between the current and legacy official MOPS hosts when transient network failures occur.
 - Quarterly refresh retries transient failures up to six attempts with backoff.
 - The updater requests only the six most recent completed calendar quarters instead of scanning two full years, reducing unnecessary traffic while preserving enough cumulative periods to derive the latest three single-quarter gross margins.
+
+
+## V0.21 mobile / research UX pass
+
+- Research holding identity is market-aware: TWSE and TPEx securities with the same code are no longer both marked held when the venue is known.
+- Global search avoids duplicating a held security in both the “my holdings” and official-results sections.
+- Held-security research routing preserves the known TWSE/TPEx venue and fails closed when a legacy holding is ambiguous.
+- Mobile dialogs use the full dynamic viewport, respect iPhone safe-area padding, contain overscroll, and keep the title/close control sticky while long forms scroll.
+- Empty personal home now presents a three-step onboarding path: add a holding, confirm personal fields, then update/research.
