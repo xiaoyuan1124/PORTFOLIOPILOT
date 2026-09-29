@@ -146,6 +146,7 @@ export function makeSnapshot(state: AppState, date = new Date()): NetWorthSnapsh
 }
 
 export function withTodaySnapshot(state: AppState, date = new Date()): AppState {
+  if (!state.holdings.length) return state;
   const next = makeSnapshot(state, date);
   const snapshots = state.snapshots.filter((item) => item.date !== next.date);
   return {
