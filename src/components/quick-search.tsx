@@ -37,8 +37,7 @@ export function QuickSearch({
   onNavigate: (section: AppSection, researchKey?: string) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [companies, setCompanies] = useState<RevenueRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [companies, setCompanies] = useState<RevenueRow[] | null>(null);
 
   useEffect(() => {
     if (!open || companies !== null) return;
@@ -54,7 +53,7 @@ export function QuickSearch({
   const companyResults = useMemo(() => {
     const needle = query.trim();
     if (!needle) return [];
-    return companies
+    return (companies ?? [])
       .map((row) => ({ row, score: score(row, needle) }))
       .filter((entry) => entry.score >= 0)
       .sort((a, b) => b.score - a.score || a.row.code.localeCompare(b.row.code, "en"))
