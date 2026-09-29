@@ -6,6 +6,7 @@ import { ArrowDownCircle, ArrowUpCircle, Banknote, Pencil, Plus, ReceiptText, Tr
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
 import { localDateKey } from "@/lib/calc";
+import { accountName } from "@/lib/local-data";
 import { activityAmountTwd } from "@/lib/performance";
 import { money } from "@/lib/utils";
 import { Badge, Button, Card, CardContent, GhostButton, Modal } from "./ui";
@@ -39,10 +40,11 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
   const [note, setNote] = useState("");
+  const [account, setAccount] = useState(accountName(state.holdings[0]?.account));
   const [preFlowValueTwd, setPreFlowValueTwd] = useState<number | null>(null);
 
   const external = type === "deposit" || type === "withdrawal";
-  const valid = Boolean(date) && amount > 0 && fxRate > 0 && (preFlowValueTwd === null || preFlowValueTwd >= 0);
+  const valid = Boolean(date) && amount > 0 && fxRate > 0 && accountName(account).length > 0 && (preFlowValueTwd === null || preFlowValueTwd >= 0);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -60,6 +62,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
       quantity,
       price,
       note: note.trim(),
+      account: accountName(account),
       ...(external && preFlowValueTwd !== null ? { preFlowValueTwd } : {})
     });
   }
@@ -73,6 +76,8 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
         <input className="field" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
       </div>
 
+      <input className="field" placeholder="帳戶，例如：台股證券、複委託" value={account} onChange={(event) => setAccount(event.target.value)} />
+
       {external ? (
         <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3.5 dark:border-white/8 dark:bg-white/[.025]">
           <p className="text-sm font-semibold">Exact TWR 邊界（選填，但建議記錄）</p>
@@ -80,13 +85,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
             填入這筆入金／出金發生「前一刻」的整體投資組合淨值（TWD）。這不是入金金額，也不是成本。只有每筆外部現金流都有邊界估值時，系統才會顯示 Exact TWR。
           </p>
           <div className="mt-3 grid grid-cols-[120px_1fr] gap-3">
-            <input
-              className="field"
-              type="time"
-              value={time}
-              onChange={(event) => setTime(event.target.value)}
-              aria-label="現金流時間"
-            />
+            <input className="field" type="time" value={time} onChange={(event) => setTime(event.target.value)} aria-label="現金流時間" />
             <input
               className="field"
               type="number"
@@ -127,7 +126,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        買進／賣出目前只做交易紀錄，不會自動改動持股；持股仍由「持股」頁維護，避免自動計算錯誤。Exact TWR 邊界只適用於真正的入金／出金。
+        不想逐筆記交易也可以只維護「持股」頁；若要算精確績效，再補現金流與 TWR 邊界。買進／賣出紀錄不會自動改持股，避免帳務推導錯誤。
       </p>
 
       <Dialog.Close asChild>
@@ -159,15 +158,7 @@ function BoundaryForm({ activity, onSave }: { activity: PortfolioActivity; onSav
       </p>
       <div className="grid grid-cols-[120px_1fr] gap-3">
         <input className="field" type="time" value={time} onChange={(event) => setTime(event.target.value)} aria-label="現金流時間" />
-        <input
-          className="field"
-          type="number"
-          min="0"
-          step="any"
-          placeholder="現金流前總淨值（TWD）"
-          value={preFlowValueTwd ?? ""}
-          onChange={(event) => setPreFlowValueTwd(event.target.value === "" ? null : Number(event.target.value))}
-        />
+        <input className="field" type="number" min="0" step="any" placeholder="現金流前總淨值（TWD）" value={preFlowValueTwd ?? ""} onChange={(event) => setPreFlowValueTwd(event.target.value === "" ? null : Number(event.target.value))} />
       </div>
       <Dialog.Close asChild>
         <Button type="submit" disabled={!valid} className="w-full">儲存 TWR 邊界</Button>
@@ -178,9 +169,16 @@ function BoundaryForm({ activity, onSave }: { activity: PortfolioActivity; onSav
 
 export function ActivityLedger({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
   const [filter, setFilter] = useState<"all" | "cash" | "trade" | "income">("all");
+  const [accountFilter, setAccountFilter] = useState("all");
+
+  const accounts = useMemo(() => [...new Set([
+    ...state.holdings.map((holding) => accountName(holding.account)),
+    ...state.activities.map((activity) => accountName(activity.account))
+  ])].sort((a, b) => a.localeCompare(b, "zh-Hant")), [state.activities, state.holdings]);
 
   const activities = useMemo(() => {
     return [...state.activities]
+      .filter((activity) => accountFilter === "all" || accountName(activity.account) === accountFilter)
       .filter((activity) => {
         if (filter === "cash") return activity.type === "deposit" || activity.type === "withdrawal";
         if (filter === "trade") return activity.type === "buy" || activity.type === "sell";
@@ -192,7 +190,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
         (b.time ?? "").localeCompare(a.time ?? "") ||
         b.id.localeCompare(a.id)
       );
-  }, [filter, state.activities]);
+  }, [accountFilter, filter, state.activities]);
 
   function add(activity: PortfolioActivity) {
     onChange({ ...state, activities: [...state.activities, activity] });
@@ -210,17 +208,23 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
-          {[
-            ["all", "全部"],
-            ["cash", "入出金"],
-            ["trade", "交易"],
-            ["income", "股息/費用"]
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setFilter(key as typeof filter)} className={`min-h-10 rounded-xl px-3 text-sm font-semibold transition ${filter === key ? "bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]" : "text-black/50 dark:text-white/50"}`}>
-              {label}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-2">
+          <div className="inline-flex rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
+            {[
+              ["all", "全部"],
+              ["cash", "入出金"],
+              ["trade", "交易"],
+              ["income", "股息/費用"]
+            ].map(([key, label]) => (
+              <button key={key} onClick={() => setFilter(key as typeof filter)} className={`min-h-10 rounded-xl px-3 text-sm font-semibold transition ${filter === key ? "bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]" : "text-black/50 dark:text-white/50"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {accounts.length > 1 ? <select className="field min-w-[160px]" value={accountFilter} onChange={(event) => setAccountFilter(event.target.value)}>
+            <option value="all">全部帳戶</option>
+            {accounts.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select> : null}
         </div>
 
         <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
@@ -245,6 +249,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold">{labels[activity.type]}</p>
                       {activity.symbol ? <span className="text-xs text-black/40 dark:text-white/40">{activity.symbol}</span> : null}
+                      <Badge>{accountName(activity.account)}</Badge>
                       {external ? <Badge tone="good">外部現金流</Badge> : <Badge>內部紀錄</Badge>}
                       {external ? (activity.preFlowValueTwd !== undefined ? <Badge tone="good">TWR 邊界已記</Badge> : <Badge tone="warn">缺 TWR 邊界</Badge>) : null}
                     </div>
@@ -261,11 +266,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                     {external ? (
                       <Modal
                         title={activity.preFlowValueTwd === undefined ? "補 TWR 邊界" : "修改 TWR 邊界"}
-                        trigger={
-                          <GhostButton className="h-10 min-h-10 w-10 px-0" aria-label={activity.preFlowValueTwd === undefined ? "補 TWR 邊界" : "修改 TWR 邊界"}>
-                            <Pencil size={15} />
-                          </GhostButton>
-                        }
+                        trigger={<GhostButton className="h-10 min-h-10 w-10 px-0" aria-label={activity.preFlowValueTwd === undefined ? "補 TWR 邊界" : "修改 TWR 邊界"}><Pencil size={15} /></GhostButton>}
                       >
                         <BoundaryForm activity={activity} onSave={updateBoundary} />
                       </Modal>
