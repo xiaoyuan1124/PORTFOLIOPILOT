@@ -18,7 +18,7 @@ const tabs: Array<{ key: PortfolioTab; label: string }> = [
   { key: "performance", label: "績效" }
 ];
 
-export function Portfolio({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => void; onResearch?: (researchKey: string) => void }) {
+export function Portfolio({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => boolean; onResearch?: (researchKey: string) => void }) {
   const [tab, setTab] = useState<PortfolioTab>("holdings");
 
   return (
