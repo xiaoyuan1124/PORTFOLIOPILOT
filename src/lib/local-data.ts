@@ -9,6 +9,12 @@ import {
   holdingCsvRowSchema
 } from "./schema";
 
+export const DEFAULT_ACCOUNT = "預設帳戶";
+
+export function accountName(value?: string) {
+  return value?.trim() || DEFAULT_ACCOUNT;
+}
+
 export function downloadText(filename: string, text: string, type = "text/plain;charset=utf-8") {
   const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
@@ -21,7 +27,7 @@ export function downloadText(filename: string, text: string, type = "text/plain;
 
 export function serializeBackup(state: AppState) {
   return JSON.stringify({
-    version: 3,
+    version: 4,
     exportedAt: new Date().toISOString(),
     state: appStateSchema.parse(state)
   }, null, 2);
@@ -41,7 +47,8 @@ export function holdingsToCsv(holdings: Holding[]) {
     price: holding.price,
     averageCost: holding.averageCost,
     currency: holding.currency,
-    sector: holding.sector
+    sector: holding.sector,
+    account: accountName(holding.account)
   })));
 }
 
@@ -55,7 +62,8 @@ export function csvTemplate() {
     price: 1000,
     averageCost: 900,
     currency: "TWD",
-    sector: "半導體"
+    sector: "半導體",
+    account: "台股證券"
   }]);
 }
 
@@ -79,15 +87,20 @@ export function parseHoldingsCsv(text: string): Holding[] {
     return {
       id: `csv-${Date.now()}-${index}`,
       ...result.data,
-      symbol: result.data.symbol.toUpperCase()
+      symbol: result.data.symbol.toUpperCase(),
+      account: accountName(result.data.account)
     };
   });
 }
 
+function holdingKey(holding: Pick<Holding, "market" | "symbol" | "account">) {
+  return `${holding.market}:${holding.symbol.toUpperCase()}:${accountName(holding.account).toLowerCase()}`;
+}
+
 export function mergeHoldings(existing: Holding[], incoming: Holding[]) {
-  const map = new Map(existing.map((holding) => [`${holding.market}:${holding.symbol.toUpperCase()}`, holding]));
+  const map = new Map(existing.map((holding) => [holdingKey(holding), holding]));
   for (const holding of incoming) {
-    const key = `${holding.market}:${holding.symbol.toUpperCase()}`;
+    const key = holdingKey(holding);
     const previous = map.get(key);
     map.set(key, previous ? { ...holding, id: previous.id } : holding);
   }
