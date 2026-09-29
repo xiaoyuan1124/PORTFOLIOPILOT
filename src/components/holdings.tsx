@@ -28,18 +28,18 @@ const emptyHolding: Omit<Holding, "id"> = {
 
 function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding: Holding) => boolean }) {
   const [form, setForm] = useState<Omit<Holding, "id">>(initial ? {
-    symbol: initial.symbol,
-    name: initial.name,
-    market: initial.market,
+    symbol: initial.type === "cash" ? `CASH-${initial.currency}` : initial.symbol,
+    name: initial.type === "cash" ? `${initial.currency} 現金` : initial.name,
+    market: initial.type === "cash" ? (initial.currency === "USD" ? "US" : "TW") : initial.market,
     type: initial.type,
-    quantity: initial.quantity,
-    price: initial.price,
-    averageCost: initial.averageCost,
+    quantity: initial.type === "cash" ? 1 : initial.quantity,
+    price: initial.type === "cash" ? initial.quantity * initial.price : initial.price,
+    averageCost: initial.type === "cash" ? initial.quantity * initial.price : initial.averageCost,
     currency: initial.currency,
-    sector: initial.sector,
+    sector: initial.type === "cash" ? "現金" : initial.sector,
     account: accountName(initial.account),
-    priceSource: initial.priceSource,
-    priceAsOf: initial.priceAsOf
+    priceSource: initial.type === "cash" ? undefined : initial.priceSource,
+    priceAsOf: initial.type === "cash" ? undefined : initial.priceAsOf
   } : emptyHolding);
   const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
   const [lookupQuery, setLookupQuery] = useState("");
@@ -81,13 +81,14 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     [catalog, lookupField, lookupQuery, smartLookupActive]
   );
 
-  const costValid = form.type === "cash" ? form.averageCost >= 0 : form.averageCost > 0;
-  const valid = Boolean(form.name.trim()) &&
-    Boolean(form.symbol.trim()) &&
-    form.quantity > 0 &&
-    form.price > 0 &&
-    costValid &&
-    accountName(form.account).length > 0;
+  const valid = form.type === "cash"
+    ? form.price > 0 && Number.isFinite(form.price) && accountName(form.account).length > 0
+    : Boolean(form.name.trim()) &&
+      Boolean(form.symbol.trim()) &&
+      form.quantity > 0 &&
+      form.price > 0 &&
+      form.averageCost > 0 &&
+      accountName(form.account).length > 0;
 
   function applyCandidate(candidate: HoldingLookupCandidate) {
     setForm((current) => ({
@@ -162,8 +163,112 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     if (exact) applyCandidate(exact);
   }
 
+  function changeMarket(market: Market) {
+    const leavingOfficialTaiwan =
+      market === "US" &&
+      (form.priceSource === "TWSE" || form.priceSource === "TPEx");
+
+    setForm({
+      ...form,
+      market,
+      currency: market === "TW" ? "TWD" : "USD",
+      ...(leavingOfficialTaiwan
+        ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
+        : {})
+    });
+    clearLookupIntent();
+    if (market === "TW") {
+      setManualIdentity(false);
+      setLookupUnavailable(false);
+      if (!catalog?.length) setCatalog(null);
+    } else {
+      setManualIdentity(true);
+    }
+  }
+
+  function changeAssetType(type: AssetType) {
+    const enteringCash = type === "cash";
+    const leavingCash = form.type === "cash" && !enteringCash;
+
+    if (enteringCash) {
+      const currency = form.currency;
+      setForm({
+        ...form,
+        type,
+        market: currency === "USD" ? "US" : "TW",
+        symbol: `CASH-${currency}`,
+        name: `${currency} 現金`,
+        quantity: 1,
+        price: 0,
+        averageCost: 0,
+        sector: "現金",
+        priceSource: undefined,
+        priceAsOf: undefined
+      });
+      clearLookupIntent();
+      setManualIdentity(true);
+      return;
+    }
+
+    setForm({
+      ...form,
+      type,
+      ...(leavingCash
+        ? {
+            symbol: "",
+            name: "",
+            quantity: 0,
+            price: 0,
+            averageCost: 0,
+            sector: "",
+            priceSource: undefined,
+            priceAsOf: undefined
+          }
+        : {})
+    });
+    clearLookupIntent();
+    if (form.market === "TW") {
+      setManualIdentity(false);
+      setLookupUnavailable(false);
+      if (!catalog?.length) setCatalog(null);
+    }
+  }
+
+  function changeCashCurrency(currency: Currency) {
+    setForm({
+      ...form,
+      currency,
+      market: currency === "USD" ? "US" : "TW",
+      symbol: `CASH-${currency}`,
+      name: `${currency} 現金`,
+      quantity: 1,
+      price: 0,
+      averageCost: 0,
+      sector: "現金",
+      priceSource: undefined,
+      priceAsOf: undefined
+    });
+  }
+
   function persistHolding() {
     if (!valid) return false;
+
+    if (form.type === "cash") {
+      return onSave({
+        id: initial?.id ?? `h-${Date.now()}`,
+        ...form,
+        market: form.currency === "USD" ? "US" : "TW",
+        symbol: `CASH-${form.currency}`,
+        name: `${form.currency} 現金`,
+        quantity: 1,
+        averageCost: form.price,
+        sector: "現金",
+        priceSource: undefined,
+        priceAsOf: undefined,
+        account: accountName(form.account)
+      });
+    }
+
     return onSave({
       id: initial?.id ?? `h-${Date.now()}`,
       ...form,
@@ -182,6 +287,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
 
   return (
     <form onSubmit={submit} className="space-y-3">
+      {form.type !== "cash" ? <>
       <div className="grid grid-cols-[120px_1fr] gap-3">
         <input
           className="field"
@@ -199,7 +305,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
         />
       </div>
 
-      {form.market === "TW" && form.type !== "cash" ? (
+      {form.market === "TW" ? (
         <div className="space-y-2">
           {manualIdentity ? (
             <div className="flex items-start justify-between gap-3 rounded-xl border border-black/6 bg-black/[.018] px-3 py-2.5 dark:border-white/8 dark:bg-white/[.025]">
@@ -256,79 +362,91 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
           美股目前不使用付費或授權不明的即時資料源；請手動填代號、名稱、目前價格與實際平均成本，兩個文字欄位不會互相清除。
         </p>
       ) : null}
+      </> : (
+        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3.5 dark:border-white/8 dark:bg-white/[.025]">
+          <p className="text-sm font-semibold">現金部位只需要餘額</p>
+          <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+            不需要代號、股數、價格或平均成本。選擇幣別並填目前現金餘額即可；底層會以 1 × 餘額保存，不會產生未實現損益。
+          </p>
+        </div>
+      )}
 
       <input className="field" placeholder="帳戶，例如：台股證券、複委託、銀行現金" value={form.account ?? ""} onChange={(e) => setForm({ ...form, account: e.target.value })} />
-      <div className="grid grid-cols-2 gap-3">
-        <select className="field" value={form.market} onChange={(e) => {
-          const market = e.target.value as Market;
-          const leavingOfficialTaiwan =
-            market === "US" &&
-            (form.priceSource === "TWSE" || form.priceSource === "TPEx");
-
-          setForm({
-            ...form,
-            market,
-            currency: market === "TW" ? "TWD" : "USD",
-            ...(leavingOfficialTaiwan
-              ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
-              : {})
-          });
-          clearLookupIntent();
-          if (market === "TW" && form.type !== "cash") {
-            setManualIdentity(false);
-            setLookupUnavailable(false);
-            if (!catalog?.length) setCatalog(null);
-          } else {
-            setManualIdentity(true);
-          }
-        }}>
-          <option value="TW">台灣</option>
-          <option value="US">美國</option>
-        </select>
-        <select className="field" value={form.type} onChange={(e) => {
-          const type = e.target.value as AssetType;
-          const enteringCash = type === "cash";
-          setForm({
-            ...form,
-            type,
-            ...(enteringCash
-              ? { sector: "現金", priceSource: undefined, priceAsOf: undefined }
-              : {})
-          });
-          clearLookupIntent();
-          if (form.market === "TW" && !enteringCash) {
-            setManualIdentity(false);
-            setLookupUnavailable(false);
-            if (!catalog?.length) setCatalog(null);
-          } else {
-            setManualIdentity(true);
-          }
-        }}>
-          <option value="stock">個股</option>
-          <option value="etf">ETF</option>
-          <option value="cash">現金</option>
-        </select>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <input className="field" type="number" step="any" min="0" placeholder="股數 / 數量" value={form.quantity || ""} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} />
-        <select className="field" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value as Currency })}>
-          <option value="TWD">TWD</option>
-          <option value="USD">USD</option>
-        </select>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <input className="field" type="number" step="any" min="0" placeholder="目前價格" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value), priceSource: "manual", priceAsOf: undefined })} />
-        <input className="field" type="number" step="any" min="0" placeholder="平均成本" value={form.averageCost || ""} onChange={(e) => setForm({ ...form, averageCost: Number(e.target.value) })} />
-      </div>
-      {form.priceSource && form.priceSource !== "manual" && form.priceAsOf ? (
-        <p className="px-1 text-xs text-black/40 dark:text-white/40">目前價格已由 {form.priceSource} 官方資料自動帶入 · 資料日 {form.priceAsOf}。平均成本屬於你的實際交易資料，不會用市價假造。</p>
+      {form.type === "cash" ? (
+        <div className="grid grid-cols-2 gap-3">
+          <select className="field" value={form.type} onChange={(e) => changeAssetType(e.target.value as AssetType)}>
+            <option value="stock">個股</option>
+            <option value="etf">ETF</option>
+            <option value="cash">現金</option>
+          </select>
+          <select className="field" value={form.currency} onChange={(e) => changeCashCurrency(e.target.value as Currency)}>
+            <option value="TWD">TWD 現金</option>
+            <option value="USD">USD 現金</option>
+          </select>
+        </div>
       ) : (
-        <p className="px-1 text-xs text-black/35 dark:text-white/35">目前價格若不是官方帶入，請在儲存前確認數值與標的身分。</p>
+        <div className="grid grid-cols-2 gap-3">
+          <select className="field" value={form.market} onChange={(e) => changeMarket(e.target.value as Market)}>
+            <option value="TW">台灣</option>
+            <option value="US">美國</option>
+          </select>
+          <select className="field" value={form.type} onChange={(e) => changeAssetType(e.target.value as AssetType)}>
+            <option value="stock">個股</option>
+            <option value="etf">ETF</option>
+            <option value="cash">現金</option>
+          </select>
+        </div>
       )}
-      <p className="px-1 text-xs text-black/35 dark:text-white/35">
-        股數必須大於 0；{form.type === "cash" ? "現金可用數量 × 價格表示金額。" : "平均成本必須大於 0，才能避免產生錯誤的未實現損益。"}
-      </p>
-      <input className="field" placeholder="產業 / 類別" value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} />
+      {form.type === "cash" ? (
+        <>
+          <label className="block text-xs font-semibold text-black/45 dark:text-white/45">目前現金餘額（{form.currency}）</label>
+          <input
+            className="field"
+            type="number"
+            inputMode="decimal"
+            step="any"
+            min="0"
+            placeholder={form.currency === "TWD" ? "例如：50000" : "例如：1500"}
+            value={form.price || ""}
+            onChange={(e) => {
+              const balance = Number(e.target.value);
+              setForm({
+                ...form,
+                quantity: 1,
+                price: balance,
+                averageCost: balance,
+                sector: "現金",
+                priceSource: undefined,
+                priceAsOf: undefined
+              });
+            }}
+          />
+          <p className="px-1 text-xs leading-5 text-black/35 dark:text-white/35">
+            PortfolioPilot 會把這筆餘額視為現金，不計算未實現損益；USD 現金會依目前 USD/TWD 匯率換算總淨值。
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <input className="field" type="number" step="any" min="0" placeholder="股數 / 數量" value={form.quantity || ""} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} />
+            <select className="field" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value as Currency })}>
+              <option value="TWD">TWD</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <input className="field" type="number" step="any" min="0" placeholder="目前價格" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value), priceSource: "manual", priceAsOf: undefined })} />
+            <input className="field" type="number" step="any" min="0" placeholder="平均成本" value={form.averageCost || ""} onChange={(e) => setForm({ ...form, averageCost: Number(e.target.value) })} />
+          </div>
+          {form.priceSource && form.priceSource !== "manual" && form.priceAsOf ? (
+            <p className="px-1 text-xs text-black/40 dark:text-white/40">目前價格已由 {form.priceSource} 官方資料自動帶入 · 資料日 {form.priceAsOf}。平均成本屬於你的實際交易資料，不會用市價假造。</p>
+          ) : (
+            <p className="px-1 text-xs text-black/35 dark:text-white/35">目前價格若不是官方帶入，請在儲存前確認數值與標的身分。</p>
+          )}
+          <p className="px-1 text-xs text-black/35 dark:text-white/35">股數與平均成本都必須大於 0，避免產生錯誤的未實現損益。</p>
+          <input className="field" placeholder="產業 / 類別" value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} />
+        </>
+      )}
       <Button disabled={!valid} type="submit" className="w-full">{initial ? "儲存修改" : "新增部位"}</Button>
       <Dialog.Close asChild>
         <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
