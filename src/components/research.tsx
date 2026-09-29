@@ -10,12 +10,12 @@ import { Journal } from "./journal";
 
 type ResearchTab = "snapshot" | "revenue" | "valuation" | "scanner" | "journal";
 
-export function Research({ state, onChange, researchKey }: { state: AppState; onChange: (state: AppState) => void; researchKey?: string }) {
+export function Research({ state, onChange, researchKey, researchRequestId = 0 }: { state: AppState; onChange: (state: AppState) => void; researchKey?: string; researchRequestId?: number }) {
   const [tab, setTab] = useState<ResearchTab>("snapshot");
 
   useEffect(() => {
     if (researchKey) setTab("snapshot");
-  }, [researchKey]);
+  }, [researchKey, researchRequestId]);
 
   return (
     <div className="space-y-4">
