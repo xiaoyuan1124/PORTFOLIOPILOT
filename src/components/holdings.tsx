@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownUp, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -45,6 +45,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupField, setLookupField] = useState<"symbol" | "name" | null>(null);
   const [lookupUnavailable, setLookupUnavailable] = useState(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (initial || form.market !== "TW" || catalog !== null) return;
@@ -108,9 +109,8 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     if (exact) applyCandidate(exact);
   }
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!valid) return;
+  function persistHolding() {
+    if (!valid) return false;
     onSave({
       id: initial?.id ?? `h-${Date.now()}`,
       ...form,
@@ -119,6 +119,13 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
       sector: form.sector.trim() || "未分類",
       account: accountName(form.account)
     });
+    return true;
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!persistHolding()) return;
+    closeRef.current?.click();
   }
 
   return (
@@ -208,8 +215,9 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
         <p className="px-1 text-xs text-black/35 dark:text-white/35">平均成本無法從公開市場資料取得，請填你的實際持有成本。</p>
       )}
       <input className="field" placeholder="產業 / 類別" value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} />
+      <Button disabled={!valid} type="submit" className="w-full">{initial ? "儲存修改" : "新增部位"}</Button>
       <Dialog.Close asChild>
-        <Button disabled={!valid} type="submit" className="w-full">{initial ? "儲存修改" : "新增部位"}</Button>
+        <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
       </Dialog.Close>
     </form>
   );
