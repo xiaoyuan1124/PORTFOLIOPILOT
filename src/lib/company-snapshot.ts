@@ -1,5 +1,6 @@
 import type { TwQuoteCache } from "./market-data";
 import type { RevenueCache, RevenueRow } from "./revenue-data";
+import { buildHoldingLookupCatalog } from "./holding-autofill";
 import type { OfficialStrategyResult } from "./strategy-gates";
 import type { ValuationCache, ValuationRow } from "./valuation-data";
 
@@ -10,9 +11,10 @@ export type CompanySnapshot = {
   name: string;
   market: "TWSE" | "TPEx";
   industry: string;
+  type: "stock" | "etf";
   quote: QuoteRow | null;
   valuation: ValuationRow | null;
-  revenue: RevenueRow;
+  revenue: RevenueRow | null;
   strategy: OfficialStrategyResult | null;
 };
 
@@ -32,20 +34,26 @@ export function buildCompanySnapshots({
   strategies: OfficialStrategyResult[];
 }): CompanySnapshot[] {
   const quoteMap = new Map(quotes.quotes.map((row) => [key(row.market, row.code), row]));
+  const revenueMap = new Map(revenue.rows.map((row) => [key(row.market, row.code), row]));
   const valuationMap = new Map(valuations.rows.map((row) => [key(row.market, row.code), row]));
   const strategyMap = new Map(strategies.map((row) => [key(row.market, row.code), row]));
 
-  return revenue.rows
-    .map((row) => ({
-      code: row.code,
-      name: row.name,
-      market: row.market,
-      industry: row.industry,
-      quote: quoteMap.get(key(row.market, row.code)) ?? null,
-      valuation: valuationMap.get(key(row.market, row.code)) ?? null,
-      revenue: row,
-      strategy: strategyMap.get(key(row.market, row.code)) ?? null
-    }))
+  return buildHoldingLookupCatalog(quotes, revenue)
+    .map((security) => {
+      const securityKey = key(security.venue, security.code);
+      const revenueRow = revenueMap.get(securityKey) ?? null;
+      return {
+        code: security.code,
+        name: security.name,
+        market: security.venue,
+        industry: security.industry,
+        type: security.type,
+        quote: quoteMap.get(securityKey) ?? null,
+        valuation: valuationMap.get(securityKey) ?? null,
+        revenue: revenueRow,
+        strategy: security.type === "stock" ? strategyMap.get(securityKey) ?? null : null
+      };
+    })
     .sort((a, b) => a.code.localeCompare(b.code, "en"));
 }
 
