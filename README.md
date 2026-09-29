@@ -168,3 +168,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Settings exposes recovery-backup export and explicit cleanup controls.
 - The global shell surfaces a clear recovery/storage warning instead of silently hiding the problem.
 - Home now reports Taiwan official-price coverage across all Taiwan investments, including manual/unknown holdings and mixed price dates, rather than showing only the newest date.
+
+
+## V0.23 holding input integrity
+
+- New holdings require a positive quantity and current price.
+- Stock/ETF holdings require a positive real average cost so unrealized P/L cannot be fabricated from a zero-cost placeholder.
+- Manual add/edit uses the same market + symbol + account identity rule as CSV import, preventing accidental double-counting inside one account.
+- Duplicate detection keeps the add dialog open and points the user to the existing position instead of silently adding another row.
+- If a user finishes typing an exact Taiwan symbol/name before official lookup data finishes loading, the form now applies the exact match as soon as the catalog arrives.
