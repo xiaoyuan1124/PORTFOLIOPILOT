@@ -1,5 +1,6 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { parseTpexValuations, parseTwseValuations } from "./lib/valuation-data.mjs";
+import { combineQuoteMarkets } from "./lib/quote-data.mjs";
 
 const QUOTE_SOURCES = [
   {
@@ -541,8 +542,19 @@ async function main() {
     fetchJson(VALUATION_SOURCES[1])
   ]);
 
-  const quotes = [...parseTwseQuotes(twseQuoteRows), ...parseTpexQuotes(tpexQuoteRows)]
-    .sort((a, b) => a.code.localeCompare(b.code, "en"));
+  let existingQuotes = [];
+  try {
+    const existingQuoteCache = JSON.parse(await readFile("public/data/tw-quotes.json", "utf8"));
+    existingQuotes = Array.isArray(existingQuoteCache?.quotes) ? existingQuoteCache.quotes : [];
+  } catch {
+    existingQuotes = [];
+  }
+
+  const quotes = combineQuoteMarkets(
+    existingQuotes,
+    parseTwseQuotes(twseQuoteRows),
+    parseTpexQuotes(tpexQuoteRows)
+  );
 
   if (quotes.length < 500) {
     throw new Error(`Refusing to publish suspiciously small quote set: ${quotes.length}`);

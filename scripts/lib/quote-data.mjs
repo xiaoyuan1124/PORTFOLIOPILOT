@@ -34,6 +34,51 @@ export function parseTwseQuoteRows(rows) {
   });
 }
 
+function plainCell(value) {
+  return String(value ?? "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .trim();
+}
+
+function findFieldIndex(fields, names) {
+  return fields.findIndex((field) => names.includes(plainCell(field)));
+}
+
+export function parseTwseMiIndexPayload(payload, date) {
+  if (!payload || typeof payload !== "object") return [];
+  if (payload.stat && String(payload.stat).toUpperCase() !== "OK") return [];
+
+  const tables = Array.isArray(payload.tables) ? payload.tables : [];
+  let table = tables.find((item) => {
+    const fields = Array.isArray(item?.fields) ? item.fields.map(plainCell) : [];
+    return fields.includes("證券代號") && fields.includes("收盤價");
+  });
+
+  if (!table && Array.isArray(payload.fields9) && Array.isArray(payload.data9)) {
+    table = { fields: payload.fields9, data: payload.data9 };
+  }
+
+  if (!table || !Array.isArray(table.fields) || !Array.isArray(table.data)) return [];
+
+  const fields = table.fields.map(plainCell);
+  const codeIndex = findFieldIndex(fields, ["證券代號", "股票代號"]);
+  const nameIndex = findFieldIndex(fields, ["證券名稱", "股票名稱"]);
+  const closeIndex = findFieldIndex(fields, ["收盤價"]);
+
+  if ([codeIndex, nameIndex, closeIndex].some((index) => index < 0)) return [];
+
+  return table.data.flatMap((row) => {
+    if (!Array.isArray(row)) return [];
+    const code = plainCell(row[codeIndex]);
+    const name = plainCell(row[nameIndex]);
+    const close = cleanQuoteNumber(plainCell(row[closeIndex]));
+
+    if (!code || !name || close === null || close < 0) return [];
+    return [{ code, name, market: "TWSE", close, date }];
+  });
+}
+
 export function parseTpexQuoteRows(rows) {
   return rows.flatMap((row) => {
     const close = cleanQuoteNumber(row.Close);

@@ -16,6 +16,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Per-holding and total unrealized return
 - One-tap Taiwan official closing-price refresh with stale-cache protection
 - Lightweight TWSE / TPEx quote-only refresh retries after Taiwan market close, independent of the heavier fundamental-data workflow
+- TWSE listed-stock closes prefer the official date-specific MI_INDEX daily-close table; the laggier STOCK_DAY_ALL feed remains fallback-only
 - Price provenance shown per holding (source + market date)
 - Official TWSE / TPEx monthly-revenue research with MoM / YoY / cumulative YoY
 - Official revenue sector pulse: latest-period industry median YoY, positive-growth breadth and >20% breadth, with minimum-sample and non-price-signal labels
