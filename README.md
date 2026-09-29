@@ -258,3 +258,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Cash cards show native-currency balance, TWD-converted value and total-asset weight.
 - Quantity, ticker and percentage-gain fields are hidden for cash, and the card explicitly states that unrealized P/L is not calculated.
 - Legacy cash positions display their full quantity × price balance even before the user opens the simplified editor.
+
+
+## V0.34 performance snapshot integrity
+
+- Current TWR Proxy ignores future-dated snapshots, matching the existing future-activity protection.
+- Benchmark comparison receives only snapshots dated on or before the current local valuation date.
+- Performance shows how many future snapshots were excluded instead of silently letting them affect today's return.
+- Performance completeness counts only snapshots currently eligible for today's metrics.
+- Activity filters now distinguish a genuinely empty ledger from an empty filtered result and offer one-tap filter clearing.
