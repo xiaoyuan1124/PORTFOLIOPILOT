@@ -105,7 +105,26 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
 
   function updateLookup(field: "symbol" | "name", value: string) {
     if (initial) {
+      const symbolChanged =
+        field === "symbol" &&
+        value.trim().toUpperCase() !== initial.symbol.trim().toUpperCase();
+
+      setForm((current) => ({
+        ...current,
+        [field]: value,
+        ...(symbolChanged
+          ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
+          : {})
+      }));
+      return;
+    }
+
+    if (form.market !== "TW") {
       setForm((current) => ({ ...current, [field]: value }));
+      lookupFieldRef.current = null;
+      lookupQueryRef.current = "";
+      setLookupField(null);
+      setLookupQuery("");
       return;
     }
 
@@ -197,12 +216,30 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
           )}
         </div>
       ) : null}
+      {!initial && form.market === "US" ? (
+        <p className="px-1 text-xs leading-5 text-black/40 dark:text-white/40">
+          美股目前不使用付費或授權不明的即時資料源；請手動填代號、名稱、目前價格與實際平均成本，兩個文字欄位不會互相清除。
+        </p>
+      ) : null}
 
       <input className="field" placeholder="帳戶，例如：台股證券、複委託、銀行現金" value={form.account ?? ""} onChange={(e) => setForm({ ...form, account: e.target.value })} />
       <div className="grid grid-cols-2 gap-3">
         <select className="field" value={form.market} onChange={(e) => {
           const market = e.target.value as Market;
-          setForm({ ...form, market, currency: market === "TW" ? "TWD" : "USD" });
+          const leavingOfficialTaiwan =
+            market === "US" &&
+            (form.priceSource === "TWSE" || form.priceSource === "TPEx");
+
+          setForm({
+            ...form,
+            market,
+            currency: market === "TW" ? "TWD" : "USD",
+            ...(leavingOfficialTaiwan
+              ? { price: 0, sector: "", priceSource: undefined, priceAsOf: undefined }
+              : {})
+          });
+          lookupFieldRef.current = null;
+          lookupQueryRef.current = "";
           setLookupField(null);
           setLookupQuery("");
         }}>
