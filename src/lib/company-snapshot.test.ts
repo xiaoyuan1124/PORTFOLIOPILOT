@@ -81,7 +81,7 @@ describe("company snapshot", () => {
       { code: "1101", name: "台泥", market: "TWSE" as const, industry: "水泥", type: "stock" as const, quote: null, valuation: null, revenue: { code: "1101", name: "台泥", market: "TWSE" as const, industry: "水泥", period: "2026-08", revenue: 1, lastYearRevenue: null, momPct: null, yoyPct: null, cumulativeRevenue: null, cumulativeYoyPct: null }, strategy: null },
       { code: "2330", name: "台積電", market: "TWSE" as const, industry: "半導體", type: "stock" as const, quote: null, valuation: null, revenue: { code: "2330", name: "台積電", market: "TWSE" as const, industry: "半導體", period: "2026-08", revenue: 1, lastYearRevenue: null, momPct: null, yoyPct: null, cumulativeRevenue: null, cumulativeYoyPct: null }, strategy: null }
     ];
-    const held = new Set(["2330"]);
+    const held = new Set(["TWSE:2330"]);
     expect(companySnapshotsForView(base, "", held).map((row) => row.code)).toEqual(["2330", "1101"]);
     expect(companySnapshotsForView(base, "", held, true).map((row) => row.code)).toEqual(["2330"]);
     expect(companySnapshotsForView(base, "半導體", held).map((row) => row.code)).toEqual(["2330"]);
