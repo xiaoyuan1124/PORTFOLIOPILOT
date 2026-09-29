@@ -42,7 +42,7 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(3);
+    expect(JSON.parse(serialized).version).toBe(4);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -151,6 +151,17 @@ describe("local data import/export", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]?.quantity).toBe(10);
     expect(rows[0]?.symbol).toBe("2330");
+  });
+
+  it("keeps identical symbols separate across accounts", () => {
+    const incoming = parseHoldingsCsv([
+      "symbol,name,market,type,quantity,price,averageCost,currency,sector,account",
+      "2330,台積電,TW,stock,10,1000,900,TWD,半導體,券商A",
+      "2330,台積電,TW,stock,5,1000,920,TWD,半導體,券商B"
+    ].join("\n"));
+    const merged = mergeHoldings([], incoming);
+    expect(merged).toHaveLength(2);
+    expect(merged.map((row) => row.account)).toEqual(["券商A", "券商B"]);
   });
 
   it("rejects invalid market values", () => {
