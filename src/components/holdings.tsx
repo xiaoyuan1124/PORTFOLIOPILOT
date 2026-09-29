@@ -6,7 +6,7 @@ import { ArrowDownUp, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-rea
 import { toast } from "sonner";
 import type { AppState, AssetType, Currency, Holding, Market } from "@/lib/types";
 import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
-import { accountName } from "@/lib/local-data";
+import { accountName, holdingIdentityKey } from "@/lib/local-data";
 import { money, percent } from "@/lib/utils";
 import { applyTwQuotes, cacheFreshnessLabel, loadBundledTwQuotes, shouldRejectStaleClosingCache } from "@/lib/market-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
@@ -26,7 +26,7 @@ const emptyHolding: Omit<Holding, "id"> = {
   account: "預設帳戶"
 };
 
-function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding: Holding) => void }) {
+function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding: Holding) => boolean }) {
   const [form, setForm] = useState<Omit<Holding, "id">>(initial ? {
     symbol: initial.symbol,
     name: initial.name,
@@ -46,13 +46,21 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
   const [lookupField, setLookupField] = useState<"symbol" | "name" | null>(null);
   const [lookupUnavailable, setLookupUnavailable] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const lookupFieldRef = useRef<"symbol" | "name" | null>(null);
+  const lookupQueryRef = useRef("");
 
   useEffect(() => {
     if (initial || form.market !== "TW" || catalog !== null) return;
     let active = true;
     void Promise.all([loadBundledTwQuotes(), loadBundledRevenue()])
       .then(([quotes, revenue]) => {
-        if (active) setCatalog(buildHoldingLookupCatalog(quotes, revenue));
+        if (!active) return;
+        const nextCatalog = buildHoldingLookupCatalog(quotes, revenue);
+        setCatalog(nextCatalog);
+        const field = lookupFieldRef.current;
+        const query = lookupQueryRef.current;
+        const exact = field && query ? findExactHoldingLookupCandidate(nextCatalog, field, query) : null;
+        if (exact) applyCandidate(exact);
       })
       .catch(() => {
         if (active) {
@@ -68,7 +76,13 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     [catalog, lookupField, lookupQuery]
   );
 
-  const valid = form.name.trim() && form.symbol.trim() && form.quantity >= 0 && form.price >= 0 && form.averageCost >= 0 && accountName(form.account).length > 0;
+  const costValid = form.type === "cash" ? form.averageCost >= 0 : form.averageCost > 0;
+  const valid = Boolean(form.name.trim()) &&
+    Boolean(form.symbol.trim()) &&
+    form.quantity > 0 &&
+    form.price > 0 &&
+    costValid &&
+    accountName(form.account).length > 0;
 
   function applyCandidate(candidate: HoldingLookupCandidate) {
     setForm((current) => ({
@@ -83,6 +97,8 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
       priceSource: candidate.venue,
       priceAsOf: candidate.date
     }));
+    lookupFieldRef.current = null;
+    lookupQueryRef.current = "";
     setLookupField(null);
     setLookupQuery("");
   }
@@ -102,6 +118,8 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
       priceSource: undefined,
       priceAsOf: undefined
     }));
+    lookupFieldRef.current = field;
+    lookupQueryRef.current = value;
     setLookupField(field);
     setLookupQuery(value);
 
@@ -111,7 +129,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
 
   function persistHolding() {
     if (!valid) return false;
-    onSave({
+    return onSave({
       id: initial?.id ?? `h-${Date.now()}`,
       ...form,
       symbol: form.symbol.trim().toUpperCase(),
@@ -119,7 +137,6 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
       sector: form.sector.trim() || "未分類",
       account: accountName(form.account)
     });
-    return true;
   }
 
   function submit(e: React.FormEvent) {
@@ -212,8 +229,11 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
       {form.priceSource && form.priceSource !== "manual" && form.priceAsOf ? (
         <p className="px-1 text-xs text-black/40 dark:text-white/40">目前價格已由 {form.priceSource} 官方資料自動帶入 · 資料日 {form.priceAsOf}。平均成本屬於你的實際交易資料，不會用市價假造。</p>
       ) : (
-        <p className="px-1 text-xs text-black/35 dark:text-white/35">平均成本無法從公開市場資料取得，請填你的實際持有成本。</p>
+        <p className="px-1 text-xs text-black/35 dark:text-white/35">目前價格若不是官方帶入，請確認後再新增。</p>
       )}
+      <p className="px-1 text-xs text-black/35 dark:text-white/35">
+        股數必須大於 0；{form.type === "cash" ? "現金可用數量 × 價格表示金額。" : "平均成本必須大於 0，才能避免產生錯誤的未實現損益。"}
+      </p>
       <input className="field" placeholder="產業 / 類別" value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} />
       <Button disabled={!valid} type="submit" className="w-full">{initial ? "儲存修改" : "新增部位"}</Button>
       <Dialog.Close asChild>
@@ -254,11 +274,20 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
 
   function upsert(holding: Holding) {
     const exists = state.holdings.some((item) => item.id === holding.id);
+    const duplicate = state.holdings.find(
+      (item) => item.id !== holding.id && holdingIdentityKey(item) === holdingIdentityKey(holding)
+    );
+    if (duplicate) {
+      toast.warning(`${holding.symbol} 已存在於「${accountName(holding.account)}」，請直接編輯既有部位，避免資產重複計算。`);
+      return false;
+    }
+
     onChange({
       ...state,
       holdings: exists ? state.holdings.map((item) => item.id === holding.id ? holding : item) : [...state.holdings, holding]
     });
     toast.success(exists ? "部位已更新" : "部位已新增");
+    return true;
   }
 
   async function refreshTaiwanPrices() {
