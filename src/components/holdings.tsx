@@ -8,7 +8,7 @@ import type { AppState, AssetType, Currency, Holding, Market } from "@/lib/types
 import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
 import { accountName } from "@/lib/local-data";
 import { money, percent } from "@/lib/utils";
-import { applyTwQuotes, cacheFreshnessLabel, loadBundledTwQuotes } from "@/lib/market-data";
+import { applyTwQuotes, cacheFreshnessLabel, loadBundledTwQuotes, shouldRejectStaleClosingCache } from "@/lib/market-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
 import { buildHoldingLookupCatalog, findExactHoldingLookupCandidate, searchHoldingLookupCatalog, type HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { Badge, Button, Card, CardContent, GhostButton, Modal } from "./ui";
@@ -265,13 +265,19 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
     setRefreshing(true);
     try {
       const cache = await loadBundledTwQuotes();
+      const asOf = cacheFreshnessLabel(cache);
+      if (shouldRejectStaleClosingCache(cache)) {
+        toast.warning(`官方收盤價快取目前只到 ${asOf}，可能休市或尚未發布今天資料；為避免錯價，本次未覆寫持股。`);
+        return;
+      }
+
       const result = applyTwQuotes(state.holdings, cache);
       if (!result.updated) {
-        toast.info("目前持股沒有可更新的 TWSE／TPEx 報價");
+        toast.info(`目前持股沒有可更新的 TWSE／TPEx 報價 · 官方資料日 ${asOf}`);
         return;
       }
       onChange({ ...state, holdings: result.holdings });
-      toast.success(`已更新 ${result.updated} 個台股部位 · 資料日 ${cacheFreshnessLabel(cache)}`);
+      toast.success(`已更新 ${result.updated} 個台股部位 · 官方收盤資料日 ${asOf}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法載入官方台股資料");
     } finally {
