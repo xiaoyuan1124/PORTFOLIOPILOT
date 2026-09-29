@@ -609,10 +609,21 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
                   </div>
                 </div>
                 <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <div className="mini-metric"><span>數量</span><strong>{holding.quantity.toLocaleString()}</strong></div>
-                  <div className="mini-metric"><span>市值</span><strong>{money(value)}</strong></div>
-                  <div className="mini-metric"><span>損益</span><strong>{percent(gainPct)}</strong></div>
-                  <div className="mini-metric"><span>占比</span><strong>{pct.toFixed(1)}%</strong></div>
+                  {holding.type === "cash" ? (
+                    <>
+                      <div className="mini-metric"><span>現金餘額</span><strong>{holding.currency} {(holding.quantity * holding.price).toLocaleString()}</strong></div>
+                      <div className="mini-metric"><span>折合淨值</span><strong>{money(value)}</strong></div>
+                      <div className="mini-metric"><span>未實現損益</span><strong>—</strong></div>
+                      <div className="mini-metric"><span>占比</span><strong>{pct.toFixed(1)}%</strong></div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mini-metric"><span>數量</span><strong>{holding.quantity.toLocaleString()}</strong></div>
+                      <div className="mini-metric"><span>市值</span><strong>{money(value)}</strong></div>
+                      <div className="mini-metric"><span>損益</span><strong>{percent(gainPct)}</strong></div>
+                      <div className="mini-metric"><span>占比</span><strong>{pct.toFixed(1)}%</strong></div>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
