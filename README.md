@@ -16,6 +16,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - One-tap Taiwan closing-price refresh from a repository-cached official TWSE / TPEx dataset
 - Price provenance shown per holding (source + market date)
 - Official TWSE / TPEx monthly-revenue research with MoM / YoY / cumulative YoY
+- Official revenue sector pulse: latest-period industry median YoY, positive-growth breadth and >20% breadth, with minimum-sample and non-price-signal labels
 - Official TWSE / TPEx valuation research with P/E, P/B and dividend yield, preserving source date and missing official fields
 - Company Snapshot research home combining official price, valuation, revenue, margin and 10D institutional data without guessing missing values
 - Official MOPS 3-month revenue history and a real first Scanner gate (3 consecutive YoY > 20%)
@@ -73,7 +74,7 @@ A previously prepared Supabase integration remains in source for possible future
 - Sonner
 - Vitest
 
-See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation, `docs/PORTFOLIO_RISK.md` for concentration methodology and coverage boundaries, `docs/EXACT_TWR.md` for event-boundary performance methodology, `docs/BENCHMARK.md` for official benchmark source and alignment rules, `docs/VALUATION_DATA.md` for valuation cache provenance and trust rules, and `docs/COMPANY_SNAPSHOT.md` for cross-cache company research join and display rules.
+See `docs/GITHUB_TOOL_AUDIT.md` for the GitHub/open-source review and adoption decisions, `docs/MARKET_DATA.md` for the Taiwan market caches, `docs/QUARTERLY_GROSS_MARGIN_GATE.md` for the official single-quarter gross-margin methodology, `docs/ETF_LOOKTHROUGH.md` for ETF composition provenance and exposure calculation, `docs/PORTFOLIO_RISK.md` for concentration methodology and coverage boundaries, `docs/EXACT_TWR.md` for event-boundary performance methodology, `docs/BENCHMARK.md` for official benchmark source and alignment rules, `docs/VALUATION_DATA.md` for valuation cache provenance and trust rules, `docs/COMPANY_SNAPSHOT.md` for cross-cache company research join and display rules, and `docs/REVENUE_SECTOR_PULSE.md` for the sector aggregation methodology.
 
 ## Local development
 
