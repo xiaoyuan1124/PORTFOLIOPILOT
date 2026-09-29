@@ -38,7 +38,10 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
 
   function removeRecoveryBackup() {
     if (!window.confirm("確定要清除復原備份嗎？清除後無法從 PortfolioPilot 取回這份原始內容。")) return;
-    clearRecoveryBackup();
+    if (!clearRecoveryBackup()) {
+      toast.error("無法清除復原備份；瀏覽器儲存目前不可用。");
+      return;
+    }
     onRecoveryBackupCleared?.();
     toast.success("復原備份已清除");
   }
