@@ -23,7 +23,7 @@ const revenue: RevenueCache = {
   rows: [
     {
       code: "2330",
-      name: "台灣積體電路製造股份有限公司",
+      name: "台積電",
       market: "TWSE",
       industry: "半導體業",
       period: "2026-08",
