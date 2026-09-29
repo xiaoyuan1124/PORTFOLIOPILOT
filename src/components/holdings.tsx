@@ -8,7 +8,7 @@ import type { AppState, AssetType, Currency, Holding, Market } from "@/lib/types
 import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
 import { accountName, holdingIdentityKey } from "@/lib/local-data";
 import { money, percent } from "@/lib/utils";
-import { applyTwQuotes, cacheFreshnessLabel, loadBundledTwQuotes, shouldRejectStaleClosingCache } from "@/lib/market-data";
+import { applyTwQuotes, cacheFreshnessLabel, cacheMarketFreshness, loadBundledTwQuotes, shouldRejectStaleClosingCache } from "@/lib/market-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
 import { buildHoldingLookupCatalog, findExactHoldingLookupCandidate, searchHoldingLookupCatalog, type HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { Badge, Button, Card, CardContent, GhostButton, Modal } from "./ui";
@@ -301,13 +301,23 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
       }
 
       const result = applyTwQuotes(state.holdings, cache);
+      const freshness = cacheMarketFreshness(cache);
+      const dateLabel = [
+        freshness.TWSE ? `TWSE ${freshness.TWSE}` : null,
+        freshness.TPEx ? `TPEx ${freshness.TPEx}` : null
+      ].filter(Boolean).join(" · ");
+
       if (!result.updated) {
         const skipped = result.skippedStale + result.skippedAmbiguous;
-        toast.info(`目前持股沒有可更新的 TWSE／TPEx 報價 · 官方資料日 ${asOf}${skipped ? ` · 已保護略過 ${skipped} 筆` : ""}`);
+        if (result.matched > 0) {
+          toast.success(`台股收盤價已是最新 · ${dateLabel || asOf}`);
+        } else {
+          toast.info(`目前持股沒有可套用的 TWSE／TPEx 報價 · ${dateLabel || `官方資料日 ${asOf}`}${skipped ? ` · 已保護略過 ${skipped} 筆` : ""}`);
+        }
         return;
       }
       onChange({ ...state, holdings: result.holdings });
-      toast.success(`已更新 ${result.updated} 個台股部位 · 官方收盤資料日 ${asOf}`);
+      toast.success(`實際更新 ${result.updated}/${result.matched} 個台股部位 · ${dateLabel || `官方資料日 ${asOf}`}`);
       if (result.skippedStale || result.skippedAmbiguous) {
         toast.info(`另有 ${result.skippedStale + result.skippedAmbiguous} 筆因舊日期或市場不明而保留原價`);
       }
