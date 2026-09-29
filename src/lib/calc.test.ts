@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppState } from "./types";
-import { allocationByAccount, dailySnapshotDelta, portfolioCashSummary, portfolioSummary, snapshotsForRange, withTodaySnapshot } from "./calc";
+import { allocationByAccount, dailySnapshotDelta, officialPriceCoverage, portfolioCashSummary, portfolioSummary, snapshotsForRange, withTodaySnapshot } from "./calc";
 
 const state: AppState = {
   usdTwd: 32,
@@ -45,6 +45,23 @@ describe("portfolio calculations", () => {
   it("groups value by local account", () => {
     const result = allocationByAccount(state.holdings, state.usdTwd);
     expect(result.map((row) => [row.name, row.value])).toEqual([["券商B", 3200], ["券商A", 2000]]);
+  });
+
+  it("reports official Taiwan price coverage without hiding older holdings", () => {
+    const coverage = officialPriceCoverage([
+      { ...state.holdings[0]!, priceSource: "TWSE", priceAsOf: "2026-09-29" },
+      { id: "tw2", symbol: "6488", name: "GlobalWafers", market: "TW", type: "stock", quantity: 1, price: 400, averageCost: 350, currency: "TWD", sector: "半導體", priceSource: "TPEx", priceAsOf: "2026-09-28" },
+      { id: "tw3", symbol: "0050", name: "ETF", market: "TW", type: "etf", quantity: 1, price: 200, averageCost: 180, currency: "TWD", sector: "ETF" }
+    ],);
+
+    expect(coverage).toEqual({
+      total: 3,
+      covered: 2,
+      manualOrUnknown: 1,
+      oldestDate: "2026-09-28",
+      newestDate: "2026-09-29",
+      aligned: false
+    });
   });
 
   it("separates cash from invested assets", () => {
