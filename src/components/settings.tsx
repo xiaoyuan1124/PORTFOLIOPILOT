@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { AlertTriangle, DatabaseBackup, Download, FileSpreadsheet, RotateCcw, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { demoState, emptyState } from "@/lib/demo-data";
+import { localDateKey } from "@/lib/calc";
 import type { AppState } from "@/lib/types";
 import {
   csvTemplate,
@@ -29,7 +30,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
       return;
     }
     downloadText(
-      `portfoliopilot-recovery-raw-${new Date().toISOString().slice(0, 10)}.txt`,
+      `portfoliopilot-recovery-raw-${localDateKey()}.txt`,
       raw,
       "text/plain;charset=utf-8"
     );
@@ -57,7 +58,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
 
   function exportJson() {
     downloadText(
-      `portfoliopilot-backup-${new Date().toISOString().slice(0, 10)}.json`,
+      `portfoliopilot-backup-${localDateKey()}.json`,
       serializeBackup(state),
       "application/json;charset=utf-8"
     );
@@ -80,7 +81,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
 
   function exportCsv() {
     downloadText(
-      `portfoliopilot-holdings-${new Date().toISOString().slice(0, 10)}.csv`,
+      `portfoliopilot-holdings-${localDateKey()}.csv`,
       holdingsToCsv(state.holdings),
       "text/csv;charset=utf-8"
     );
