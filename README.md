@@ -4,6 +4,10 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 
 ## Current self-use build
 
+- Decision-cockpit dashboard with net-worth range controls, cash level, account distribution, top positions and data freshness
+- Global stock/navigation search (⌘K / Ctrl+K) with direct Taiwan company research
+- Multi-account holdings and cash-flow tracking with account-aware CSV import/export
+- Explicit DEMO mode; new installs start empty so simulated holdings cannot masquerade as personal assets
 - Responsive dashboard with desktop sidebar and mobile bottom navigation
 - Add/edit/delete TW / US stocks, ETFs and cash
 - Search and sort holdings
@@ -27,7 +31,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - **Real local daily net-worth snapshots** instead of a fabricated trend line
 - Four-gate Official Scanner using only official/non-demo Taiwan market data
 - Investment journal
-- Versioned JSON full backup/import with Zod validation (v3 stores optional TWR boundary time/value; v1/v2 remain readable)
+- Versioned JSON full backup/import with Zod validation (v4 adds account + DEMO/personal metadata; v1-v3 remain readable)
 - Holdings CSV import/export and downloadable template
 - ETF composition CSV import/export with strict weight validation and no automatic normalization
 - Dark mode

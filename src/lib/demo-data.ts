@@ -1,13 +1,14 @@
 import type { AppState, ResearchStock } from "./types";
 
 export const demoState: AppState = {
+  dataMode: "demo",
   usdTwd: 31.8,
   holdings: [
-    { id: "h1", symbol: "2330", name: "台積電", market: "TW", type: "stock", quantity: 8, price: 1210, averageCost: 1035, currency: "TWD", sector: "半導體" },
-    { id: "h2", symbol: "009816", name: "台灣TOP50", market: "TW", type: "etf", quantity: 900, price: 11.8, averageCost: 10.9, currency: "TWD", sector: "台灣大型股" },
-    { id: "h3", symbol: "QQQM", name: "Invesco NASDAQ 100 ETF", market: "US", type: "etf", quantity: 1.25, price: 305, averageCost: 278, currency: "USD", sector: "美國科技" },
-    { id: "h4", symbol: "NVDA", name: "NVIDIA", market: "US", type: "stock", quantity: 1.5, price: 192, averageCost: 171, currency: "USD", sector: "半導體" },
-    { id: "h5", symbol: "CASH-TWD", name: "台幣現金", market: "TW", type: "cash", quantity: 1, price: 18000, averageCost: 18000, currency: "TWD", sector: "現金" }
+    { id: "h1", symbol: "2330", name: "台積電", market: "TW", type: "stock", quantity: 8, price: 1210, averageCost: 1035, currency: "TWD", sector: "半導體", account: "台股證券" },
+    { id: "h2", symbol: "009816", name: "台灣TOP50", market: "TW", type: "etf", quantity: 900, price: 11.8, averageCost: 10.9, currency: "TWD", sector: "台灣大型股", account: "台股證券" },
+    { id: "h3", symbol: "QQQM", name: "Invesco NASDAQ 100 ETF", market: "US", type: "etf", quantity: 1.25, price: 305, averageCost: 278, currency: "USD", sector: "美國科技", account: "美股證券" },
+    { id: "h4", symbol: "NVDA", name: "NVIDIA", market: "US", type: "stock", quantity: 1.5, price: 192, averageCost: 171, currency: "USD", sector: "半導體", account: "美股證券" },
+    { id: "h5", symbol: "CASH-TWD", name: "台幣現金", market: "TW", type: "cash", quantity: 1, price: 18000, averageCost: 18000, currency: "TWD", sector: "現金", account: "銀行現金" }
   ],
   etfCompositions: [],
   journal: [
@@ -21,9 +22,9 @@ export const demoState: AppState = {
     }
   ],
   activities: [
-    { id: "a1", date: "2026-04-01", type: "deposit", symbol: "", amount: 45000, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "初始投入" },
-    { id: "a2", date: "2026-07-01", type: "deposit", symbol: "", amount: 6000, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "定期投入" },
-    { id: "a3", date: "2026-09-10", type: "dividend", symbol: "2330", amount: 120, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "示範股息" }
+    { id: "a1", date: "2026-04-01", type: "deposit", symbol: "", amount: 45000, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "初始投入", account: "台股證券" },
+    { id: "a2", date: "2026-07-01", type: "deposit", symbol: "", amount: 6000, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "定期投入", account: "台股證券" },
+    { id: "a3", date: "2026-09-10", type: "dividend", symbol: "2330", amount: 120, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "示範股息", account: "台股證券" }
   ],
   snapshots: [
     { date: "2026-09-22", total: 55320, cost: 51100, gain: 4220, usdTwd: 31.7 },
@@ -35,6 +36,7 @@ export const demoState: AppState = {
 };
 
 export const emptyState: AppState = {
+  dataMode: "personal",
   usdTwd: 31.8,
   holdings: [],
   etfCompositions: [],

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { AppState } from "./types";
-import { dailySnapshotDelta, portfolioSummary, withTodaySnapshot } from "./calc";
+import { allocationByAccount, dailySnapshotDelta, portfolioCashSummary, portfolioSummary, snapshotsForRange, withTodaySnapshot } from "./calc";
 
 const state: AppState = {
   usdTwd: 32,
   holdings: [
-    { id: "tw", symbol: "2330", name: "TSMC", market: "TW", type: "stock", quantity: 2, price: 1000, averageCost: 900, currency: "TWD", sector: "半導體" },
-    { id: "us", symbol: "QQQM", name: "QQQM", market: "US", type: "etf", quantity: 1, price: 100, averageCost: 80, currency: "USD", sector: "美國科技" }
+    { id: "tw", symbol: "2330", name: "TSMC", market: "TW", type: "stock", quantity: 2, price: 1000, averageCost: 900, currency: "TWD", sector: "半導體", account: "券商A" },
+    { id: "us", symbol: "QQQM", name: "QQQM", market: "US", type: "etf", quantity: 1, price: 100, averageCost: 80, currency: "USD", sector: "美國科技", account: "券商B" }
   ],
   etfCompositions: [],
   journal: [],
@@ -40,5 +40,28 @@ describe("portfolio calculations", () => {
     ]);
     expect(result?.amount).toBe(10);
     expect(result?.pct).toBe(10);
+  });
+
+  it("groups value by local account", () => {
+    const result = allocationByAccount(state.holdings, state.usdTwd);
+    expect(result.map((row) => [row.name, row.value])).toEqual([["券商B", 3200], ["券商A", 2000]]);
+  });
+
+  it("separates cash from invested assets", () => {
+    const result = portfolioCashSummary([
+      ...state.holdings,
+      { id: "cash", symbol: "CASH", name: "Cash", market: "TW", type: "cash", quantity: 1, price: 800, averageCost: 800, currency: "TWD", sector: "現金" }
+    ], state.usdTwd);
+    expect(result.cash).toBe(800);
+    expect(result.total).toBe(6000);
+  });
+
+  it("filters snapshots by year to date", () => {
+    const rows = snapshotsForRange([
+      { date: "2025-12-31", total: 90, cost: 90, gain: 0, usdTwd: 32 },
+      { date: "2026-01-02", total: 100, cost: 90, gain: 10, usdTwd: 32 },
+      { date: "2026-09-27", total: 110, cost: 90, gain: 20, usdTwd: 32 }
+    ], "YTD");
+    expect(rows.map((row) => row.date)).toEqual(["2026-01-02", "2026-09-27"]);
   });
 });

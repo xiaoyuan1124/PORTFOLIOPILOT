@@ -13,6 +13,7 @@ export const holdingSchema = z.object({
   averageCost: z.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
   sector: z.string().min(1).max(120),
+  account: z.string().trim().min(1).max(120).optional(),
   priceSource: z.enum(["manual", "TWSE", "TPEx"]).optional(),
   priceAsOf: z.string().optional()
 });
@@ -67,6 +68,7 @@ export const activitySchema = z.object({
   quantity: z.number().finite().nonnegative(),
   price: z.number().finite().nonnegative(),
   note: z.string(),
+  account: z.string().trim().min(1).max(120).optional(),
   preFlowValueTwd: z.number().finite().nonnegative().optional()
 }).superRefine((activity, ctx) => {
   if (activity.preFlowValueTwd !== undefined && activity.type !== "deposit" && activity.type !== "withdrawal") {
@@ -92,12 +94,13 @@ export const appStateSchema = z.object({
   journal: z.array(journalEntrySchema),
   activities: z.array(activitySchema).default([]),
   snapshots: z.array(snapshotSchema).default([]),
-  usdTwd: z.number().finite().positive()
+  usdTwd: z.number().finite().positive(),
+  dataMode: z.enum(["personal", "demo"]).default("personal")
 });
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),
@@ -113,7 +116,11 @@ export const holdingCsvRowSchema = z.object({
   price: z.coerce.number().finite().nonnegative(),
   averageCost: z.coerce.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
-  sector: z.string().trim().min(1).max(120)
+  sector: z.string().trim().min(1).max(120),
+  account: z.preprocess(
+    (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+    z.string().trim().min(1).max(120).optional()
+  )
 });
 
 export const etfCompositionCsvRowSchema = z.object({

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Database, ExternalLink, RefreshCw, Search, TrendingUp } from "lucide-react";
+import { ExternalLink, RefreshCw, Search } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { buildCompanySnapshots, companySnapshotsForView } from "@/lib/company-snapshot";
 import { loadBundledInstitutional10d, type InstitutionalCache } from "@/lib/institutional-data";
@@ -66,11 +66,11 @@ function SectionHeader({ title, detail }: { title: string; detail: string }) {
   return <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-semibold">{title}</h4><span className="text-[11px] text-black/40 dark:text-white/40">{detail}</span></div>;
 }
 
-export function CompanySnapshotResearch({ state }: { state: AppState }) {
+export function CompanySnapshotResearch({ state, requestedKey }: { state: AppState; requestedKey?: string }) {
   const [caches, setCaches] = useState<Caches | null>(null);
   const [query, setQuery] = useState("");
   const [heldOnly, setHeldOnly] = useState(false);
-  const [selectedKey, setSelectedKey] = useState("");
+  const [selectedKey, setSelectedKey] = useState(requestedKey ?? "");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -109,9 +109,12 @@ export function CompanySnapshotResearch({ state }: { state: AppState }) {
   const snapshots = useMemo(() => caches ? buildCompanySnapshots({ quotes: caches.quotes, revenue: caches.revenue, valuations: caches.valuations, strategies }) : [], [caches, strategies]);
   const visible = useMemo(() => companySnapshotsForView(snapshots, query, heldCodes, heldOnly, 80), [snapshots, query, heldCodes, heldOnly]);
   const selected = useMemo(() => {
-    if (selectedKey) return snapshots.find((row) => `${row.market}:${row.code}` === selectedKey) ?? null;
-    return snapshots.find((row) => heldCodes.has(row.code.toUpperCase())) ?? null;
-  }, [snapshots, selectedKey, heldCodes]);
+    if (selectedKey) {
+      const chosen = snapshots.find((row) => `${row.market}:${row.code}` === selectedKey);
+      if (chosen) return chosen;
+    }
+    return snapshots.find((row) => heldCodes.has(row.code.toUpperCase())) ?? visible[0] ?? null;
+  }, [snapshots, selectedKey, heldCodes, visible]);
 
   const quoteSource = selected && caches ? caches.quotes.sources.find((source) => source.name === selected.market) ?? null : null;
   const revenueSource = selected && caches ? caches.revenue.sources.find((source) => source.name === selected.market) ?? null : null;

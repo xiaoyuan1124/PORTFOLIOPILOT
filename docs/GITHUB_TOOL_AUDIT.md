@@ -1,10 +1,23 @@
 # GitHub Tool Audit — PortfolioPilot
 
-Date: 2026-09-27
+Date: 2026-09-29
 
 Goal: build the most useful **zero-cost, local-first web/PWA version** of PortfolioPilot before paying for any backend, market-data service, AI service, or app-store distribution.
 
 This audit is about reusable engineering ideas and permissively licensed libraries. It does **not** authorize copying product code whose license would change PortfolioPilot's obligations.
+
+## 2026-09-29 usability-tool review
+
+The AssetMetra comparison triggered a second pass focused on navigation, mobile interaction, search and dense portfolio views.
+
+| Project | License | Current status | Decision |
+| --- | --- | --- | --- |
+| dip/cmdk | MIT | public, not archived | useful command-menu reference; **not added** because existing Radix Dialog can provide the current command/search surface without another runtime dependency |
+| kentcdodds/match-sorter | MIT | public, not archived | strong fuzzy-search candidate; **not added yet** because symbol/name/industry search is small enough for a deterministic in-repo scorer |
+| TanStack/table | MIT | public, active | keep as the preferred future desktop research-grid tool; current mobile-first card flows do not need a data-grid dependency |
+| emilkowalski/vaul | MIT | public, not archived | drawer interaction is useful, but current Radix bottom-sheet dialog already covers the required mobile forms; avoid duplicate modal stacks |
+
+The decision is intentionally conservative: a GitHub tool is valuable only when it removes meaningful complexity. PortfolioPilot should not add a package merely because a competitor has a similar interaction.
 
 ## Adopt now
 

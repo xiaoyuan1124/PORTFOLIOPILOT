@@ -10,7 +10,7 @@ import { Journal } from "./journal";
 
 type ResearchTab = "snapshot" | "revenue" | "valuation" | "scanner" | "journal";
 
-export function Research({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
+export function Research({ state, onChange, researchKey }: { state: AppState; onChange: (state: AppState) => void; researchKey?: string }) {
   const [tab, setTab] = useState<ResearchTab>("snapshot");
 
   return (
@@ -33,7 +33,7 @@ export function Research({ state, onChange }: { state: AppState; onChange: (stat
         ))}
       </div>
 
-      {tab === "snapshot" ? <CompanySnapshotResearch state={state} /> : null}
+      {tab === "snapshot" ? <CompanySnapshotResearch state={state} requestedKey={researchKey} /> : null}
       {tab === "revenue" ? <RevenueResearch state={state} /> : null}
       {tab === "valuation" ? <ValuationResearch state={state} /> : null}
       {tab === "scanner" ? <Scanner state={state} /> : null}

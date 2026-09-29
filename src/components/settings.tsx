@@ -56,8 +56,9 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
     if (!file) return;
     try {
       const incoming = parseHoldingsCsv(await file.text());
-      const merged = mergeHoldings(state.holdings, incoming);
-      onChange({ ...state, holdings: merged });
+      const base = state.dataMode === "demo" ? emptyState : state;
+      const merged = mergeHoldings(base.holdings, incoming);
+      onChange({ ...base, dataMode: "personal", holdings: merged });
       toast.success(`已匯入 ${incoming.length} 筆持股`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "CSV 格式不正確");
@@ -91,7 +92,7 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
         <CardContent>
           <h3 className="font-semibold">完整備份</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
-            JSON 會包含持股、ETF 成分來源、交易／現金流、投資筆記、匯率與歷史淨值快照，匯入時會先用 schema 驗證格式。
+            JSON 會包含持股、帳戶、ETF 成分來源、交易／現金流、投資筆記、匯率、DEMO/個人模式與歷史淨值快照，匯入時會先用 schema 驗證格式。
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={exportJson}><Download size={16} />匯出 JSON</Button>
@@ -105,7 +106,7 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
         <CardContent>
           <h3 className="font-semibold">持股 CSV</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
-            適合用 Excel / Google Sheets 編輯大量持股。匯入時會以「市場＋代號」合併，同代號更新、不重複新增。
+            適合用 Excel / Google Sheets 編輯大量持股。新版 CSV 含 account 欄位，匯入時以「市場＋代號＋帳戶」合併，因此同一檔股票可分開存在不同券商。
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={exportCsv}><FileSpreadsheet size={16} />匯出 CSV</Button>
@@ -136,7 +137,7 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
       <Card>
         <CardContent>
           <h3 className="font-semibold">資料重設</h3>
-          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">想正式開始使用時，可以直接清空示範資料；若只是想看看預設畫面，也可以恢復示範資料。</p>
+          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">新安裝預設為空白個人模式，不會自動塞示範持股。只有你主動按下「示範資料」才會進入 DEMO，首頁與頂部會持續標示。</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <GhostButton onClick={() => {
               if (!window.confirm("確定要清空本機的持股、ETF 成分來源、交易／現金流、筆記與淨值歷史嗎？建議先匯出 JSON。")) return;

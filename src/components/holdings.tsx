@@ -6,9 +6,10 @@ import { ArrowDownUp, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-rea
 import { toast } from "sonner";
 import type { AppState, AssetType, Currency, Holding, Market } from "@/lib/types";
 import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
+import { accountName } from "@/lib/local-data";
 import { money, percent } from "@/lib/utils";
 import { applyTwQuotes, cacheFreshnessLabel, loadBundledTwQuotes } from "@/lib/market-data";
-import { Button, Card, CardContent, GhostButton, Modal } from "./ui";
+import { Badge, Button, Card, CardContent, GhostButton, Modal } from "./ui";
 
 const emptyHolding: Omit<Holding, "id"> = {
   symbol: "",
@@ -19,7 +20,8 @@ const emptyHolding: Omit<Holding, "id"> = {
   price: 0,
   averageCost: 0,
   currency: "TWD",
-  sector: ""
+  sector: "",
+  account: "預設帳戶"
 };
 
 function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding: Holding) => void }) {
@@ -32,10 +34,11 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     price: initial.price,
     averageCost: initial.averageCost,
     currency: initial.currency,
-    sector: initial.sector
+    sector: initial.sector,
+    account: accountName(initial.account)
   } : emptyHolding);
 
-  const valid = form.name.trim() && form.symbol.trim() && form.quantity >= 0 && form.price >= 0 && form.averageCost >= 0;
+  const valid = form.name.trim() && form.symbol.trim() && form.quantity >= 0 && form.price >= 0 && form.averageCost >= 0 && accountName(form.account).length > 0;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +48,8 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
       ...form,
       symbol: form.symbol.trim().toUpperCase(),
       name: form.name.trim(),
-      sector: form.sector.trim() || "未分類"
+      sector: form.sector.trim() || "未分類",
+      account: accountName(form.account)
     });
   }
 
@@ -55,6 +59,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
         <input className="field" placeholder="代號" value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })} />
         <input className="field" placeholder="名稱" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
       </div>
+      <input className="field" placeholder="帳戶，例如：台股證券、複委託、銀行現金" value={form.account ?? ""} onChange={(e) => setForm({ ...form, account: e.target.value })} />
       <div className="grid grid-cols-2 gap-3">
         <select className="field" value={form.market} onChange={(e) => setForm({ ...form, market: e.target.value as Market })}>
           <option value="TW">台灣</option>
@@ -90,13 +95,17 @@ type SortMode = "value" | "gain" | "name";
 export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("value");
+  const [account, setAccount] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
   const summary = portfolioSummary(state.holdings, state.usdTwd);
+
+  const accounts = useMemo(() => [...new Set(state.holdings.map((holding) => accountName(holding.account)))].sort((a, b) => a.localeCompare(b, "zh-Hant")), [state.holdings]);
 
   const sorted = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const filtered = state.holdings.filter((holding) =>
-      !needle || `${holding.symbol} ${holding.name} ${holding.sector}`.toLowerCase().includes(needle)
+      (account === "all" || accountName(holding.account) === account) &&
+      (!needle || `${holding.symbol} ${holding.name} ${holding.sector} ${accountName(holding.account)}`.toLowerCase().includes(needle))
     );
 
     return [...filtered].sort((a, b) => {
@@ -108,7 +117,7 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
       }
       return holdingValueTwd(b, state.usdTwd) - holdingValueTwd(a, state.usdTwd);
     });
-  }, [query, sort, state.holdings, state.usdTwd]);
+  }, [account, query, sort, state.holdings, state.usdTwd]);
 
   function upsert(holding: Holding) {
     const exists = state.holdings.some((item) => item.id === holding.id);
@@ -143,6 +152,7 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
         <div>
           <p className="text-sm text-black/45 dark:text-white/45">目前總淨值</p>
           <p className="mt-1 text-3xl font-semibold tracking-tight">{money(summary.total)}</p>
+          {accounts.length ? <p className="mt-1 text-xs text-black/38 dark:text-white/38">{accounts.length} 個帳戶 · 可分帳戶檢視</p> : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <GhostButton type="button" disabled={refreshing} onClick={refreshTaiwanPrices}>
@@ -155,11 +165,15 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
         </div>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-[1fr_180px]">
+      <div className="grid gap-2 md:grid-cols-[1fr_180px_180px]">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 dark:text-white/30" size={17} />
-          <input className="field pl-11" placeholder="搜尋代號、名稱、產業" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input className="field pl-11" placeholder="搜尋代號、名稱、產業、帳戶" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
+        <select className="field" value={account} onChange={(e) => setAccount(e.target.value)}>
+          <option value="all">全部帳戶</option>
+          {accounts.map((name) => <option key={name} value={name}>{name}</option>)}
+        </select>
         <div className="relative">
           <ArrowDownUp className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-black/30 dark:text-white/30" size={16} />
           <select className="field pl-11" value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
@@ -185,6 +199,7 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <p className="font-semibold">{holding.name}</p>
                       <span className="text-xs text-black/40 dark:text-white/40">{holding.symbol}</span>
+                      <Badge>{accountName(holding.account)}</Badge>
                     </div>
                     <p className="mt-1 text-sm text-black/45 dark:text-white/45">{holding.sector} · {holding.market} · {holding.currency}</p>
                     {holding.priceSource && holding.priceAsOf ? (
@@ -221,7 +236,7 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
           );
         })}
       </div>
-      {!sorted.length ? <p className="py-16 text-center text-sm text-black/40 dark:text-white/40">{state.holdings.length ? "沒有符合搜尋條件的部位。" : "目前沒有持股，新增第一個部位開始追蹤。"}</p> : null}
+      {!sorted.length ? <p className="py-16 text-center text-sm text-black/40 dark:text-white/40">{state.holdings.length ? "沒有符合搜尋或帳戶條件的部位。" : "目前沒有持股，新增第一個部位開始追蹤。"}</p> : null}
     </div>
   );
 }
