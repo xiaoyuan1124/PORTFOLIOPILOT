@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { DatabaseBackup, Download, FileSpreadsheet, RotateCcw, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { demoState, emptyState } from "@/lib/demo-data";
@@ -19,6 +19,7 @@ import { Button, Card, CardContent, GhostButton } from "./ui";
 export function Settings({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
   const jsonRef = useRef<HTMLInputElement>(null);
   const csvRef = useRef<HTMLInputElement>(null);
+  const [usdDraft, setUsdDraft] = useState<string | null>(null);
 
   function exportJson() {
     downloadText(
@@ -125,11 +126,31 @@ export function Settings({ state, onChange }: { state: AppState; onChange: (stat
           <input
             className="field mt-2 max-w-[220px]"
             type="number"
+            inputMode="decimal"
             step="0.01"
             min="1"
-            value={state.usdTwd}
-            onChange={(e) => onChange({ ...state, usdTwd: Number(e.target.value) || 1 })}
+            value={usdDraft ?? String(state.usdTwd)}
+            onChange={(e) => setUsdDraft(e.target.value)}
+            onBlur={() => {
+              if (usdDraft === null) return;
+              const value = Number(usdDraft);
+              if (Number.isFinite(value) && value > 0) {
+                onChange({ ...state, usdTwd: value });
+                toast.success(`USD/TWD 已更新為 ${value.toFixed(2)}`);
+              } else {
+                toast.error("請輸入大於 0 的有效 USD/TWD 匯率");
+              }
+              setUsdDraft(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") {
+                setUsdDraft(null);
+                e.currentTarget.blur();
+              }
+            }}
           />
+          <p className="mt-2 text-xs text-black/35 dark:text-white/35">可先清空再完整輸入；離開欄位或按 Enter 後才會儲存，避免輸入途中把匯率誤改成 1。</p>
           <p className="mt-3 text-xs text-black/35 dark:text-white/35">歷史快照：{state.snapshots.length.toLocaleString()} 筆</p>
         </CardContent>
       </Card>

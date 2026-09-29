@@ -18,7 +18,7 @@ const tabs: Array<{ key: PortfolioTab; label: string }> = [
   { key: "performance", label: "績效" }
 ];
 
-export function Portfolio({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
+export function Portfolio({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => void; onResearch?: (researchKey: string) => void }) {
   const [tab, setTab] = useState<PortfolioTab>("holdings");
 
   return (
@@ -35,7 +35,7 @@ export function Portfolio({ state, onChange }: { state: AppState; onChange: (sta
         ))}
       </div>
 
-      {tab === "holdings" ? <HoldingsPanel state={state} onChange={onChange} /> : null}
+      {tab === "holdings" ? <HoldingsPanel state={state} onChange={onChange} onResearch={onResearch} /> : null}
       {tab === "lookthrough" ? <EtfLookThrough state={state} onChange={onChange} /> : null}
       {tab === "risk" ? <PortfolioRisk state={state} /> : null}
       {tab === "activity" ? <ActivityLedger state={state} onChange={onChange} /> : null}

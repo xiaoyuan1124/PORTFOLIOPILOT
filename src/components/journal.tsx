@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BookOpen, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import type { AppState, JournalEntry } from "@/lib/types";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
@@ -24,6 +25,7 @@ export function Journal({ state, onChange }: { state: AppState; onChange: (state
     };
     onChange({ ...state, journal: [entry, ...state.journal] });
     setSymbol(""); setTitle(""); setThesis(""); setInvalidation("");
+    toast.success("投資筆記已儲存");
   }
 
   return (
@@ -64,7 +66,11 @@ export function Journal({ state, onChange }: { state: AppState; onChange: (state
                   type="button"
                   aria-label="刪除筆記"
                   className="h-10 min-h-10 w-10 shrink-0 px-0"
-                  onClick={() => onChange({ ...state, journal: state.journal.filter((item) => item.id !== entry.id) })}
+                  onClick={() => {
+                    if (!window.confirm(`刪除「${entry.title}」這篇投資筆記？`)) return;
+                    onChange({ ...state, journal: state.journal.filter((item) => item.id !== entry.id) });
+                    toast.success("投資筆記已刪除");
+                  }}
                 >
                   <Trash2 size={16} />
                 </GhostButton>

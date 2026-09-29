@@ -11,11 +11,12 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Responsive dashboard with desktop sidebar and mobile bottom navigation
 - Add/edit/delete TW / US stocks, ETFs and cash
 - Smart Taiwan holding entry: type either symbol or name, choose an official TWSE/TPEx match, and auto-fill the paired field, market, asset type, currency, latest close, industry/category and price provenance
-- Search and sort holdings
+- Search and sort holdings, clear filters in one tap, and jump directly from a Taiwan holding card into its official research snapshot
 - TWD / USD portfolio valuation
 - Per-holding and total unrealized return
 - One-tap Taiwan official closing-price refresh with stale-cache protection
 - Lightweight TWSE / TPEx quote-only refresh retries after Taiwan market close, with transient network retry/backoff; refreshed quotes are built and deployed to Pages in the same workflow
+- Full Taiwan market-data refresh also retries transient official-source network failures
 - TWSE listed-stock closes prefer the official date-specific MI_INDEX daily-close table; the laggier STOCK_DAY_ALL feed remains fallback-only
 - Price provenance shown per holding (source + market date)
 - Official TWSE / TPEx monthly-revenue research with MoM / YoY / cumulative YoY
@@ -124,3 +125,13 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - no brokerage passwords
 - no AI in the current roadmap
 - market data must identify source, timestamp and usage rights before becoming production data
+
+
+## V0.19 stability / UX pass
+
+- Activity and TWR-boundary dialogs persist before closing, matching the holding-form mobile safety fix.
+- Official Taiwan price updates never regress a holding to an older dated quote and preserve TWSE/TPEx venue identity when known.
+- A cache fetched today may legitimately point to an earlier trading date on a weekday market holiday.
+- PWA market-data cache keys are canonicalized so cache-busting query strings do not grow Cache Storage without bound.
+- USD/TWD editing is atomic: users can clear/type freely and commit only on blur or Enter.
+- Journal delete actions require confirmation and save/delete actions provide feedback.

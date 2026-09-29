@@ -225,7 +225,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
 
 type SortMode = "value" | "gain" | "name";
 
-export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: (state: AppState) => void }) {
+export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => void; onResearch?: (researchKey: string) => void }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("value");
   const [account, setAccount] = useState("all");
@@ -273,11 +273,15 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
 
       const result = applyTwQuotes(state.holdings, cache);
       if (!result.updated) {
-        toast.info(`目前持股沒有可更新的 TWSE／TPEx 報價 · 官方資料日 ${asOf}`);
+        const skipped = result.skippedStale + result.skippedAmbiguous;
+        toast.info(`目前持股沒有可更新的 TWSE／TPEx 報價 · 官方資料日 ${asOf}${skipped ? ` · 已保護略過 ${skipped} 筆` : ""}`);
         return;
       }
       onChange({ ...state, holdings: result.holdings });
       toast.success(`已更新 ${result.updated} 個台股部位 · 官方收盤資料日 ${asOf}`);
+      if (result.skippedStale || result.skippedAmbiguous) {
+        toast.info(`另有 ${result.skippedStale + result.skippedAmbiguous} 筆因舊日期或市場不明而保留原價`);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法載入官方台股資料");
     } finally {
@@ -348,6 +352,16 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
                     ) : null}
                   </div>
                   <div className="flex shrink-0 gap-1">
+                    {holding.market === "TW" && (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") && onResearch ? (
+                      <GhostButton
+                        className="h-10 min-h-10 w-10 px-0"
+                        aria-label={`研究 ${holding.name}`}
+                        title="查看官方研究"
+                        onClick={() => onResearch(`${holding.priceSource}:${holding.symbol}`)}
+                      >
+                        <Search size={15} />
+                      </GhostButton>
+                    ) : null}
                     <Modal title={`編輯 ${holding.name}`} trigger={<GhostButton className="h-10 min-h-10 w-10 px-0" aria-label="編輯"><Pencil size={15} /></GhostButton>}>
                       <HoldingForm initial={holding} onSave={upsert} />
                     </Modal>
@@ -375,7 +389,14 @@ export function HoldingsPanel({ state, onChange }: { state: AppState; onChange: 
           );
         })}
       </div>
-      {!sorted.length ? <p className="py-16 text-center text-sm text-black/40 dark:text-white/40">{state.holdings.length ? "沒有符合搜尋或帳戶條件的部位。" : "目前沒有持股，新增第一個部位開始追蹤。"}</p> : null}
+      {!sorted.length ? (
+        <div className="py-14 text-center">
+          <p className="text-sm text-black/40 dark:text-white/40">{state.holdings.length ? "沒有符合搜尋或帳戶條件的部位。" : "目前沒有持股，新增第一個部位開始追蹤。"}</p>
+          {state.holdings.length && (query || account !== "all") ? (
+            <GhostButton className="mt-4" onClick={() => { setQuery(""); setAccount("all"); }}>清除搜尋與帳戶篩選</GhostButton>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

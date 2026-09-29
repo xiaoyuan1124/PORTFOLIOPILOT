@@ -35,14 +35,41 @@ export async function loadBundledTwQuotes(): Promise<TwQuoteCache> {
 }
 
 export function applyTwQuotes(holdings: Holding[], cache: TwQuoteCache) {
-  const quoteMap = new Map(cache.quotes.map((quote) => [quote.code.toUpperCase(), quote]));
+  const quoteMap = new Map<string, TwQuoteCache["quotes"]>();
+  for (const quote of cache.quotes) {
+    const code = quote.code.toUpperCase();
+    quoteMap.set(code, [...(quoteMap.get(code) ?? []), quote]);
+  }
+
   let updated = 0;
+  let skippedStale = 0;
+  let skippedAmbiguous = 0;
 
   const next = holdings.map((holding) => {
     if (holding.market !== "TW" || holding.type === "cash") return holding;
 
-    const quote = quoteMap.get(holding.symbol.toUpperCase());
-    if (!quote || quote.close <= 0) return holding;
+    const candidates = quoteMap.get(holding.symbol.toUpperCase()) ?? [];
+    if (!candidates.length) return holding;
+
+    const preferredVenue =
+      holding.priceSource === "TWSE" || holding.priceSource === "TPEx"
+        ? holding.priceSource
+        : null;
+    const quote = preferredVenue
+      ? candidates.find((candidate) => candidate.market === preferredVenue)
+      : candidates.length === 1
+        ? candidates[0]
+        : undefined;
+
+    if (!quote) {
+      skippedAmbiguous += 1;
+      return holding;
+    }
+    if (quote.close <= 0) return holding;
+    if (holding.priceAsOf && quote.date < holding.priceAsOf) {
+      skippedStale += 1;
+      return holding;
+    }
 
     updated += 1;
     return {
@@ -54,7 +81,7 @@ export function applyTwQuotes(holdings: Holding[], cache: TwQuoteCache) {
     };
   });
 
-  return { holdings: next, updated };
+  return { holdings: next, updated, skippedStale, skippedAmbiguous };
 }
 
 export function cacheFreshnessLabel(cache: TwQuoteCache) {
@@ -83,10 +110,14 @@ function taipeiParts(now: Date) {
 export function shouldRejectStaleClosingCache(cache: TwQuoteCache, now = new Date()) {
   const latest = cacheFreshnessLabel(cache);
   const taipei = taipeiParts(now);
+  const generatedTaipei = taipeiParts(new Date(cache.generatedAt));
   const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri"].includes(taipei.weekday);
 
-  // Before the Taiwan market's end-of-day publishing window, the previous
-  // trading day's close is expected. After 17:00 on a weekday, do not let
-  // an older static cache overwrite a user's current values.
-  return weekday && taipei.hour >= 17 && latest < taipei.date;
+  // A cache fetched today is allowed even when the latest official trading
+  // date is older (for example a weekday market holiday). Only reject a cache
+  // that itself has not been refreshed today after the publishing window.
+  return weekday &&
+    taipei.hour >= 17 &&
+    generatedTaipei.date < taipei.date &&
+    latest < taipei.date;
 }

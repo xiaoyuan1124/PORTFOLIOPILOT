@@ -33,12 +33,66 @@ describe("official Taiwan quote cache", () => {
     expect(result.holdings[3]?.price).toBe(1000);
   });
 
+  it("does not regress a holding to an older official date", () => {
+    const current = [{ ...holdings[0]!, price: 1300, priceSource: "TWSE" as const, priceAsOf: "2026-09-28" }];
+    const result = applyTwQuotes(current, cache);
+    expect(result.updated).toBe(0);
+    expect(result.skippedStale).toBe(1);
+    expect(result.holdings[0]?.price).toBe(1300);
+    expect(result.holdings[0]?.priceAsOf).toBe("2026-09-28");
+  });
+
+  it("uses the holding venue when the same code appears in both markets", () => {
+    const duplicateCache: TwQuoteCache = {
+      ...cache,
+      quotes: [
+        { code: "7777", name: "上市同碼", market: "TWSE", close: 100, date: "2026-09-27" },
+        { code: "7777", name: "上櫃同碼", market: "TPEx", close: 200, date: "2026-09-27" }
+      ]
+    };
+    const current: Holding[] = [{
+      id: "x", symbol: "7777", name: "上櫃同碼", market: "TW", type: "stock",
+      quantity: 1, price: 150, averageCost: 120, currency: "TWD", sector: "測試",
+      priceSource: "TPEx", priceAsOf: "2026-09-26"
+    }];
+    const result = applyTwQuotes(current, duplicateCache);
+    expect(result.holdings[0]?.price).toBe(200);
+    expect(result.holdings[0]?.priceSource).toBe("TPEx");
+  });
+
+  it("fails closed on an ambiguous same-code quote without a known venue", () => {
+    const duplicateCache: TwQuoteCache = {
+      ...cache,
+      quotes: [
+        { code: "7777", name: "上市同碼", market: "TWSE", close: 100, date: "2026-09-27" },
+        { code: "7777", name: "上櫃同碼", market: "TPEx", close: 200, date: "2026-09-27" }
+      ]
+    };
+    const current: Holding[] = [{
+      id: "x", symbol: "7777", name: "同碼", market: "TW", type: "stock",
+      quantity: 1, price: 150, averageCost: 120, currency: "TWD", sector: "測試"
+    }];
+    const result = applyTwQuotes(current, duplicateCache);
+    expect(result.updated).toBe(0);
+    expect(result.skippedAmbiguous).toBe(1);
+    expect(result.holdings[0]?.price).toBe(150);
+  });
+
   it("reports the latest market date", () => {
     expect(cacheFreshnessLabel(cache)).toBe("2026-09-27");
   });
 
   it("rejects an older cache after the Taiwan close publishing window", () => {
     expect(shouldRejectStaleClosingCache(cache, new Date("2026-09-29T12:00:00.000Z"))).toBe(true);
+  });
+
+  it("allows an older trading date when the cache itself was refreshed today", () => {
+    const holidayCache: TwQuoteCache = {
+      ...cache,
+      generatedAt: "2026-09-29T10:30:00.000Z",
+      quotes: cache.quotes.map((quote) => ({ ...quote, date: "2026-09-28" }))
+    };
+    expect(shouldRejectStaleClosingCache(holidayCache, new Date("2026-09-29T12:00:00.000Z"))).toBe(false);
   });
 
   it("allows the previous close before the Taiwan publishing window", () => {
