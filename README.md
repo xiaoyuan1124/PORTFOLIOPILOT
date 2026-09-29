@@ -5,7 +5,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 ## Current self-use build
 
 - Decision-cockpit dashboard with net-worth range controls, cash level, account distribution, top positions and data freshness
-- Global stock/navigation search (⌘K / Ctrl+K) with direct Taiwan company research
+- Global stock/ETF/navigation search (⌘K / Ctrl+K) with direct official Taiwan security research
 - Multi-account holdings and cash-flow tracking with account-aware CSV import/export
 - Explicit DEMO mode; new installs start empty so simulated holdings cannot masquerade as personal assets
 - Responsive dashboard with desktop sidebar and mobile bottom navigation
@@ -22,7 +22,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Official TWSE / TPEx monthly-revenue research with MoM / YoY / cumulative YoY
 - Official revenue sector pulse: latest-period industry median YoY, positive-growth breadth and >20% breadth, with minimum-sample and non-price-signal labels
 - Official TWSE / TPEx valuation research with P/E, P/B and dividend yield, preserving source date and missing official fields
-- Company Snapshot research home combining official price, valuation, revenue, margin and 10D institutional data without guessing missing values
+- Company Snapshot research home combining official price, valuation, revenue, margin and 10D institutional data without guessing missing values; quote-only ETFs are supported with company-only metrics explicitly marked not applicable
 - Official MOPS 3-month revenue history and a real first Scanner gate (3 consecutive YoY > 20%)
 - Official TWSE / TPEx 10-trading-day foreign and investment-trust net-flow gates
 - Official MOPS single-quarter gross-margin history with strict three-quarter improvement gate
@@ -135,3 +135,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - PWA market-data cache keys are canonicalized so cache-busting query strings do not grow Cache Storage without bound.
 - USD/TWD editing is atomic: users can clear/type freely and commit only on blur or Enter.
 - Journal delete actions require confirmation and save/delete actions provide feedback.
+
+
+## V0.20 search / research UX pass
+
+- Global search uses the same official-security catalog as smart holding entry, so Taiwan ETFs are discoverable before they are held.
+- Quote-only non-equity instruments such as warrants are excluded from smart holding/global security search.
+- ETF research keeps official close/source/date while leaving company revenue, margin and company Scanner fields explicitly not applicable.
+- TWSE source links accept the newer `TWSE MI_INDEX` provenance name instead of disappearing because of an exact-name mismatch.
