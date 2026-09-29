@@ -177,3 +177,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Manual add/edit uses the same market + symbol + account identity rule as CSV import, preventing accidental double-counting inside one account.
 - Duplicate detection keeps the add dialog open and points the user to the existing position instead of silently adding another row.
 - If a user finishes typing an exact Taiwan symbol/name before official lookup data finishes loading, the form now applies the exact match as soon as the catalog arrives.
+
+
+## V0.24 refresh / search feedback
+
+- Taiwan quote refresh counts only holdings whose price/provenance/date actually changed.
+- A matched holding that is already current now reports “already latest” instead of pretending it was updated.
+- Refresh feedback shows TWSE and TPEx official dates separately so one market cannot hide another market's older date.
+- Global search distinguishes official-data load failures from genuine no-result searches and provides an inline retry action.
