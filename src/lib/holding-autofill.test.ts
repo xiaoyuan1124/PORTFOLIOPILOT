@@ -57,7 +57,7 @@ describe("holding autofill catalog", () => {
 
     expect(tsmc).toEqual({
       code: "2330",
-      name: "台灣積體電路製造股份有限公司",
+      name: "台積電",
       venue: "TWSE",
       close: 1250,
       date: "2026-09-29",
@@ -80,6 +80,6 @@ describe("holding autofill catalog", () => {
     expect(searchHoldingLookupCatalog(catalog, "233").map((item) => item.code)).toEqual(["2330"]);
     expect(searchHoldingLookupCatalog(catalog, "環球").map((item) => item.code)).toEqual(["6488"]);
     expect(findExactHoldingLookupCandidate(catalog, "symbol", "2330")?.close).toBe(1250);
-    expect(findExactHoldingLookupCandidate(catalog, "name", "環球晶圓股份有限公司")?.code).toBe("6488");
+    expect(findExactHoldingLookupCandidate(catalog, "name", "環球晶")?.code).toBe("6488");
   });
 });
