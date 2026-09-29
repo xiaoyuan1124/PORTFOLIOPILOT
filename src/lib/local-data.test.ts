@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   etfCompositionsToCsv,
+  holdingIdentityKey,
   mergeHoldings,
   parseBackup,
   parseEtfCompositionCsv,
@@ -153,6 +154,24 @@ describe("local data import/export", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]?.quantity).toBe(10);
     expect(rows[0]?.symbol).toBe("2330");
+  });
+
+  it("uses market + normalized symbol + account as the holding identity", () => {
+    expect(holdingIdentityKey({
+      market: "TW",
+      symbol: " 2330 ",
+      account: "券商A"
+    })).toBe("TW:2330:券商a");
+
+    expect(holdingIdentityKey({
+      market: "TW",
+      symbol: "2330",
+      account: "券商B"
+    })).not.toBe(holdingIdentityKey({
+      market: "TW",
+      symbol: "2330",
+      account: "券商A"
+    }));
   });
 
   it("keeps identical symbols separate across accounts", () => {
