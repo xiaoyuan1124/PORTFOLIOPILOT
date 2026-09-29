@@ -143,3 +143,10 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Quote-only non-equity instruments such as warrants are excluded from smart holding/global security search.
 - ETF research keeps official close/source/date while leaving company revenue, margin and company Scanner fields explicitly not applicable.
 - TWSE source links accept the newer `TWSE MI_INDEX` provenance name instead of disappearing because of an exact-name mismatch.
+
+
+## V0.20.1 market refresh hardening
+
+- Quarterly MOPS requests alternate between the current and legacy official MOPS hosts when transient network failures occur.
+- Quarterly refresh retries transient failures up to six attempts with backoff.
+- The updater requests only the six most recent completed calendar quarters instead of scanning two full years, reducing unnecessary traffic while preserving enough cumulative periods to derive the latest three single-quarter gross margins.

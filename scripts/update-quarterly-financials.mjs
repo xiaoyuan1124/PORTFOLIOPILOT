@@ -7,7 +7,10 @@ import {
   retryTransientMopsRequest
 } from "./lib/quarterly-financials.mjs";
 
-const MOPS_URL = "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04";
+const MOPS_URLS = [
+  "https://mops.twse.com.tw/mops/web/ajax_t163sb04",
+  "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04"
+];
 const MARKETS = [
   { market: "TWSE", typek: "sii" },
   { market: "TPEx", typek: "otc" }
@@ -24,6 +27,28 @@ function previousPeriod(period) {
   if (!match) throw new Error(`Invalid quarter key: ${period}`);
   const quarter = Number(match[2]);
   return quarter === 1 ? null : `${match[1]}-Q${quarter - 1}`;
+}
+
+function recentCompletedQuarters(count = 6, now = new Date()) {
+  let year = now.getUTCFullYear();
+  let quarter = Math.floor(now.getUTCMonth() / 3) + 1;
+
+  quarter -= 1;
+  if (quarter === 0) {
+    quarter = 4;
+    year -= 1;
+  }
+
+  const periods = [];
+  for (let index = 0; index < count; index += 1) {
+    periods.push({ year, quarter });
+    quarter -= 1;
+    if (quarter === 0) {
+      quarter = 4;
+      year -= 1;
+    }
+  }
+  return periods.reverse();
 }
 
 function formBody(typek, year, quarter) {
@@ -43,14 +68,15 @@ async function fetchQuarter(source, year, quarter) {
   const period = quarterKey(year, quarter);
 
   return retryTransientMopsRequest(
-    async () => {
-      const response = await fetch(MOPS_URL, {
+    async (attempt) => {
+      const url = MOPS_URLS[(attempt - 1) % MOPS_URLS.length];
+      const response = await fetch(url, {
         method: "POST",
         redirect: "follow",
         headers: {
           "content-type": "application/x-www-form-urlencoded",
-          "user-agent": "Mozilla/5.0 PortfolioPilot/0.13",
-          referer: "https://mopsov.twse.com.tw/",
+          "user-agent": "Mozilla/5.0 PortfolioPilot/0.20",
+          referer: `${new URL(url).origin}/`,
           accept: "text/html,application/xhtml+xml"
         },
         body: formBody(source.typek, year, quarter),
@@ -74,14 +100,14 @@ async function fetchQuarter(source, year, quarter) {
         throw new Error(`Refusing incomplete MOPS ${source.market} ${period}: ${companyRows} company rows`);
       }
 
-      return { period, ...parsed };
+      return { period, sourceUrl: url, ...parsed };
     },
     {
-      attempts: 4,
-      baseDelayMs: 1500,
+      attempts: 6,
+      baseDelayMs: 1800,
       onRetry: ({ nextAttempt, delayMs, error }) => {
         console.warn(
-          `Transient MOPS ${source.market} ${period} failure; retrying attempt ${nextAttempt}/4 in ${delayMs}ms: ${error?.message ?? error}`
+          `Transient MOPS ${source.market} ${period} failure; retrying attempt ${nextAttempt}/6 in ${delayMs}ms: ${error?.message ?? error}`
         );
       }
     }
@@ -114,17 +140,14 @@ function uniqueNotApplicable(rawByMarket, periods) {
 
 async function main() {
   const generatedAt = new Date().toISOString();
-  const currentYear = new Date().getUTCFullYear();
-  const years = [currentYear - 1, currentYear];
+  const candidatePeriods = recentCompletedQuarters(6);
   const rawByMarket = new Map(MARKETS.map(({ market }) => [market, new Map()]));
 
-  for (const year of years) {
-    for (let quarter = 1; quarter <= 4; quarter += 1) {
-      for (const source of MARKETS) {
-        const result = await fetchQuarter(source, year, quarter);
-        if (result) rawByMarket.get(source.market).set(result.period, result);
-        await sleep(REQUEST_DELAY_MS);
-      }
+  for (const { year, quarter } of candidatePeriods) {
+    for (const source of MARKETS) {
+      const result = await fetchQuarter(source, year, quarter);
+      if (result) rawByMarket.get(source.market).set(result.period, result);
+      await sleep(REQUEST_DELAY_MS);
     }
   }
 
@@ -177,7 +200,7 @@ async function main() {
         name: "MOPS 公開資訊觀測站－綜合損益表",
         market: source.market,
         period,
-        url: MOPS_URL,
+        url: raw.sourceUrl ?? MOPS_URLS[0],
         method: "POST",
         fetchedAt: generatedAt,
         generalRows: raw.generalRows.length,
