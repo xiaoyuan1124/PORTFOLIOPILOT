@@ -16,8 +16,9 @@ export function activityAmountTwd(activity: PortfolioActivity) {
   return activity.amount * (activity.currency === "USD" ? activity.fxRate : 1);
 }
 
-export function netExternalContributions(activities: PortfolioActivity[]) {
+export function netExternalContributions(activities: PortfolioActivity[], throughDate?: string) {
   return activities.reduce((sum, activity) => {
+    if (throughDate && activity.date > throughDate) return sum;
     const amount = activityAmountTwd(activity);
     if (activity.type === "deposit") return sum + amount;
     if (activity.type === "withdrawal") return sum - amount;
@@ -25,8 +26,9 @@ export function netExternalContributions(activities: PortfolioActivity[]) {
   }, 0);
 }
 
-export function incomeAfterFees(activities: PortfolioActivity[]) {
+export function incomeAfterFees(activities: PortfolioActivity[], throughDate?: string) {
   return activities.reduce((sum, activity) => {
+    if (throughDate && activity.date > throughDate) return sum;
     const amount = activityAmountTwd(activity);
     if (activity.type === "dividend") return sum + amount;
     if (activity.type === "fee") return sum - amount;

@@ -31,7 +31,8 @@ const icons: Record<ActivityType, typeof Banknote> = {
 
 function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: PortfolioActivity) => void }) {
   const [type, setType] = useState<ActivityType>("deposit");
-  const [date, setDate] = useState(localDateKey());
+  const today = localDateKey();
+  const [date, setDate] = useState(today);
   const [time, setTime] = useState("");
   const [symbol, setSymbol] = useState("");
   const [amount, setAmount] = useState(0);
@@ -45,7 +46,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const external = type === "deposit" || type === "withdrawal";
-  const valid = Boolean(date) && amount > 0 && fxRate > 0 && accountName(account).length > 0 && (preFlowValueTwd === null || preFlowValueTwd >= 0);
+  const valid = Boolean(date) && date <= today && amount > 0 && fxRate > 0 && accountName(account).length > 0 && (preFlowValueTwd === null || preFlowValueTwd >= 0);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -75,8 +76,10 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
         <select className="field" value={type} onChange={(event) => setType(event.target.value as ActivityType)}>
           {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
-        <input className="field" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+        <input className="field" type="date" max={today} value={date} onChange={(event) => setDate(event.target.value)} />
       </div>
+
+      {date > today ? <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">不能新增未來日期的交易／現金流；請改成實際發生日。</p> : null}
 
       <input className="field" placeholder="帳戶，例如：台股證券、複委託" value={account} onChange={(event) => setAccount(event.target.value)} />
 
