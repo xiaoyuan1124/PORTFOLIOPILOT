@@ -14,6 +14,7 @@ import {
   evaluateOfficialStrategy,
   type SourceRef
 } from "@/lib/strategy-gates";
+import { isHeldTwSecurity, resolveHeldTwSecurityKeys } from "@/lib/research-holdings";
 import { percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 
@@ -120,11 +121,6 @@ export function Scanner({ state }: { state: AppState }) {
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  const heldCodes = useMemo(
-    () => new Set(state.holdings.filter((holding) => holding.market === "TW" && holding.type !== "cash").map((holding) => holding.symbol.toUpperCase())),
-    [state.holdings]
-  );
-
   async function fetchCaches(previous?: {
     revenue: RevenueHistoryCache | null;
     institutional: InstitutionalCache | null;
@@ -189,6 +185,10 @@ export function Scanner({ state }: { state: AppState }) {
     () => revenue && institutional && quarterly ? evaluateOfficialStrategy(revenue, institutional, quarterly) : [],
     [revenue, institutional, quarterly]
   );
+  const heldKeys = useMemo(
+    () => resolveHeldTwSecurityKeys(state.holdings, evaluated),
+    [evaluated, state.holdings]
+  );
   const counts = useMemo(() => ({
     pass: evaluated.filter((item) => item.overallStatus === "pass").length,
     fail: evaluated.filter((item) => item.overallStatus === "fail").length,
@@ -242,7 +242,7 @@ export function Scanner({ state }: { state: AppState }) {
           <Card key={`${item.market}:${item.code}`}><CardContent className="p-4 md:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{item.name}</p><span className="text-xs text-black/40 dark:text-white/40">{item.code}</span>{heldCodes.has(item.code.toUpperCase()) ? <Badge tone="good">持有</Badge> : null}</div>
+                <div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{item.name}</p><span className="text-xs text-black/40 dark:text-white/40">{item.code}</span>{isHeldTwSecurity(heldKeys, item.market, item.code) ? <Badge tone="good">持有</Badge> : null}</div>
                 <p className="mt-1 text-sm text-black/45 dark:text-white/45">{item.industry || "官方產業分類未帶入"} · {item.market}</p>
               </div>
               <StatusBadge status={item.overallStatus} />

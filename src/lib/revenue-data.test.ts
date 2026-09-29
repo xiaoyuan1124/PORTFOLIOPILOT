@@ -13,8 +13,20 @@ const cache: RevenueCache = {
 
 describe("monthly revenue cache", () => {
   it("defaults to held Taiwan symbols", () => {
-    const rows = revenueRowsForView(cache, "", new Set(["2330"]));
+    const rows = revenueRowsForView(cache, "", new Set(["TWSE:2330"]));
     expect(rows.map((row) => row.code)).toEqual(["2330"]);
+  });
+
+  it("does not treat the same code on another venue as held", () => {
+    const split: RevenueCache = {
+      ...cache,
+      rows: [
+        ...cache.rows,
+        { code: "2330", name: "同碼上櫃", market: "TPEx", industry: "測試", period: "2026-08", revenue: 1, lastYearRevenue: 1, momPct: 0, yoyPct: 0, cumulativeRevenue: 1, cumulativeYoyPct: 0 }
+      ]
+    };
+    const rows = revenueRowsForView(split, "", new Set(["TWSE:2330"]));
+    expect(rows.map((row) => `${row.market}:${row.code}`)).toEqual(["TWSE:2330"]);
   });
 
   it("searches by code, name, or industry", () => {

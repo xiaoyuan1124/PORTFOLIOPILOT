@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, RefreshCw, Search } from "lucide-react";
 import type { AppState } from "@/lib/types";
-import { buildCompanySnapshots, companySnapshotsForView, companySnapshotKey, isHeldCompanySnapshot } from "@/lib/company-snapshot";
+import { buildCompanySnapshots, companySnapshotsForView, isHeldCompanySnapshot } from "@/lib/company-snapshot";
 import { loadBundledInstitutional10d, type InstitutionalCache } from "@/lib/institutional-data";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { loadBundledQuarterlyMargins, type GateStatus, type QuarterlyMarginCache } from "@/lib/quarterly-financials";
 import { loadBundledRevenue, type RevenueCache } from "@/lib/revenue-data";
 import { loadBundledRevenueHistory, type RevenueHistoryCache } from "@/lib/revenue-history";
+import { resolveHeldTwSecurityKeys } from "@/lib/research-holdings";
 import { evaluateOfficialStrategy, type SourceRef } from "@/lib/strategy-gates";
 import { loadBundledValuations, valuationSource, type ValuationCache } from "@/lib/valuation-data";
 import { money, percent } from "@/lib/utils";
@@ -89,20 +90,6 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  const heldKeys = useMemo(() => {
-    const keys = new Set<string>();
-    for (const holding of state.holdings) {
-      if (holding.market !== "TW" || holding.type === "cash") continue;
-      const code = holding.symbol.toUpperCase();
-      if (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") {
-        keys.add(companySnapshotKey(holding.priceSource, code));
-      } else {
-        keys.add(code);
-      }
-    }
-    return keys;
-  }, [state.holdings]);
-
   async function fetchCaches(previous?: Caches | null) {
     const [quotes, revenue] = await Promise.all([
       loadBundledTwQuotes(),
@@ -167,6 +154,10 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
 
   const strategies = useMemo(() => caches ? evaluateOfficialStrategy(caches.revenueHistory, caches.institutional, caches.quarterly) : [], [caches]);
   const snapshots = useMemo(() => caches ? buildCompanySnapshots({ quotes: caches.quotes, revenue: caches.revenue, valuations: caches.valuations, strategies }) : [], [caches, strategies]);
+  const heldKeys = useMemo(
+    () => resolveHeldTwSecurityKeys(state.holdings, snapshots),
+    [state.holdings, snapshots]
+  );
   const visible = useMemo(() => companySnapshotsForView(snapshots, query, heldKeys, heldOnly, 80), [snapshots, query, heldKeys, heldOnly]);
   const selected = useMemo(() => {
     if (selectedKey) {

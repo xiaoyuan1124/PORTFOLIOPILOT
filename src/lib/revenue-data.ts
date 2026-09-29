@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { twSecurityKey } from "./research-holdings";
 
 const revenueRowSchema = z.object({
   code: z.string().min(1),
@@ -43,7 +44,7 @@ export async function loadBundledRevenue(): Promise<RevenueCache> {
 export function revenueRowsForView(
   cache: RevenueCache,
   query: string,
-  heldCodes: Set<string>,
+  heldKeys: Set<string>,
   limit = 80
 ) {
   const needle = query.trim().toLowerCase();
@@ -51,13 +52,13 @@ export function revenueRowsForView(
     if (needle) {
       return `${row.code} ${row.name} ${row.industry}`.toLowerCase().includes(needle);
     }
-    return heldCodes.has(row.code.toUpperCase());
+    return heldKeys.has(twSecurityKey(row.market, row.code));
   });
 
   return [...rows]
     .sort((a, b) => {
-      const aHeld = heldCodes.has(a.code.toUpperCase()) ? 1 : 0;
-      const bHeld = heldCodes.has(b.code.toUpperCase()) ? 1 : 0;
+      const aHeld = heldKeys.has(twSecurityKey(a.market, a.code)) ? 1 : 0;
+      const bHeld = heldKeys.has(twSecurityKey(b.market, b.code)) ? 1 : 0;
       if (aHeld !== bHeld) return bHeld - aHeld;
       return (b.yoyPct ?? -Infinity) - (a.yoyPct ?? -Infinity);
     })
