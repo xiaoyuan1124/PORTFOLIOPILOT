@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownCircle, ArrowUpCircle, Banknote, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -42,6 +42,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
   const [note, setNote] = useState("");
   const [account, setAccount] = useState(accountName(state.holdings[0]?.account));
   const [preFlowValueTwd, setPreFlowValueTwd] = useState<number | null>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   const external = type === "deposit" || type === "withdrawal";
   const valid = Boolean(date) && amount > 0 && fxRate > 0 && accountName(account).length > 0 && (preFlowValueTwd === null || preFlowValueTwd >= 0);
@@ -65,6 +66,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
       account: accountName(account),
       ...(external && preFlowValueTwd !== null ? { preFlowValueTwd } : {})
     });
+    closeRef.current?.click();
   }
 
   return (
@@ -129,8 +131,9 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
         不想逐筆記交易也可以只維護「持股」頁；若要算精確績效，再補現金流與 TWR 邊界。買進／賣出紀錄不會自動改持股，避免帳務推導錯誤。
       </p>
 
+      <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
       <Dialog.Close asChild>
-        <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
+        <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
       </Dialog.Close>
     </form>
   );
@@ -139,6 +142,7 @@ function ActivityForm({ state, onSave }: { state: AppState; onSave: (activity: P
 function BoundaryForm({ activity, onSave }: { activity: PortfolioActivity; onSave: (activity: PortfolioActivity) => void }) {
   const [time, setTime] = useState(activity.time ?? "");
   const [preFlowValueTwd, setPreFlowValueTwd] = useState<number | null>(activity.preFlowValueTwd ?? null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const valid = preFlowValueTwd !== null && Number.isFinite(preFlowValueTwd) && preFlowValueTwd >= 0;
 
   function submit(event: React.FormEvent) {
@@ -149,6 +153,7 @@ function BoundaryForm({ activity, onSave }: { activity: PortfolioActivity; onSav
       ...(time ? { time } : { time: undefined }),
       preFlowValueTwd
     });
+    closeRef.current?.click();
   }
 
   return (
@@ -160,8 +165,9 @@ function BoundaryForm({ activity, onSave }: { activity: PortfolioActivity; onSav
         <input className="field" type="time" value={time} onChange={(event) => setTime(event.target.value)} aria-label="現金流時間" />
         <input className="field" type="number" min="0" step="any" placeholder="現金流前總淨值（TWD）" value={preFlowValueTwd ?? ""} onChange={(event) => setPreFlowValueTwd(event.target.value === "" ? null : Number(event.target.value))} />
       </div>
+      <Button type="submit" disabled={!valid} className="w-full">儲存 TWR 邊界</Button>
       <Dialog.Close asChild>
-        <Button type="submit" disabled={!valid} className="w-full">儲存 TWR 邊界</Button>
+        <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
       </Dialog.Close>
     </form>
   );
