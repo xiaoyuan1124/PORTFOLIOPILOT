@@ -23,6 +23,20 @@ type Caches = {
   quarterly: QuarterlyMarginCache;
 };
 
+const emptyValuations: ValuationCache = { generatedAt: "", sources: [], rows: [] };
+const emptyRevenueHistory: RevenueHistoryCache = { generatedAt: "", periods: [], sources: [], rows: [] };
+const emptyInstitutional: InstitutionalCache = { generatedAt: "", tradingDates: [], sources: [], rows: [] };
+const emptyQuarterly: QuarterlyMarginCache = { generatedAt: "", periods: [], sources: [], rows: [], notApplicable: [] };
+
+async function optionalCache<T>(label: string, loader: () => Promise<T>, fallback: T) {
+  try {
+    return { value: await loader(), warning: "" };
+  } catch (cause) {
+    const detail = cause instanceof Error ? cause.message : "載入失敗";
+    return { value: fallback, warning: `${label}：${detail}` };
+  }
+}
+
 function statusLabel(status: GateStatus) {
   if (status === "pass") return "通過";
   if (status === "fail") return "未通過";
@@ -73,6 +87,7 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
   const [selectedKey, setSelectedKey] = useState(requestedKey ?? "");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   const heldKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -88,23 +103,50 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
     return keys;
   }, [state.holdings]);
 
-  async function fetchCaches() {
-    const [quotes, revenue, valuations, revenueHistory, institutional, quarterly] = await Promise.all([
+  async function fetchCaches(previous?: Caches | null) {
+    const [quotes, revenue] = await Promise.all([
       loadBundledTwQuotes(),
-      loadBundledRevenue(),
-      loadBundledValuations(),
-      loadBundledRevenueHistory(),
-      loadBundledInstitutional10d(),
-      loadBundledQuarterlyMargins()
+      loadBundledRevenue()
     ]);
-    return { quotes, revenue, valuations, revenueHistory, institutional, quarterly };
+
+    const [valuationsResult, revenueHistoryResult, institutionalResult, quarterlyResult] = await Promise.all([
+      optionalCache("官方估值", loadBundledValuations, previous?.valuations ?? emptyValuations),
+      optionalCache("三個月營收歷史", loadBundledRevenueHistory, previous?.revenueHistory ?? emptyRevenueHistory),
+      optionalCache("法人 10D", loadBundledInstitutional10d, previous?.institutional ?? emptyInstitutional),
+      optionalCache("季度毛利率", loadBundledQuarterlyMargins, previous?.quarterly ?? emptyQuarterly)
+    ]);
+
+    return {
+      caches: {
+        quotes,
+        revenue,
+        valuations: valuationsResult.value,
+        revenueHistory: revenueHistoryResult.value,
+        institutional: institutionalResult.value,
+        quarterly: quarterlyResult.value
+      },
+      warnings: [
+        valuationsResult.warning,
+        revenueHistoryResult.warning,
+        institutionalResult.warning,
+        quarterlyResult.warning
+      ].filter(Boolean)
+    };
   }
 
   useEffect(() => {
     let active = true;
     void fetchCaches()
-      .then((next) => { if (active) { setCaches(next); setError(""); } })
-      .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "無法載入官方個股資料。"); })
+      .then((next) => {
+        if (!active) return;
+        setCaches(next.caches);
+        setWarnings(next.warnings);
+        setError("");
+      })
+      .catch((cause) => {
+        if (!active) return;
+        setError(cause instanceof Error ? cause.message : "無法載入官方個股資料。");
+      })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
@@ -112,9 +154,15 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
   async function reload() {
     setLoading(true);
     setError("");
-    try { setCaches(await fetchCaches()); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "無法載入官方個股資料。"); }
-    finally { setLoading(false); }
+    try {
+      const next = await fetchCaches(caches);
+      setCaches(next.caches);
+      setWarnings(next.warnings);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "無法載入官方個股資料。");
+    } finally {
+      setLoading(false);
+    }
   }
 
   const strategies = useMemo(() => caches ? evaluateOfficialStrategy(caches.revenueHistory, caches.institutional, caches.quarterly) : [], [caches]);
@@ -122,11 +170,11 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
   const visible = useMemo(() => companySnapshotsForView(snapshots, query, heldKeys, heldOnly, 80), [snapshots, query, heldKeys, heldOnly]);
   const selected = useMemo(() => {
     if (selectedKey) {
-      const chosen = snapshots.find((row) => `${row.market}:${row.code}` === selectedKey);
-      if (chosen) return chosen;
+      return snapshots.find((row) => `${row.market}:${row.code}` === selectedKey) ?? null;
     }
     return snapshots.find((row) => isHeldCompanySnapshot(row, heldKeys)) ?? visible[0] ?? null;
   }, [snapshots, selectedKey, heldKeys, visible]);
+  const requestedMissing = Boolean(selectedKey && !loading && !error && snapshots.length && !selected);
 
   const quoteSource = selected && caches ? caches.quotes.sources.find((source) => source.name.toUpperCase().includes(selected.market.toUpperCase())) ?? null : null;
   const revenueSource = selected?.revenue && caches ? caches.revenue.sources.find((source) => source.name.toUpperCase().includes(selected.market.toUpperCase())) ?? null : null;
@@ -136,7 +184,7 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
     <div className="rounded-[24px] border border-black/6 bg-[#1f332a] p-5 text-white shadow-sm dark:border-white/8 dark:bg-[#dce9e2] dark:text-[#122018]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">Company Snapshot · Official Data</p><h3 className="mt-2 text-xl font-semibold">一頁看完台股個股／ETF 的核心資料</h3><p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">把已驗證的 TWSE、TPEx、MOPS 快取集中在同一頁。不同指標保留各自日期與來源；缺值、不適用與資料不足不補猜。</p></div>
-        <div className="text-right"><p className="text-3xl font-semibold">{snapshots.length}</p><p className="text-xs opacity-60">可研究標的</p></div>
+        <div className="text-right"><p className="text-3xl font-semibold">{loading ? "…" : error && !caches ? "—" : snapshots.length}</p><p className="text-xs opacity-60">{loading ? "讀取官方資料" : "可研究標的"}</p></div>
       </div>
     </div>
 
@@ -147,6 +195,15 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
     </div>
 
     {error ? <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">{error}</div> : null}
+    {!error && warnings.length ? (
+      <div className="rounded-2xl border border-[#b98b57]/20 bg-[#f8f1e8] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/15 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+        <p className="font-semibold">部分官方研究資料暫時不可用</p>
+        <p className="mt-1 text-xs leading-5 opacity-80">收盤價與最新月營收仍可正常使用；以下區塊會保留先前已載入資料，若沒有舊資料則顯示資料不足，不用假資料補齊。</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">
+          {warnings.map((warning) => <li key={warning}>{warning}</li>)}
+        </ul>
+      </div>
+    ) : null}
 
     {!loading && !error ? <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
       {visible.slice(0, 16).map((row) => {
@@ -156,7 +213,15 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
       })}
     </div> : null}
 
-    {!loading && !error && !selected ? <div className="rounded-2xl border border-black/6 p-8 text-center dark:border-white/8"><Search className="mx-auto text-black/25 dark:text-white/25" size={28} /><p className="mt-3 text-sm font-semibold">選一家公司開始研究</p><p className="mt-1 text-xs text-black/40 dark:text-white/40">有台股持倉時會自動優先顯示持有標的；否則請從上方搜尋或快速選擇。</p></div> : null}
+    {requestedMissing ? (
+      <div className="rounded-2xl border border-[#b98b57]/20 bg-[#f8f1e8] p-6 text-center text-[#6f4c26] dark:border-[#b98b57]/15 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+        <Search className="mx-auto opacity-50" size={28} />
+        <p className="mt-3 text-sm font-semibold">指定標的目前不在官方研究清單</p>
+        <p className="mt-1 text-xs leading-5 opacity-80">要求的研究鍵：{selectedKey}。系統不會自動改顯示另一家公司，避免你誤以為看到的是原本指定標的。</p>
+        <GhostButton className="mt-4 border-current/20 bg-transparent" onClick={() => setSelectedKey("")}>改看其他標的</GhostButton>
+      </div>
+    ) : null}
+    {!loading && !error && !selected && !requestedMissing ? <div className="rounded-2xl border border-black/6 p-8 text-center dark:border-white/8"><Search className="mx-auto text-black/25 dark:text-white/25" size={28} /><p className="mt-3 text-sm font-semibold">選一家公司開始研究</p><p className="mt-1 text-xs text-black/40 dark:text-white/40">有台股持倉時會自動優先顯示持有標的；否則請從上方搜尋或快速選擇。</p></div> : null}
 
     {selected ? <>
       <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{isHeldCompanySnapshot(selected, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>

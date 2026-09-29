@@ -17,6 +17,19 @@ import {
 import { percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 
+const emptyRevenueHistory: RevenueHistoryCache = { generatedAt: "", periods: [], sources: [], rows: [] };
+const emptyInstitutional: InstitutionalCache = { generatedAt: "", tradingDates: [], sources: [], rows: [] };
+const emptyQuarterly: QuarterlyMarginCache = { generatedAt: "", periods: [], sources: [], rows: [], notApplicable: [] };
+
+async function optionalCache<T>(label: string, loader: () => Promise<T>, fallback: T) {
+  try {
+    return { value: await loader(), warning: "" };
+  } catch (cause) {
+    const detail = cause instanceof Error ? cause.message : "載入失敗";
+    return { value: fallback, warning: `${label}：${detail}` };
+  }
+}
+
 function statusLabel(status: GateStatus) {
   if (status === "pass") return "通過";
   if (status === "fail") return "未通過";
@@ -105,29 +118,45 @@ export function Scanner({ state }: { state: AppState }) {
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   const heldCodes = useMemo(
     () => new Set(state.holdings.filter((holding) => holding.market === "TW" && holding.type !== "cash").map((holding) => holding.symbol.toUpperCase())),
     [state.holdings]
   );
 
-  async function fetchCaches() {
-    const [revenueCache, institutionalCache, quarterlyCache] = await Promise.all([
-      loadBundledRevenueHistory(),
-      loadBundledInstitutional10d(),
-      loadBundledQuarterlyMargins()
+  async function fetchCaches(previous?: {
+    revenue: RevenueHistoryCache | null;
+    institutional: InstitutionalCache | null;
+    quarterly: QuarterlyMarginCache | null;
+  }) {
+    const [revenueResult, institutionalResult, quarterlyResult] = await Promise.all([
+      optionalCache("三個月營收歷史", loadBundledRevenueHistory, previous?.revenue ?? emptyRevenueHistory),
+      optionalCache("法人 10D", loadBundledInstitutional10d, previous?.institutional ?? emptyInstitutional),
+      optionalCache("季度毛利率", loadBundledQuarterlyMargins, previous?.quarterly ?? emptyQuarterly)
     ]);
-    return { revenueCache, institutionalCache, quarterlyCache };
+
+    return {
+      revenueCache: revenueResult.value,
+      institutionalCache: institutionalResult.value,
+      quarterlyCache: quarterlyResult.value,
+      warnings: [
+        revenueResult.warning,
+        institutionalResult.warning,
+        quarterlyResult.warning
+      ].filter(Boolean)
+    };
   }
 
   useEffect(() => {
     let active = true;
     void fetchCaches()
-      .then(({ revenueCache, institutionalCache, quarterlyCache }) => {
+      .then(({ revenueCache, institutionalCache, quarterlyCache, warnings: nextWarnings }) => {
         if (!active) return;
         setRevenue(revenueCache);
         setInstitutional(institutionalCache);
         setQuarterly(quarterlyCache);
+        setWarnings(nextWarnings);
         setError("");
       })
       .catch((cause) => {
@@ -144,10 +173,11 @@ export function Scanner({ state }: { state: AppState }) {
     setLoading(true);
     setError("");
     try {
-      const next = await fetchCaches();
+      const next = await fetchCaches({ revenue, institutional, quarterly });
       setRevenue(next.revenueCache);
       setInstitutional(next.institutionalCache);
       setQuarterly(next.quarterlyCache);
+      setWarnings(next.warnings);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "無法載入官方策略資料。");
     } finally {
@@ -183,7 +213,7 @@ export function Scanner({ state }: { state: AppState }) {
             <h3 className="mt-2 text-xl font-semibold">成長＋毛利改善＋雙法人共振</h3>
             <p className="mt-2 max-w-2xl text-sm leading-6 opacity-70">全部條件皆來自 TWSE、TPEx 或 MOPS 官方公開資料。季毛利率使用單季數字；Q2～Q4 由同年累計財報差分後計算，不把累計毛利率冒充單季毛利率。</p>
           </div>
-          <div className="text-right"><p className="text-3xl font-semibold">{counts.pass}</p><p className="text-xs opacity-60">四關正式通過</p></div>
+          <div className="text-right"><p className="text-3xl font-semibold">{loading ? "…" : error ? "—" : counts.pass}</p><p className="text-xs opacity-60">{loading ? "讀取官方 Gate" : "四關正式通過"}</p></div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2 text-xs opacity-70">
           <span>通過 {counts.pass}</span><span>·</span><span>未通過 {counts.fail}</span><span>·</span><span>資料不足 {counts.insufficient}</span><span>·</span><span>不適用 {counts.notApplicable}</span>
@@ -197,6 +227,15 @@ export function Scanner({ state }: { state: AppState }) {
       </div>
 
       {error ? <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">{error}</div> : null}
+      {!error && warnings.length ? (
+        <div className="rounded-2xl border border-[#b98b57]/20 bg-[#f8f1e8] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/15 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+          <p className="font-semibold">Scanner 部分官方資料暫時不可用</p>
+          <p className="mt-1 text-xs leading-5 opacity-80">其餘 Gate 仍照實顯示；缺少來源的 Gate 會標成「資料不足」，不會因單一資料源失敗而讓整頁消失。</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">
+            {warnings.map((warning) => <li key={warning}>{warning}</li>)}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="grid gap-3 xl:grid-cols-2">
         {visible.map((item) => (
