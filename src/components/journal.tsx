@@ -4,6 +4,7 @@ import { useState } from "react";
 import { BookOpen, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { AppState, JournalEntry } from "@/lib/types";
+import { localDateKey } from "@/lib/calc";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
 export function Journal({ state, onChange }: { state: AppState; onChange: (state: AppState) => boolean }) {
@@ -17,7 +18,7 @@ export function Journal({ state, onChange }: { state: AppState; onChange: (state
     if (!title.trim() || !thesis.trim()) return;
     const entry: JournalEntry = {
       id: `j-${Date.now()}`,
-      date: new Date().toISOString().slice(0, 10),
+      date: localDateKey(),
       symbol: symbol.trim().toUpperCase(),
       title: title.trim(),
       thesis: thesis.trim(),

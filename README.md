@@ -224,3 +224,10 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Forms and dialogs stay open when persistence fails, so unsaved user input is not silently discarded.
 - Journal fields are cleared only after a successful save.
 - Theme changes remain usable even when browser storage is unavailable; the UI warns that the preference could not be remembered instead of throwing.
+
+
+## V0.30 local-date consistency
+
+- Investment journal entries use the device's local calendar date instead of UTC, preventing after-midnight entries from being recorded as the previous day.
+- Recovery, JSON backup, holdings CSV and ETF composition export filenames use the same local-date convention.
+- Local date formatting is covered by calculation tests.
