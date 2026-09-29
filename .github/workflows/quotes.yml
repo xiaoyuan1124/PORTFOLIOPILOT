@@ -1,0 +1,44 @@
+name: Refresh Taiwan Closing Quotes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/update-quotes.mjs"
+      - "scripts/lib/quote-data.mjs"
+      - ".github/workflows/quotes.yml"
+  schedule:
+    # Taiwan time: 15:17, 17:17, 19:17, 21:17 on weekdays.
+    # Multiple attempts reduce dependence on a single delayed GitHub cron run
+    # and allow the exchange endpoints time to publish final close data.
+    - cron: "17 7,9,11,13 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: taiwan-closing-quotes
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Fetch latest official TWSE / TPEx closing quotes
+        run: node scripts/update-quotes.mjs
+      - name: Commit newer quote cache
+        run: |
+          if git diff --quiet -- public/data/tw-quotes.json; then
+            echo "No quote changes."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add public/data/tw-quotes.json
+            git commit -m "data: refresh Taiwan closing quotes"
+            git push
+          fi
