@@ -152,6 +152,13 @@ export const positionTransferImpactSchema = z.object({
   quantity: z.number().finite().positive()
 });
 
+export const historicalTradeSchema = z.object({
+  mode: z.literal("ledger_only"),
+  market: z.enum(["TW", "US"]),
+  fee: z.number().finite().nonnegative(),
+  tax: z.number().finite().nonnegative()
+});
+
 export const etfConstituentSchema = z.object({
   market: z.enum(["TW", "US"]),
   symbol: z.string().trim().min(1).max(32),
@@ -209,7 +216,8 @@ export const activitySchema = z.object({
   cashImpact: cashImpactSchema.optional(),
   cashTransferImpact: cashTransferImpactSchema.optional(),
   cashFxImpact: cashFxImpactSchema.optional(),
-  positionTransferImpact: positionTransferImpactSchema.optional()
+  positionTransferImpact: positionTransferImpactSchema.optional(),
+  historicalTrade: historicalTradeSchema.optional()
 }).superRefine((activity, ctx) => {
   const zeroAmountInternal =
     activity.type === "corporate_action" ||
@@ -276,6 +284,77 @@ export const activitySchema = z.object({
         code: "custom",
         path: ["cashImpact"],
         message: "系統擷取的 TWR 邊界必須來自已連動現金帳戶的事件。"
+      });
+    }
+  }
+
+  if (activity.historicalTrade && !isTradeActivityType(activity.type)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["historicalTrade"],
+      message: "歷史買賣 metadata 只能附在買進／賣出紀錄。"
+    });
+  }
+
+  if (activity.historicalTrade) {
+    const historical = activity.historicalTrade;
+    if (
+      activity.inventoryImpact ||
+      activity.cashImpact ||
+      activity.cashTransferImpact ||
+      activity.cashFxImpact ||
+      activity.positionTransferImpact
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["historicalTrade"],
+        message: "Ledger-only 歷史買賣不可附帶目前持股、現金、轉帳或換匯快照。"
+      });
+    }
+
+    if (!activity.account?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["account"],
+        message: "歷史買賣必須保存交易帳戶。"
+      });
+    }
+
+    const expectedCurrency = historical.market === "TW" ? "TWD" : "USD";
+    if (activity.currency !== expectedCurrency) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["currency"],
+        message: "歷史買賣市場與交易幣別不一致。"
+      });
+    }
+    if (historical.market === "TW" && Math.abs(activity.fxRate - 1) > 1e-12) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["fxRate"],
+        message: "台股歷史買賣的 TWD 匯率必須為 1。"
+      });
+    }
+    if (activity.quantity <= 0 || activity.price <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["quantity"],
+        message: "歷史買賣必須保存正數成交數量與成交價。"
+      });
+    }
+
+    const gross = activity.quantity * activity.price;
+    const expectedAmount = activity.type === "buy"
+      ? gross + historical.fee + historical.tax
+      : gross - historical.fee - historical.tax;
+    if (
+      expectedAmount <= 0 ||
+      Math.abs(activity.amount - expectedAmount) > 1e-8 * Math.max(1, Math.abs(expectedAmount))
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["amount"],
+        message: "歷史買賣金額必須與成交數量、成交價、手續費與交易稅一致。"
       });
     }
   }
@@ -1096,7 +1175,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12), z.literal(13)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12), z.literal(13), z.literal(14)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),
