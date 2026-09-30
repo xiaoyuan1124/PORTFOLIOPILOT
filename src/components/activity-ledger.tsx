@@ -704,7 +704,23 @@ function ActivityForm({
       ) : null}
 
       {currency === "USD" && !corporate ? (
-        <input className="field" type="number" min="0.0001" step="0.01" placeholder="當日 USD/TWD 匯率" value={fxRate || ""} onChange={(event) => setFxRate(Number(event.target.value))} />
+        <div>
+          <input
+            className="field"
+            type="number"
+            min="0.0001"
+            step="0.01"
+            placeholder="當日 USD/TWD 匯率"
+            value={external && boundaryMode === "auto" ? state.usdTwd : (fxRate || "")}
+            disabled={external && boundaryMode === "auto"}
+            onChange={(event) => setFxRate(Number(event.target.value))}
+          />
+          {external && boundaryMode === "auto" ? (
+            <p className="mt-2 px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
+              自動 TWR 邊界使用目前 PortfolioPilot USD/TWD {state.usdTwd.toFixed(2)}，確保 pre-flow、現金流與寫入後估值使用同一匯率基準。
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       {!external && !trade && !corporate ? (
