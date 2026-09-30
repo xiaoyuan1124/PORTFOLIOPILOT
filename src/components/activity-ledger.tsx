@@ -17,10 +17,12 @@ import { loadBundledRevenue } from "@/lib/revenue-data";
 import {
   applyCashLinkedActivity,
   applyCashTransfer,
+  recordHistoricalCashActivity,
   revertCashLinkedActivity,
   revertCashTransfer,
   type CashLinkedActivityInput,
-  type CashTransferInput
+  type CashTransferInput,
+  type HistoricalCashActivityInput
 } from "@/lib/cash-account";
 import {
   applyShareAdjustment,
@@ -309,12 +311,14 @@ function OpeningBuyForm({
 function ActivityForm({
   state,
   onSaveCash,
+  onSaveHistoricalCash,
   onSaveTransfer,
   onSaveTrade,
   onSaveCorporateAction
 }: {
   state: AppState;
   onSaveCash: (input: CashLinkedActivityInput) => boolean;
+  onSaveHistoricalCash: (input: HistoricalCashActivityInput) => boolean;
   onSaveTransfer: (input: CashTransferInput) => boolean;
   onSaveTrade: (input: ManagedTradeInput) => boolean;
   onSaveCorporateAction: (input: ShareAdjustmentInput) => boolean;
@@ -336,10 +340,11 @@ function ActivityForm({
     holding.currency === defaultTradeHolding?.currency &&
     accountName(holding.account) === accountName(defaultTradeHolding?.account)
   ) ?? cashHoldings.find((holding) => holding.currency === defaultTradeHolding?.currency) ?? cashHoldings[0];
+  const initialCashCurrency: Currency = defaultCashHolding?.currency ?? defaultTradeHolding?.currency ?? "TWD";
   const [symbol, setSymbol] = useState("");
   const [amount, setAmount] = useState(0);
-  const [currency, setCurrency] = useState<Currency>(defaultTradeHolding?.currency ?? "TWD");
-  const [fxRate, setFxRate] = useState(defaultTradeHolding?.currency === "USD" ? state.usdTwd : 1);
+  const [currency, setCurrency] = useState<Currency>(initialCashCurrency);
+  const [fxRate, setFxRate] = useState(initialCashCurrency === "USD" ? state.usdTwd : 1);
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
   const [fee, setFee] = useState(0);
@@ -392,8 +397,9 @@ function ActivityForm({
   const tradeGross = quantity * price;
   const tradeNet = type === "sell" ? tradeGross - fee - tax : tradeGross + fee + tax;
   const cashOnlyDebit = type === "withdrawal" || type === "fee";
+  const historicalCash = !trade && !transfer && !corporate && date < today;
   const tradeCashSufficient = type !== "buy" || (selectedTradeCash !== null && tradeNet <= selectedTradeCash.price + 1e-9);
-  const cashOnlySufficient = !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
+  const cashOnlySufficient = historicalCash || !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
   const transferSufficient = selectedTransferFrom !== null && amount <= selectedTransferFrom.price + 1e-9;
   const currentPortfolioValueTwd = portfolioSummary(state.holdings, state.usdTwd).total;
   const effectiveFxRate = external && boundaryMode === "auto" && currency === "USD" ? state.usdTwd : fxRate;
@@ -490,7 +496,7 @@ function ActivityForm({
       if (currentCash) {
         setCashHoldingId(currentCash.id);
         setCurrency(currentCash.currency);
-        setFxRate(currentCash.currency === "USD" ? state.usdTwd : 1);
+        setFxRate(currentCash.currency === "USD" ? (date < today ? 0 : state.usdTwd) : 1);
       }
     } else {
       const current = tradeHoldings.find((holding) => holding.id === tradeHoldingId) ?? tradeHoldings[0];
@@ -562,6 +568,25 @@ function ActivityForm({
     }
 
     if (!selectedCash) return;
+
+    if (historicalCash) {
+      const saved = onSaveHistoricalCash({
+        id: nextActivityId(state.activities, date),
+        date,
+        type: type as "deposit" | "withdrawal" | "dividend" | "fee",
+        cashHoldingId: selectedCash.id,
+        amount,
+        fxRate: selectedCash.currency === "USD" ? fxRate : 1,
+        symbol: external ? "" : symbol,
+        note,
+        ...(external && time ? { time } : {}),
+        ...(external && preFlowValueTwd !== null ? { preFlowValueTwd } : {})
+      });
+      if (!saved) return;
+      closeRef.current?.click();
+      return;
+    }
+
     const saved = onSaveCash({
       id: nextActivityId(state.activities, date),
       date,
@@ -571,7 +596,7 @@ function ActivityForm({
       fxRate: selectedCash.currency === "USD" ? effectiveFxRate : 1,
       symbol: external ? "" : symbol,
       note,
-      ...(external && boundaryMode === "auto" && date === today
+      ...(external && boundaryMode === "auto"
         ? {
             time: localTimeKey(),
             capturePreFlowFromCurrentState: true
@@ -600,12 +625,22 @@ function ActivityForm({
           onChange={(event) => {
             const nextDate = event.target.value;
             setDate(nextDate);
-            if (nextDate !== today) setBoundaryMode("manual");
+            if (nextDate !== today) {
+              setBoundaryMode("manual");
+              if (currency === "USD") setFxRate(0);
+            } else if (currency === "USD") {
+              setFxRate(state.usdTwd);
+            }
           }}
         />
       </div>
 
       {date > today ? <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">不能新增未來日期的交易／現金流；請改成實際發生日。</p> : null}
+      {historicalCash ? (
+        <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-xs leading-5 text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+          <strong>歷史補登模式：</strong>只新增帳務紀錄，不修改目前現金餘額。選擇現金帳戶只用來保存帳戶名稱與幣別；歷史入出金仍納入 XIRR／TWR，歷史股息／費用仍納入收入統計。
+        </div>
+      ) : null}
 
       {trade ? (
         <div>
@@ -753,11 +788,11 @@ function ActivityForm({
               const next = cashHoldings.find((holding) => holding.id === nextId);
               if (next) {
                 setCurrency(next.currency);
-                setFxRate(next.currency === "USD" ? state.usdTwd : 1);
+                setFxRate(next.currency === "USD" ? (date < today ? 0 : state.usdTwd) : 1);
               }
             }}
           >
-            <option value="">選擇要連動的現金帳戶</option>
+            <option value="">{historicalCash ? "選擇歷史紀錄所屬現金帳戶" : "選擇要連動的現金帳戶"}</option>
             {cashHoldings.map((holding) => (
               <option key={holding.id} value={holding.id}>
                 {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
@@ -865,12 +900,16 @@ function ActivityForm({
             type="number"
             min="0.0001"
             step="0.01"
-            placeholder="當日 USD/TWD 匯率"
+            placeholder={historicalCash ? "歷史當日 USD/TWD（必填）" : "當日 USD/TWD 匯率"}
             value={external && boundaryMode === "auto" ? state.usdTwd : (fxRate || "")}
             disabled={external && boundaryMode === "auto"}
             onChange={(event) => setFxRate(Number(event.target.value))}
           />
-          {external && boundaryMode === "auto" ? (
+          {historicalCash ? (
+            <p className="mt-2 px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
+              歷史 USD 事件必須手動輸入當日匯率；系統不會把目前 USD/TWD 當成過去匯率。
+            </p>
+          ) : external && boundaryMode === "auto" ? (
             <p className="mt-2 px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
               自動 TWR 邊界使用目前 PortfolioPilot USD/TWD {state.usdTwd.toFixed(2)}，確保 pre-flow、現金流與寫入後估值使用同一匯率基準。
             </p>
@@ -943,23 +982,30 @@ function ActivityForm({
       ) : null}
 
       {!trade && !corporate && !transfer && selectedCash ? (
-        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
-          <div className="flex justify-between gap-3">
-            <span>現金餘額</span>
-            <strong>
-              {selectedCash.currency} {selectedCash.price.toLocaleString()} → {(selectedCash.price + ((type === "deposit" || type === "dividend") ? amount : -amount)).toLocaleString()}
-            </strong>
+        historicalCash ? (
+          <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+            <div className="flex justify-between gap-3"><span>目前現金餘額</span><strong>{selectedCash.currency} {selectedCash.price.toLocaleString()}</strong></div>
+            <p className="mt-2 text-black/38 dark:text-white/38">儲存後仍維持相同餘額；系統不會把過去的現金事件重新套用到今天。</p>
           </div>
-          {cashOnlyDebit && amount > selectedCash.price + 1e-9 ? (
-            <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">現金不足，這筆紀錄不會寫入。</p>
-          ) : null}
-        </div>
+        ) : (
+          <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+            <div className="flex justify-between gap-3">
+              <span>現金餘額</span>
+              <strong>
+                {selectedCash.currency} {selectedCash.price.toLocaleString()} → {(selectedCash.price + ((type === "deposit" || type === "dividend") ? amount : -amount)).toLocaleString()}
+              </strong>
+            </div>
+            {cashOnlyDebit && amount > selectedCash.price + 1e-9 ? (
+              <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">現金不足，這筆紀錄不會寫入。</p>
+            ) : null}
+          </div>
+        )
       ) : null}
 
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.59 起，同幣別現金帳戶可用內部轉帳原子搬移餘額，不會誤算成外部現金流。今天的入出金仍可在寫入前自動擷取 Exact TWR pre-flow 淨值；跨幣別換匯暫不偽裝成轉帳。
+        V0.60 起，只有今天實際發生的現金事件會修改目前餘額；過去日期一律以 ledger-only 歷史補登保存，避免舊入出金、股息或費用重播到現在。內部同幣別轉帳仍不算外部現金流。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
@@ -1054,6 +1100,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
     }
   }
 
+  function addHistoricalCashActivity(input: HistoricalCashActivityInput) {
+    try {
+      const next = recordHistoricalCashActivity(state, input);
+      if (!onChange(next)) return false;
+      toast.success("歷史帳務紀錄已新增，目前現金餘額未變動");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全補登歷史現金事件");
+      return false;
+    }
+  }
+
   function addCashTransfer(input: CashTransferInput) {
     try {
       const next = applyCashTransfer(state, input);
@@ -1144,7 +1202,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
             <OpeningBuyForm state={state} onSave={addOpeningPosition} />
           </Modal>
           <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
-            <ActivityForm state={state} onSaveCash={addCashActivity} onSaveTransfer={addCashTransfer} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
+            <ActivityForm state={state} onSaveCash={addCashActivity} onSaveHistoricalCash={addHistoricalCashActivity} onSaveTransfer={addCashTransfer} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
           </Modal>
         </div>
       </div>
@@ -1165,6 +1223,12 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           const transfer = isCashTransferActivityType(activity.type);
           const trade = isTradeActivityType(activity.type);
           const corporate = activity.type === "corporate_action";
+          const ledgerOnlyCash =
+            (activity.type === "deposit" ||
+              activity.type === "withdrawal" ||
+              activity.type === "dividend" ||
+              activity.type === "fee") &&
+            !activity.cashImpact;
 
           return (
             <Card key={activity.id}>
@@ -1181,6 +1245,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       {external ? <Badge tone="good">外部現金流</Badge> : transfer ? <Badge>內部資產搬移</Badge> : <Badge>內部紀錄</Badge>}
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
                       {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
+                      {ledgerOnlyCash ? <Badge tone="warn">Ledger-only・未改目前現金</Badge> : null}
                       {activity.cashTransferImpact ? <Badge tone="good">雙帳戶原子更新</Badge> : null}
                       {external ? (activity.preFlowValueTwd !== undefined ? (
                         <Badge tone="good">
@@ -1300,7 +1365,14 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                           return;
                         }
 
-                        if (!window.confirm("刪除這筆舊版交易／現金流紀錄？")) return;
+                        if (ledgerOnlyCash) {
+                          if (!window.confirm("這筆是 Ledger-only 歷史／舊資料，未修改目前現金餘額。刪除只會移除帳務與績效紀錄，確定繼續？")) return;
+                          if (!onChange({ ...state, activities: state.activities.filter((item) => item.id !== activity.id) })) return;
+                          toast.success("歷史帳務紀錄已刪除，目前現金餘額未變動");
+                          return;
+                        }
+
+                        if (!window.confirm("刪除這筆舊版交易紀錄？")) return;
                         if (!onChange({ ...state, activities: state.activities.filter((item) => item.id !== activity.id) })) return;
                         toast.success("紀錄已刪除");
                       }}

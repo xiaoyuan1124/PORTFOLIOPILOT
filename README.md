@@ -553,3 +553,16 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Backup V11 validates transfer account IDs, currency consistency, normalized cash snapshots and exact before ± amount = after arithmetic; tampered transfer backups fail closed.
 - Legacy V1–V10 backups remain readable.
 
+## V0.60 historical cash-event backfill safety
+
+- Cash events are now split by accounting meaning instead of applying every dated record to today's cash balance.
+- **Today:** deposits, withdrawals, dividends and fees continue to update the selected current cash account atomically and preserve reversible before / after snapshots.
+- **Past dates:** the same four event types are recorded as **ledger-only historical backfill**. They preserve account, currency, saved historical USD/TWD, note and applicable TWR boundary fields, but never mutate current holdings.
+- Historical deposits / withdrawals still participate in net external contributions, XIRR, Exact TWR and Modified Dietz according to their recorded date and FX.
+- Historical USD cash events require an explicit positive USD/TWD input; switching to a past date clears the current FX value so today's rate cannot silently masquerade as a historical rate.
+- Historical dividends / fees still participate in received-income reporting using their saved historical FX.
+- A historical withdrawal or fee is not rejected merely because today's cash balance is lower; today's cash is intentionally irrelevant to a ledger-only past event.
+- The current-state cash engine now rejects any non-today date, so historical events cannot bypass the UI and replay into current cash through the mutation path.
+- Activity cards explicitly label cash records without a current-state cash snapshot as **Ledger-only · 未改目前現金**; deleting one removes only ledger/performance history.
+- Backup format remains V11 because the existing activity schema already safely represents ledger-only historical events; no synthetic current-cash snapshot is added.
+

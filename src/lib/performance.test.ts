@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppState } from "./types";
 import { calculateXirr, exactTimeWeightedReturn, incomeAfterFees, modifiedDietzReturn, netExternalContributions, portfolioXirr } from "./performance";
+import { recordHistoricalCashActivity } from "./cash-account";
 
 describe("performance math", () => {
   it("solves a simple one-year 10% XIRR", () => {
@@ -26,6 +27,40 @@ describe("performance math", () => {
       ]
     };
     expect(netExternalContributions(state.activities)).toBe(800);
+  });
+
+  it("keeps historical backfill out of current cash while retaining performance semantics", () => {
+    const base: AppState = {
+      usdTwd: 1,
+      holdings: [
+        { id: "cash", symbol: "CASH-TWD", name: "Cash", market: "TW", type: "cash", quantity: 1, price: 250, averageCost: 250, currency: "TWD", sector: "現金", account: "券商A" }
+      ],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      activities: []
+    };
+
+    const next = recordHistoricalCashActivity(base, {
+      id: "historical-deposit",
+      date: "2000-01-01",
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "",
+      note: "",
+      time: "09:00",
+      preFlowValueTwd: 100
+    });
+
+    expect(next.holdings[0]?.price).toBe(250);
+    expect(netExternalContributions(next.activities)).toBe(100);
+    const twr = exactTimeWeightedReturn(next, "2000-01-02");
+    expect(twr.externalFlowCount).toBe(1);
+    expect(twr.boundedFlowCount).toBe(1);
+    expect(twr.status).toBe("exact");
+    expect(twr.value).toBeCloseTo(0.25, 10);
   });
 
   it("does not treat internal cash transfers as contributions, income or TWR boundaries", () => {

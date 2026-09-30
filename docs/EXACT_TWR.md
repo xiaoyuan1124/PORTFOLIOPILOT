@@ -1,6 +1,6 @@
 # Exact TWR Event Boundaries
 
-PortfolioPilot V0.12 adds the data needed for a true time-weighted return over a covered interval.
+PortfolioPilot stores event-boundary data for a true time-weighted return over a covered interval.
 
 ## Why the old TWR remains a Proxy
 
@@ -18,12 +18,16 @@ For every external cash flow:
 
 - type must be deposit or withdrawal;
 - record the cash-flow date;
-- optionally record an HH:MM time;
-- record `preFlowValueTwd`: the total portfolio net value immediately **before** the external cash flow.
+- record `preFlowValueTwd`: the total portfolio net value immediately **before** the external cash flow;
+- use an HH:MM time whenever multiple external flows share the same date.
 
-The boundary value is in TWD. For a USD cash flow, the flow itself is converted with that activity's stored USD/TWD rate.
+For a same-day event entered when it actually occurs, V0.58+ can capture the pre-flow value from the current PortfolioPilot holdings state immediately before the cash mutation and mark the provenance as `system_current_state`. For a past date, the boundary must be manually confirmed from historical records; the app never substitutes today's net worth for an unknown historical value.
 
-Buy, sell, dividend and fee entries are internal portfolio events and do not create TWR cash-flow boundaries.
+The boundary value is in TWD. For a USD flow, the flow is converted with that activity's saved USD/TWD rate. Same-day automatic capture uses the current saved portfolio FX so the pre-flow valuation, flow conversion and post-flow valuation share one FX basis.
+
+Buy, sell, dividend, fee and internal cash-transfer entries are internal portfolio events and do not create TWR cash-flow boundaries.
+
+V0.60 also separates **historical ledger backfill** from current-cash mutation. A past deposit / withdrawal can be added to the ledger for XIRR / TWR history without changing today's cash holding. Past dividends / fees are likewise ledger-only and never replay into the current balance.
 
 ## Sub-period calculation
 
@@ -71,6 +75,6 @@ The existing XIRR and Modified Dietz Proxy remain available independently.
 
 ## Backup compatibility
 
-PortfolioPilot JSON backup format is V3 for new exports. V3 can store external-flow time and pre-flow valuation.
+The current PortfolioPilot JSON backup format is V11. It preserves external-flow time, pre-flow valuation, boundary provenance and the newer cash / inventory linkage metadata.
 
-Imports remain backward compatible with V1 and V2. Older backups simply have no Exact TWR boundaries until the owner adds them.
+Imports remain backward compatible with V1–V10. Older external-flow records may lack Exact TWR boundaries or boundary provenance; missing data stays missing until the owner adds a confirmed boundary.
