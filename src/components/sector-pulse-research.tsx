@@ -11,12 +11,13 @@ import {
 } from "@/lib/sector-pulse";
 import { percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
+import { MarketSectorPulseResearch } from "./market-sector-pulse-research";
 
 function share(value: number) {
   return `${value.toFixed(1)}%`;
 }
 
-export function SectorPulseResearch({ state }: { state: AppState }) {
+function RevenueSectorPulseResearch({ state }: { state: AppState }) {
   const [cache, setCache] = useState<RevenueCache | null>(null);
   const [query, setQuery] = useState("");
   const [heldOnly, setHeldOnly] = useState(false);
@@ -220,6 +221,36 @@ export function SectorPulseResearch({ state }: { state: AppState }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+
+export function SectorPulseResearch({ state }: { state: AppState }) {
+  const [view, setView] = useState<"market" | "revenue">("market");
+
+  return (
+    <div className="space-y-4">
+      <div className="inline-flex max-w-full overflow-x-auto rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
+        <button
+          type="button"
+          onClick={() => setView("market")}
+          className={`min-h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${view === "market" ? "bg-[#1f332a] text-white shadow-sm dark:bg-[#dce9e2] dark:text-[#122018]" : "text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"}`}
+        >
+          市場日行情
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("revenue")}
+          className={`min-h-10 whitespace-nowrap rounded-xl px-3 text-sm font-semibold transition ${view === "revenue" ? "bg-[#1f332a] text-white shadow-sm dark:bg-[#dce9e2] dark:text-[#122018]" : "text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"}`}
+        >
+          月營收基本面
+        </button>
+      </div>
+
+      {view === "market"
+        ? <MarketSectorPulseResearch state={state} />
+        : <RevenueSectorPulseResearch state={state} />}
     </div>
   );
 }
