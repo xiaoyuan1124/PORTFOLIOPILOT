@@ -216,6 +216,36 @@ describe("managed trade inventory", () => {
     expect(() => revertManagedTrade(drifted, "buy")).toThrow(/手動修改或校正/);
   });
 
+  it("keeps the linked cash account when a buy uses the balance exactly", () => {
+    const exact = state();
+    exact.holdings = exact.holdings.map((item) =>
+      item.id === "cash" ? { ...item, price: 1000, averageCost: 1000 } : item
+    );
+
+    const next = applyManagedTrade(exact, {
+      id: "exact-cash",
+      date: "2026-09-30",
+      type: "buy",
+      holdingId: "h1",
+      cashHoldingId: "cash",
+      quantity: 1,
+      price: 1000,
+      fee: 0,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    });
+
+    expect(next.holdings.find((item) => item.id === "cash")).toMatchObject({
+      quantity: 1,
+      price: 0,
+      averageCost: 0
+    });
+
+    const reverted = revertManagedTrade(next, "exact-cash");
+    expect(reverted.holdings.find((item) => item.id === "cash")?.price).toBe(1000);
+  });
+
   it("rejects a buy when linked cash is insufficient", () => {
     expect(() => applyManagedTrade(state(), {
       id: "too-expensive",
