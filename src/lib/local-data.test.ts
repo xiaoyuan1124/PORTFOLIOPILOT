@@ -48,7 +48,7 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(7);
+    expect(JSON.parse(serialized).version).toBe(8);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -102,7 +102,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(7);
+    expect(JSON.parse(serialized).version).toBe(8);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -154,7 +154,58 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(7);
+    expect(JSON.parse(serialized).version).toBe(8);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("round-trips V8 cash-linked activity metadata", () => {
+    const before = {
+      id: "cash",
+      symbol: "CASH-TWD",
+      name: "TWD 現金",
+      market: "TW" as const,
+      type: "cash" as const,
+      quantity: 1,
+      price: 5000,
+      averageCost: 5000,
+      currency: "TWD" as const,
+      sector: "現金",
+      account: "券商現金"
+    };
+    const after = { ...before, price: 5100, averageCost: 5100 };
+
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [after],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "dividend",
+        date: "2026-09-30",
+        type: "dividend",
+        symbol: "2330",
+        amount: 100,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 0,
+        price: 0,
+        note: "",
+        account: "券商現金",
+        cashImpact: {
+          cashHoldingId: "cash",
+          before,
+          after,
+          delta: 100,
+          reason: "dividend"
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(8);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
