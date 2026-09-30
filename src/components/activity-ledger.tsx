@@ -5,8 +5,13 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownCircle, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
-import { isExternalActivityType, isTradeActivityType, normalizeActivitySecurityFields } from "@/lib/activity-data";
+import { isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
 import { localDateKey } from "@/lib/calc";
+import {
+  applyCashLinkedActivity,
+  revertCashLinkedActivity,
+  type CashLinkedActivityInput
+} from "@/lib/cash-account";
 import {
   applyShareAdjustment,
   revertCorporateAction,
@@ -53,12 +58,12 @@ function nextActivityId(activities: PortfolioActivity[], date: string) {
 
 function ActivityForm({
   state,
-  onSave,
+  onSaveCash,
   onSaveTrade,
   onSaveCorporateAction
 }: {
   state: AppState;
-  onSave: (activity: PortfolioActivity) => boolean;
+  onSaveCash: (input: CashLinkedActivityInput) => boolean;
   onSaveTrade: (input: ManagedTradeInput) => boolean;
   onSaveCorporateAction: (input: ShareAdjustmentInput) => boolean;
 }) {
@@ -70,7 +75,15 @@ function ActivityForm({
     () => state.holdings.filter((holding) => holding.type !== "cash"),
     [state.holdings]
   );
+  const cashHoldings = useMemo(
+    () => state.holdings.filter((holding) => holding.type === "cash"),
+    [state.holdings]
+  );
   const defaultTradeHolding = tradeHoldings[0];
+  const defaultCashHolding = cashHoldings.find((holding) =>
+    holding.currency === defaultTradeHolding?.currency &&
+    accountName(holding.account) === accountName(defaultTradeHolding?.account)
+  ) ?? cashHoldings.find((holding) => holding.currency === defaultTradeHolding?.currency) ?? cashHoldings[0];
   const [symbol, setSymbol] = useState("");
   const [amount, setAmount] = useState(0);
   const [currency, setCurrency] = useState<Currency>(defaultTradeHolding?.currency ?? "TWD");
@@ -80,10 +93,11 @@ function ActivityForm({
   const [fee, setFee] = useState(0);
   const [tax, setTax] = useState(0);
   const [tradeHoldingId, setTradeHoldingId] = useState(defaultTradeHolding?.id ?? "");
+  const [tradeCashHoldingId, setTradeCashHoldingId] = useState(defaultCashHolding?.id ?? "");
+  const [cashHoldingId, setCashHoldingId] = useState(defaultCashHolding?.id ?? "");
   const [corporateHoldingId, setCorporateHoldingId] = useState(defaultTradeHolding?.id ?? "");
   const [shareRatio, setShareRatio] = useState(1);
   const [note, setNote] = useState("");
-  const [account, setAccount] = useState(accountName(defaultTradeHolding?.account ?? state.holdings[0]?.account));
   const [preFlowValueTwd, setPreFlowValueTwd] = useState<number | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -91,21 +105,31 @@ function ActivityForm({
   const trade = isTradeActivityType(type);
   const corporate = type === "corporate_action";
   const selectedHolding = tradeHoldings.find((holding) => holding.id === tradeHoldingId) ?? null;
+  const selectedTradeCash = cashHoldings.find((holding) => holding.id === tradeCashHoldingId) ?? null;
+  const selectedCash = cashHoldings.find((holding) => holding.id === cashHoldingId) ?? null;
   const selectedCorporateHolding = tradeHoldings.find((holding) => holding.id === corporateHoldingId) ?? null;
+  const compatibleTradeCash = selectedHolding
+    ? cashHoldings.filter((holding) => holding.currency === selectedHolding.currency)
+    : [];
   const tradeGross = quantity * price;
   const tradeNet = type === "sell" ? tradeGross - fee - tax : tradeGross + fee + tax;
+  const cashOnlyDebit = type === "withdrawal" || type === "fee";
+  const tradeCashSufficient = type !== "buy" || (selectedTradeCash !== null && tradeNet <= selectedTradeCash.price + 1e-9);
+  const cashOnlySufficient = !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
   const valid = Boolean(date) &&
     date <= today &&
     fxRate > 0 &&
-    accountName(account).length > 0 &&
     (preFlowValueTwd === null || preFlowValueTwd >= 0) &&
     (trade
       ? Boolean(selectedHolding) &&
+        Boolean(selectedTradeCash) &&
+        selectedTradeCash?.currency === selectedHolding?.currency &&
         date === today &&
         quantity > 0 &&
         price > 0 &&
         fee >= 0 &&
         tax >= 0 &&
+        tradeCashSufficient &&
         (type !== "sell" || (selectedHolding !== null && quantity <= selectedHolding.quantity && tradeNet > 0))
       : corporate
         ? Boolean(selectedCorporateHolding) &&
@@ -113,7 +137,7 @@ function ActivityForm({
           Number.isFinite(shareRatio) &&
           shareRatio > 0 &&
           Math.abs(shareRatio - 1) > 1e-12
-        : amount > 0);
+        : Boolean(selectedCash) && amount > 0 && cashOnlySufficient);
 
   function changeType(nextType: ActivityType) {
     setType(nextType);
@@ -137,7 +161,6 @@ function ActivityForm({
       const current = tradeHoldings.find((holding) => holding.id === corporateHoldingId) ?? tradeHoldings[0];
       if (current) {
         setCorporateHoldingId(current.id);
-        setAccount(accountName(current.account));
         setCurrency(current.currency);
         setFxRate(current.currency === "USD" ? state.usdTwd : 1);
       }
@@ -149,13 +172,24 @@ function ActivityForm({
       setPrice(0);
       setFee(0);
       setTax(0);
+      const currentCash = cashHoldings.find((holding) => holding.id === cashHoldingId) ?? cashHoldings[0];
+      if (currentCash) {
+        setCashHoldingId(currentCash.id);
+        setCurrency(currentCash.currency);
+        setFxRate(currentCash.currency === "USD" ? state.usdTwd : 1);
+      }
     } else {
       const current = tradeHoldings.find((holding) => holding.id === tradeHoldingId) ?? tradeHoldings[0];
       if (current) {
         setTradeHoldingId(current.id);
-        setAccount(accountName(current.account));
         setCurrency(current.currency);
         setFxRate(current.currency === "USD" ? state.usdTwd : 1);
+        const preferredCash =
+          cashHoldings.find((holding) =>
+            holding.currency === current.currency &&
+            accountName(holding.account) === accountName(current.account)
+          ) ?? cashHoldings.find((holding) => holding.currency === current.currency);
+        setTradeCashHoldingId(preferredCash?.id ?? "");
       }
     }
   }
@@ -171,6 +205,7 @@ function ActivityForm({
         date,
         type,
         holdingId: selectedHolding.id,
+        cashHoldingId: selectedTradeCash!.id,
         quantity,
         price,
         fee,
@@ -197,18 +232,17 @@ function ActivityForm({
       return;
     }
 
-    const security = normalizeActivitySecurityFields(type, symbol, quantity, price);
-    const saved = onSave({
+    if (!selectedCash) return;
+    const saved = onSaveCash({
       id: nextActivityId(state.activities, date),
       date,
-      ...(external && time ? { time } : {}),
-      type,
-      ...security,
+      type: type as "deposit" | "withdrawal" | "dividend" | "fee",
+      cashHoldingId: selectedCash.id,
       amount,
-      currency,
-      fxRate: currency === "USD" ? fxRate : 1,
-      note: note.trim(),
-      account: accountName(account),
+      fxRate: selectedCash.currency === "USD" ? fxRate : 1,
+      symbol: external ? "" : symbol,
+      note,
+      ...(external && time ? { time } : {}),
       ...(external && preFlowValueTwd !== null ? { preFlowValueTwd } : {})
     });
     if (!saved) return;
@@ -236,9 +270,14 @@ function ActivityForm({
               setTradeHoldingId(nextId);
               const next = tradeHoldings.find((holding) => holding.id === nextId);
               if (next) {
-                setAccount(accountName(next.account));
                 setCurrency(next.currency);
                 setFxRate(next.currency === "USD" ? state.usdTwd : 1);
+                const preferredCash =
+                  cashHoldings.find((holding) =>
+                    holding.currency === next.currency &&
+                    accountName(holding.account) === accountName(next.account)
+                  ) ?? cashHoldings.find((holding) => holding.currency === next.currency);
+                setTradeCashHoldingId(preferredCash?.id ?? "");
               }
             }}
           >
@@ -252,8 +291,25 @@ function ActivityForm({
           {!tradeHoldings.length ? (
             <p className="mt-2 px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">目前沒有可連動的投資部位。請先到「持股」建立部位，再記錄新式連動交易。</p>
           ) : null}
+          <select
+            className="field mt-3"
+            value={tradeCashHoldingId}
+            onChange={(event) => setTradeCashHoldingId(event.target.value)}
+          >
+            <option value="">選擇交易使用的 {selectedHolding?.currency ?? ""} 現金帳戶</option>
+            {compatibleTradeCash.map((holding) => (
+              <option key={holding.id} value={holding.id}>
+                {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+              </option>
+            ))}
+          </select>
+          {selectedHolding && !compatibleTradeCash.length ? (
+            <p className="mt-2 px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">
+              沒有 {selectedHolding.currency} 現金部位。請先到「持股」建立對應幣別的現金帳戶。
+            </p>
+          ) : null}
           <p className="mt-2 px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
-            V0.54 以目前持股作為升級基準，因此連動交易只接受今天的實際交易，避免補錄舊交易時把現況重複加減。
+            V0.56 會讓證券與現金在同一次操作中一起更新；買進現金不足時直接拒絕。舊交易不會被回溯重播。
           </p>
         </div>
       ) : corporate ? (
@@ -266,7 +322,6 @@ function ActivityForm({
               setCorporateHoldingId(nextId);
               const next = tradeHoldings.find((holding) => holding.id === nextId);
               if (next) {
-                setAccount(accountName(next.account));
                 setCurrency(next.currency);
                 setFxRate(next.currency === "USD" ? state.usdTwd : 1);
               }
@@ -284,7 +339,33 @@ function ActivityForm({
           </p>
         </div>
       ) : (
-        <input className="field" placeholder="帳戶，例如：台股證券、複委託" value={account} onChange={(event) => setAccount(event.target.value)} />
+        <div>
+          <select
+            className="field"
+            value={cashHoldingId}
+            onChange={(event) => {
+              const nextId = event.target.value;
+              setCashHoldingId(nextId);
+              const next = cashHoldings.find((holding) => holding.id === nextId);
+              if (next) {
+                setCurrency(next.currency);
+                setFxRate(next.currency === "USD" ? state.usdTwd : 1);
+              }
+            }}
+          >
+            <option value="">選擇要連動的現金帳戶</option>
+            {cashHoldings.map((holding) => (
+              <option key={holding.id} value={holding.id}>
+                {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+              </option>
+            ))}
+          </select>
+          {!cashHoldings.length ? (
+            <p className="mt-2 px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">
+              目前沒有現金部位。請先到「持股」新增 TWD 或 USD 現金，再記錄現金流、股息或費用。
+            </p>
+          ) : null}
+        </div>
       )}
 
       {external ? (
@@ -314,7 +395,7 @@ function ActivityForm({
       {!trade && !corporate ? (
         <div className="grid grid-cols-[1fr_120px] gap-3">
           <input className="field" type="number" min="0" step="any" placeholder="金額" value={amount || ""} onChange={(event) => setAmount(Number(event.target.value))} />
-          <select className="field" value={currency} onChange={(event) => setCurrency(event.target.value as Currency)}>
+          <select className="field" value={currency} disabled>
             <option value="TWD">TWD</option>
             <option value="USD">USD</option>
           </select>
@@ -347,6 +428,17 @@ function ActivityForm({
           <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
             <div className="flex justify-between gap-3"><span>成交總額</span><strong>{selectedHolding?.currency ?? currency} {Number.isFinite(tradeGross) ? tradeGross.toLocaleString() : "—"}</strong></div>
             <div className="mt-1 flex justify-between gap-3"><span>{type === "sell" ? "扣除費稅後淨收入" : "含費稅總支出"}</span><strong>{selectedHolding?.currency ?? currency} {Number.isFinite(tradeNet) ? tradeNet.toLocaleString() : "—"}</strong></div>
+            {selectedTradeCash ? (
+              <div className="mt-1 flex justify-between gap-3">
+                <span>現金餘額</span>
+                <strong>
+                  {selectedTradeCash.price.toLocaleString()} → {(selectedTradeCash.price + (type === "buy" ? -tradeNet : tradeNet)).toLocaleString()}
+                </strong>
+              </div>
+            ) : null}
+            {type === "buy" && selectedTradeCash && tradeNet > selectedTradeCash.price + 1e-9 ? (
+              <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">現金不足，這筆買進不會寫入任何資料。</p>
+            ) : null}
             {type === "sell" && selectedHolding && quantity > selectedHolding.quantity ? (
               <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">賣出數量不可超過目前持有 {selectedHolding.quantity}。</p>
             ) : null}
@@ -378,10 +470,24 @@ function ActivityForm({
         </div>
       ) : null}
 
+      {!trade && !corporate && selectedCash ? (
+        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+          <div className="flex justify-between gap-3">
+            <span>現金餘額</span>
+            <strong>
+              {selectedCash.currency} {selectedCash.price.toLocaleString()} → {(selectedCash.price + ((type === "deposit" || type === "dividend") ? amount : -amount)).toLocaleString()}
+            </strong>
+          </div>
+          {cashOnlyDebit && amount > selectedCash.price + 1e-9 ? (
+            <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">現金不足，這筆紀錄不會寫入。</p>
+          ) : null}
+        </div>
+      ) : null}
+
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        買進／賣出會直接套用到所選持股；股數調整會按倍率同步改股數與平均成本並維持總成本基礎。所有新式庫存事件都保留前後快照，舊版交易不會被回溯重播。
+        V0.56 起，新交易、股息、費用與入出金會同步更新指定現金帳戶；買進與扣款事件不允許負現金。證券與現金都保存前後快照，可在資料仍一致時安全回滾。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
@@ -452,11 +558,16 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       );
   }, [accountFilter, filter, state.activities]);
 
-  function add(activity: PortfolioActivity) {
-    const saved = onChange({ ...state, activities: [...state.activities, activity] });
-    if (!saved) return false;
-    toast.success("交易／現金流已記錄");
-    return true;
+  function addCashActivity(input: CashLinkedActivityInput) {
+    try {
+      const next = applyCashLinkedActivity(state, input);
+      if (!onChange(next)) return false;
+      toast.success("紀錄已新增，現金帳戶已同步更新");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全更新現金帳戶");
+      return false;
+    }
   }
 
   function addManagedTrade(input: ManagedTradeInput) {
@@ -521,7 +632,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
         </div>
 
         <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
-          <ActivityForm state={state} onSave={add} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
+          <ActivityForm state={state} onSaveCash={addCashActivity} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
         </Modal>
       </div>
 
@@ -555,6 +666,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <Badge>{accountName(activity.account)}</Badge>
                       {external ? <Badge tone="good">外部現金流</Badge> : <Badge>內部紀錄</Badge>}
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
+                      {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
                       {external ? (activity.preFlowValueTwd !== undefined ? <Badge tone="good">TWR 邊界已記</Badge> : <Badge tone="warn">缺 TWR 邊界</Badge>) : null}
                     </div>
                     <p className="mt-1 text-xs text-black/40 dark:text-white/40">{activity.date}{activity.time ? ` · ${activity.time}` : ""}</p>
@@ -578,6 +690,11 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                     {activity.inventoryImpact?.kind === "corporate_action" ? (
                       <p className="mt-2 text-xs text-black/45 dark:text-white/45">
                         股數倍率 ×{activity.inventoryImpact.ratio.toLocaleString()} · 股數 {activity.inventoryImpact.before.quantity.toLocaleString()} → {activity.inventoryImpact.after.quantity.toLocaleString()} · 平均成本 {activity.inventoryImpact.before.averageCost.toLocaleString()} → {activity.inventoryImpact.after.averageCost.toLocaleString()}
+                      </p>
+                    ) : null}
+                    {activity.cashImpact ? (
+                      <p className="mt-1 text-xs text-black/45 dark:text-white/45">
+                        {accountName(activity.cashImpact.before.account)} · 現金 {activity.cashImpact.delta > 0 ? "+" : ""}{activity.cashImpact.delta.toLocaleString()} · {activity.cashImpact.before.price.toLocaleString()} → {(activity.cashImpact.after?.price ?? 0).toLocaleString()}
                       </p>
                     ) : null}
                     {external && activity.preFlowValueTwd !== undefined ? <p className="mt-2 text-xs text-black/45 dark:text-white/45">現金流前淨值：{money(activity.preFlowValueTwd)}</p> : null}
@@ -620,7 +737,19 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                           return;
                         }
 
-                        if (!window.confirm("刪除這筆交易／現金流紀錄？")) return;
+                        if (activity.cashImpact) {
+                          if (!window.confirm("這筆紀錄已連動現金帳戶。刪除時會嘗試精確還原現金餘額；若後續事件或手動修改使資料不一致，系統會拒絕回滾。確定繼續？")) return;
+                          try {
+                            const next = revertCashLinkedActivity(state, activity.id);
+                            if (!onChange(next)) return;
+                            toast.success("紀錄已刪除，現金餘額已還原");
+                          } catch (error) {
+                            toast.error(error instanceof Error ? error.message : "無法安全回滾現金事件");
+                          }
+                          return;
+                        }
+
+                        if (!window.confirm("刪除這筆舊版交易／現金流紀錄？")) return;
                         if (!onChange({ ...state, activities: state.activities.filter((item) => item.id !== activity.id) })) return;
                         toast.success("紀錄已刪除");
                       }}

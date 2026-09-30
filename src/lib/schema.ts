@@ -24,7 +24,7 @@ export const holdingSchema = z.object({
   market: z.enum(["TW", "US"]),
   type: z.enum(["stock", "etf", "cash"]),
   quantity: z.number().finite().positive("持股數量必須大於 0。"),
-  price: z.number().finite().positive("目前價格／現金餘額必須大於 0。"),
+  price: z.number().finite().nonnegative("目前價格／現金餘額不可小於 0。"),
   averageCost: z.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
   sector: z.string().min(1).max(120),
@@ -32,6 +32,14 @@ export const holdingSchema = z.object({
   priceSource: z.enum(["manual", "TWSE", "TPEx"]).optional(),
   priceAsOf: dateKeySchema.optional()
 }).superRefine((holding, ctx) => {
+  if (holding.type !== "cash" && holding.price <= 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["price"],
+      message: "股票／ETF 目前價格必須大於 0。"
+    });
+  }
+
   if (holding.type !== "cash" && holding.averageCost <= 0) {
     ctx.addIssue({
       code: "custom",
@@ -103,6 +111,14 @@ export const inventoryImpactSchema = z.discriminatedUnion("kind", [
   })
 ]);
 
+export const cashImpactSchema = z.object({
+  cashHoldingId: z.string().min(1),
+  before: holdingSchema,
+  after: holdingSchema,
+  delta: z.number().finite().refine((value) => Math.abs(value) > 1e-12, "現金異動不可為 0。"),
+  reason: z.enum(["trade", "deposit", "withdrawal", "dividend", "fee"])
+});
+
 export const etfConstituentSchema = z.object({
   market: z.enum(["TW", "US"]),
   symbol: z.string().trim().min(1).max(32),
@@ -155,7 +171,8 @@ export const activitySchema = z.object({
   note: z.string(),
   account: z.string().trim().min(1).max(120).optional(),
   preFlowValueTwd: z.number().finite().nonnegative().optional(),
-  inventoryImpact: inventoryImpactSchema.optional()
+  inventoryImpact: inventoryImpactSchema.optional(),
+  cashImpact: cashImpactSchema.optional()
 }).superRefine((activity, ctx) => {
   if (activity.type !== "corporate_action" && activity.amount <= 0) {
     ctx.addIssue({
@@ -240,6 +257,112 @@ export const activitySchema = z.object({
         message: "交易幣別或帳戶與持股連動快照不一致。"
       });
     }
+  }
+
+  if (activity.cashImpact) {
+    const cash = activity.cashImpact;
+    const expectedDeltaSign =
+      activity.type === "deposit" || activity.type === "dividend" || activity.type === "sell"
+        ? 1
+        : activity.type === "withdrawal" || activity.type === "fee" || activity.type === "buy"
+          ? -1
+          : 0;
+
+    if (cash.before.type !== "cash" || cash.after.type !== "cash") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact"],
+        message: "現金連動快照只能指向現金部位。"
+      });
+    }
+    if (cash.before.id !== cash.cashHoldingId || cash.after.id !== cash.cashHoldingId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "cashHoldingId"],
+        message: "現金連動快照的部位 ID 不一致。"
+      });
+    }
+    if (activity.currency !== cash.before.currency) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact"],
+        message: "活動幣別與現金帳戶幣別不一致。"
+      });
+    }
+    if (expectedDeltaSign === 0 || Math.sign(cash.delta) !== expectedDeltaSign) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "delta"],
+        message: "現金異動方向與活動類型不一致。"
+      });
+    }
+    if (Math.abs(Math.abs(cash.delta) - activity.amount) > 1e-8) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "delta"],
+        message: "活動金額與現金異動金額不一致。"
+      });
+    }
+
+    const beforeNormalized =
+      Math.abs(cash.before.quantity - 1) <= 1e-9 &&
+      Math.abs(cash.before.averageCost - cash.before.price) <= 1e-8;
+    const afterNormalized =
+      Math.abs(cash.after.quantity - 1) <= 1e-9 &&
+      Math.abs(cash.after.averageCost - cash.after.price) <= 1e-8;
+    if (!beforeNormalized || !afterNormalized) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact"],
+        message: "現金連動快照必須以 1 × 餘額的標準格式保存。"
+      });
+    }
+
+    const expectedBalance = cash.before.price + cash.delta;
+    if (expectedBalance < -1e-8) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "delta"],
+        message: "現金連動不可產生負餘額。"
+      });
+    } else {
+      const normalizedExpected = expectedBalance <= 1e-8 ? 0 : expectedBalance;
+      if (
+        Math.abs(cash.after.price - normalizedExpected) > 1e-8 ||
+        Math.abs(cash.after.averageCost - normalizedExpected) > 1e-8
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["cashImpact", "after"],
+          message: "現金 after 快照必須等於 before 餘額加上本次 delta。"
+        });
+      }
+    }
+
+    if (isTradeActivityType(activity.type) && activity.inventoryImpact?.kind !== "trade") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["inventoryImpact"],
+        message: "有現金連動的新式買進／賣出必須同時保留證券持股快照。"
+      });
+    }
+
+    const expectedReason = isTradeActivityType(activity.type) ? "trade" : activity.type;
+    if (cash.reason !== expectedReason) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "reason"],
+        message: "現金連動原因與活動類型不一致。"
+      });
+    }
+  }
+
+  if (activity.type === "corporate_action" && activity.cashImpact) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashImpact"],
+      message: "非現金股數調整不可附帶現金連動。"
+    });
   }
 }).transform((activity) => {
   const normalized = {
@@ -381,7 +504,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),
@@ -394,7 +517,7 @@ export const holdingCsvRowSchema = z.object({
   market: z.enum(["TW", "US"]),
   type: z.enum(["stock", "etf", "cash"]),
   quantity: z.coerce.number().finite().positive("持股數量必須大於 0。"),
-  price: z.coerce.number().finite().positive("目前價格／現金餘額必須大於 0。"),
+  price: z.coerce.number().finite().nonnegative("目前價格／現金餘額不可小於 0。"),
   averageCost: z.coerce.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
   sector: z.string().trim().min(1).max(120),
@@ -403,6 +526,14 @@ export const holdingCsvRowSchema = z.object({
     z.string().trim().min(1).max(120).optional()
   )
 }).superRefine((holding, ctx) => {
+  if (holding.type !== "cash" && holding.price <= 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["price"],
+      message: "股票／ETF 目前價格必須大於 0。"
+    });
+  }
+
   if (holding.type !== "cash" && holding.averageCost <= 0) {
     ctx.addIssue({
       code: "custom",

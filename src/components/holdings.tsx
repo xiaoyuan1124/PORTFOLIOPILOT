@@ -82,7 +82,7 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
   );
 
   const valid = form.type === "cash"
-    ? form.price > 0 && Number.isFinite(form.price) && accountName(form.account).length > 0
+    ? form.price >= 0 && Number.isFinite(form.price) && accountName(form.account).length > 0
     : Boolean(form.name.trim()) &&
       Boolean(form.symbol.trim()) &&
       form.quantity > 0 &&
@@ -493,7 +493,7 @@ function QuickCorrectionForm({
   const valid = holdings.length > 0 && holdings.every((holding) => {
     const draft = drafts[holding.id] ?? correctionDraft(holding);
     const price = Number(draft.price);
-    if (holding.type === "cash") return Number.isFinite(price) && price > 0;
+    if (holding.type === "cash") return Number.isFinite(price) && price >= 0;
 
     const quantity = Number(draft.quantity);
     const averageCost = Number(draft.averageCost);

@@ -84,6 +84,14 @@ export type InventoryImpact =
       ratio: number;
     };
 
+export interface CashImpact {
+  cashHoldingId: string;
+  before: Holding;
+  after: Holding;
+  delta: number;
+  reason: "trade" | "deposit" | "withdrawal" | "dividend" | "fee";
+}
+
 export interface PortfolioActivity {
   id: string;
   date: string;
@@ -99,6 +107,7 @@ export interface PortfolioActivity {
   account?: string;
   preFlowValueTwd?: number;
   inventoryImpact?: InventoryImpact;
+  cashImpact?: CashImpact;
 }
 
 export interface NetWorthSnapshot {

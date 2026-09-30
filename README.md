@@ -498,3 +498,19 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Rollback fails closed if a later linked trade / corporate action exists or the holding has been manually edited / reconciled.
 - Corporate actions carry zero cash amount and remain separate from deposits, withdrawals, dividends and fees.
 - Cash subscriptions, rights offerings and other actions involving additional cash are intentionally not treated as simple share adjustments; they should be recorded with their actual cash / trade flows instead of being guessed.
+
+
+## V0.56 cash-account linkage
+
+- New forward-only ledger events now update explicit cash holdings instead of leaving cash and activity history as parallel records.
+- Managed buys atomically update the selected security and subtract gross cost + fees + taxes from a same-currency cash holding. Insufficient cash fails closed before any state is written.
+- Managed sells atomically reduce the security holding and add net proceeds after fees / taxes to the selected same-currency cash holding.
+- New deposits, withdrawals, dividends and standalone fees also update a selected cash holding. Withdrawals and fees cannot create negative cash.
+- Cash holdings are persistent accounts and may have a zero balance. Spending the balance exactly to zero keeps the same cash-account identity available for later sells, dividends or deposits; negative cash is still rejected.
+- Every new cash-linked event stores the cash holding ID, before / after snapshot, signed cash delta and reason in backup V8.
+- Trade rollback now validates both the security snapshot and linked cash snapshot. It fails closed if either side drifted or a later linked event touched the same security or cash account.
+- Cash-only event rollback likewise requires the event to be the latest linked event for that cash holding and refuses to overwrite later manual reconciliation.
+- USD cash-linked events preserve the saved historical FX rate; TWD events normalize FX to 1.
+- Deposits / withdrawals remain the only activity types allowed to carry Exact TWR pre-flow boundaries.
+- Legacy V0.55-and-earlier activities are not replayed into cash. V0.56 uses the current cash holdings as the migration baseline to prevent double-counting old transactions.
+- The UI requires an existing cash holding rather than inventing a starting balance. Users can create TWD / USD cash from the Holdings page before recording new cash-linked events.

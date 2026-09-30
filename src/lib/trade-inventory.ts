@@ -1,11 +1,17 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
 import { accountName } from "./local-data";
+import {
+  holdingSnapshotEqual,
+  nextCashSnapshot,
+  replaceHoldingSnapshot
+} from "./cash-account";
 
 export type ManagedTradeInput = {
   id: string;
   date: string;
   type: "buy" | "sell";
   holdingId: string;
+  cashHoldingId: string;
   quantity: number;
   price: number;
   fee: number;
@@ -22,15 +28,18 @@ function assertNonnegative(value: number, label: string) {
   if (!Number.isFinite(value) || value < 0) throw new Error(`${label}不可小於 0。`);
 }
 
-function holdingSnapshotEqual(a: Holding | null | undefined, b: Holding | null | undefined) {
-  if (a === null || a === undefined || b === null || b === undefined) return a === b;
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-
 export function applyManagedTrade(state: AppState, input: ManagedTradeInput): AppState {
   const holding = state.holdings.find((item) => item.id === input.holdingId);
   if (!holding || holding.type === "cash") {
     throw new Error("找不到可套用交易的投資部位，請先建立持股。");
+  }
+
+  const cash = state.holdings.find((item) => item.id === input.cashHoldingId);
+  if (!cash || cash.type !== "cash") {
+    throw new Error("找不到可連動的現金帳戶，請先建立現金部位。");
+  }
+  if (cash.currency !== holding.currency) {
+    throw new Error(`交易幣別為 ${holding.currency}，不可連動 ${cash.currency} 現金帳戶。`);
   }
 
   assertPositive(input.quantity, "交易數量");
@@ -77,6 +86,9 @@ export function applyManagedTrade(state: AppState, input: ManagedTradeInput): Ap
     amount = netProceeds;
   }
 
+  const cashDelta = input.type === "buy" ? -amount : amount;
+  const cashAfter = nextCashSnapshot(cash, cashDelta);
+
   const activity: PortfolioActivity = {
     id: input.id,
     date: input.date,
@@ -98,14 +110,22 @@ export function applyManagedTrade(state: AppState, input: ManagedTradeInput): Ap
       tax: input.tax,
       realizedPnl,
       method: "average_cost"
+    },
+    cashImpact: {
+      cashHoldingId: cash.id,
+      before: { ...cash },
+      after: cashAfter,
+      delta: cashDelta,
+      reason: "trade"
     }
   };
 
+  const withSecurity = replaceHoldingSnapshot(state.holdings, holding.id, after);
+  const holdings = replaceHoldingSnapshot(withSecurity, cash.id, cashAfter);
+
   return {
     ...state,
-    holdings: after
-      ? state.holdings.map((item) => item.id === holding.id ? after! : item)
-      : state.holdings.filter((item) => item.id !== holding.id),
+    holdings,
     activities: [...state.activities, activity]
   };
 }
@@ -123,7 +143,19 @@ export function revertManagedTrade(state: AppState, activityId: string): AppStat
     (item.date > activity.date || (item.date === activity.date && item.id > activity.id))
   );
   if (laterLinked) {
-    throw new Error("此部位後面已有其他持股連動交易，請先從最新一筆開始回滾。");
+    throw new Error("此部位後面已有其他持股連動事件，請先從最新一筆開始回滾。");
+  }
+
+  const cashImpact = activity.cashImpact;
+  const laterCash = cashImpact
+    ? state.activities.some((item) =>
+        item.id !== activity.id &&
+        item.cashImpact?.cashHoldingId === cashImpact.cashHoldingId &&
+        (item.date > activity.date || (item.date === activity.date && item.id > activity.id))
+      )
+    : false;
+  if (laterCash) {
+    throw new Error("這筆交易使用的現金帳戶後面已有其他連動事件，請先從最新一筆開始回滾。");
   }
 
   const current = state.holdings.find((item) => item.id === impact.holdingId) ?? null;
@@ -131,10 +163,17 @@ export function revertManagedTrade(state: AppState, activityId: string): AppStat
     throw new Error("目前持股已被後續手動修改或校正，無法安全自動回滾這筆交易。");
   }
 
-  const restored = impact.before;
-  const holdings = current
-    ? state.holdings.map((item) => item.id === restored.id ? restored : item)
-    : [...state.holdings, restored];
+  if (cashImpact) {
+    const currentCash = state.holdings.find((item) => item.id === cashImpact.cashHoldingId) ?? null;
+    if (!holdingSnapshotEqual(currentCash, cashImpact.after)) {
+      throw new Error("目前現金餘額已被後續修改或校正，無法安全自動回滾這筆交易。");
+    }
+  }
+
+  let holdings = replaceHoldingSnapshot(state.holdings, impact.holdingId, impact.before);
+  if (cashImpact) {
+    holdings = replaceHoldingSnapshot(holdings, cashImpact.cashHoldingId, cashImpact.before);
+  }
 
   return {
     ...state,

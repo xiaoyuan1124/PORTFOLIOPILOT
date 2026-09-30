@@ -30,7 +30,7 @@ export function downloadText(filename: string, text: string, type = "text/plain;
 
 export function serializeBackup(state: AppState) {
   return JSON.stringify({
-    version: 7,
+    version: 8,
     exportedAt: new Date().toISOString(),
     state: appStateSchema.parse(state)
   }, null, 2);
@@ -135,8 +135,8 @@ export function applyHoldingCorrections(existing: Holding[], corrections: Holdin
     }
 
     if (current.type === "cash") {
-      if (!Number.isFinite(correction.price) || correction.price <= 0) {
-        throw new Error(`${current.currency} 現金餘額必須大於 0。`);
+      if (!Number.isFinite(correction.price) || correction.price < 0) {
+        throw new Error(`${current.currency} 現金餘額不可小於 0。`);
       }
 
       updated.set(current.id, {
