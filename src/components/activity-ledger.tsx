@@ -1355,7 +1355,14 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                           return;
                         }
 
-                        if (!window.confirm("刪除這筆舊版交易／現金流紀錄？")) return;
+                        if (ledgerOnlyCash) {
+                          if (!window.confirm("這筆是 Ledger-only 歷史／舊資料，未修改目前現金餘額。刪除只會移除帳務與績效紀錄，確定繼續？")) return;
+                          if (!onChange({ ...state, activities: state.activities.filter((item) => item.id !== activity.id) })) return;
+                          toast.success("歷史帳務紀錄已刪除，目前現金餘額未變動");
+                          return;
+                        }
+
+                        if (!window.confirm("刪除這筆舊版交易紀錄？")) return;
                         if (!onChange({ ...state, activities: state.activities.filter((item) => item.id !== activity.id) })) return;
                         toast.success("紀錄已刪除");
                       }}
