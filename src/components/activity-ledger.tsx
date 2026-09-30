@@ -352,6 +352,8 @@ function ActivityForm({
   const [tradeHoldingId, setTradeHoldingId] = useState(defaultTradeHolding?.id ?? "");
   const [tradeCashHoldingId, setTradeCashHoldingId] = useState(defaultCashHolding?.id ?? "");
   const [cashHoldingId, setCashHoldingId] = useState(defaultCashHolding?.id ?? "");
+  const [historicalAccount, setHistoricalAccount] = useState("");
+  const [historicalCurrency, setHistoricalCurrency] = useState<Currency | "">("");
   const [transferFromCashHoldingId, setTransferFromCashHoldingId] = useState(cashHoldings[0]?.id ?? "");
   const [transferToCashHoldingId, setTransferToCashHoldingId] = useState(
     cashHoldings.find((holding) =>
@@ -399,10 +401,11 @@ function ActivityForm({
   const cashOnlyDebit = type === "withdrawal" || type === "fee";
   const historicalCash = !trade && !transfer && !corporate && date < today;
   const tradeCashSufficient = type !== "buy" || (selectedTradeCash !== null && tradeNet <= selectedTradeCash.price + 1e-9);
-  const cashOnlySufficient = historicalCash || !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
+  const cashOnlySufficient = !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
   const transferSufficient = selectedTransferFrom !== null && amount <= selectedTransferFrom.price + 1e-9;
   const currentPortfolioValueTwd = portfolioSummary(state.holdings, state.usdTwd).total;
   const effectiveFxRate = external && boundaryMode === "auto" && currency === "USD" ? state.usdTwd : fxRate;
+  const historicalFxValid = historicalCurrency !== "USD" || fxRate > 0;
   const boundaryValid = !external ||
     (boundaryMode === "auto"
       ? date === today
@@ -436,7 +439,12 @@ function ActivityForm({
             Number.isFinite(shareRatio) &&
             shareRatio > 0 &&
             Math.abs(shareRatio - 1) > 1e-12
-          : Boolean(selectedCash) && amount > 0 && cashOnlySufficient);
+          : historicalCash
+            ? Boolean(historicalAccount.trim()) &&
+              Boolean(historicalCurrency) &&
+              amount > 0 &&
+              historicalFxValid
+            : Boolean(selectedCash) && amount > 0 && cashOnlySufficient);
 
   function changeType(nextType: ActivityType) {
     setType(nextType);
@@ -567,16 +575,16 @@ function ActivityForm({
       return;
     }
 
-    if (!selectedCash) return;
-
     if (historicalCash) {
+      if (!historicalCurrency) return;
       const saved = onSaveHistoricalCash({
         id: nextActivityId(state.activities, date),
         date,
         type: type as "deposit" | "withdrawal" | "dividend" | "fee",
-        cashHoldingId: selectedCash.id,
+        account: historicalAccount.trim(),
+        currency: historicalCurrency,
         amount,
-        fxRate: selectedCash.currency === "USD" ? fxRate : 1,
+        fxRate: historicalCurrency === "USD" ? fxRate : 1,
         symbol: external ? "" : symbol,
         note,
         ...(external && time ? { time } : {}),
@@ -587,6 +595,7 @@ function ActivityForm({
       return;
     }
 
+    if (!selectedCash) return;
     const saved = onSaveCash({
       id: nextActivityId(state.activities, date),
       date,
