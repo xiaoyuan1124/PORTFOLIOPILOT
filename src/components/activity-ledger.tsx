@@ -17,10 +17,12 @@ import { loadBundledRevenue } from "@/lib/revenue-data";
 import {
   applyCashLinkedActivity,
   applyCashTransfer,
+  recordHistoricalCashActivity,
   revertCashLinkedActivity,
   revertCashTransfer,
   type CashLinkedActivityInput,
-  type CashTransferInput
+  type CashTransferInput,
+  type HistoricalCashActivityInput
 } from "@/lib/cash-account";
 import {
   applyShareAdjustment,
@@ -309,12 +311,14 @@ function OpeningBuyForm({
 function ActivityForm({
   state,
   onSaveCash,
+  onSaveHistoricalCash,
   onSaveTransfer,
   onSaveTrade,
   onSaveCorporateAction
 }: {
   state: AppState;
   onSaveCash: (input: CashLinkedActivityInput) => boolean;
+  onSaveHistoricalCash: (input: HistoricalCashActivityInput) => boolean;
   onSaveTransfer: (input: CashTransferInput) => boolean;
   onSaveTrade: (input: ManagedTradeInput) => boolean;
   onSaveCorporateAction: (input: ShareAdjustmentInput) => boolean;
@@ -392,8 +396,9 @@ function ActivityForm({
   const tradeGross = quantity * price;
   const tradeNet = type === "sell" ? tradeGross - fee - tax : tradeGross + fee + tax;
   const cashOnlyDebit = type === "withdrawal" || type === "fee";
+  const historicalCash = !trade && !transfer && !corporate && date < today;
   const tradeCashSufficient = type !== "buy" || (selectedTradeCash !== null && tradeNet <= selectedTradeCash.price + 1e-9);
-  const cashOnlySufficient = !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
+  const cashOnlySufficient = historicalCash || !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
   const transferSufficient = selectedTransferFrom !== null && amount <= selectedTransferFrom.price + 1e-9;
   const currentPortfolioValueTwd = portfolioSummary(state.holdings, state.usdTwd).total;
   const effectiveFxRate = external && boundaryMode === "auto" && currency === "USD" ? state.usdTwd : fxRate;
@@ -562,6 +567,25 @@ function ActivityForm({
     }
 
     if (!selectedCash) return;
+
+    if (historicalCash) {
+      const saved = onSaveHistoricalCash({
+        id: nextActivityId(state.activities, date),
+        date,
+        type: type as "deposit" | "withdrawal" | "dividend" | "fee",
+        cashHoldingId: selectedCash.id,
+        amount,
+        fxRate: selectedCash.currency === "USD" ? fxRate : 1,
+        symbol: external ? "" : symbol,
+        note,
+        ...(external && time ? { time } : {}),
+        ...(external && preFlowValueTwd !== null ? { preFlowValueTwd } : {})
+      });
+      if (!saved) return;
+      closeRef.current?.click();
+      return;
+    }
+
     const saved = onSaveCash({
       id: nextActivityId(state.activities, date),
       date,
@@ -571,7 +595,7 @@ function ActivityForm({
       fxRate: selectedCash.currency === "USD" ? effectiveFxRate : 1,
       symbol: external ? "" : symbol,
       note,
-      ...(external && boundaryMode === "auto" && date === today
+      ...(external && boundaryMode === "auto"
         ? {
             time: localTimeKey(),
             capturePreFlowFromCurrentState: true
