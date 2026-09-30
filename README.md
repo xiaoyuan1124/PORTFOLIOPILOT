@@ -588,3 +588,13 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Historical cash events remain the separate V0.60 ledger-only path. PortfolioPilot does not fabricate historical securities inventory, historical cash balances or cost-basis reconstruction from incomplete data.
 - No backup schema change is required for V0.62; Backup V12 remains current.
 
+## V0.63 performance cost transparency
+
+- The Performance page no longer uses the ambiguous label **股息－費用** for a value that only subtracts standalone `fee` activities.
+- It now exposes separate TWD-normalized totals for dividend income, standalone fees, managed-trade fees and managed-trade taxes / other transaction taxes.
+- Internal FX conversions now also expose a **換匯估值差額**: destination cash minus source cash after valuing both sides at the PortfolioPilot USD/TWD rate saved with that conversion.
+- FX valuation delta is descriptive, not a guessed bank fee. A negative value may reflect spread, fees or execution away from the saved valuation rate; PortfolioPilot does not invent the cause.
+- Trade fees / taxes are already embedded in cash movement, average cost and realized P/L. FX execution effects are already embedded in the resulting cash balances. The Performance breakdown never subtracts these costs from XIRR / Exact TWR / TWR Proxy a second time.
+- `docs/PERFORMANCE_METHOD.md` is updated to reflect the current Exact TWR implementation, Modified Dietz proxy fallback, internal-transfer / FX semantics and current fail-closed trust boundaries.
+- No backup schema change is required; Backup V12 remains current.
+
