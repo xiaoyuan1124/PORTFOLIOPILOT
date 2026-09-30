@@ -47,7 +47,29 @@ export function DailyPortfolioDrivers({
   }
 
   useEffect(() => {
-    void reload();
+    let active = true;
+
+    void Promise.allSettled([
+      loadBundledTwQuotes(),
+      loadBundledMaterialEvents(),
+      loadBundledRevenue()
+    ]).then(([quoteResult, eventResult, revenueResult]) => {
+      if (!active) return;
+
+      if (quoteResult.status === "fulfilled") {
+        setQuotes(quoteResult.value);
+        setQuoteError("");
+      } else {
+        setQuotes(null);
+        setQuoteError(quoteResult.reason instanceof Error ? quoteResult.reason.message : "無法載入官方台股收盤資料。");
+      }
+
+      setEvents(eventResult.status === "fulfilled" ? eventResult.value : null);
+      setRevenue(revenueResult.status === "fulfilled" ? revenueResult.value : null);
+      setLoading(false);
+    });
+
+    return () => { active = false; };
   }, []);
 
   const today = localDateKey();
