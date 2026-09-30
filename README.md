@@ -579,3 +579,18 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - The ledger surfaces both the execution rate and saved valuation rate. Any mark-to-current-rate net-worth difference is descriptive valuation impact, not an external cash flow or a separately fabricated return.
 - Backup format is now V12 and validates FX account identity, opposite currencies, normalized cash snapshots, before / after arithmetic and execution-rate consistency. V1–V11 backups remain readable.
 
+## V0.62 security account transfer
+
+- The activity ledger now has a dedicated **持股移轉** workflow for moving an existing stock / ETF position between broker or account labels without fabricating a sell + buy pair.
+- Security transfer is a non-cash internal asset movement: it creates no trade proceeds, no cash mutation, no realized P/L and no Exact TWR external-flow boundary.
+- Transfers are forward-only from today's current inventory baseline so historical broker movements cannot be replayed into current holdings.
+- Partial transfers reduce only the source quantity; source average cost, current price and price provenance remain unchanged.
+- A new destination position inherits the source security identity, current price, TWSE / TPEx or manual provenance, data date, sector and per-share cost basis.
+- If the destination account already holds the same market + symbol, transferred basis is merged into its existing basis using a weighted average cost.
+- Existing source and destination positions must use the same current price and price provenance / as-of date before they can be merged. A mismatch fails closed so moving an asset between accounts cannot silently change total market value.
+- The engine verifies both total market value and total cost basis are conserved across the transfer before writing either side.
+- Each transfer stores source and destination before / after snapshots and the exact transferred quantity. Full-source transfers may remove the source position while preserving enough metadata for exact rollback.
+- Rollback checks both position IDs for later trades, corporate actions or transfers and rejects manual drift. It also refuses to restore a fully moved / sold position if that account identity has since been recreated under another ID.
+- Existing trade and corporate-action rollback logic now treats a later security transfer as a dependency, preventing older snapshots from overwriting newer account movements.
+- Backup format is now V13 with structural validation for position identity, quantity arithmetic, weighted cost basis, price provenance and total value / basis conservation. V1–V12 backups remain readable.
+
