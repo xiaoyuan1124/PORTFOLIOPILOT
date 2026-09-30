@@ -53,17 +53,18 @@ function ActivityForm({
     () => state.holdings.filter((holding) => holding.type !== "cash"),
     [state.holdings]
   );
+  const defaultTradeHolding = tradeHoldings[0];
   const [symbol, setSymbol] = useState("");
   const [amount, setAmount] = useState(0);
-  const [currency, setCurrency] = useState<Currency>("TWD");
-  const [fxRate, setFxRate] = useState(state.usdTwd);
+  const [currency, setCurrency] = useState<Currency>(defaultTradeHolding?.currency ?? "TWD");
+  const [fxRate, setFxRate] = useState(defaultTradeHolding?.currency === "USD" ? state.usdTwd : 1);
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
   const [fee, setFee] = useState(0);
   const [tax, setTax] = useState(0);
-  const [tradeHoldingId, setTradeHoldingId] = useState(tradeHoldings[0]?.id ?? "");
+  const [tradeHoldingId, setTradeHoldingId] = useState(defaultTradeHolding?.id ?? "");
   const [note, setNote] = useState("");
-  const [account, setAccount] = useState(accountName(state.holdings[0]?.account));
+  const [account, setAccount] = useState(accountName(defaultTradeHolding?.account ?? state.holdings[0]?.account));
   const [preFlowValueTwd, setPreFlowValueTwd] = useState<number | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -104,8 +105,14 @@ function ActivityForm({
       setPrice(0);
       setFee(0);
       setTax(0);
-    } else if (!tradeHoldingId && tradeHoldings[0]) {
-      setTradeHoldingId(tradeHoldings[0].id);
+    } else {
+      const current = tradeHoldings.find((holding) => holding.id === tradeHoldingId) ?? tradeHoldings[0];
+      if (current) {
+        setTradeHoldingId(current.id);
+        setAccount(accountName(current.account));
+        setCurrency(current.currency);
+        setFxRate(current.currency === "USD" ? state.usdTwd : 1);
+      }
     }
   }
 
