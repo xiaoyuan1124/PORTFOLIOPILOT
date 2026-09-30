@@ -39,7 +39,18 @@ jobs:
       - name: Fetch official MOPS / TWSE / TPEx material events
         run: node scripts/update-material-events.mjs
       - name: Fetch official MOPS quarterly financials
+        id: quarterly
+        continue-on-error: true
         run: node scripts/update-quarterly-financials.mjs
+      - name: Report quarterly cache fallback
+        if: steps.quarterly.outcome == 'failure'
+        run: |
+          echo "::warning::MOPS quarterly refresh failed after retries. Keeping the previously committed quarterly-margin cache so successful quote, revenue, material-event and benchmark refreshes can still be published."
+          {
+            echo "### Quarterly financial cache fallback"
+            echo ""
+            echo "MOPS quarterly refresh failed after retries. The workflow will preserve the previously committed `public/data/tw-quarterly-margins.json` cache and continue publishing other official-data updates."
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Fetch official TWSE benchmark history
         run: node scripts/update-benchmarks.mjs
       - name: Commit changed caches

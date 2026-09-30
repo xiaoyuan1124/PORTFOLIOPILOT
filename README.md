@@ -393,3 +393,10 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Each event preserves company statement date/time, fact date, disclosure rule, subject, original description, venue and direct official-source metadata.
 - Holding matching is deliberately strict: only positions with known TWSE/TPEx provenance are eligible, so a short announcement cache can never be used to guess the venue of a manual holding.
 - GitHub Actions refreshes and deploys the material-event cache with the existing Taiwan market-data workflow.
+
+
+## V0.48.1 market refresh partial-failure hardening
+
+- A transient MOPS quarterly-financial refresh failure no longer blocks otherwise successful Taiwan quote, revenue, material-event and benchmark refreshes from being built and deployed.
+- Quarterly refresh still retries and fails closed; when all retries fail, the workflow keeps the previously committed quarterly-margin cache instead of fabricating or partially publishing new quarterly data.
+- GitHub Actions emits an explicit warning and job summary whenever this fallback is used, so stale quarterly research data cannot be mistaken for a successful fresh pull.
