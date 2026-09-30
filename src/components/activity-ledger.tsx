@@ -1,12 +1,19 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownCircle, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
 import { isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
 import { localDateKey } from "@/lib/calc";
+import {
+  buildHoldingLookupCatalog,
+  searchHoldingLookupCatalog,
+  type HoldingLookupCandidate
+} from "@/lib/holding-autofill";
+import { loadBundledTwQuotes } from "@/lib/market-data";
+import { loadBundledRevenue } from "@/lib/revenue-data";
 import {
   applyCashLinkedActivity,
   revertCashLinkedActivity,
@@ -21,9 +28,11 @@ import { accountName } from "@/lib/local-data";
 import { activityAmountTwd } from "@/lib/performance";
 import {
   applyManagedTrade,
+  applyOpeningBuy,
   realizedManagedTradePnlTwd,
   revertManagedTrade,
-  type ManagedTradeInput
+  type ManagedTradeInput,
+  type NewPositionBuyInput
 } from "@/lib/trade-inventory";
 import { money } from "@/lib/utils";
 import { Badge, Button, Card, CardContent, GhostButton, Modal } from "./ui";
@@ -54,6 +63,249 @@ function nextActivityId(activities: PortfolioActivity[], date: string) {
   let sequence = activities.length + 1;
   while (used.has(`${prefix}${sequence}`)) sequence += 1;
   return `${prefix}${sequence}`;
+}
+
+function OpeningBuyForm({
+  state,
+  onSave
+}: {
+  state: AppState;
+  onSave: (input: NewPositionBuyInput) => boolean;
+}) {
+  const today = localDateKey();
+  const [market, setMarket] = useState<"TW" | "US">("TW");
+  const currency: Currency = market === "TW" ? "TWD" : "USD";
+  const compatibleCash = useMemo(
+    () => state.holdings.filter((holding) => holding.type === "cash" && holding.currency === currency),
+    [currency, state.holdings]
+  );
+  const [cashHoldingId, setCashHoldingId] = useState("");
+  const selectedCash = compatibleCash.find((holding) => holding.id === cashHoldingId) ?? compatibleCash[0] ?? null;
+  const [catalog, setCatalog] = useState<HoldingLookupCandidate[]>([]);
+  const [catalogStatus, setCatalogStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [query, setQuery] = useState("");
+  const [candidate, setCandidate] = useState<HoldingLookupCandidate | null>(null);
+  const [usSymbol, setUsSymbol] = useState("");
+  const [usName, setUsName] = useState("");
+  const [usType, setUsType] = useState<"stock" | "etf">("stock");
+  const [usSector, setUsSector] = useState("");
+  const [usCurrentPrice, setUsCurrentPrice] = useState(0);
+  const [quantity, setQuantity] = useState(0);
+  const [executionPrice, setExecutionPrice] = useState(0);
+  const [fee, setFee] = useState(0);
+  const [tax, setTax] = useState(0);
+  const [fxRate, setFxRate] = useState(state.usdTwd);
+  const [note, setNote] = useState("");
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([loadBundledTwQuotes(), loadBundledRevenue()])
+      .then(([quotes, revenue]) => {
+        if (cancelled) return;
+        setCatalog(buildHoldingLookupCatalog(quotes, revenue));
+        setCatalogStatus("ready");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCatalog([]);
+        setCatalogStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const preferred = compatibleCash[0]?.id ?? "";
+    if (!compatibleCash.some((holding) => holding.id === cashHoldingId)) {
+      setCashHoldingId(preferred);
+    }
+  }, [cashHoldingId, compatibleCash]);
+
+  const lookupResults = useMemo(
+    () => market === "TW" && query.trim() ? searchHoldingLookupCatalog(catalog, query) : [],
+    [catalog, market, query]
+  );
+
+  const gross = quantity * executionPrice;
+  const totalOutflow = gross + fee + tax;
+  const currentPrice = market === "TW" ? (candidate?.close ?? 0) : usCurrentPrice;
+  const symbol = market === "TW" ? (candidate?.code ?? "") : usSymbol.trim().toUpperCase();
+  const name = market === "TW" ? (candidate?.name ?? "") : usName.trim();
+  const sector = market === "TW" ? (candidate?.industry ?? "") : usSector.trim();
+  const assetType = market === "TW" ? (candidate?.type ?? "stock") : usType;
+  const sufficientCash = selectedCash !== null && totalOutflow <= selectedCash.price + 1e-9;
+  const valid = Boolean(selectedCash) &&
+    quantity > 0 &&
+    executionPrice > 0 &&
+    currentPrice > 0 &&
+    fee >= 0 &&
+    tax >= 0 &&
+    Boolean(symbol) &&
+    Boolean(name) &&
+    Boolean(sector) &&
+    (currency === "TWD" || fxRate > 0) &&
+    sufficientCash;
+
+  function switchMarket(next: "TW" | "US") {
+    setMarket(next);
+    setCandidate(null);
+    setQuery("");
+    setQuantity(0);
+    setExecutionPrice(0);
+    setFee(0);
+    setTax(0);
+    if (next === "US") setFxRate(state.usdTwd);
+  }
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!valid || !selectedCash) return;
+
+    const activityId = nextActivityId(state.activities, today);
+    const saved = onSave({
+      id: activityId,
+      date: today,
+      cashHoldingId: selectedCash.id,
+      position: {
+        id: `holding-${activityId}`,
+        symbol,
+        name,
+        market,
+        type: assetType,
+        price: currentPrice,
+        currency,
+        sector,
+        account: accountName(selectedCash.account),
+        ...(market === "TW" && candidate
+          ? { priceSource: candidate.venue, priceAsOf: candidate.date }
+          : { priceSource: "manual" as const })
+      },
+      quantity,
+      price: executionPrice,
+      fee,
+      tax,
+      fxRate: currency === "USD" ? fxRate : 1,
+      note
+    });
+    if (!saved) return;
+    closeRef.current?.click();
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          className={`min-h-11 rounded-xl border px-3 text-sm font-semibold ${market === "TW" ? "border-[#1f332a] bg-[#edf2ee] dark:border-[#dce9e2] dark:bg-[#17201b]" : "border-black/7 dark:border-white/9"}`}
+          onClick={() => switchMarket("TW")}
+        >
+          台股
+        </button>
+        <button
+          type="button"
+          className={`min-h-11 rounded-xl border px-3 text-sm font-semibold ${market === "US" ? "border-[#1f332a] bg-[#edf2ee] dark:border-[#dce9e2] dark:bg-[#17201b]" : "border-black/7 dark:border-white/9"}`}
+          onClick={() => switchMarket("US")}
+        >
+          美股
+        </button>
+      </div>
+
+      {market === "TW" ? (
+        <div className="space-y-2">
+          <input
+            className="field"
+            placeholder="輸入台股代號或名稱，例如 2330、台積電"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setCandidate(null);
+            }}
+          />
+          {catalogStatus === "loading" ? <p className="px-1 text-xs text-black/40 dark:text-white/40">正在載入 TWSE／TPEx 官方標的快取…</p> : null}
+          {catalogStatus === "error" ? <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">官方標的快取載入失敗；為避免猜測標的，台股首次買進暫不允許送出。</p> : null}
+          {lookupResults.length ? (
+            <div className="overflow-hidden rounded-2xl border border-black/7 bg-white dark:border-white/8 dark:bg-white/4">
+              {lookupResults.map((item) => (
+                <button
+                  key={`${item.venue}:${item.code}`}
+                  type="button"
+                  className="flex w-full items-center justify-between gap-3 border-b border-black/5 px-3 py-3 text-left last:border-b-0 dark:border-white/6"
+                  onClick={() => {
+                    setCandidate(item);
+                    setQuery(`${item.code} ${item.name}`);
+                    if (!executionPrice) setExecutionPrice(item.close);
+                  }}
+                >
+                  <span><strong>{item.code}</strong> · {item.name}</span>
+                  <span className="text-xs text-black/40 dark:text-white/40">{item.venue} · {item.date}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {candidate ? (
+            <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/50 dark:border-white/8 dark:bg-white/[.025] dark:text-white/50">
+              <strong>{candidate.code} {candidate.name}</strong> · {candidate.type === "etf" ? "ETF" : "股票"} · {candidate.industry}<br />
+              官方目前價 {candidate.close.toLocaleString()} · {candidate.venue} · {candidate.date}
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <input className="field" placeholder="美股代號，例如 QQQM" value={usSymbol} onChange={(event) => setUsSymbol(event.target.value)} />
+            <select className="field" value={usType} onChange={(event) => setUsType(event.target.value as "stock" | "etf")}>
+              <option value="stock">股票</option>
+              <option value="etf">ETF</option>
+            </select>
+          </div>
+          <input className="field" placeholder="標的名稱" value={usName} onChange={(event) => setUsName(event.target.value)} />
+          <input className="field" placeholder="分類／產業，例如 ETF、半導體" value={usSector} onChange={(event) => setUsSector(event.target.value)} />
+          <input className="field" type="number" min="0.000001" step="any" placeholder="目前價格（USD，手動）" value={usCurrentPrice || ""} onChange={(event) => setUsCurrentPrice(Number(event.target.value))} />
+          <p className="px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">目前尚未接免費官方美股收盤來源，因此美股目前價格標記為 manual；成交價仍獨立保存。</p>
+        </div>
+      )}
+
+      <select className="field" value={selectedCash?.id ?? ""} onChange={(event) => setCashHoldingId(event.target.value)}>
+        <option value="">選擇 {currency} 現金帳戶</option>
+        {compatibleCash.map((holding) => (
+          <option key={holding.id} value={holding.id}>
+            {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+          </option>
+        ))}
+      </select>
+      {!compatibleCash.length ? <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">沒有 {currency} 現金帳戶，請先到「持股」新增對應幣別現金。</p> : null}
+
+      <div className="grid grid-cols-2 gap-3">
+        <input className="field" type="number" min="0.000001" step="any" placeholder="買進數量" value={quantity || ""} onChange={(event) => setQuantity(Number(event.target.value))} />
+        <input className="field" type="number" min="0.000001" step="any" placeholder={`成交價（${currency}）`} value={executionPrice || ""} onChange={(event) => setExecutionPrice(Number(event.target.value))} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <input className="field" type="number" min="0" step="any" placeholder="手續費" value={fee || ""} onChange={(event) => setFee(Number(event.target.value))} />
+        <input className="field" type="number" min="0" step="any" placeholder="交易稅／其他稅費" value={tax || ""} onChange={(event) => setTax(Number(event.target.value))} />
+      </div>
+
+      {currency === "USD" ? (
+        <input className="field" type="number" min="0.0001" step="0.01" placeholder="當日 USD/TWD 匯率" value={fxRate || ""} onChange={(event) => setFxRate(Number(event.target.value))} />
+      ) : null}
+
+      <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+        <div className="flex justify-between gap-3"><span>含費稅總支出</span><strong>{currency} {Number.isFinite(totalOutflow) ? totalOutflow.toLocaleString() : "—"}</strong></div>
+        {selectedCash ? <div className="mt-1 flex justify-between gap-3"><span>現金餘額</span><strong>{selectedCash.price.toLocaleString()} → {(selectedCash.price - totalOutflow).toLocaleString()}</strong></div> : null}
+        {selectedCash && !sufficientCash ? <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">現金不足，首次買進不會寫入任何資料。</p> : null}
+      </div>
+
+      <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
+      <p className="text-xs leading-5 text-black/40 dark:text-white/40">
+        首次買進會同時建立新持股、扣現金並寫入交易。之後加碼請使用一般「買進」，避免重複建立相同部位。
+      </p>
+      <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />建立部位並買進</Button>
+      <Dialog.Close asChild>
+        <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
+      </Dialog.Close>
+    </form>
+  );
 }
 
 function ActivityForm({
