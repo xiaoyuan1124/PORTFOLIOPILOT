@@ -111,6 +111,68 @@ export function holdingIdentityKey(holding: Pick<Holding, "market" | "symbol" | 
   return `${holding.market}:${holding.symbol.trim().toUpperCase()}:${accountName(holding.account).toLowerCase()}`;
 }
 
+export type HoldingCorrection = {
+  id: string;
+  quantity: number;
+  price: number;
+  averageCost: number;
+};
+
+export function applyHoldingCorrections(existing: Holding[], corrections: HoldingCorrection[]) {
+  const byId = new Map(existing.map((holding) => [holding.id, holding]));
+  const seen = new Set<string>();
+  const updated = new Map<string, Holding>();
+
+  for (const correction of corrections) {
+    if (seen.has(correction.id)) {
+      throw new Error("快速校正資料包含重複部位。");
+    }
+    seen.add(correction.id);
+
+    const current = byId.get(correction.id);
+    if (!current) {
+      throw new Error("快速校正包含已不存在的部位，請重新開啟後再試。");
+    }
+
+    if (current.type === "cash") {
+      if (!Number.isFinite(correction.price) || correction.price <= 0) {
+        throw new Error(`${current.currency} 現金餘額必須大於 0。`);
+      }
+
+      updated.set(current.id, {
+        ...current,
+        quantity: 1,
+        price: correction.price,
+        averageCost: correction.price,
+        priceSource: undefined,
+        priceAsOf: undefined
+      });
+      continue;
+    }
+
+    if (
+      !Number.isFinite(correction.quantity) || correction.quantity <= 0 ||
+      !Number.isFinite(correction.price) || correction.price <= 0 ||
+      !Number.isFinite(correction.averageCost) || correction.averageCost <= 0
+    ) {
+      throw new Error(`${current.symbol || current.name} 的數量、目前價格與平均成本都必須大於 0。`);
+    }
+
+    const priceChanged = correction.price !== current.price;
+    updated.set(current.id, {
+      ...current,
+      quantity: correction.quantity,
+      price: correction.price,
+      averageCost: correction.averageCost,
+      ...(priceChanged
+        ? { priceSource: "manual" as const, priceAsOf: undefined }
+        : {})
+    });
+  }
+
+  return existing.map((holding) => updated.get(holding.id) ?? holding);
+}
+
 export function holdingMergeConflictCount(existing: Holding[], incoming: Holding[]) {
   const existingKeys = new Set(existing.map(holdingIdentityKey));
   const conflicts = new Set(

@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowDownUp, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { ArrowDownUp, ListChecks, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { AppState, AssetType, Currency, Holding, Market } from "@/lib/types";
 import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
-import { accountName, holdingIdentityKey } from "@/lib/local-data";
+import { applyHoldingCorrections, accountName, holdingIdentityKey, type HoldingCorrection } from "@/lib/local-data";
 import { money, percent } from "@/lib/utils";
 import { applyTwQuotes, cacheFreshnessLabel, cacheMarketFreshness, loadBundledTwQuotes, shouldRejectStaleClosingCache } from "@/lib/market-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
@@ -455,6 +455,189 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
   );
 }
 
+type CorrectionDraft = {
+  quantity: string;
+  price: string;
+  averageCost: string;
+};
+
+function correctionDraft(holding: Holding): CorrectionDraft {
+  if (holding.type === "cash") {
+    const balance = holding.quantity * holding.price;
+    return {
+      quantity: "1",
+      price: String(balance),
+      averageCost: String(balance)
+    };
+  }
+
+  return {
+    quantity: String(holding.quantity),
+    price: String(holding.price),
+    averageCost: String(holding.averageCost)
+  };
+}
+
+function QuickCorrectionForm({
+  holdings,
+  onSave
+}: {
+  holdings: Holding[];
+  onSave: (corrections: HoldingCorrection[]) => boolean;
+}) {
+  const [drafts, setDrafts] = useState<Record<string, CorrectionDraft>>(
+    () => Object.fromEntries(holdings.map((holding) => [holding.id, correctionDraft(holding)])) as Record<string, CorrectionDraft>
+  );
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  const valid = holdings.length > 0 && holdings.every((holding) => {
+    const draft = drafts[holding.id] ?? correctionDraft(holding);
+    const price = Number(draft.price);
+    if (holding.type === "cash") return Number.isFinite(price) && price > 0;
+
+    const quantity = Number(draft.quantity);
+    const averageCost = Number(draft.averageCost);
+    return Number.isFinite(quantity) && quantity > 0 &&
+      Number.isFinite(price) && price > 0 &&
+      Number.isFinite(averageCost) && averageCost > 0;
+  });
+
+  function updateDraft(id: string, field: keyof CorrectionDraft, value: string) {
+    setDrafts((current) => ({
+      ...current,
+      [id]: {
+        ...(current[id] ?? { quantity: "", price: "", averageCost: "" }),
+        [field]: value
+      }
+    }));
+  }
+
+  function persist(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!valid) return;
+
+    const corrections: HoldingCorrection[] = holdings.map((holding) => {
+      const draft = drafts[holding.id] ?? correctionDraft(holding);
+      if (holding.type === "cash") {
+        const balance = Number(draft.price);
+        return {
+          id: holding.id,
+          quantity: 1,
+          price: balance,
+          averageCost: balance
+        };
+      }
+
+      return {
+        id: holding.id,
+        quantity: Number(draft.quantity),
+        price: Number(draft.price),
+        averageCost: Number(draft.averageCost)
+      };
+    });
+
+    if (onSave(corrections)) closeRef.current?.click();
+  }
+
+  return (
+    <form onSubmit={persist} className="space-y-4">
+      <div className="rounded-2xl border border-black/6 bg-black/[.018] p-4 dark:border-white/8 dark:bg-white/[.025]">
+        <p className="text-sm font-semibold">依券商目前庫存一次校正</p>
+        <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+          這裡只更新數量、目前價格、平均成本與現金餘額；標的、帳戶、市場與幣別不會改動。手動修改目前價格時，舊的官方價格來源日期會自動清除，避免把手動數值誤標成 TWSE／TPEx 官方價。
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {holdings.map((holding) => {
+          const draft = drafts[holding.id] ?? correctionDraft(holding);
+          const isCash = holding.type === "cash";
+
+          return (
+            <div key={holding.id} className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold">{isCash ? `${holding.currency} 現金` : holding.name}</p>
+                  <p className="mt-1 text-xs text-black/40 dark:text-white/40">
+                    {isCash ? accountName(holding.account) : `${holding.symbol} · ${accountName(holding.account)} · ${holding.market}`}
+                  </p>
+                </div>
+                {!isCash && holding.priceSource && holding.priceSource !== "manual" && holding.priceAsOf ? (
+                  <Badge>{holding.priceSource} · {holding.priceAsOf}</Badge>
+                ) : null}
+              </div>
+
+              {isCash ? (
+                <div className="mt-4">
+                  <label className="block text-xs font-semibold text-black/45 dark:text-white/45">目前現金餘額（{holding.currency}）</label>
+                  <input
+                    className="field mt-2"
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    min="0"
+                    value={draft.price}
+                    onChange={(event) => updateDraft(holding.id, "price", event.target.value)}
+                  />
+                </div>
+              ) : (
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <label className="block">
+                    <span className="text-xs font-semibold text-black/45 dark:text-white/45">數量</span>
+                    <input
+                      className="field mt-2"
+                      type="number"
+                      inputMode="decimal"
+                      step="any"
+                      min="0"
+                      value={draft.quantity}
+                      onChange={(event) => updateDraft(holding.id, "quantity", event.target.value)}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-semibold text-black/45 dark:text-white/45">目前價格（{holding.currency}）</span>
+                    <input
+                      className="field mt-2"
+                      type="number"
+                      inputMode="decimal"
+                      step="any"
+                      min="0"
+                      value={draft.price}
+                      onChange={(event) => updateDraft(holding.id, "price", event.target.value)}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-semibold text-black/45 dark:text-white/45">平均成本（{holding.currency}）</span>
+                    <input
+                      className="field mt-2"
+                      type="number"
+                      inputMode="decimal"
+                      step="any"
+                      min="0"
+                      value={draft.averageCost}
+                      onChange={(event) => updateDraft(holding.id, "averageCost", event.target.value)}
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="sticky bottom-0 -mx-1 bg-white/95 px-1 pb-[max(.25rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur dark:bg-[#111713]/95">
+        <Button disabled={!valid} type="submit" className="w-full">
+          儲存全部校正
+        </Button>
+      </div>
+
+      <Dialog.Close asChild>
+        <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
+      </Dialog.Close>
+    </form>
+  );
+}
+
 type SortMode = "value" | "gain" | "name";
 
 export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => boolean; onResearch?: (researchKey: string) => void }) {
@@ -501,6 +684,38 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
     if (!saved) return false;
     toast.success(exists ? "部位已更新" : "部位已新增");
     return true;
+  }
+
+  function quickCorrect(corrections: HoldingCorrection[]) {
+    const currentById = new Map(state.holdings.map((holding) => [holding.id, holding]));
+    const changedCount = corrections.filter((correction) => {
+      const current = currentById.get(correction.id);
+      if (!current) return true;
+      if (current.type === "cash") {
+        return current.quantity !== 1 ||
+          current.price !== correction.price ||
+          current.averageCost !== correction.price;
+      }
+
+      return current.quantity !== correction.quantity ||
+        current.price !== correction.price ||
+        current.averageCost !== correction.averageCost;
+    }).length;
+
+    if (changedCount === 0) {
+      toast.info("目前庫存沒有需要儲存的變更");
+      return true;
+    }
+
+    try {
+      const holdings = applyHoldingCorrections(state.holdings, corrections);
+      if (!onChange({ ...state, holdings })) return false;
+      toast.success(`已校正 ${changedCount} 個部位`);
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "快速校正失敗");
+      return false;
+    }
   }
 
   async function refreshTaiwanPrices() {
@@ -554,6 +769,14 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
             <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
             {refreshing ? "更新中" : "更新台股收盤價"}
           </GhostButton>
+          {state.holdings.length ? (
+            <Modal
+              title="快速校正目前庫存"
+              trigger={<GhostButton type="button"><ListChecks size={16} />快速校正</GhostButton>}
+            >
+              <QuickCorrectionForm holdings={state.holdings} onSave={quickCorrect} />
+            </Modal>
+          ) : null}
           <Modal title="新增投資部位" trigger={<Button><Plus size={16} />新增部位</Button>}>
             <HoldingForm onSave={upsert} />
           </Modal>

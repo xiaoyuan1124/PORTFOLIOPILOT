@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyHoldingCorrections,
   etfCompositionsToCsv,
   holdingIdentityKey,
   holdingMergeConflictCount,
@@ -654,6 +655,110 @@ describe("local data import/export", () => {
     };
 
     expect(() => parseBackup(JSON.stringify(backup))).toThrow(/現金不可附帶/);
+  });
+
+  it("applies batch holding corrections without changing identity fields", () => {
+    const existing = [
+      {
+        id: "tw",
+        symbol: "2330",
+        name: "台積電",
+        market: "TW" as const,
+        type: "stock" as const,
+        quantity: 10,
+        price: 1000,
+        averageCost: 900,
+        currency: "TWD" as const,
+        sector: "半導體",
+        account: "券商A",
+        priceSource: "TWSE" as const,
+        priceAsOf: "2026-09-30"
+      },
+      {
+        id: "cash",
+        symbol: "CASH-TWD",
+        name: "TWD 現金",
+        market: "TW" as const,
+        type: "cash" as const,
+        quantity: 1,
+        price: 50000,
+        averageCost: 50000,
+        currency: "TWD" as const,
+        sector: "現金",
+        account: "券商A"
+      }
+    ];
+
+    const corrected = applyHoldingCorrections(existing, [
+      { id: "tw", quantity: 12, price: 1000, averageCost: 910 },
+      { id: "cash", quantity: 99, price: 42000, averageCost: 1 }
+    ]);
+
+    expect(corrected[0]).toMatchObject({
+      id: "tw",
+      symbol: "2330",
+      account: "券商A",
+      quantity: 12,
+      price: 1000,
+      averageCost: 910,
+      priceSource: "TWSE",
+      priceAsOf: "2026-09-30"
+    });
+    expect(corrected[1]).toMatchObject({
+      id: "cash",
+      symbol: "CASH-TWD",
+      quantity: 1,
+      price: 42000,
+      averageCost: 42000
+    });
+  });
+
+  it("marks a manually corrected current price as manual and clears stale official date", () => {
+    const corrected = applyHoldingCorrections([{
+      id: "tw",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW",
+      type: "stock",
+      quantity: 10,
+      price: 1000,
+      averageCost: 900,
+      currency: "TWD",
+      sector: "半導體",
+      priceSource: "TWSE",
+      priceAsOf: "2026-09-30"
+    }], [{
+      id: "tw",
+      quantity: 10,
+      price: 1010,
+      averageCost: 900
+    }]);
+
+    expect(corrected[0]?.priceSource).toBe("manual");
+    expect(corrected[0]?.priceAsOf).toBeUndefined();
+  });
+
+  it("fails closed on invalid or stale batch correction rows", () => {
+    const existing = [{
+      id: "tw",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW" as const,
+      type: "stock" as const,
+      quantity: 10,
+      price: 1000,
+      averageCost: 900,
+      currency: "TWD" as const,
+      sector: "半導體"
+    }];
+
+    expect(() => applyHoldingCorrections(existing, [
+      { id: "tw", quantity: 0, price: 1000, averageCost: 900 }
+    ])).toThrow(/都必須大於 0/);
+
+    expect(() => applyHoldingCorrections(existing, [
+      { id: "missing", quantity: 1, price: 1, averageCost: 1 }
+    ])).toThrow(/已不存在/);
   });
 
   it("uses market + normalized symbol + account as the holding identity", () => {

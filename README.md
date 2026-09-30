@@ -372,3 +372,13 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Cancelling the confirmation leaves the current portfolio unchanged.
 - Successful overwrite imports clearly report how many existing positions were replaced.
 - Regression tests cover duplicate rows inside a CSV and existing-position conflict counting.
+
+
+## V0.47 quick inventory reconciliation
+
+- Holdings now provide a single quick-reconciliation workflow for updating multiple positions at once from the current broker inventory.
+- Stocks and ETFs can batch-correct quantity, current price and average cost without reopening each holding editor.
+- Cash rows use a single balance field and remain normalized internally as 1 × balance with no unrealized P/L.
+- Security identity, account, market and currency are intentionally read-only during quick reconciliation.
+- If a user manually changes a current security price, stale TWSE/TPEx provenance is cleared and the price is explicitly marked manual; quantity/cost-only changes preserve official source/date.
+- The entire correction is persisted atomically through the existing app-state save path, with validation failing closed on invalid or stale rows.
