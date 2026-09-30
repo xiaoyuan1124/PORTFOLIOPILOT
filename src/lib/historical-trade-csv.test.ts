@@ -67,6 +67,20 @@ describe("historical trade CSV adapter", () => {
     expect(result.state.activities.every((item) => item.cashImpact === undefined)).toBe(true);
   });
 
+  it("supports compact ROC dates, datetimes and hyphenated US tickers", () => {
+    const tw = parseHistoricalTradeCsv([
+      "日期,買賣,代號,股數,成交價,手續費,交易稅",
+      "1090102,買進,2330,1,100,1,0"
+    ].join("\n"), "台股券商", "TW");
+    expect(tw[0]?.date).toBe("2020-01-02");
+
+    const us = parseHistoricalTradeCsv([
+      "date,type,market,symbol,quantity,price,fee,tax,fxRate,account",
+      "2020-01-03 09:30:00,buy,US,BRK-B,1,200,1,0,30,US Broker"
+    ].join("\n"), "", null);
+    expect(us[0]).toMatchObject({ date: "2020-01-03", symbol: "BRK-B" });
+  });
+
   it("supports English US rows, row accounts and explicit historical FX", () => {
     const rows = parseHistoricalTradeCsv([
       "date,side,ticker,qty,price,commission,tax,currency,fxRate,account,tradeId",
