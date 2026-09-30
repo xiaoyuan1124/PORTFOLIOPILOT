@@ -26,14 +26,60 @@ export function netExternalContributions(activities: PortfolioActivity[], throug
   }, 0);
 }
 
+export type LedgerEconomicsSummary = {
+  dividendsTwd: number;
+  standaloneFeesTwd: number;
+  tradeFeesTwd: number;
+  tradeTaxesTwd: number;
+  fxConversionValuationDeltaTwd: number;
+  incomeAfterStandaloneFeesTwd: number;
+};
+
+export function ledgerEconomicsSummary(
+  activities: PortfolioActivity[],
+  throughDate?: string
+): LedgerEconomicsSummary {
+  return activities.reduce<LedgerEconomicsSummary>((summary, activity) => {
+    if (throughDate && activity.date > throughDate) return summary;
+    const fx = activity.currency === "USD" ? activity.fxRate : 1;
+
+    if (activity.type === "dividend") {
+      summary.dividendsTwd += activity.amount * fx;
+    }
+    if (activity.type === "fee") {
+      summary.standaloneFeesTwd += activity.amount * fx;
+    }
+    if (activity.inventoryImpact?.kind === "trade") {
+      summary.tradeFeesTwd += activity.inventoryImpact.fee * fx;
+      summary.tradeTaxesTwd += activity.inventoryImpact.tax * fx;
+    }
+    if (activity.cashFxImpact) {
+      const impact = activity.cashFxImpact;
+      const valuationRate = impact.valuationTwdPerUsd;
+      const sourceValueTwd = impact.fromBefore.currency === "USD"
+        ? impact.fromAmount * valuationRate
+        : impact.fromAmount;
+      const destinationValueTwd = impact.toBefore.currency === "USD"
+        ? impact.toAmount * valuationRate
+        : impact.toAmount;
+      summary.fxConversionValuationDeltaTwd += destinationValueTwd - sourceValueTwd;
+    }
+
+    summary.incomeAfterStandaloneFeesTwd =
+      summary.dividendsTwd - summary.standaloneFeesTwd;
+    return summary;
+  }, {
+    dividendsTwd: 0,
+    standaloneFeesTwd: 0,
+    tradeFeesTwd: 0,
+    tradeTaxesTwd: 0,
+    fxConversionValuationDeltaTwd: 0,
+    incomeAfterStandaloneFeesTwd: 0
+  });
+}
+
 export function incomeAfterFees(activities: PortfolioActivity[], throughDate?: string) {
-  return activities.reduce((sum, activity) => {
-    if (throughDate && activity.date > throughDate) return sum;
-    const amount = activityAmountTwd(activity);
-    if (activity.type === "dividend") return sum + amount;
-    if (activity.type === "fee") return sum - amount;
-    return sum;
-  }, 0);
+  return ledgerEconomicsSummary(activities, throughDate).incomeAfterStandaloneFeesTwd;
 }
 
 type DatedCashFlow = { date: string; value: number };
