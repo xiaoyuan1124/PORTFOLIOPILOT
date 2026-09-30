@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Holding } from "./types";
-import { isHeldTwSecurity, resolveHeldTwSecurityKeys } from "./research-holdings";
+import { twSecurityKey } from "./research-holdings";
 
 const materialEventRowSchema = z.object({
   market: z.enum(["TWSE", "TPEx"]),
@@ -48,13 +48,19 @@ export function materialEventsForHoldings(
   holdings: Holding[],
   limit = 80
 ) {
-  const heldKeys = resolveHeldTwSecurityKeys(
-    holdings,
-    cache.rows.map((row) => ({ market: row.market, code: row.code }))
+  const heldKeys = new Set(
+    holdings.flatMap((holding) => {
+      if (
+        holding.market !== "TW" ||
+        holding.type === "cash" ||
+        (holding.priceSource !== "TWSE" && holding.priceSource !== "TPEx")
+      ) return [];
+      return [twSecurityKey(holding.priceSource, holding.symbol)];
+    })
   );
 
   return cache.rows
-    .filter((row) => isHeldTwSecurity(heldKeys, row.market, row.code))
+    .filter((row) => heldKeys.has(twSecurityKey(row.market, row.code)))
     .sort((a, b) =>
       b.publishedDate.localeCompare(a.publishedDate) ||
       b.publishedTime.localeCompare(a.publishedTime) ||
