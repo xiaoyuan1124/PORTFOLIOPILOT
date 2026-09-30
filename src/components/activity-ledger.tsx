@@ -94,7 +94,7 @@ function ActivityForm({
   const [tax, setTax] = useState(0);
   const [tradeHoldingId, setTradeHoldingId] = useState(defaultTradeHolding?.id ?? "");
   const [tradeCashHoldingId, setTradeCashHoldingId] = useState(defaultCashHolding?.id ?? "");
-  const [cashHoldingId, setCashHoldingId] = useState(cashHoldings[0]?.id ?? "");
+  const [cashHoldingId, setCashHoldingId] = useState(defaultCashHolding?.id ?? "");
   const [corporateHoldingId, setCorporateHoldingId] = useState(defaultTradeHolding?.id ?? "");
   const [shareRatio, setShareRatio] = useState(1);
   const [note, setNote] = useState("");
@@ -694,7 +694,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                     ) : null}
                     {activity.cashImpact ? (
                       <p className="mt-1 text-xs text-black/45 dark:text-white/45">
-                        現金 {activity.cashImpact.delta > 0 ? "+" : ""}{activity.cashImpact.delta.toLocaleString()} · {activity.cashImpact.before.price.toLocaleString()} → {(activity.cashImpact.after?.price ?? 0).toLocaleString()}
+                        {accountName(activity.cashImpact.before.account)} · 現金 {activity.cashImpact.delta > 0 ? "+" : ""}{activity.cashImpact.delta.toLocaleString()} · {activity.cashImpact.before.price.toLocaleString()} → {(activity.cashImpact.after?.price ?? 0).toLocaleString()}
                       </p>
                     ) : null}
                     {external && activity.preFlowValueTwd !== undefined ? <p className="mt-2 text-xs text-black/45 dark:text-white/45">現金流前淨值：{money(activity.preFlowValueTwd)}</p> : null}
