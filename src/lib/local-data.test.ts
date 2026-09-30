@@ -49,7 +49,7 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(12);
+    expect(JSON.parse(serialized).version).toBe(13);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -104,7 +104,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(12);
+    expect(JSON.parse(serialized).version).toBe(13);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -174,8 +174,127 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(12);
+    expect(JSON.parse(serialized).version).toBe(13);
     expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("round-trips V13 security account transfer metadata", () => {
+    const sourceBefore = {
+      id: "source",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW" as const,
+      type: "stock" as const,
+      quantity: 10,
+      price: 1000,
+      averageCost: 900,
+      currency: "TWD" as const,
+      sector: "半導體",
+      account: "券商A",
+      priceSource: "TWSE" as const,
+      priceAsOf: "2026-09-30"
+    };
+    const sourceAfter = { ...sourceBefore, quantity: 6 };
+    const destinationAfter = {
+      ...sourceBefore,
+      id: "destination",
+      quantity: 4,
+      account: "券商B"
+    };
+
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [sourceAfter, destinationAfter],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "position-transfer",
+        date: "2026-09-30",
+        type: "position_transfer",
+        symbol: "2330",
+        amount: 0,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 4,
+        price: 0,
+        note: "",
+        account: "券商A",
+        positionTransferImpact: {
+          sourceHoldingId: "source",
+          destinationHoldingId: "destination",
+          sourceBefore,
+          sourceAfter,
+          destinationBefore: null,
+          destinationAfter,
+          quantity: 4
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(13);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("rejects tampered V13 security transfer cost basis", () => {
+    const sourceBefore = {
+      id: "source",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW",
+      type: "stock",
+      quantity: 10,
+      price: 1000,
+      averageCost: 900,
+      currency: "TWD",
+      sector: "半導體",
+      account: "券商A",
+      priceSource: "TWSE",
+      priceAsOf: "2026-09-30"
+    };
+    const backup = {
+      version: 13,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [
+          { ...sourceBefore, quantity: 6 },
+          { ...sourceBefore, id: "destination", quantity: 4, averageCost: 950, account: "券商B" }
+        ],
+        etfCompositions: [],
+        journal: [],
+        snapshots: [],
+        allocationTargets: [],
+        activities: [{
+          id: "bad-position-transfer",
+          date: "2026-09-30",
+          type: "position_transfer",
+          symbol: "2330",
+          amount: 0,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 4,
+          price: 0,
+          note: "",
+          account: "券商A",
+          positionTransferImpact: {
+            sourceHoldingId: "source",
+            destinationHoldingId: "destination",
+            sourceBefore,
+            sourceAfter: { ...sourceBefore, quantity: 6 },
+            destinationBefore: null,
+            destinationAfter: { ...sourceBefore, id: "destination", quantity: 4, averageCost: 950, account: "券商B" },
+            quantity: 4
+          }
+        }]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/加權平均成本|總成本基礎/);
   });
 
   it("rejects tampered V12 FX execution-rate arithmetic", () => {
@@ -421,7 +540,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(12);
+    expect(JSON.parse(serialized).version).toBe(13);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -473,7 +592,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(12);
+    expect(JSON.parse(serialized).version).toBe(13);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -524,7 +643,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(12);
+    expect(JSON.parse(serialized).version).toBe(13);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -649,7 +768,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(12);
+    expect(JSON.parse(serialized).version).toBe(13);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
