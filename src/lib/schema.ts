@@ -119,6 +119,16 @@ export const cashImpactSchema = z.object({
   reason: z.enum(["trade", "deposit", "withdrawal", "dividend", "fee"])
 });
 
+export const cashTransferImpactSchema = z.object({
+  fromCashHoldingId: z.string().min(1),
+  toCashHoldingId: z.string().min(1),
+  fromBefore: holdingSchema,
+  fromAfter: holdingSchema,
+  toBefore: holdingSchema,
+  toAfter: holdingSchema,
+  amount: z.number().finite().positive()
+});
+
 export const etfConstituentSchema = z.object({
   market: z.enum(["TW", "US"]),
   symbol: z.string().trim().min(1).max(32),
@@ -161,7 +171,7 @@ export const activitySchema = z.object({
   id: z.string().min(1),
   date: dateKeySchema,
   time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).optional(),
-  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee", "corporate_action"]),
+  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee", "transfer", "corporate_action"]),
   symbol: z.string(),
   amount: z.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
@@ -173,7 +183,8 @@ export const activitySchema = z.object({
   preFlowValueTwd: z.number().finite().nonnegative().optional(),
   preFlowValueSource: z.enum(["system_current_state", "manual"]).optional(),
   inventoryImpact: inventoryImpactSchema.optional(),
-  cashImpact: cashImpactSchema.optional()
+  cashImpact: cashImpactSchema.optional(),
+  cashTransferImpact: cashTransferImpactSchema.optional()
 }).superRefine((activity, ctx) => {
   if (activity.type !== "corporate_action" && activity.amount <= 0) {
     ctx.addIssue({
@@ -426,6 +437,122 @@ export const activitySchema = z.object({
       message: "非現金股數調整不可附帶現金連動。"
     });
   }
+
+  if (activity.type === "transfer" && !activity.cashTransferImpact) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashTransferImpact"],
+      message: "內部現金轉帳必須保留轉出與轉入帳戶的前後快照。"
+    });
+  }
+
+  if (activity.type !== "transfer" && activity.cashTransferImpact) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashTransferImpact"],
+      message: "只有內部現金轉帳可以附帶雙現金帳戶快照。"
+    });
+  }
+
+  if (activity.type === "transfer" && (activity.cashImpact || activity.inventoryImpact)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashTransferImpact"],
+      message: "內部現金轉帳不可同時附帶單一現金或證券持股連動。"
+    });
+  }
+
+  if (activity.cashTransferImpact) {
+    const transfer = activity.cashTransferImpact;
+    const snapshots = [transfer.fromBefore, transfer.fromAfter, transfer.toBefore, transfer.toAfter];
+    const normalized = snapshots.every((cash) =>
+      cash.type === "cash" &&
+      Math.abs(cash.quantity - 1) <= 1e-9 &&
+      Math.abs(cash.averageCost - cash.price) <= 1e-8
+    );
+
+    if (transfer.fromCashHoldingId === transfer.toCashHoldingId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashTransferImpact"],
+        message: "內部轉帳的轉出與轉入現金帳戶不可相同。"
+      });
+    }
+    if (
+      transfer.fromBefore.id !== transfer.fromCashHoldingId ||
+      transfer.fromAfter.id !== transfer.fromCashHoldingId ||
+      transfer.toBefore.id !== transfer.toCashHoldingId ||
+      transfer.toAfter.id !== transfer.toCashHoldingId
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashTransferImpact"],
+        message: "內部轉帳快照的現金帳戶 ID 不一致。"
+      });
+    }
+    if (!normalized) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashTransferImpact"],
+        message: "內部轉帳現金快照必須使用 1 × 餘額的標準格式。"
+      });
+    }
+
+    const currency = transfer.fromBefore.currency;
+    if (
+      transfer.fromAfter.currency !== currency ||
+      transfer.toBefore.currency !== currency ||
+      transfer.toAfter.currency !== currency ||
+      activity.currency !== currency
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashTransferImpact"],
+        message: "內部轉帳只允許同幣別現金帳戶，且活動幣別必須一致。"
+      });
+    }
+    if (Math.abs(transfer.amount - activity.amount) > 1e-8) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashTransferImpact", "amount"],
+        message: "內部轉帳活動金額與快照金額不一致。"
+      });
+    }
+
+    const expectedFrom = transfer.fromBefore.price - transfer.amount;
+    const expectedTo = transfer.toBefore.price + transfer.amount;
+    if (
+      expectedFrom < -1e-8 ||
+      Math.abs(transfer.fromAfter.price - Math.max(0, expectedFrom)) > 1e-8 ||
+      Math.abs(transfer.fromAfter.averageCost - Math.max(0, expectedFrom)) > 1e-8
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashTransferImpact", "fromAfter"],
+        message: "內部轉帳的轉出 after 快照與 before－amount 不一致。"
+      });
+    }
+    if (
+      Math.abs(transfer.toAfter.price - expectedTo) > 1e-8 ||
+      Math.abs(transfer.toAfter.averageCost - expectedTo) > 1e-8
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashTransferImpact", "toAfter"],
+        message: "內部轉帳的轉入 after 快照與 before＋amount 不一致。"
+      });
+    }
+
+    const activityAccount = (activity.account?.trim() || "預設帳戶").toLowerCase();
+    const fromAccount = (transfer.fromBefore.account?.trim() || "預設帳戶").toLowerCase();
+    if (activityAccount !== fromAccount) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["account"],
+        message: "內部轉帳活動帳戶必須對應轉出現金帳戶。"
+      });
+    }
+  }
 }).transform((activity) => {
   const normalized = {
     ...activity,
@@ -567,7 +694,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),
