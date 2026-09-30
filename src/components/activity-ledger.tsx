@@ -340,10 +340,11 @@ function ActivityForm({
     holding.currency === defaultTradeHolding?.currency &&
     accountName(holding.account) === accountName(defaultTradeHolding?.account)
   ) ?? cashHoldings.find((holding) => holding.currency === defaultTradeHolding?.currency) ?? cashHoldings[0];
+  const initialCashCurrency: Currency = defaultCashHolding?.currency ?? defaultTradeHolding?.currency ?? "TWD";
   const [symbol, setSymbol] = useState("");
   const [amount, setAmount] = useState(0);
-  const [currency, setCurrency] = useState<Currency>(defaultTradeHolding?.currency ?? "TWD");
-  const [fxRate, setFxRate] = useState(defaultTradeHolding?.currency === "USD" ? state.usdTwd : 1);
+  const [currency, setCurrency] = useState<Currency>(initialCashCurrency);
+  const [fxRate, setFxRate] = useState(initialCashCurrency === "USD" ? state.usdTwd : 1);
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
   const [fee, setFee] = useState(0);
