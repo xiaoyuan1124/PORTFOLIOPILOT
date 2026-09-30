@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isExternalActivityType, isTradeActivityType, normalizeActivitySecurityFields } from "./activity-data";
 
 export const ETF_WEIGHT_EPSILON = 1e-6;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -85,13 +86,33 @@ export const activitySchema = z.object({
   account: z.string().trim().min(1).max(120).optional(),
   preFlowValueTwd: z.number().finite().nonnegative().optional()
 }).superRefine((activity, ctx) => {
-  if (activity.preFlowValueTwd !== undefined && activity.type !== "deposit" && activity.type !== "withdrawal") {
+  if (isTradeActivityType(activity.type) && !activity.symbol.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["symbol"],
+      message: "買進／賣出紀錄必須包含股票代號。"
+    });
+  }
+
+  if (activity.preFlowValueTwd !== undefined && !isExternalActivityType(activity.type)) {
     ctx.addIssue({
       code: "custom",
       path: ["preFlowValueTwd"],
       message: "TWR 邊界估值只適用於入金或出金。"
     });
   }
+}).transform((activity) => {
+  const normalized = {
+    ...activity,
+    ...normalizeActivitySecurityFields(activity.type, activity.symbol, activity.quantity, activity.price)
+  };
+
+  if (!isExternalActivityType(activity.type)) {
+    delete normalized.time;
+    delete normalized.preFlowValueTwd;
+  }
+
+  return normalized;
 });
 
 export const snapshotSchema = z.object({

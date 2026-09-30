@@ -215,6 +215,80 @@ describe("local data import/export", () => {
     expect(() => parseBackup(JSON.stringify(backup))).toThrow(/有效的曆日/);
   });
 
+  it("normalizes stale activity fields when importing legacy backups", () => {
+    const parsed = parseBackup(JSON.stringify({
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [
+          {
+            id: "legacy-deposit",
+            date: "2026-09-30",
+            time: "09:00",
+            type: "deposit",
+            symbol: "2330",
+            amount: 1000,
+            currency: "TWD",
+            fxRate: 1,
+            quantity: 3,
+            price: 1000,
+            note: ""
+          },
+          {
+            id: "legacy-dividend",
+            date: "2026-09-30",
+            time: "10:00",
+            type: "dividend",
+            symbol: " qqqm ",
+            amount: 10,
+            currency: "USD",
+            fxRate: 31.8,
+            quantity: 99,
+            price: 999,
+            note: ""
+          }
+        ],
+        snapshots: []
+      }
+    }));
+
+    expect(parsed.activities[0]).toMatchObject({ symbol: "", quantity: 0, price: 0, time: "09:00" });
+    expect(parsed.activities[1]).toMatchObject({ symbol: "QQQM", quantity: 0, price: 0 });
+    expect(parsed.activities[1]?.time).toBeUndefined();
+  });
+
+  it("rejects imported buy or sell activity without a security symbol", () => {
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [{
+          id: "bad-buy",
+          date: "2026-09-30",
+          type: "buy",
+          symbol: "   ",
+          amount: 1000,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 1,
+          price: 1000,
+          note: ""
+        }],
+        snapshots: []
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/必須包含股票代號/);
+  });
+
   it("accepts legacy backup data without snapshots or ETF compositions", () => {
     const parsed = parseBackup(JSON.stringify({
       holdings: [],
