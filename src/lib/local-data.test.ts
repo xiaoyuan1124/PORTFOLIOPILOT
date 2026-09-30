@@ -495,6 +495,110 @@ describe("local data import/export", () => {
     expect(() => parseHoldingsCsv(csv)).toThrow(/必須大於 0/);
   });
 
+  it("rejects market/currency mismatches that would corrupt TWD valuation", () => {
+    const baseHolding = {
+      id: "tw",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW",
+      type: "stock",
+      quantity: 1,
+      price: 1000,
+      averageCost: 900,
+      currency: "USD",
+      sector: "半導體"
+    };
+
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [baseHolding],
+        etfCompositions: [],
+        journal: [],
+        activities: [],
+        snapshots: []
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/市場與幣別不一致/);
+    expect(() => parseHoldingsCsv([
+      "symbol,name,market,type,quantity,price,averageCost,currency,sector",
+      "QQQM,QQQM,US,etf,1,250,200,TWD,ETF"
+    ].join("\n"))).toThrow(/市場與幣別不一致/);
+  });
+
+  it("rejects incomplete or impossible official price provenance", () => {
+    const base = {
+      id: "tw",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW",
+      type: "stock",
+      quantity: 1,
+      price: 1000,
+      averageCost: 900,
+      currency: "TWD",
+      sector: "半導體"
+    };
+
+    const build = (holding: Record<string, unknown>) => ({
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [holding],
+        etfCompositions: [],
+        journal: [],
+        activities: [],
+        snapshots: []
+      }
+    });
+
+    expect(() => parseBackup(JSON.stringify(build({ ...base, priceSource: "TWSE" })))).toThrow(/必須同時保留資料日/);
+    expect(() => parseBackup(JSON.stringify(build({ ...base, priceAsOf: "2026-09-30" })))).toThrow(/不可缺少對應來源/);
+    expect(() => parseBackup(JSON.stringify(build({
+      ...base,
+      market: "US",
+      currency: "USD",
+      symbol: "QQQM",
+      name: "QQQM",
+      priceSource: "TWSE",
+      priceAsOf: "2026-09-30"
+    })))).toThrow(/只能套用於台灣持股/);
+  });
+
+  it("rejects stale security provenance attached to cash", () => {
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [{
+          id: "cash",
+          symbol: "CASH-TWD",
+          name: "TWD 現金",
+          market: "TW",
+          type: "cash",
+          quantity: 1,
+          price: 10000,
+          averageCost: 10000,
+          currency: "TWD",
+          sector: "現金",
+          priceSource: "TWSE",
+          priceAsOf: "2026-09-30"
+        }],
+        etfCompositions: [],
+        journal: [],
+        activities: [],
+        snapshots: []
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/現金不可附帶/);
+  });
+
   it("uses market + normalized symbol + account as the holding identity", () => {
     expect(holdingIdentityKey({
       market: "TW",
