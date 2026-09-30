@@ -428,9 +428,23 @@ describe("local data import/export", () => {
 
     expect(() => parseBackup(JSON.stringify(base))).toThrow(/不可包含本機路徑/);
 
-    const missingFingerprint = structuredClone(base);
-    missingFingerprint.state.activities[0].historicalTrade.importFileName = "broker.csv";
-    delete missingFingerprint.state.activities[0].historicalTrade.importFingerprint;
+    const {
+      importFingerprint: _ignoredFingerprint,
+      ...historicalTradeWithoutFingerprint
+    } = base.state.activities[0].historicalTrade;
+    const missingFingerprint = {
+      ...base,
+      state: {
+        ...base.state,
+        activities: [{
+          ...base.state.activities[0],
+          historicalTrade: {
+            ...historicalTradeWithoutFingerprint,
+            importFileName: "broker.csv"
+          }
+        }]
+      }
+    };
 
     expect(() => parseBackup(JSON.stringify(missingFingerprint))).toThrow(/fingerprint/);
   });
