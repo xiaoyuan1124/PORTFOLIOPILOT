@@ -1,5 +1,6 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
 import { accountName, holdingIdentityKey } from "./local-data";
+import { localDateKey } from "./calc";
 import { hasLaterRecordedActivity } from "./activity-order";
 import {
   activityTouchesCashHolding,
@@ -46,6 +47,10 @@ function assertNonnegative(value: number, label: string) {
 }
 
 export function applyOpeningBuy(state: AppState, input: NewPositionBuyInput): AppState {
+  if (input.date !== localDateKey()) {
+    throw new Error("首次買進只允許記錄今天實際發生的交易；歷史交易不可重播到目前持股與現金。");
+  }
+
   const cash = state.holdings.find((item) => item.id === input.cashHoldingId);
   if (!cash || cash.type !== "cash") {
     throw new Error("找不到可連動的現金帳戶，請先建立現金部位。");
@@ -134,6 +139,10 @@ export function applyOpeningBuy(state: AppState, input: NewPositionBuyInput): Ap
 }
 
 export function applyManagedTrade(state: AppState, input: ManagedTradeInput): AppState {
+  if (input.date !== localDateKey()) {
+    throw new Error("持股連動交易只允許記錄今天實際發生的交易；歷史買賣不可重播到目前庫存與現金。");
+  }
+
   const holding = state.holdings.find((item) => item.id === input.holdingId);
   if (!holding || holding.type === "cash") {
     throw new Error("找不到可套用交易的投資部位，請先建立持股。");

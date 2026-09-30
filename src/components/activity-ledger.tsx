@@ -811,7 +811,7 @@ function ActivityForm({
           type="date"
           max={today}
           value={date}
-          disabled={transfer}
+          disabled={transfer || trade || corporate}
           onChange={(event) => {
             const nextDate = event.target.value;
             setDate(nextDate);
@@ -826,6 +826,11 @@ function ActivityForm({
       </div>
 
       {date > today ? <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">不能新增未來日期的交易／現金流；請改成實際發生日。</p> : null}
+      {trade || corporate ? (
+        <div className="rounded-2xl border border-black/6 bg-black/[.018] px-4 py-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+          <strong>目前狀態連動模式：</strong>買進、賣出與股數調整只接受今天實際發生且要立刻反映到目前持股的事件。歷史交易不會被重播到今天的庫存或現金。
+        </div>
+      ) : null}
       {historicalCash ? (
         <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-xs leading-5 text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
           <strong>歷史補登模式：</strong>只新增帳務紀錄，不修改目前現金餘額。選擇現金帳戶只用來保存帳戶名稱與幣別；歷史入出金仍納入 XIRR／TWR，歷史股息／費用仍納入收入統計。
@@ -1195,7 +1200,7 @@ function ActivityForm({
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.61 起，同幣別轉帳與 TWD／USD 內部換匯都屬於內部資產搬移，不算外部現金流。換匯只接受今天目前帳戶狀態，並保存實際轉出／實收金額與成交匯率；歷史現金事件仍維持 ledger-only，不重播到現在。
+        V0.62 起，所有會直接修改目前持股或現金的交易／股數調整也統一採 forward-only：只接受今天的目前狀態。歷史現金事件維持 ledger-only；歷史證券 mutation 不會被重播到今天的庫存。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>

@@ -59,13 +59,60 @@ function state(baseHolding = holding()): AppState {
 }
 
 describe("managed trade inventory", () => {
+  it("rejects historical opening buys and managed trades before mutating current state", () => {
+    const base = state();
+    const openingBase = state();
+    openingBase.holdings = [cashFor(holding())];
+
+    expect(() => applyOpeningBuy(openingBase, {
+      id: "historical-open",
+      date: "2000-01-01",
+      cashHoldingId: "cash",
+      position: {
+        id: "historical-position",
+        symbol: "2454",
+        name: "聯發科",
+        market: "TW",
+        type: "stock",
+        price: 1500,
+        currency: "TWD",
+        sector: "半導體",
+        account: "交易現金"
+      },
+      quantity: 1,
+      price: 1500,
+      fee: 0,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    })).toThrow(/歷史交易不可重播/);
+
+    expect(() => applyManagedTrade(base, {
+      id: "historical-buy",
+      date: "2000-01-01",
+      type: "buy",
+      holdingId: "h1",
+      cashHoldingId: "cash",
+      quantity: 1,
+      price: 900,
+      fee: 0,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    })).toThrow(/歷史買賣不可重播/);
+
+    expect(base.holdings[0]?.quantity).toBe(10);
+    expect(base.holdings.find((item) => item.id === "cash")?.price).toBe(10000);
+    expect(base.activities).toEqual([]);
+  });
+
   it("opens a brand-new Taiwan position and deducts cash atomically", () => {
     const base = state();
     base.holdings = [cashFor(holding())];
 
     const next = applyOpeningBuy(base, {
       id: "open-2330",
-      date: "2026-09-30",
+      date: localDateKey(),
       cashHoldingId: "cash",
       position: {
         id: "holding-open-2330",
@@ -120,7 +167,7 @@ describe("managed trade inventory", () => {
     const base = state();
     expect(() => applyOpeningBuy(base, {
       id: "duplicate",
-      date: "2026-09-30",
+      date: localDateKey(),
       cashHoldingId: "cash",
       position: {
         id: "new-id",
@@ -148,7 +195,7 @@ describe("managed trade inventory", () => {
     const base = state();
     expect(() => applyOpeningBuy(base, {
       id: "wrong-currency-open",
-      date: "2026-09-30",
+      date: localDateKey(),
       cashHoldingId: "cash",
       position: {
         id: "us-new",
@@ -176,7 +223,7 @@ describe("managed trade inventory", () => {
 
     expect(() => applyOpeningBuy(base, {
       id: "too-large-open",
-      date: "2026-09-30",
+      date: localDateKey(),
       cashHoldingId: "cash",
       position: {
         id: "new",
@@ -200,7 +247,7 @@ describe("managed trade inventory", () => {
   it("applies a buy using weighted-average cost including fees", () => {
     const next = applyManagedTrade(state(), {
       id: "buy-1",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "buy",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -240,7 +287,7 @@ describe("managed trade inventory", () => {
   it("applies a partial sell and preserves the remaining average cost", () => {
     const next = applyManagedTrade(state(), {
       id: "sell-1",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "sell",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -266,7 +313,7 @@ describe("managed trade inventory", () => {
   it("removes a fully sold holding and can restore it by reverting the latest linked trade", () => {
     const sold = applyManagedTrade(state(), {
       id: "sell-all",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "sell",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -291,7 +338,7 @@ describe("managed trade inventory", () => {
   it("rejects overselling", () => {
     expect(() => applyManagedTrade(state(), {
       id: "bad",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "sell",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -307,7 +354,7 @@ describe("managed trade inventory", () => {
   it("rejects rollback after a later linked trade on the same holding", () => {
     const first = applyManagedTrade(state(), {
       id: "a",
-      date: "2026-09-29",
+      date: localDateKey(),
       type: "buy",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -320,7 +367,7 @@ describe("managed trade inventory", () => {
     });
     const second = applyManagedTrade(first, {
       id: "b",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "sell",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -338,7 +385,7 @@ describe("managed trade inventory", () => {
   it("rejects rollback if the current holding drifted from the stored post-trade snapshot", () => {
     const bought = applyManagedTrade(state(), {
       id: "buy",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "buy",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -366,7 +413,7 @@ describe("managed trade inventory", () => {
 
     const next = applyManagedTrade(exact, {
       id: "exact-cash",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "buy",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -391,7 +438,7 @@ describe("managed trade inventory", () => {
   it("rejects a buy when linked cash is insufficient", () => {
     expect(() => applyManagedTrade(state(), {
       id: "too-expensive",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "buy",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -416,7 +463,7 @@ describe("managed trade inventory", () => {
 
     expect(() => applyManagedTrade(mixed, {
       id: "wrong-currency",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "buy",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -432,7 +479,7 @@ describe("managed trade inventory", () => {
   it("rejects trade rollback after later activity on the same cash account", () => {
     const bought = applyManagedTrade(state(), {
       id: "a",
-      date: "2026-09-29",
+      date: localDateKey(),
       type: "buy",
       holdingId: "h1",
       cashHoldingId: "cash",
@@ -446,7 +493,7 @@ describe("managed trade inventory", () => {
 
     bought.activities.push({
       id: "b",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "fee",
       symbol: "",
       amount: 10,
@@ -565,7 +612,7 @@ describe("managed trade inventory", () => {
 
     const sold = applyManagedTrade(us, {
       id: "usd-sell",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "sell",
       holdingId: "us",
       cashHoldingId: "cash",
