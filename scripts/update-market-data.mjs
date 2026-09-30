@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { parseTpexValuations, parseTwseValuations } from "./lib/valuation-data.mjs";
-import { combineQuoteMarkets } from "./lib/quote-data.mjs";
+import { combineQuoteMarkets, parseTpexQuoteRows, parseTwseQuoteRows } from "./lib/quote-data.mjs";
 
 const QUOTE_SOURCES = [
   {
@@ -121,44 +121,6 @@ async function fetchJson(source) {
       throw new Error(`${source.name} returned non-array payload (${source.url})`);
     }
     return data;
-  });
-}
-
-function parseTwseQuotes(rows) {
-  return rows.flatMap((row) => {
-    const close = cleanNumber(row.ClosingPrice);
-    const code = String(row.Code ?? "").trim();
-    const name = String(row.Name ?? "").trim();
-    const date = normalizeDate(row.Date);
-
-    if (!code || !name || close === null || close < 0) return [];
-
-    return [{
-      code,
-      name,
-      market: "TWSE",
-      close,
-      date
-    }];
-  });
-}
-
-function parseTpexQuotes(rows) {
-  return rows.flatMap((row) => {
-    const close = cleanNumber(row.Close);
-    const code = String(row.SecuritiesCompanyCode ?? "").trim();
-    const name = String(row.CompanyName ?? "").trim();
-    const date = normalizeDate(row.Date);
-
-    if (!code || !name || close === null || close < 0) return [];
-
-    return [{
-      code,
-      name,
-      market: "TPEx",
-      close,
-      date
-    }];
   });
 }
 
@@ -573,8 +535,8 @@ async function main() {
 
   const quotes = combineQuoteMarkets(
     existingQuotes,
-    parseTwseQuotes(twseQuoteRows),
-    parseTpexQuotes(tpexQuoteRows)
+    parseTwseQuoteRows(twseQuoteRows),
+    parseTpexQuoteRows(tpexQuoteRows)
   );
 
   if (quotes.length < 500) {
