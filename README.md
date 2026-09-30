@@ -328,3 +328,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Duplicate ETF market + symbol identities fail closed instead of silently presenting multiple composition sources for one ETF.
 - Duplicate net-worth snapshot dates fail closed so one calendar day cannot contain two competing portfolio values.
 - Regression tests cover duplicate holding identity, activity IDs, snapshot dates and ETF identities.
+
+
+## V0.42 holding numeric integrity
+
+- JSON/local-state and holdings CSV imports now reject zero quantity or zero current price instead of treating missing investment data as a valid zero.
+- Stock and ETF average cost must be greater than zero during import, matching the interactive holding form.
+- Cash imports require a positive balance value; legacy cash average-cost fields remain tolerated because cash P/L never uses them.
+- The rules now match the V0.23 interactive holding safeguards across every supported holding-entry path.
+- Regression tests cover zero quantity, price, average cost and zero cash-balance imports.

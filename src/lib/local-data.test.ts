@@ -441,6 +441,60 @@ describe("local data import/export", () => {
     expect(rows[0]?.symbol).toBe("2330");
   });
 
+  it("rejects zero-valued investment fields in JSON backups", () => {
+    const baseHolding = {
+      id: "tw",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW",
+      type: "stock",
+      quantity: 1,
+      price: 1000,
+      averageCost: 900,
+      currency: "TWD",
+      sector: "半導體"
+    };
+
+    for (const patch of [
+      { quantity: 0 },
+      { price: 0 },
+      { averageCost: 0 }
+    ]) {
+      const backup = {
+        version: 4,
+        exportedAt: "2026-09-30T00:00:00.000Z",
+        state: {
+          usdTwd: 31.8,
+          holdings: [{ ...baseHolding, ...patch }],
+          etfCompositions: [],
+          journal: [],
+          activities: [],
+          snapshots: []
+        }
+      };
+
+      expect(() => parseBackup(JSON.stringify(backup))).toThrow();
+    }
+  });
+
+  it("rejects zero stock values in holdings CSV instead of treating missing data as zero", () => {
+    const csv = [
+      "symbol,name,market,type,quantity,price,averageCost,currency,sector",
+      "2330,台積電,TW,stock,10,0,900,TWD,半導體"
+    ].join("\n");
+
+    expect(() => parseHoldingsCsv(csv)).toThrow(/必須大於 0/);
+  });
+
+  it("rejects a zero cash balance in imported holdings", () => {
+    const csv = [
+      "symbol,name,market,type,quantity,price,averageCost,currency,sector",
+      "CASH-TWD,TWD 現金,TW,cash,1,0,0,TWD,現金"
+    ].join("\n");
+
+    expect(() => parseHoldingsCsv(csv)).toThrow(/必須大於 0/);
+  });
+
   it("uses market + normalized symbol + account as the holding identity", () => {
     expect(holdingIdentityKey({
       market: "TW",
