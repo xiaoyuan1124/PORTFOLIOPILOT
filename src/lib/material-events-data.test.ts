@@ -74,10 +74,15 @@ describe("held material events", () => {
     expect(rows.map((row) => row.subject)).toEqual(["上櫃公告"]);
   });
 
-  it("fails closed when a manual holding code is ambiguous across venues", () => {
-    const rows = materialEventsForHoldings(cache, [
+  it("fails closed for manual/unknown venue holdings instead of inferring venue from a short event cache", () => {
+    const ambiguousRows = materialEventsForHoldings(cache, [
       holding({ symbol: "7777", priceSource: undefined })
     ]);
-    expect(rows).toEqual([]);
+    const seeminglyUniqueRows = materialEventsForHoldings(cache, [
+      holding({ symbol: "2330", priceSource: undefined })
+    ]);
+
+    expect(ambiguousRows).toEqual([]);
+    expect(seeminglyUniqueRows).toEqual([]);
   });
 });
