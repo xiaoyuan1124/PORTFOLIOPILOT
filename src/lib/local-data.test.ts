@@ -419,6 +419,62 @@ describe("local data import/export", () => {
     expect(() => parseBackup(JSON.stringify(backup))).toThrow(/只能保留一份成分資料/);
   });
 
+  it("rejects zero-amount imported activities before they can pollute performance completeness", () => {
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [{
+          id: "zero-flow",
+          date: "2026-09-30",
+          type: "deposit",
+          symbol: "",
+          amount: 0,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 0,
+          price: 0,
+          note: ""
+        }],
+        snapshots: []
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/金額必須大於 0/);
+  });
+
+  it("normalizes imported TWD activity FX to one", () => {
+    const parsed = parseBackup(JSON.stringify({
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [{
+          id: "twd-flow",
+          date: "2026-09-30",
+          type: "deposit",
+          symbol: "",
+          amount: 1000,
+          currency: "TWD",
+          fxRate: 31.8,
+          quantity: 0,
+          price: 0,
+          note: ""
+        }],
+        snapshots: []
+      }
+    }));
+
+    expect(parsed.activities[0]?.fxRate).toBe(1);
+  });
+
   it("accepts legacy backup data without snapshots or ETF compositions", () => {
     const parsed = parseBackup(JSON.stringify({
       holdings: [],

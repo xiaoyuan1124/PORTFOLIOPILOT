@@ -354,3 +354,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - A price data date without a corresponding source fails closed instead of appearing trustworthy without provenance.
 - Cash cannot carry stale exchange price source/date metadata.
 - Regression tests cover market/currency mismatches, incomplete official provenance and stale cash provenance.
+
+
+## V0.45 activity amount integrity
+
+- JSON/local-state parsing now rejects zero-value transaction and cash-flow records, matching the interactive activity form.
+- A zero-value deposit/withdrawal can no longer be counted as an external cash flow and incorrectly make Exact TWR look incomplete.
+- Imported TWD activities normalize fxRate to 1, matching runtime calculation semantics and preventing meaningless stale FX values in backups.
+- USD activities keep their explicitly supplied historical USD/TWD rate.
+- Regression tests cover zero-amount rejection and TWD FX normalization.

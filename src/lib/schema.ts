@@ -126,7 +126,7 @@ export const activitySchema = z.object({
   time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).optional(),
   type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee"]),
   symbol: z.string(),
-  amount: z.number().finite().nonnegative(),
+  amount: z.number().finite().positive("交易／現金流金額必須大於 0。"),
   currency: z.enum(["TWD", "USD"]),
   fxRate: z.number().finite().positive(),
   quantity: z.number().finite().nonnegative(),
@@ -153,6 +153,7 @@ export const activitySchema = z.object({
 }).transform((activity) => {
   const normalized = {
     ...activity,
+    fxRate: activity.currency === "TWD" ? 1 : activity.fxRate,
     ...normalizeActivitySecurityFields(activity.type, activity.symbol, activity.quantity, activity.price)
   };
 
