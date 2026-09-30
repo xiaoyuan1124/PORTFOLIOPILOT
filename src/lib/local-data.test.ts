@@ -49,8 +49,150 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(11);
+    expect(JSON.parse(serialized).version).toBe(12);
     expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("round-trips V12 currency exchange metadata", () => {
+    const fromBefore = {
+      id: "cash-twd",
+      symbol: "CASH-TWD",
+      name: "TWD 現金",
+      market: "TW" as const,
+      type: "cash" as const,
+      quantity: 1,
+      price: 40000,
+      averageCost: 40000,
+      currency: "TWD" as const,
+      sector: "現金",
+      account: "台股"
+    };
+    const toBefore = {
+      id: "cash-usd",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      market: "US" as const,
+      type: "cash" as const,
+      quantity: 1,
+      price: 100,
+      averageCost: 100,
+      currency: "USD" as const,
+      sector: "現金",
+      account: "美股"
+    };
+    const fromAfter = { ...fromBefore, price: 8100, averageCost: 8100 };
+    const toAfter = { ...toBefore, price: 1100, averageCost: 1100 };
+
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [fromAfter, toAfter],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "exchange",
+        date: "2026-09-30",
+        type: "exchange",
+        symbol: "",
+        amount: 31800,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 0,
+        price: 0,
+        note: "",
+        account: "台股",
+        cashExchangeImpact: {
+          fromCashHoldingId: "cash-twd",
+          toCashHoldingId: "cash-usd",
+          fromBefore,
+          fromAfter,
+          toBefore,
+          toAfter,
+          sourceAmount: 31800,
+          targetAmount: 1000,
+          rateTwdPerUsd: 31.8,
+          fee: 100
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(12);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("rejects tampered V12 exchange rate arithmetic", () => {
+    const fromBefore = {
+      id: "cash-twd",
+      symbol: "CASH-TWD",
+      name: "TWD 現金",
+      market: "TW",
+      type: "cash",
+      quantity: 1,
+      price: 40000,
+      averageCost: 40000,
+      currency: "TWD",
+      sector: "現金",
+      account: "台股"
+    };
+    const toBefore = {
+      id: "cash-usd",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      market: "US",
+      type: "cash",
+      quantity: 1,
+      price: 100,
+      averageCost: 100,
+      currency: "USD",
+      sector: "現金",
+      account: "美股"
+    };
+    const backup = {
+      version: 12,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [
+          { ...fromBefore, price: 8100, averageCost: 8100 },
+          { ...toBefore, price: 1100, averageCost: 1100 }
+        ],
+        etfCompositions: [],
+        journal: [],
+        snapshots: [],
+        allocationTargets: [],
+        activities: [{
+          id: "bad-exchange",
+          date: "2026-09-30",
+          type: "exchange",
+          symbol: "",
+          amount: 31800,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 0,
+          price: 0,
+          note: "",
+          account: "台股",
+          cashExchangeImpact: {
+            fromCashHoldingId: "cash-twd",
+            toCashHoldingId: "cash-usd",
+            fromBefore,
+            fromAfter: { ...fromBefore, price: 8100, averageCost: 8100 },
+            toBefore,
+            toAfter: { ...toBefore, price: 1100, averageCost: 1100 },
+            sourceAmount: 31800,
+            targetAmount: 1000,
+            rateTwdPerUsd: 30,
+            fee: 100
+          }
+        }]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/換入金額與換出本金及實際成交匯率/);
   });
 
   it("round-trips V11 internal cash transfer metadata", () => {
@@ -104,7 +246,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(11);
+    expect(JSON.parse(serialized).version).toBe(12);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -279,7 +421,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(11);
+    expect(JSON.parse(serialized).version).toBe(12);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -331,7 +473,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(11);
+    expect(JSON.parse(serialized).version).toBe(12);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -382,7 +524,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(11);
+    expect(JSON.parse(serialized).version).toBe(12);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -507,7 +649,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(11);
+    expect(JSON.parse(serialized).version).toBe(12);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
