@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { AppState, Holding } from "./types";
 import { localDateKey } from "./calc";
 import {
+  applyCashExchange,
   applyCashLinkedActivity,
   applyCashTransfer,
   nextCashSnapshot,
+  revertCashExchange,
   revertCashLinkedActivity,
   revertCashTransfer
 } from "./cash-account";
@@ -552,6 +554,288 @@ describe("cash account linkage", () => {
     };
 
     expect(() => revertCashTransfer(drifted, "transfer-a")).toThrow(/手動修改或校正/);
+  });
+
+  it("exchanges TWD to USD atomically using the actual TWD/USD execution rate", () => {
+    const base = state(cash({ price: 40000, averageCost: 40000 }));
+    base.holdings.push(cash({
+      id: "cash-usd",
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 100,
+      averageCost: 100,
+      currency: "USD",
+      account: "美股"
+    }));
+
+    const next = applyCashExchange(base, {
+      id: "fx-buy-usd",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-usd",
+      sourceAmount: 31800,
+      rateTwdPerUsd: 31.8,
+      fee: 100,
+      note: "買美元"
+    });
+
+    expect(next.holdings.find((item) => item.id === "cash")?.price).toBe(8100);
+    expect(next.holdings.find((item) => item.id === "cash-usd")?.price).toBe(1100);
+    expect(next.activities[0]).toMatchObject({
+      type: "exchange",
+      amount: 31800,
+      currency: "TWD",
+      cashExchangeImpact: {
+        sourceAmount: 31800,
+        targetAmount: 1000,
+        rateTwdPerUsd: 31.8,
+        fee: 100
+      }
+    });
+  });
+
+  it("exchanges USD to TWD atomically and keeps the fee in source currency", () => {
+    const usd = cash({
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 1000,
+      averageCost: 1000,
+      currency: "USD",
+      account: "美股"
+    });
+    const base = state(usd);
+    base.holdings.push(cash({
+      id: "cash-twd",
+      price: 1000,
+      averageCost: 1000,
+      account: "台股"
+    }));
+
+    const next = applyCashExchange(base, {
+      id: "fx-sell-usd",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-twd",
+      sourceAmount: 500,
+      rateTwdPerUsd: 32,
+      fee: 2,
+      note: ""
+    });
+
+    expect(next.holdings.find((item) => item.id === "cash")?.price).toBe(498);
+    expect(next.holdings.find((item) => item.id === "cash-twd")?.price).toBe(17000);
+    expect(next.activities[0]?.cashExchangeImpact?.targetAmount).toBe(16000);
+    expect(next.activities[0]?.fxRate).toBe(32);
+  });
+
+  it("preserves a zero-balance source identity after an exact exchange debit", () => {
+    const base = state(cash({ price: 31800, averageCost: 31800 }));
+    base.holdings.push(cash({
+      id: "cash-usd",
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 0,
+      averageCost: 0,
+      currency: "USD",
+      account: "美股"
+    }));
+
+    const next = applyCashExchange(base, {
+      id: "fx-zero",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-usd",
+      sourceAmount: 31800,
+      rateTwdPerUsd: 31.8,
+      fee: 0,
+      note: ""
+    });
+
+    expect(next.holdings.find((item) => item.id === "cash")).toMatchObject({
+      quantity: 1,
+      price: 0,
+      averageCost: 0
+    });
+    expect(next.holdings.find((item) => item.id === "cash-usd")?.price).toBe(1000);
+  });
+
+  it("rejects same-currency, historical, invalid-rate and insufficient exchanges", () => {
+    const sameCurrency = state();
+    sameCurrency.holdings.push(cash({
+      id: "cash-2",
+      price: 1000,
+      averageCost: 1000,
+      account: "券商B"
+    }));
+
+    expect(() => applyCashExchange(sameCurrency, {
+      id: "same-currency",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-2",
+      sourceAmount: 100,
+      rateTwdPerUsd: 31.8,
+      fee: 0,
+      note: ""
+    })).toThrow(/不同幣別/);
+
+    const cross = state();
+    cross.holdings.push(cash({
+      id: "cash-usd",
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 0,
+      averageCost: 0,
+      currency: "USD",
+      account: "美股"
+    }));
+
+    expect(() => applyCashExchange(cross, {
+      id: "historical-fx",
+      date: "2000-01-01",
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-usd",
+      sourceAmount: 100,
+      rateTwdPerUsd: 31.8,
+      fee: 0,
+      note: ""
+    })).toThrow(/只允許從今天/);
+
+    expect(() => applyCashExchange(cross, {
+      id: "bad-rate",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-usd",
+      sourceAmount: 100,
+      rateTwdPerUsd: 0,
+      fee: 0,
+      note: ""
+    })).toThrow(/成交匯率/);
+
+    expect(() => applyCashExchange(cross, {
+      id: "too-much-fx",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-usd",
+      sourceAmount: 4999,
+      rateTwdPerUsd: 31.8,
+      fee: 2,
+      note: ""
+    })).toThrow(/現金不足/);
+  });
+
+  it("rolls back both sides of the latest exchange exactly", () => {
+    const base = state(cash({ price: 40000, averageCost: 40000 }));
+    base.holdings.push(cash({
+      id: "cash-usd",
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 100,
+      averageCost: 100,
+      currency: "USD",
+      account: "美股"
+    }));
+
+    const exchanged = applyCashExchange(base, {
+      id: "fx",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-usd",
+      sourceAmount: 31800,
+      rateTwdPerUsd: 31.8,
+      fee: 100,
+      note: ""
+    });
+    const reverted = revertCashExchange(exchanged, "fx");
+
+    expect(reverted.holdings).toEqual(base.holdings);
+    expect(reverted.activities).toEqual([]);
+  });
+
+  it("blocks exchange rollback when either account has a later linked event or manual drift", () => {
+    const base = state(cash({ price: 40000, averageCost: 40000 }));
+    base.holdings.push(cash({
+      id: "cash-usd",
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 100,
+      averageCost: 100,
+      currency: "USD",
+      account: "美股"
+    }));
+
+    const exchanged = applyCashExchange(base, {
+      id: "activity-1",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-usd",
+      sourceAmount: 3180,
+      rateTwdPerUsd: 31.8,
+      fee: 0,
+      note: ""
+    });
+    const later = applyCashLinkedActivity(exchanged, {
+      id: "activity-2",
+      date: localDateKey(),
+      type: "fee",
+      cashHoldingId: "cash-usd",
+      amount: 1,
+      fxRate: 31.8,
+      symbol: "",
+      note: ""
+    });
+    expect(() => revertCashExchange(later, "activity-1")).toThrow(/最新一筆/);
+
+    const drifted = {
+      ...exchanged,
+      holdings: exchanged.holdings.map((item) =>
+        item.id === "cash-usd" ? { ...item, price: item.price + 1, averageCost: item.averageCost + 1 } : item
+      )
+    };
+    expect(() => revertCashExchange(drifted, "activity-1")).toThrow(/手動修改或校正/);
+  });
+
+  it("blocks rollback of older cash events after a later currency exchange", () => {
+    const base = state(cash({ price: 40000, averageCost: 40000 }));
+    base.holdings.push(cash({
+      id: "cash-usd",
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 100,
+      averageCost: 100,
+      currency: "USD",
+      account: "美股"
+    }));
+
+    const deposited = applyCashLinkedActivity(base, {
+      id: "activity-1",
+      date: localDateKey(),
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "",
+      note: ""
+    });
+    const exchanged = applyCashExchange(deposited, {
+      id: "activity-2",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-usd",
+      sourceAmount: 100,
+      rateTwdPerUsd: 31.8,
+      fee: 0,
+      note: ""
+    });
+
+    expect(() => revertCashLinkedActivity(exchanged, "activity-1")).toThrow(/最新一筆/);
   });
 
   it("normalizes cash snapshots and rejects invalid deltas", () => {
