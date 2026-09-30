@@ -295,6 +295,57 @@ export const activitySchema = z.object({
         message: "活動金額與現金異動金額不一致。"
       });
     }
+
+    const beforeNormalized =
+      Math.abs(cash.before.quantity - 1) <= 1e-9 &&
+      Math.abs(cash.before.averageCost - cash.before.price) <= 1e-8;
+    const afterNormalized = !cash.after || (
+      Math.abs(cash.after.quantity - 1) <= 1e-9 &&
+      Math.abs(cash.after.averageCost - cash.after.price) <= 1e-8
+    );
+    if (!beforeNormalized || !afterNormalized) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact"],
+        message: "現金連動快照必須以 1 × 餘額的標準格式保存。"
+      });
+    }
+
+    const expectedBalance = cash.before.price + cash.delta;
+    if (expectedBalance < -1e-8) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "delta"],
+        message: "現金連動不可產生負餘額。"
+      });
+    } else if (expectedBalance <= 1e-8) {
+      if (cash.after !== null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["cashImpact", "after"],
+          message: "現金餘額歸零時，after 快照必須為 null。"
+        });
+      }
+    } else if (
+      !cash.after ||
+      Math.abs(cash.after.price - expectedBalance) > 1e-8 ||
+      Math.abs(cash.after.averageCost - expectedBalance) > 1e-8
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "after"],
+        message: "現金 after 快照必須等於 before 餘額加上本次 delta。"
+      });
+    }
+
+    if (isTradeActivityType(activity.type) && activity.inventoryImpact?.kind !== "trade") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["inventoryImpact"],
+        message: "有現金連動的新式買進／賣出必須同時保留證券持股快照。"
+      });
+    }
+
     const expectedReason = isTradeActivityType(activity.type) ? "trade" : activity.type;
     if (cash.reason !== expectedReason) {
       ctx.addIssue({
