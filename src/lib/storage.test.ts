@@ -43,6 +43,22 @@ describe("local storage safety", () => {
     expect(loaded.state.holdings).toEqual([]);
   });
 
+  it("migrates legacy stored state without allocation targets", () => {
+    storage.setItem("portfoliopilot:v1", JSON.stringify({
+      holdings: [],
+      etfCompositions: [],
+      journal: [],
+      activities: [],
+      snapshots: [],
+      usdTwd: 31.8,
+      dataMode: "personal"
+    }));
+
+    const loaded = loadInitialState();
+    expect(loaded.invalidStoredState).toBe(false);
+    expect(loaded.state.allocationTargets).toEqual([]);
+  });
+
   it("preserves invalid raw data before returning an empty safe state", () => {
     storage.setItem("portfoliopilot:v1", "{not valid json");
     const loaded = loadInitialState();
