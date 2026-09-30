@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppState, Holding } from "./types";
+import { localDateKey } from "./calc";
 import {
   applyCashLinkedActivity,
   nextCashSnapshot,
@@ -59,11 +60,79 @@ describe("cash account linkage", () => {
       currency: "TWD",
       time: "09:30",
       preFlowValueTwd: 5000,
+      preFlowValueSource: "manual",
       cashImpact: {
         delta: 1000,
         reason: "deposit"
       }
     });
+  });
+
+  it("auto-captures the current portfolio value before a same-day external cash flow", () => {
+    const base = state();
+    base.holdings.push({
+      id: "usd-stock",
+      symbol: "TEST",
+      name: "Test",
+      market: "US",
+      type: "stock",
+      quantity: 2,
+      price: 100,
+      averageCost: 90,
+      currency: "USD",
+      sector: "Test",
+      account: "美股"
+    });
+
+    const next = applyCashLinkedActivity(base, {
+      id: "auto-deposit",
+      date: localDateKey(),
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 1000,
+      fxRate: 1,
+      symbol: "",
+      note: "",
+      time: "10:15",
+      capturePreFlowFromCurrentState: true
+    });
+
+    expect(next.activities[0]).toMatchObject({
+      preFlowValueTwd: 11360,
+      preFlowValueSource: "system_current_state",
+      time: "10:15"
+    });
+    expect(next.holdings.find((item) => item.id === "cash")?.price).toBe(6000);
+  });
+
+  it("rejects current-state boundary capture for historical flows", () => {
+    expect(() => applyCashLinkedActivity(state(), {
+      id: "historical",
+      date: "2000-01-01",
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "",
+      note: "",
+      time: "10:15",
+      capturePreFlowFromCurrentState: true
+    })).toThrow(/歷史入金／出金不可使用目前淨值/);
+  });
+
+  it("rejects auto boundary capture on non-external cash events", () => {
+    expect(() => applyCashLinkedActivity(state(), {
+      id: "dividend-auto",
+      date: localDateKey(),
+      type: "dividend",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "2330",
+      note: "",
+      time: "10:15",
+      capturePreFlowFromCurrentState: true
+    })).toThrow(/只有入金／出金/);
   });
 
   it("subtracts withdrawals and preserves a zero-balance cash account", () => {
