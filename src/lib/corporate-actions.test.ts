@@ -89,7 +89,7 @@ describe("corporate share adjustments", () => {
     expect(next.holdings[0]?.averageCost).toBeCloseTo(900 / 1.1, 8);
   });
 
-  it("rejects zero or negative ratios", () => {
+  it("rejects zero, negative and no-op ratios", () => {
     expect(() => applyShareAdjustment(state(), {
       id: "bad",
       date: "2026-09-30",
@@ -97,6 +97,14 @@ describe("corporate share adjustments", () => {
       ratio: 0,
       note: ""
     })).toThrow(/必須大於 0/);
+
+    expect(() => applyShareAdjustment(state(), {
+      id: "noop",
+      date: "2026-09-30",
+      holdingId: "h1",
+      ratio: 1,
+      note: ""
+    })).toThrow(/不可為 1/);
   });
 
   it("reverts the latest share adjustment exactly", () => {
