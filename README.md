@@ -506,7 +506,7 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Managed buys atomically update the selected security and subtract gross cost + fees + taxes from a same-currency cash holding. Insufficient cash fails closed before any state is written.
 - Managed sells atomically reduce the security holding and add net proceeds after fees / taxes to the selected same-currency cash holding.
 - New deposits, withdrawals, dividends and standalone fees also update a selected cash holding. Withdrawals and fees cannot create negative cash.
-- If an event reduces a cash balance exactly to zero, the zero-value cash holding is removed while the event retains a full before / after snapshot so rollback can restore it.
+- Cash holdings are persistent accounts and may have a zero balance. Spending the balance exactly to zero keeps the same cash-account identity available for later sells, dividends or deposits; negative cash is still rejected.
 - Every new cash-linked event stores the cash holding ID, before / after snapshot, signed cash delta and reason in backup V8.
 - Trade rollback now validates both the security snapshot and linked cash snapshot. It fails closed if either side drifted or a later linked event touched the same security or cash account.
 - Cash-only event rollback likewise requires the event to be the latest linked event for that cash holding and refuses to overwrite later manual reconciliation.
