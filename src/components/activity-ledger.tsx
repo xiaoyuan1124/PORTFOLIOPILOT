@@ -1380,7 +1380,7 @@ function ActivityForm({
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.61 起，同幣別轉帳與 TWD／USD 內部換匯都屬於內部資產搬移，不算外部現金流。換匯只接受今天目前帳戶狀態，並保存實際轉出／實收金額與成交匯率；歷史現金事件仍維持 ledger-only，不重播到現在。
+        V0.62 起，股票／ETF 可在帳戶間直接移轉並攜帶成本基礎，不需要偽裝成賣出＋買進；同幣別轉帳與 TWD／USD 內部換匯也持續屬於內部資產搬移，不算外部現金流。所有會改目前庫存的移轉仍只從今天狀態往前套用。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
@@ -1446,6 +1446,12 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           accountName(activity.cashTransferImpact.toBefore.account)
         ];
       }
+      if (activity.positionTransferImpact) {
+        return [
+          accountName(activity.positionTransferImpact.sourceBefore.account),
+          accountName(activity.positionTransferImpact.destinationAfter.account)
+        ];
+      }
       return [accountName(activity.account)];
     })
   ])].sort((a, b) => a.localeCompare(b, "zh-Hant")), [state.activities, state.holdings]);
@@ -1460,11 +1466,14 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
             accountName(activity.cashTransferImpact.toBefore.account) === accountFilter)) ||
         (activity.cashFxImpact &&
           (accountName(activity.cashFxImpact.fromBefore.account) === accountFilter ||
-            accountName(activity.cashFxImpact.toBefore.account) === accountFilter))
+            accountName(activity.cashFxImpact.toBefore.account) === accountFilter)) ||
+        (activity.positionTransferImpact &&
+          (accountName(activity.positionTransferImpact.sourceBefore.account) === accountFilter ||
+            accountName(activity.positionTransferImpact.destinationAfter.account) === accountFilter))
       )
       .filter((activity) => {
         if (filter === "cash") return activity.type === "deposit" || activity.type === "withdrawal" || activity.type === "transfer" || activity.type === "fx_conversion";
-        if (filter === "trade") return activity.type === "buy" || activity.type === "sell" || activity.type === "corporate_action";
+        if (filter === "trade") return activity.type === "buy" || activity.type === "sell" || activity.type === "position_transfer" || activity.type === "corporate_action";
         if (filter === "income") return activity.type === "dividend" || activity.type === "fee";
         return true;
       })
@@ -1519,6 +1528,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       return true;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法安全完成內部換匯");
+      return false;
+    }
+  }
+
+  function addSecurityTransfer(input: SecurityAccountTransferInput) {
+    try {
+      const next = applySecurityAccountTransfer(state, input);
+      if (!onChange(next)) return false;
+      toast.success("持股已在帳戶間移轉，未建立買賣或現金流");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全完成持股移轉");
       return false;
     }
   }
@@ -1582,7 +1603,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
             {[
               ["all", "全部"],
               ["cash", "現金流/轉帳/換匯"],
-              ["trade", "交易/股數調整"],
+              ["trade", "交易/持股異動"],
               ["income", "股息/費用"]
             ].map(([key, label]) => (
               <button key={key} onClick={() => setFilter(key as typeof filter)} className={`min-h-10 rounded-xl px-3 text-sm font-semibold transition ${filter === key ? "bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]" : "text-black/50 dark:text-white/50"}`}>
@@ -1602,6 +1623,9 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           </Modal>
           <Modal title="內部換匯" trigger={<GhostButton><ArrowRightLeft size={16} />換匯</GhostButton>}>
             <FxConversionForm state={state} onSave={addCashFxConversion} />
+          </Modal>
+          <Modal title="持股帳戶移轉" trigger={<GhostButton><ArrowRightLeft size={16} />移轉持股</GhostButton>}>
+            <SecurityTransferForm state={state} onSave={addSecurityTransfer} />
           </Modal>
           <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
             <ActivityForm state={state} onSaveCash={addCashActivity} onSaveHistoricalCash={addHistoricalCashActivity} onSaveTransfer={addCashTransfer} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
@@ -1624,6 +1648,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           const external = isExternalActivityType(activity.type);
           const transfer = isCashTransferActivityType(activity.type);
           const fxConversion = isCashFxActivityType(activity.type);
+          const positionTransfer = isPositionTransferActivityType(activity.type);
           const trade = isTradeActivityType(activity.type);
           const corporate = activity.type === "corporate_action";
           const ledgerOnlyCash =
@@ -1645,12 +1670,13 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="font-semibold">{labels[activity.type]}</p>
                       {!external && activity.symbol ? <span className="text-xs text-black/40 dark:text-white/40">{activity.symbol}</span> : null}
                       <Badge>{accountName(activity.account)}</Badge>
-                      {external ? <Badge tone="good">外部現金流</Badge> : (transfer || fxConversion) ? <Badge>內部資產搬移</Badge> : <Badge>內部紀錄</Badge>}
+                      {external ? <Badge tone="good">外部現金流</Badge> : (transfer || fxConversion || positionTransfer) ? <Badge>內部資產搬移</Badge> : <Badge>內部紀錄</Badge>}
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
                       {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
                       {ledgerOnlyCash ? <Badge tone="warn">Ledger-only・未改目前現金</Badge> : null}
                       {activity.cashTransferImpact ? <Badge tone="good">雙帳戶原子更新</Badge> : null}
                       {activity.cashFxImpact ? <Badge tone="good">跨幣別原子更新</Badge> : null}
+                      {activity.positionTransferImpact ? <Badge tone="good">雙持股原子更新</Badge> : null}
                       {external ? (activity.preFlowValueTwd !== undefined ? (
                         <Badge tone="good">
                           {activity.preFlowValueSource === "system_current_state"
@@ -1665,6 +1691,10 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                     <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                       {corporate ? (
                         <p className="text-sm font-semibold">非現金股數調整</p>
+                      ) : positionTransfer && activity.positionTransferImpact ? (
+                        <p className="text-lg font-semibold tabular-nums">
+                          {activity.symbol} · {activity.positionTransferImpact.quantity.toLocaleString()} 股
+                        </p>
                       ) : fxConversion && activity.cashFxImpact ? (
                         <p className="text-lg font-semibold tabular-nums">
                           {activity.cashFxImpact.fromBefore.currency} {activity.cashFxImpact.fromAmount.toLocaleString()} → {activity.cashFxImpact.toBefore.currency} {activity.cashFxImpact.toAmount.toLocaleString()}
@@ -1708,6 +1738,14 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                         <p className="text-black/35 dark:text-white/35">內部換匯不計入淨投入，也不建立 TWR 外部現金流邊界；轉出與實收金額直接保存，不猜 spread 或費用。</p>
                       </div>
                     ) : null}
+                    {activity.positionTransferImpact ? (
+                      <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+                        <p>{accountName(activity.positionTransferImpact.sourceBefore.account)} · 股數 {activity.positionTransferImpact.sourceBefore.quantity.toLocaleString()} → {(activity.positionTransferImpact.sourceAfter?.quantity ?? 0).toLocaleString()}</p>
+                        <p>{accountName(activity.positionTransferImpact.destinationAfter.account)} · 股數 {(activity.positionTransferImpact.destinationBefore?.quantity ?? 0).toLocaleString()} → {activity.positionTransferImpact.destinationAfter.quantity.toLocaleString()}</p>
+                        <p>移轉成本基礎 {activity.currency} {(activity.positionTransferImpact.quantity * activity.positionTransferImpact.sourceBefore.averageCost).toLocaleString()} · 目的平均成本 {activity.positionTransferImpact.destinationAfter.averageCost.toLocaleString()}</p>
+                        <p className="text-black/35 dark:text-white/35">持股移轉不視為買賣，不產生現金流或已實現損益；總成本基礎與總市值必須守恆。</p>
+                      </div>
+                    ) : null}
                     {external && activity.preFlowValueTwd !== undefined ? (
                       <p className="mt-2 text-xs text-black/45 dark:text-white/45">
                         現金流前淨值：{money(activity.preFlowValueTwd)}
@@ -1733,6 +1771,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       className="h-10 min-h-10 w-10 px-0"
                       aria-label="刪除紀錄"
                       onClick={() => {
+                        if (activity.positionTransferImpact) {
+                          if (!window.confirm("這筆持股移轉已同時更新來源與目的帳戶。刪除時會嘗試精確還原雙方庫存；若任一部位已有後續交易、股數調整、其他移轉或手動校正，系統會拒絕回滾。確定繼續？")) return;
+                          try {
+                            const next = revertSecurityAccountTransfer(state, activity.id);
+                            if (!onChange(next)) return;
+                            toast.success("持股移轉已刪除，來源與目的庫存已還原");
+                          } catch (error) {
+                            toast.error(error instanceof Error ? error.message : "無法安全回滾持股移轉");
+                          }
+                          return;
+                        }
+
                         if (activity.inventoryImpact?.kind === "corporate_action") {
                           if (!window.confirm("這筆股數調整已套用到持股。刪除時會嘗試精確還原事件前庫存；若後續交易或手動修改使資料不一致，系統會拒絕回滾。確定繼續？")) return;
                           try {
@@ -1818,7 +1868,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       {!activities.length ? (
         <div className="py-14 text-center">
           <p className="text-sm text-black/40 dark:text-white/40">
-            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流／轉帳／換匯紀錄。" : "目前尚未記錄任何交易／現金流／轉帳／換匯。"}
+            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流／轉帳／換匯／持股移轉紀錄。" : "目前尚未記錄任何交易／現金流／轉帳／換匯／持股移轉。"}
           </p>
           {state.activities.length && (filter !== "all" || accountFilter !== "all") ? (
             <GhostButton className="mt-4" onClick={() => { setFilter("all"); setAccountFilter("all"); }}>
