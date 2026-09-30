@@ -1,6 +1,7 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
 import { localDateKey, portfolioSummary } from "./calc";
 import { accountName } from "./local-data";
+import { hasLaterRecordedActivity } from "./activity-order";
 
 export type CashLinkedActivityInput = {
   id: string;
@@ -145,11 +146,12 @@ export function revertCashTransfer(state: AppState, activityId: string): AppStat
     throw new Error("這筆紀錄不是可回滾的內部現金轉帳。");
   }
 
-  const laterTouchesEither = state.activities.some((item) =>
-    item.id !== activity.id &&
-    (activityTouchesCashHolding(item, impact.fromCashHoldingId) ||
-      activityTouchesCashHolding(item, impact.toCashHoldingId)) &&
-    (item.date > activity.date || (item.date === activity.date && item.id > activity.id))
+  const laterTouchesEither = hasLaterRecordedActivity(
+    state.activities,
+    activity,
+    (item) =>
+      activityTouchesCashHolding(item, impact.fromCashHoldingId) ||
+      activityTouchesCashHolding(item, impact.toCashHoldingId)
   );
   if (laterTouchesEither) {
     throw new Error("轉出或轉入帳戶後面已有其他現金連動事件，請先從最新一筆開始回滾。");
@@ -256,10 +258,10 @@ export function revertCashLinkedActivity(state: AppState, activityId: string): A
     throw new Error("這筆紀錄不是可獨立回滾的現金連動事件。");
   }
 
-  const laterCash = state.activities.some((item) =>
-    item.id !== activity.id &&
-    activityTouchesCashHolding(item, impact.cashHoldingId) &&
-    (item.date > activity.date || (item.date === activity.date && item.id > activity.id))
+  const laterCash = hasLaterRecordedActivity(
+    state.activities,
+    activity,
+    (item) => activityTouchesCashHolding(item, impact.cashHoldingId)
   );
   if (laterCash) {
     throw new Error("此現金帳戶後面已有其他連動事件，請先從最新一筆開始回滾。");
