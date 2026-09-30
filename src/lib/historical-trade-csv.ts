@@ -207,9 +207,6 @@ export function parseHistoricalTradeCsv(
   fallbackMarket: Market | null
 ): HistoricalTradeInput[] {
   const accountFallback = fallbackAccount.trim();
-  if (!accountFallback) {
-    throw new Error("請先填寫這份歷史成交 CSV 的預設帳戶名稱。");
-  }
 
   const parsed = Papa.parse<Record<string, unknown>>(text, {
     header: true,
@@ -254,6 +251,9 @@ export function parseHistoricalTradeCsv(
     const fee = parseNumber(rowValue(row, headerByField, "fee"), "手續費", rowNumber, true);
     const tax = parseNumber(rowValue(row, headerByField, "tax"), "交易稅", rowNumber, true);
     const account = rawText(rowValue(row, headerByField, "account")) || accountFallback;
+    if (!account) {
+      throw new Error(`歷史成交 CSV 第 ${rowNumber} 列沒有帳戶；請在 CSV 提供帳戶欄，或先填寫預設帳戶。`);
+    }
     const fxRate = market === "TW"
       ? 1
       : parseNumber(rowValue(row, headerByField, "fxRate"), "交易當日 USD/TWD 匯率", rowNumber, false);
