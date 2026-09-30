@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppState } from "./types";
 import {
+  historicalTradeCsvBatches,
   historicalTradeCsvTemplate,
   importHistoricalTradeCsv,
   latestHistoricalTradeCsvBatch,
@@ -281,6 +282,69 @@ describe("historical trade CSV adapter", () => {
     expect(undoneFirst.activities).toEqual([]);
     expect(undoneFirst.holdings).toEqual(base.holdings);
     expect(() => undoHistoricalTradeCsvBatch(undoneFirst, first.importBatchId)).toThrow(/已不存在/);
+  });
+
+  it("lists every reversible batch newest-first with remaining rows and cost summaries", () => {
+    const firstCsv = [
+      "日期,買賣,市場,代號,股數,成交價,手續費,交易稅,帳戶,成交序號",
+      "2020/01/02,買進,TW,2330,1,100,10,3,台股券商,A001",
+      "2020/01/03,賣出,TW,2330,1,110,5,2,台股券商,A002"
+    ].join("\n");
+    const secondCsv = [
+      "日期,買賣,市場,代號,股數,成交價,手續費,交易稅,匯率,帳戶,成交序號",
+      "2019/12/01,買進,US,QQQM,1,200,2,1,30,美股券商,B001"
+    ].join("\n");
+
+    const first = importHistoricalTradeCsv(state(), firstCsv, "", null);
+    const second = importHistoricalTradeCsv(first.state, secondCsv, "", null);
+    const batches = historicalTradeCsvBatches(second.state);
+
+    expect(batches).toHaveLength(2);
+    expect(batches[0]).toMatchObject({
+      importBatchId: second.importBatchId,
+      remainingCount: 1,
+      buyCount: 1,
+      sellCount: 0,
+      twCount: 0,
+      usCount: 1,
+      firstDate: "2019-12-01",
+      lastDate: "2019-12-01",
+      accounts: ["美股券商"],
+      feesTwd: 60,
+      taxesTwd: 30
+    });
+    expect(batches[1]).toMatchObject({
+      importBatchId: first.importBatchId,
+      remainingCount: 2,
+      buyCount: 1,
+      sellCount: 1,
+      twCount: 2,
+      usCount: 0,
+      firstDate: "2020-01-02",
+      lastDate: "2020-01-03",
+      accounts: ["台股券商"],
+      feesTwd: 15,
+      taxesTwd: 5
+    });
+
+    // Historical date does not decide "newest"; actual append/import order does.
+    expect(batches[0]?.firstDate).toBe("2019-12-01");
+
+    const partiallyDeleted = {
+      ...second.state,
+      activities: second.state.activities.filter(
+        (activity) => activity.id !== first.state.activities[0]?.id
+      )
+    };
+    const afterPartialDelete = historicalTradeCsvBatches(partiallyDeleted);
+    expect(afterPartialDelete[1]).toMatchObject({
+      importBatchId: first.importBatchId,
+      remainingCount: 1,
+      buyCount: 0,
+      sellCount: 1,
+      feesTwd: 5,
+      taxesTwd: 2
+    });
   });
 
   it("provides a template that parses as both TW and US history", () => {
