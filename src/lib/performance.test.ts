@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AppState } from "./types";
-import { calculateXirr, exactTimeWeightedReturn, incomeAfterFees, modifiedDietzReturn, netExternalContributions, portfolioXirr } from "./performance";
+import type { AppState, PortfolioActivity } from "./types";
+import { calculateXirr, exactTimeWeightedReturn, incomeAfterFees, ledgerEconomicsSummary, modifiedDietzReturn, netExternalContributions, portfolioXirr } from "./performance";
 import { recordHistoricalCashActivity } from "./cash-account";
 
 describe("performance math", () => {
@@ -145,6 +145,108 @@ describe("performance math", () => {
       { id: "future-fee", date: "2026-10-05", type: "fee" as const, symbol: "", amount: 50, currency: "TWD" as const, fxRate: 1, quantity: 0, price: 0, note: "" }
     ];
     expect(incomeAfterFees(activities, "2026-09-30")).toBe(100);
+  });
+
+  it("separates dividends, standalone fees, trade costs and FX valuation delta", () => {
+    const twdCash = {
+      id: "twd",
+      symbol: "CASH-TWD",
+      name: "TWD 現金",
+      market: "TW" as const,
+      type: "cash" as const,
+      quantity: 1,
+      price: 5000,
+      averageCost: 5000,
+      currency: "TWD" as const,
+      sector: "現金",
+      account: "台幣"
+    };
+    const usdCash = {
+      id: "usd",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      market: "US" as const,
+      type: "cash" as const,
+      quantity: 1,
+      price: 100,
+      averageCost: 100,
+      currency: "USD" as const,
+      sector: "現金",
+      account: "美元"
+    };
+    const usHolding = {
+      id: "qqqm",
+      symbol: "QQQM",
+      name: "QQQM",
+      market: "US" as const,
+      type: "etf" as const,
+      quantity: 2,
+      price: 250,
+      averageCost: 200,
+      currency: "USD" as const,
+      sector: "ETF",
+      account: "美元"
+    };
+
+    const activities: PortfolioActivity[] = [
+      { id: "dividend", date: "2026-09-01", type: "dividend", symbol: "2330", amount: 100, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "" },
+      { id: "standalone-fee", date: "2026-09-02", type: "fee", symbol: "", amount: 2, currency: "USD", fxRate: 30, quantity: 0, price: 0, note: "" },
+      {
+        id: "trade",
+        date: "2026-09-03",
+        type: "buy",
+        symbol: "QQQM",
+        amount: 253,
+        currency: "USD",
+        fxRate: 30,
+        quantity: 1,
+        price: 250,
+        note: "",
+        inventoryImpact: {
+          kind: "trade",
+          holdingId: "qqqm",
+          before: usHolding,
+          after: { ...usHolding, quantity: 3 },
+          fee: 1,
+          tax: 2,
+          realizedPnl: 0,
+          method: "average_cost"
+        }
+      },
+      {
+        id: "fx",
+        date: "2026-09-04",
+        type: "fx_conversion",
+        symbol: "",
+        amount: 3200,
+        currency: "TWD",
+        fxRate: 32,
+        quantity: 0,
+        price: 0,
+        note: "",
+        cashFxImpact: {
+          fromCashHoldingId: "twd",
+          toCashHoldingId: "usd",
+          fromBefore: twdCash,
+          fromAfter: { ...twdCash, price: 1800, averageCost: 1800 },
+          toBefore: usdCash,
+          toAfter: { ...usdCash, price: 200, averageCost: 200 },
+          fromAmount: 3200,
+          toAmount: 100,
+          executionTwdPerUsd: 32,
+          valuationTwdPerUsd: 31.8
+        }
+      }
+    ];
+
+    const summary = ledgerEconomicsSummary(activities, "2026-09-30");
+    expect(summary.dividendsTwd).toBe(100);
+    expect(summary.standaloneFeesTwd).toBe(60);
+    expect(summary.incomeAfterStandaloneFeesTwd).toBe(40);
+    expect(summary.tradeFeesTwd).toBe(30);
+    expect(summary.tradeTaxesTwd).toBe(60);
+    expect(summary.fxConversionValuationDeltaTwd).toBeCloseTo(-20, 8);
+    expect(incomeAfterFees(activities, "2026-09-30")).toBe(40);
   });
 
   it("calculates portfolio XIRR from external flows and terminal value", () => {
