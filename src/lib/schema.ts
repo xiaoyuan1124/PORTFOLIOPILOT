@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isCashFxActivityType, isExternalActivityType, isTradeActivityType, normalizeActivitySecurityFields } from "./activity-data";
+import { isCashFxActivityType, isExternalActivityType, isPositionTransferActivityType, isTradeActivityType, normalizeActivitySecurityFields } from "./activity-data";
 
 export const ETF_WEIGHT_EPSILON = 1e-6;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -142,6 +142,16 @@ export const cashFxImpactSchema = z.object({
   valuationTwdPerUsd: z.number().finite().positive()
 });
 
+export const positionTransferImpactSchema = z.object({
+  sourceHoldingId: z.string().min(1),
+  destinationHoldingId: z.string().min(1),
+  sourceBefore: holdingSchema,
+  sourceAfter: holdingSchema.nullable(),
+  destinationBefore: holdingSchema.nullable(),
+  destinationAfter: holdingSchema,
+  quantity: z.number().finite().positive()
+});
+
 export const etfConstituentSchema = z.object({
   market: z.enum(["TW", "US"]),
   symbol: z.string().trim().min(1).max(32),
@@ -184,7 +194,7 @@ export const activitySchema = z.object({
   id: z.string().min(1),
   date: dateKeySchema,
   time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).optional(),
-  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee", "transfer", "fx_conversion", "corporate_action"]),
+  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee", "transfer", "fx_conversion", "position_transfer", "corporate_action"]),
   symbol: z.string(),
   amount: z.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
@@ -198,9 +208,14 @@ export const activitySchema = z.object({
   inventoryImpact: inventoryImpactSchema.optional(),
   cashImpact: cashImpactSchema.optional(),
   cashTransferImpact: cashTransferImpactSchema.optional(),
-  cashFxImpact: cashFxImpactSchema.optional()
+  cashFxImpact: cashFxImpactSchema.optional(),
+  positionTransferImpact: positionTransferImpactSchema.optional()
 }).superRefine((activity, ctx) => {
-  if (activity.type !== "corporate_action" && activity.amount <= 0) {
+  const zeroAmountInternal =
+    activity.type === "corporate_action" ||
+    isPositionTransferActivityType(activity.type);
+
+  if (!zeroAmountInternal && activity.amount <= 0) {
     ctx.addIssue({
       code: "custom",
       path: ["amount"],
@@ -208,15 +223,15 @@ export const activitySchema = z.object({
     });
   }
 
-  if (activity.type === "corporate_action" && activity.amount !== 0) {
+  if (zeroAmountInternal && activity.amount !== 0) {
     ctx.addIssue({
       code: "custom",
       path: ["amount"],
-      message: "非現金股數調整不可帶入現金金額。"
+      message: "非現金庫存事件不可帶入現金金額。"
     });
   }
 
-  if ((isTradeActivityType(activity.type) || activity.type === "corporate_action") && !activity.symbol.trim()) {
+  if ((isTradeActivityType(activity.type) || activity.type === "corporate_action" || isPositionTransferActivityType(activity.type)) && !activity.symbol.trim()) {
     ctx.addIssue({
       code: "custom",
       path: ["symbol"],
@@ -568,6 +583,237 @@ export const activitySchema = z.object({
     }
   }
 
+  if (activity.type === "position_transfer" && !activity.positionTransferImpact) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["positionTransferImpact"],
+      message: "證券帳戶移轉必須保留來源與目的持股的前後快照。"
+    });
+  }
+
+  if (activity.type !== "position_transfer" && activity.positionTransferImpact) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["positionTransferImpact"],
+      message: "只有證券帳戶移轉可以附帶雙持股快照。"
+    });
+  }
+
+  if (
+    activity.type === "position_transfer" &&
+    (activity.inventoryImpact || activity.cashImpact || activity.cashTransferImpact || activity.cashFxImpact)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["positionTransferImpact"],
+      message: "證券帳戶移轉不可同時附帶買賣、現金轉帳或換匯連動。"
+    });
+  }
+
+  if (activity.positionTransferImpact) {
+    const transfer = activity.positionTransferImpact;
+    const source = transfer.sourceBefore;
+    const sourceAfter = transfer.sourceAfter;
+    const destinationBefore = transfer.destinationBefore;
+    const destinationAfter = transfer.destinationAfter;
+    const sourceAccount = (source.account?.trim() || "預設帳戶").toLowerCase();
+    const destinationAccount = (destinationAfter.account?.trim() || "預設帳戶").toLowerCase();
+    const activityAccount = (activity.account?.trim() || "預設帳戶").toLowerCase();
+    const sourceSymbol = source.symbol.trim().toUpperCase();
+
+    if (transfer.sourceHoldingId === transfer.destinationHoldingId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact"],
+        message: "證券移轉的來源與目的持股 ID 不可相同。"
+      });
+    }
+    if (
+      source.id !== transfer.sourceHoldingId ||
+      (sourceAfter && sourceAfter.id !== transfer.sourceHoldingId) ||
+      (destinationBefore && destinationBefore.id !== transfer.destinationHoldingId) ||
+      destinationAfter.id !== transfer.destinationHoldingId
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact"],
+        message: "證券移轉快照的持股 ID 不一致。"
+      });
+    }
+
+    const snapshots = [source, sourceAfter, destinationBefore, destinationAfter]
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+    if (snapshots.some((item) => item.type === "cash")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact"],
+        message: "證券帳戶移轉不可包含現金部位。"
+      });
+    }
+    if (snapshots.some((item) =>
+      item.market !== source.market ||
+      item.symbol.trim().toUpperCase() !== sourceSymbol ||
+      item.type !== source.type ||
+      item.currency !== source.currency
+    )) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact"],
+        message: "證券移轉的市場、代號、資產類型與幣別必須一致。"
+      });
+    }
+    if (sourceAccount === destinationAccount) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact"],
+        message: "證券移轉的來源與目的帳戶不可相同。"
+      });
+    }
+    if (
+      activity.symbol.trim().toUpperCase() !== sourceSymbol ||
+      activity.currency !== source.currency ||
+      activityAccount !== sourceAccount
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact"],
+        message: "證券移轉活動的代號、幣別或來源帳戶與快照不一致。"
+      });
+    }
+    if (
+      Math.abs(activity.quantity - transfer.quantity) > 1e-8 ||
+      activity.price !== 0
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["quantity"],
+        message: "證券移轉活動必須保存實際移轉股數，且不可帶入成交價。"
+      });
+    }
+
+    const remaining = source.quantity - transfer.quantity;
+    if (remaining < -1e-8) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact", "quantity"],
+        message: "證券移轉股數不可超過來源持股。"
+      });
+    } else if (remaining <= 1e-8) {
+      if (sourceAfter !== null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["positionTransferImpact", "sourceAfter"],
+          message: "來源持股全數移轉後 sourceAfter 必須為 null。"
+        });
+      }
+    } else if (
+      !sourceAfter ||
+      Math.abs(sourceAfter.quantity - remaining) > 1e-8 ||
+      Math.abs(sourceAfter.averageCost - source.averageCost) > 1e-8 ||
+      Math.abs(sourceAfter.price - source.price) > 1e-8 ||
+      sourceAfter.priceSource !== source.priceSource ||
+      sourceAfter.priceAsOf !== source.priceAsOf ||
+      (sourceAfter.account?.trim() || "預設帳戶").toLowerCase() !== sourceAccount
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact", "sourceAfter"],
+        message: "來源持股 after 快照必須只減少移轉股數並保留成本與價格基準。"
+      });
+    }
+
+    const destinationBeforeQuantity = destinationBefore?.quantity ?? 0;
+    const expectedDestinationQuantity = destinationBeforeQuantity + transfer.quantity;
+    const expectedDestinationBasis =
+      (destinationBefore ? destinationBefore.quantity * destinationBefore.averageCost : 0) +
+      transfer.quantity * source.averageCost;
+    const expectedDestinationAverageCost = expectedDestinationBasis / expectedDestinationQuantity;
+
+    if (
+      Math.abs(destinationAfter.quantity - expectedDestinationQuantity) > 1e-8 ||
+      Math.abs(destinationAfter.averageCost - expectedDestinationAverageCost) > 1e-8
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact", "destinationAfter"],
+        message: "目的持股 after 快照的股數或加權平均成本不一致。"
+      });
+    }
+
+    if (destinationBefore) {
+      const beforeAccount = (destinationBefore.account?.trim() || "預設帳戶").toLowerCase();
+      if (beforeAccount !== destinationAccount) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["positionTransferImpact", "destinationAfter"],
+          message: "目的持股帳戶在移轉前後不可改變。"
+        });
+      }
+      if (
+        Math.abs(source.price - destinationBefore.price) > 1e-8 ||
+        source.priceSource !== destinationBefore.priceSource ||
+        source.priceAsOf !== destinationBefore.priceAsOf
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["positionTransferImpact", "destinationBefore"],
+          message: "來源與既有目的持股必須使用相同目前價格與價格來源／資料日。"
+        });
+      }
+      if (
+        Math.abs(destinationAfter.price - destinationBefore.price) > 1e-8 ||
+        destinationAfter.priceSource !== destinationBefore.priceSource ||
+        destinationAfter.priceAsOf !== destinationBefore.priceAsOf
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["positionTransferImpact", "destinationAfter"],
+          message: "既有目的持股的目前價格與來源不可被帳戶移轉改寫。"
+        });
+      }
+    } else if (
+      Math.abs(destinationAfter.price - source.price) > 1e-8 ||
+      destinationAfter.priceSource !== source.priceSource ||
+      destinationAfter.priceAsOf !== source.priceAsOf ||
+      destinationAfter.name !== source.name ||
+      destinationAfter.sector !== source.sector
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact", "destinationAfter"],
+        message: "新目的持股必須沿用來源持股的市場價格、來源、名稱與分類。"
+      });
+    }
+
+    const beforeBasis =
+      source.quantity * source.averageCost +
+      (destinationBefore ? destinationBefore.quantity * destinationBefore.averageCost : 0);
+    const afterBasis =
+      (sourceAfter ? sourceAfter.quantity * sourceAfter.averageCost : 0) +
+      destinationAfter.quantity * destinationAfter.averageCost;
+    if (Math.abs(beforeBasis - afterBasis) > 1e-7 * Math.max(1, Math.abs(beforeBasis))) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact"],
+        message: "證券移轉前後總成本基礎必須完全守恆。"
+      });
+    }
+
+    const beforeValue =
+      source.quantity * source.price +
+      (destinationBefore ? destinationBefore.quantity * destinationBefore.price : 0);
+    const afterValue =
+      (sourceAfter ? sourceAfter.quantity * sourceAfter.price : 0) +
+      destinationAfter.quantity * destinationAfter.price;
+    if (Math.abs(beforeValue - afterValue) > 1e-7 * Math.max(1, Math.abs(beforeValue))) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["positionTransferImpact"],
+        message: "證券移轉前後總市值不可因帳戶搬移而改變。"
+      });
+    }
+  }
+
   if (activity.type === "fx_conversion" && !activity.cashFxImpact) {
     ctx.addIssue({
       code: "custom",
@@ -850,7 +1096,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12), z.literal(13)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),
