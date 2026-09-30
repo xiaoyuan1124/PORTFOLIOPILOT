@@ -1011,9 +1011,15 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
 
   const activities = useMemo(() => {
     return [...state.activities]
-      .filter((activity) => accountFilter === "all" || accountName(activity.account) === accountFilter)
+      .filter((activity) =>
+        accountFilter === "all" ||
+        accountName(activity.account) === accountFilter ||
+        (activity.cashTransferImpact &&
+          (accountName(activity.cashTransferImpact.fromBefore.account) === accountFilter ||
+            accountName(activity.cashTransferImpact.toBefore.account) === accountFilter))
+      )
       .filter((activity) => {
-        if (filter === "cash") return activity.type === "deposit" || activity.type === "withdrawal";
+        if (filter === "cash") return activity.type === "deposit" || activity.type === "withdrawal" || activity.type === "transfer";
         if (filter === "trade") return activity.type === "buy" || activity.type === "sell" || activity.type === "corporate_action";
         if (filter === "income") return activity.type === "dividend" || activity.type === "fee";
         return true;
@@ -1033,6 +1039,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       return true;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法安全更新現金帳戶");
+      return false;
+    }
+  }
+
+  function addCashTransfer(input: CashTransferInput) {
+    try {
+      const next = applyCashTransfer(state, input);
+      if (!onChange(next)) return false;
+      toast.success("內部轉帳已完成，總現金與淨值不變");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全完成內部現金轉帳");
       return false;
     }
   }
@@ -1095,7 +1113,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           <div className="inline-flex rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
             {[
               ["all", "全部"],
-              ["cash", "入出金"],
+              ["cash", "現金流/轉帳"],
               ["trade", "交易/股數調整"],
               ["income", "股息/費用"]
             ].map(([key, label]) => (
@@ -1115,7 +1133,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
             <OpeningBuyForm state={state} onSave={addOpeningPosition} />
           </Modal>
           <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
-            <ActivityForm state={state} onSaveCash={addCashActivity} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
+            <ActivityForm state={state} onSaveCash={addCashActivity} onSaveTransfer={addCashTransfer} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
           </Modal>
         </div>
       </div>
@@ -1133,6 +1151,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           const Icon = icons[activity.type];
           const twd = activityAmountTwd(activity);
           const external = isExternalActivityType(activity.type);
+          const transfer = isCashTransferActivityType(activity.type);
           const trade = isTradeActivityType(activity.type);
           const corporate = activity.type === "corporate_action";
 
@@ -1148,9 +1167,10 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="font-semibold">{labels[activity.type]}</p>
                       {!external && activity.symbol ? <span className="text-xs text-black/40 dark:text-white/40">{activity.symbol}</span> : null}
                       <Badge>{accountName(activity.account)}</Badge>
-                      {external ? <Badge tone="good">外部現金流</Badge> : <Badge>內部紀錄</Badge>}
+                      {external ? <Badge tone="good">外部現金流</Badge> : transfer ? <Badge>內部資產搬移</Badge> : <Badge>內部紀錄</Badge>}
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
                       {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
+                      {activity.cashTransferImpact ? <Badge tone="good">雙帳戶原子更新</Badge> : null}
                       {external ? (activity.preFlowValueTwd !== undefined ? (
                         <Badge tone="good">
                           {activity.preFlowValueSource === "system_current_state"
@@ -1188,6 +1208,13 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="mt-1 text-xs text-black/45 dark:text-white/45">
                         {accountName(activity.cashImpact.before.account)} · 現金 {activity.cashImpact.delta > 0 ? "+" : ""}{activity.cashImpact.delta.toLocaleString()} · {activity.cashImpact.before.price.toLocaleString()} → {(activity.cashImpact.after?.price ?? 0).toLocaleString()}
                       </p>
+                    ) : null}
+                    {activity.cashTransferImpact ? (
+                      <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+                        <p>{accountName(activity.cashTransferImpact.fromBefore.account)} · {activity.currency} {activity.cashTransferImpact.fromBefore.price.toLocaleString()} → {activity.cashTransferImpact.fromAfter.price.toLocaleString()}</p>
+                        <p>{accountName(activity.cashTransferImpact.toBefore.account)} · {activity.currency} {activity.cashTransferImpact.toBefore.price.toLocaleString()} → {activity.cashTransferImpact.toAfter.price.toLocaleString()}</p>
+                        <p className="text-black/35 dark:text-white/35">內部轉帳不計入淨投入，也不建立 TWR 外部現金流邊界。</p>
+                      </div>
                     ) : null}
                     {external && activity.preFlowValueTwd !== undefined ? (
                       <p className="mt-2 text-xs text-black/45 dark:text-white/45">
@@ -1234,6 +1261,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                             toast.success("交易已刪除，持股已還原");
                           } catch (error) {
                             toast.error(error instanceof Error ? error.message : "無法安全回滾交易");
+                          }
+                          return;
+                        }
+
+                        if (activity.cashTransferImpact) {
+                          if (!window.confirm("這筆內部轉帳已同時更新兩個現金帳戶。刪除時會嘗試精確還原雙方餘額；若任一帳戶已有後續事件或手動校正，系統會拒絕回滾。確定繼續？")) return;
+                          try {
+                            const next = revertCashTransfer(state, activity.id);
+                            if (!onChange(next)) return;
+                            toast.success("內部轉帳已刪除，兩邊現金餘額已還原");
+                          } catch (error) {
+                            toast.error(error instanceof Error ? error.message : "無法安全回滾內部轉帳");
                           }
                           return;
                         }
