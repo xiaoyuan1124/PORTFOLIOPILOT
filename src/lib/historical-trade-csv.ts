@@ -310,6 +310,91 @@ export function parseHistoricalTradeCsv(
   });
 }
 
+export interface HistoricalTradeCsvPreviewRow {
+  date: string;
+  type: "buy" | "sell";
+  market: Market;
+  symbol: string;
+  account: string;
+  quantity: number;
+  price: number;
+  fee: number;
+  tax: number;
+  fxRate: number;
+}
+
+export interface HistoricalTradeCsvPreview {
+  importedCount: number;
+  buyCount: number;
+  sellCount: number;
+  twCount: number;
+  usCount: number;
+  firstDate: string;
+  lastDate: string;
+  accounts: string[];
+  feesTwd: number;
+  taxesTwd: number;
+  sampleRows: HistoricalTradeCsvPreviewRow[];
+}
+
+function validateHistoricalTradeInputs(state: AppState, inputs: HistoricalTradeInput[]) {
+  let next = state;
+  for (const input of inputs) {
+    next = recordHistoricalTrade(next, input);
+  }
+  return next;
+}
+
+export function previewHistoricalTradeCsv(
+  state: AppState,
+  text: string,
+  fallbackAccount: string,
+  fallbackMarket: Market | null
+): HistoricalTradeCsvPreview {
+  const inputs = parseHistoricalTradeCsv(text, fallbackAccount, fallbackMarket);
+
+  // Run the exact engine against an immutable candidate state so duplicate
+  // fingerprints, historical-date rules and every V0.65 invariant are checked
+  // before the UI offers a commit action.
+  validateHistoricalTradeInputs(state, inputs);
+
+  const sortedDates = inputs.map((input) => input.date).sort();
+  const accounts = [...new Set(inputs.map((input) => input.account))].sort((a, b) => a.localeCompare(b, "zh-Hant"));
+  const feesTwd = inputs.reduce(
+    (sum, input) => sum + input.fee * (input.market === "TW" ? 1 : input.fxRate),
+    0
+  );
+  const taxesTwd = inputs.reduce(
+    (sum, input) => sum + input.tax * (input.market === "TW" ? 1 : input.fxRate),
+    0
+  );
+
+  return {
+    importedCount: inputs.length,
+    buyCount: inputs.filter((input) => input.type === "buy").length,
+    sellCount: inputs.filter((input) => input.type === "sell").length,
+    twCount: inputs.filter((input) => input.market === "TW").length,
+    usCount: inputs.filter((input) => input.market === "US").length,
+    firstDate: sortedDates[0] ?? "",
+    lastDate: sortedDates.at(-1) ?? "",
+    accounts,
+    feesTwd,
+    taxesTwd,
+    sampleRows: inputs.slice(0, 8).map((input) => ({
+      date: input.date,
+      type: input.type,
+      market: input.market,
+      symbol: input.symbol,
+      account: input.account,
+      quantity: input.quantity,
+      price: input.price,
+      fee: input.fee,
+      tax: input.tax,
+      fxRate: input.fxRate
+    }))
+  };
+}
+
 export function importHistoricalTradeCsv(
   state: AppState,
   text: string,
@@ -317,10 +402,7 @@ export function importHistoricalTradeCsv(
   fallbackMarket: Market | null
 ) {
   const inputs = parseHistoricalTradeCsv(text, fallbackAccount, fallbackMarket);
-  let next = state;
-  for (const input of inputs) {
-    next = recordHistoricalTrade(next, input);
-  }
+  const next = validateHistoricalTradeInputs(state, inputs);
   return {
     state: next,
     importedCount: inputs.length

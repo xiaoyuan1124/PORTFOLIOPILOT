@@ -3,7 +3,8 @@ import type { AppState } from "./types";
 import {
   historicalTradeCsvTemplate,
   importHistoricalTradeCsv,
-  parseHistoricalTradeCsv
+  parseHistoricalTradeCsv,
+  previewHistoricalTradeCsv
 } from "./historical-trade-csv";
 
 function state(): AppState {
@@ -191,6 +192,48 @@ describe("historical trade CSV adapter", () => {
       "日期,買賣,代號,股數,成交價,手續費,交易稅",
       "2099/01/01,買進,2330,1,100,1,0"
     ].join("\n"), "券商", "TW")).toThrow(/今天以前/);
+  });
+
+  it("previews a fully validated batch without mutating state", () => {
+    const base = state();
+    const csv = [
+      "date,type,market,symbol,quantity,price,fee,tax,fxRate,account,tradeId",
+      "2020-01-02,buy,TW,2330,2,500,10,3,1,台股券商,TW-1",
+      "2020-02-03,sell,US,QQQM,1,100,2,1,30,美股券商,US-1"
+    ].join("\n");
+
+    const preview = previewHistoricalTradeCsv(base, csv, "", null);
+
+    expect(base.activities).toEqual([]);
+    expect(base.holdings[0]?.quantity).toBe(10);
+    expect(preview).toMatchObject({
+      importedCount: 2,
+      buyCount: 1,
+      sellCount: 1,
+      twCount: 1,
+      usCount: 1,
+      firstDate: "2020-01-02",
+      lastDate: "2020-02-03",
+      accounts: ["台股券商", "美股券商"],
+      feesTwd: 70,
+      taxesTwd: 33
+    });
+    expect(preview.sampleRows).toHaveLength(2);
+    expect(preview.sampleRows[1]).toMatchObject({
+      market: "US",
+      symbol: "QQQM",
+      fxRate: 30
+    });
+  });
+
+  it("uses the same duplicate guard during preview as the real import", () => {
+    const csv = [
+      "日期,買賣,市場,代號,股數,成交價,手續費,交易稅,帳戶,成交序號",
+      "2020/01/02,買進,TW,2330,1,100,1,0,券商,A001"
+    ].join("\n");
+    const imported = importHistoricalTradeCsv(state(), csv, "", null);
+
+    expect(() => previewHistoricalTradeCsv(imported.state, csv, "", null)).toThrow(/已經匯入過/);
   });
 
   it("provides a template that parses as both TW and US history", () => {

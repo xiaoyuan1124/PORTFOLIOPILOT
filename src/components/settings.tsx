@@ -8,7 +8,9 @@ import { localDateKey } from "@/lib/calc";
 import { parseTaiwanBrokerInventoryCsv } from "@/lib/broker-inventory-csv";
 import {
   historicalTradeCsvTemplate,
-  importHistoricalTradeCsv
+  importHistoricalTradeCsv,
+  previewHistoricalTradeCsv,
+  type HistoricalTradeCsvPreview
 } from "@/lib/historical-trade-csv";
 import { buildHoldingLookupCatalog } from "@/lib/holding-autofill";
 import { loadBundledTwQuotes } from "@/lib/market-data";
@@ -27,6 +29,14 @@ import {
 import { clearRecoveryBackup, getRecoveryBackupRaw, saveState } from "@/lib/storage";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
+type PendingHistoricalTradeCsv = {
+  fileName: string;
+  text: string;
+  fallbackAccount: string;
+  fallbackMarket: Market | null;
+  preview: HistoricalTradeCsvPreview;
+};
+
 export function Settings({ state, onChange, hasRecoveryBackup = false, onRecoveryBackupCleared, storageWriteBlocked = false }: { state: AppState; onChange: (state: AppState) => boolean; hasRecoveryBackup?: boolean; onRecoveryBackupCleared?: () => void; storageWriteBlocked?: boolean }) {
   const jsonRef = useRef<HTMLInputElement>(null);
   const csvRef = useRef<HTMLInputElement>(null);
@@ -35,6 +45,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
   const [brokerAccount, setBrokerAccount] = useState("");
   const [tradeAccount, setTradeAccount] = useState("");
   const [tradeMarket, setTradeMarket] = useState<"" | Market>("");
+  const [pendingTradeCsv, setPendingTradeCsv] = useState<PendingHistoricalTradeCsv | null>(null);
   const [usdDraft, setUsdDraft] = useState<string | null>(null);
 
   function exportRecoveryBackup() {
@@ -183,28 +194,55 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
     }
   }
 
-  async function importHistoricalTradeCsvFile(file?: File) {
+  async function prepareHistoricalTradeCsvFile(file?: File) {
     if (!file) return;
+
+    try {
+      const text = await file.text();
+      const fallbackAccount = tradeAccount.trim();
+      const fallbackMarket = tradeMarket || null;
+      const base = state.dataMode === "demo" ? emptyState : state;
+      const preview = previewHistoricalTradeCsv(
+        base,
+        text,
+        fallbackAccount,
+        fallbackMarket
+      );
+
+      setPendingTradeCsv({
+        fileName: file.name,
+        text,
+        fallbackAccount,
+        fallbackMarket,
+        preview
+      });
+      toast.success(`已驗證 ${preview.importedCount} 筆歷史買賣，請先檢查預覽`);
+    } catch (error) {
+      setPendingTradeCsv(null);
+      toast.error(error instanceof Error ? error.message : "無法驗證歷史成交 CSV");
+    } finally {
+      if (tradeCsvRef.current) tradeCsvRef.current.value = "";
+    }
+  }
+
+  function confirmHistoricalTradeCsvImport() {
+    if (!pendingTradeCsv) return;
 
     try {
       const base = state.dataMode === "demo" ? emptyState : state;
       const result = importHistoricalTradeCsv(
         base,
-        await file.text(),
-        tradeAccount,
-        tradeMarket || null
+        pendingTradeCsv.text,
+        pendingTradeCsv.fallbackAccount,
+        pendingTradeCsv.fallbackMarket
       );
 
-      if (!window.confirm(
-        `已驗證 ${result.importedCount} 筆歷史買賣。繼續後只會新增 Ledger-only 交易日誌與明確 fee / tax，不會修改目前持股或現金。確定匯入？`
-      )) return;
-
       if (!onChange({ ...result.state, dataMode: "personal" })) return;
+      setPendingTradeCsv(null);
       toast.success(`已補登 ${result.importedCount} 筆歷史買賣，目前持股與現金未變動`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "無法匯入歷史成交 CSV");
-    } finally {
-      if (tradeCsvRef.current) tradeCsvRef.current.value = "";
+      setPendingTradeCsv(null);
+      toast.error(error instanceof Error ? error.message : "匯入前重新驗證失敗，請重新選擇 CSV");
     }
   }
 
@@ -330,7 +368,10 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <div>
               <label className="block text-xs font-semibold text-black/45 dark:text-white/45">預設市場（CSV 有市場／幣別時會覆蓋）</label>
-              <select className="field mt-2" value={tradeMarket} onChange={(event) => setTradeMarket(event.target.value as "" | Market)}>
+              <select className="field mt-2" value={tradeMarket} onChange={(event) => {
+                setTradeMarket(event.target.value as "" | Market);
+                setPendingTradeCsv(null);
+              }}>
                 <option value="">不指定，要求 CSV 自行提供</option>
                 <option value="TW">台股 · TWD</option>
                 <option value="US">美股 · USD</option>
@@ -341,7 +382,10 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
               <input
                 className="field mt-2"
                 value={tradeAccount}
-                onChange={(event) => setTradeAccount(event.target.value)}
+                onChange={(event) => {
+                  setTradeAccount(event.target.value);
+                  setPendingTradeCsv(null);
+                }}
                 placeholder="例如：永豐證券、IBKR"
               />
             </div>
@@ -349,9 +393,79 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
           <p className="mt-3 text-xs leading-5 text-black/35 dark:text-white/35">
             若券商檔有成交序號，系統會用「市場＋帳戶＋成交序號」建立穩定 fingerprint；沒有成交序號時則用完整成交內容與同內容出現次序建立 fingerprint。再次匯入同一批資料會 fail closed，避免重複計入。
           </p>
+          {pendingTradeCsv ? (
+            <div className="mt-5 rounded-2xl border border-[#6c8c79]/25 bg-[#edf2ee] p-4 dark:border-[#6c8c79]/20 dark:bg-[#17201b]">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold">匯入前預覽 · {pendingTradeCsv.fileName}</p>
+                  <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+                    尚未寫入任何資料。確認時會再用當下 Portfolio state 完整驗證一次。
+                  </p>
+                </div>
+                <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-black/55 dark:bg-white/8 dark:text-white/55">
+                  {pendingTradeCsv.preview.importedCount} 筆
+                </span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+                <div className="rounded-xl bg-white/65 p-3 dark:bg-white/[.045]">
+                  <p className="text-[11px] text-black/38 dark:text-white/38">買 / 賣</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums">{pendingTradeCsv.preview.buyCount} / {pendingTradeCsv.preview.sellCount}</p>
+                </div>
+                <div className="rounded-xl bg-white/65 p-3 dark:bg-white/[.045]">
+                  <p className="text-[11px] text-black/38 dark:text-white/38">台股 / 美股</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums">{pendingTradeCsv.preview.twCount} / {pendingTradeCsv.preview.usCount}</p>
+                </div>
+                <div className="rounded-xl bg-white/65 p-3 dark:bg-white/[.045]">
+                  <p className="text-[11px] text-black/38 dark:text-white/38">日期範圍</p>
+                  <p className="mt-1 text-sm font-semibold">{pendingTradeCsv.preview.firstDate} → {pendingTradeCsv.preview.lastDate}</p>
+                </div>
+                <div className="rounded-xl bg-white/65 p-3 dark:bg-white/[.045]">
+                  <p className="text-[11px] text-black/38 dark:text-white/38">帳戶數</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums">{pendingTradeCsv.preview.accounts.length}</p>
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-xl bg-white/55 p-3 text-xs leading-5 text-black/50 dark:bg-white/[.035] dark:text-white/50">
+                <p>帳戶：{pendingTradeCsv.preview.accounts.join("、")}</p>
+                <p className="mt-1">
+                  明確手續費約 TWD {pendingTradeCsv.preview.feesTwd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  {" · "}
+                  明確交易稅約 TWD {pendingTradeCsv.preview.taxesTwd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </p>
+                <p className="mt-1 text-black/35 dark:text-white/35">
+                  美股費用僅依各列保存的歷史 USD/TWD 換算供預覽；不會使用今天匯率。
+                </p>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {pendingTradeCsv.preview.sampleRows.map((row, index) => (
+                  <div key={`${row.date}-${row.market}-${row.symbol}-${index}`} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-black/5 bg-white/55 px-3 py-2 text-xs dark:border-white/6 dark:bg-white/[.035]">
+                    <span className="font-semibold">{row.date} · {row.type === "buy" ? "買進" : "賣出"} · {row.market}:{row.symbol}</span>
+                    <span className="text-black/45 dark:text-white/45">
+                      {row.quantity.toLocaleString()} × {row.price.toLocaleString()} · {row.account}
+                    </span>
+                  </div>
+                ))}
+                {pendingTradeCsv.preview.importedCount > pendingTradeCsv.preview.sampleRows.length ? (
+                  <p className="px-1 text-[11px] text-black/35 dark:text-white/35">
+                    另有 {pendingTradeCsv.preview.importedCount - pendingTradeCsv.preview.sampleRows.length} 筆已通過相同驗證，為避免手機畫面過長未逐列展開。
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button onClick={confirmHistoricalTradeCsvImport}>
+                  <Upload size={16} />確認匯入 {pendingTradeCsv.preview.importedCount} 筆
+                </Button>
+                <GhostButton onClick={() => setPendingTradeCsv(null)}>取消預覽</GhostButton>
+              </div>
+            </div>
+          ) : null}
+
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={() => tradeCsvRef.current?.click()}>
-              <Upload size={16} />匯入歷史成交 CSV
+              <Upload size={16} />{pendingTradeCsv ? "重新選擇 CSV" : "選擇歷史成交 CSV"}
             </Button>
             <GhostButton onClick={() => downloadText("portfoliopilot-historical-trades-template.csv", historicalTradeCsvTemplate(), "text/csv;charset=utf-8")}>
               <FileSpreadsheet size={16} />下載成交範本
@@ -361,7 +475,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
               type="file"
               accept=".csv,text/csv"
               className="hidden"
-              onChange={(event) => void importHistoricalTradeCsvFile(event.target.files?.[0])}
+              onChange={(event) => void prepareHistoricalTradeCsvFile(event.target.files?.[0])}
             />
           </div>
         </CardContent>
