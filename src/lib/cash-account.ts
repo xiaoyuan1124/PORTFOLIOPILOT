@@ -17,6 +17,11 @@ export type CashLinkedActivityInput = {
   capturePreFlowFromCurrentState?: boolean;
 };
 
+export type HistoricalCashActivityInput = Omit<
+  CashLinkedActivityInput,
+  "capturePreFlowFromCurrentState"
+>;
+
 export type CashTransferInput = {
   id: string;
   date: string;
@@ -180,6 +185,9 @@ export function applyCashLinkedActivity(state: AppState, input: CashLinkedActivi
   if (!Number.isFinite(input.fxRate) || input.fxRate <= 0) {
     throw new Error("匯率必須大於 0。");
   }
+  if (input.date !== localDateKey()) {
+    throw new Error("目前現金帳戶連動只允許今天實際發生的事件；歷史補登只能寫入帳務紀錄，不可重播到目前餘額。");
+  }
 
   const external = input.type === "deposit" || input.type === "withdrawal";
   if (input.capturePreFlowFromCurrentState && !external) {
@@ -247,6 +255,62 @@ export function applyCashLinkedActivity(state: AppState, input: CashLinkedActivi
   return {
     ...state,
     holdings: replaceHoldingSnapshot(state.holdings, cash.id, after),
+    activities: [...state.activities, activity]
+  };
+}
+
+export function recordHistoricalCashActivity(
+  state: AppState,
+  input: HistoricalCashActivityInput
+): AppState {
+  const today = localDateKey();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || input.date >= today) {
+    throw new Error("歷史補登日期必須早於今天；今天的事件請使用現金帳戶連動。");
+  }
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    throw new Error("歷史現金事件金額必須大於 0。");
+  }
+  if (!Number.isFinite(input.fxRate) || input.fxRate <= 0) {
+    throw new Error("歷史 USD/TWD 匯率必須大於 0。");
+  }
+
+  const cash = assertCashHolding(state.holdings.find((item) => item.id === input.cashHoldingId));
+  const external = input.type === "deposit" || input.type === "withdrawal";
+
+  if (!external && (input.time || input.preFlowValueTwd !== undefined)) {
+    throw new Error("TWR 時間與 pre-flow 邊界只適用於歷史入金／出金。");
+  }
+  if (
+    input.preFlowValueTwd !== undefined &&
+    (!Number.isFinite(input.preFlowValueTwd) || input.preFlowValueTwd < 0)
+  ) {
+    throw new Error("歷史 TWR pre-flow 淨值不可小於 0。");
+  }
+
+  const activity: PortfolioActivity = {
+    id: input.id,
+    date: input.date,
+    ...(external && input.time ? { time: input.time } : {}),
+    type: input.type,
+    symbol: external ? "" : input.symbol.trim().toUpperCase(),
+    amount: input.amount,
+    currency: cash.currency,
+    fxRate: cash.currency === "USD" ? input.fxRate : 1,
+    quantity: 0,
+    price: 0,
+    note: input.note.trim(),
+    account: accountName(cash.account),
+    ...(external && input.preFlowValueTwd !== undefined
+      ? {
+          preFlowValueTwd: input.preFlowValueTwd,
+          preFlowValueSource: "manual" as const
+        }
+      : {})
+  };
+
+  return {
+    ...state,
+    holdings: state.holdings,
     activities: [...state.activities, activity]
   };
 }
