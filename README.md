@@ -63,7 +63,7 @@ It does **not** require:
 - brokerage credentials
 - App Store account
 
-A previously prepared Supabase integration remains in source for possible future use but is **not enabled in the self-use UI** and no PortfolioPilot Supabase project is required.
+PortfolioPilot currently contains no Supabase runtime client or database migration dependency; personal portfolio state remains browser-local.
 
 ## Stack
 
@@ -337,3 +337,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Cash imports require a positive balance value; legacy cash average-cost fields remain tolerated because cash P/L never uses them.
 - The rules now match the V0.23 interactive holding safeguards across every supported holding-entry path.
 - Regression tests cover zero quantity, price, average cost and zero cash-balance imports.
+
+
+## V0.43 local-first dependency cleanup
+
+- Removed the unused Supabase browser client and dormant cloud-sync migration from the repository.
+- Removed `@supabase/supabase-js` from runtime dependencies.
+- No user-facing behavior changed; PortfolioPilot continues to store personal portfolio state only in browser localStorage.
+- This keeps the current build aligned with the zero-cost, local-first architecture and avoids an unnecessary cloud SDK / supply-chain surface.
