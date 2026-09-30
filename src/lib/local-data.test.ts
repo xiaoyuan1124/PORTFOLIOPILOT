@@ -289,6 +289,136 @@ describe("local data import/export", () => {
     expect(() => parseBackup(JSON.stringify(backup))).toThrow(/必須包含股票代號/);
   });
 
+  it("rejects duplicate holding identity in JSON backups", () => {
+    const holding = {
+      id: "holding-a",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW",
+      type: "stock",
+      quantity: 1,
+      price: 1000,
+      averageCost: 900,
+      currency: "TWD",
+      sector: "半導體",
+      account: "券商A"
+    };
+
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [
+          holding,
+          { ...holding, id: "holding-b", symbol: " 2330 ", account: "券商A" }
+        ],
+        etfCompositions: [],
+        journal: [],
+        activities: [],
+        snapshots: []
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/不可重複建立持股/);
+  });
+
+  it("rejects duplicate record IDs that could make delete or rendering ambiguous", () => {
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [
+          {
+            id: "same-id",
+            date: "2026-09-29",
+            type: "deposit",
+            symbol: "",
+            amount: 1000,
+            currency: "TWD",
+            fxRate: 1,
+            quantity: 0,
+            price: 0,
+            note: ""
+          },
+          {
+            id: "same-id",
+            date: "2026-09-30",
+            type: "withdrawal",
+            symbol: "",
+            amount: 100,
+            currency: "TWD",
+            fxRate: 1,
+            quantity: 0,
+            price: 0,
+            note: ""
+          }
+        ],
+        snapshots: []
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/重複 ID/);
+  });
+
+  it("rejects duplicate snapshot dates instead of creating an ambiguous time series", () => {
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [],
+        snapshots: [
+          { date: "2026-09-30", total: 100, cost: 90, gain: 10, usdTwd: 31.8 },
+          { date: "2026-09-30", total: 110, cost: 90, gain: 20, usdTwd: 31.8 }
+        ]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/同一天只能有一筆淨值快照/);
+  });
+
+  it("rejects duplicate ETF identities in JSON backups", () => {
+    const composition = {
+      id: "composition-a",
+      etfMarket: "TW",
+      etfSymbol: "0050",
+      etfName: "元大台灣50",
+      asOf: "2026-09-30",
+      sourceName: "Issuer",
+      sourceUrl: "https://example.com/0050",
+      sourceType: "official_issuer",
+      constituents: [
+        { market: "TW", symbol: "2330", name: "台積電", weightPct: 50, sector: "半導體" }
+      ]
+    };
+
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [
+          composition,
+          { ...composition, id: "composition-b", etfSymbol: " 0050 " }
+        ],
+        journal: [],
+        activities: [],
+        snapshots: []
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/只能保留一份成分資料/);
+  });
+
   it("accepts legacy backup data without snapshots or ETF compositions", () => {
     const parsed = parseBackup(JSON.stringify({
       holdings: [],

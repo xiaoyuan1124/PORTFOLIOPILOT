@@ -319,3 +319,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Legacy deposits/withdrawals deterministically discard stale symbol, quantity and trade-price fields while preserving valid external-flow time/boundary data.
 - Imported dividends/fees keep an optional normalized symbol but discard stale trade quantity/price and non-applicable time fields.
 - Regression tests cover both safe legacy normalization and missing trade identity rejection.
+
+
+## V0.41 state identity integrity
+
+- JSON/local-state parsing now enforces the same holding identity rule as interactive and CSV flows: market + normalized symbol + account must be unique.
+- Duplicate IDs within holdings, ETF compositions, journals or activities fail closed to prevent ambiguous rendering and destructive actions.
+- Duplicate ETF market + symbol identities fail closed instead of silently presenting multiple composition sources for one ETF.
+- Duplicate net-worth snapshot dates fail closed so one calendar day cannot contain two competing portfolio values.
+- Regression tests cover duplicate holding identity, activity IDs, snapshot dates and ETF identities.
