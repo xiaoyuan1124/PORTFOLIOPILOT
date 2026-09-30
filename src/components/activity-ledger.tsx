@@ -624,7 +624,12 @@ function ActivityForm({
           onChange={(event) => {
             const nextDate = event.target.value;
             setDate(nextDate);
-            if (nextDate !== today) setBoundaryMode("manual");
+            if (nextDate !== today) {
+              setBoundaryMode("manual");
+              if (currency === "USD") setFxRate(0);
+            } else if (currency === "USD") {
+              setFxRate(state.usdTwd);
+            }
           }}
         />
       </div>
@@ -782,7 +787,7 @@ function ActivityForm({
               const next = cashHoldings.find((holding) => holding.id === nextId);
               if (next) {
                 setCurrency(next.currency);
-                setFxRate(next.currency === "USD" ? state.usdTwd : 1);
+                setFxRate(next.currency === "USD" ? (date < today ? 0 : state.usdTwd) : 1);
               }
             }}
           >
@@ -894,12 +899,16 @@ function ActivityForm({
             type="number"
             min="0.0001"
             step="0.01"
-            placeholder="當日 USD/TWD 匯率"
+            placeholder={historicalCash ? "歷史當日 USD/TWD（必填）" : "當日 USD/TWD 匯率"}
             value={external && boundaryMode === "auto" ? state.usdTwd : (fxRate || "")}
             disabled={external && boundaryMode === "auto"}
             onChange={(event) => setFxRate(Number(event.target.value))}
           />
-          {external && boundaryMode === "auto" ? (
+          {historicalCash ? (
+            <p className="mt-2 px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
+              歷史 USD 事件必須手動輸入當日匯率；系統不會把目前 USD/TWD 當成過去匯率。
+            </p>
+          ) : external && boundaryMode === "auto" ? (
             <p className="mt-2 px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
               自動 TWR 邊界使用目前 PortfolioPilot USD/TWD {state.usdTwd.toFixed(2)}，確保 pre-flow、現金流與寫入後估值使用同一匯率基準。
             </p>
