@@ -6,7 +6,7 @@ import { ArrowDownCircle, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, Receip
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
 import { isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
-import { localDateKey } from "@/lib/calc";
+import { localDateKey, localTimeKey, portfolioSummary } from "@/lib/calc";
 import {
   buildHoldingLookupCatalog,
   searchHoldingLookupCatalog,
@@ -344,6 +344,7 @@ function ActivityForm({
   const [shareRatio, setShareRatio] = useState(1);
   const [note, setNote] = useState("");
   const [preFlowValueTwd, setPreFlowValueTwd] = useState<number | null>(null);
+  const [boundaryMode, setBoundaryMode] = useState<"auto" | "manual">("auto");
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const external = isExternalActivityType(type);
@@ -361,10 +362,15 @@ function ActivityForm({
   const cashOnlyDebit = type === "withdrawal" || type === "fee";
   const tradeCashSufficient = type !== "buy" || (selectedTradeCash !== null && tradeNet <= selectedTradeCash.price + 1e-9);
   const cashOnlySufficient = !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
+  const currentPortfolioValueTwd = portfolioSummary(state.holdings, state.usdTwd).total;
+  const boundaryValid = !external ||
+    (boundaryMode === "auto"
+      ? date === today
+      : preFlowValueTwd === null || (Number.isFinite(preFlowValueTwd) && preFlowValueTwd >= 0));
   const valid = Boolean(date) &&
     date <= today &&
     fxRate > 0 &&
-    (preFlowValueTwd === null || preFlowValueTwd >= 0) &&
+    boundaryValid &&
     (trade
       ? Boolean(selectedHolding) &&
         Boolean(selectedTradeCash) &&
@@ -391,6 +397,7 @@ function ActivityForm({
       setSymbol("");
       setQuantity(0);
       setPrice(0);
+      setBoundaryMode(date === today ? "auto" : "manual");
       return;
     }
 
@@ -487,8 +494,15 @@ function ActivityForm({
       fxRate: selectedCash.currency === "USD" ? fxRate : 1,
       symbol: external ? "" : symbol,
       note,
-      ...(external && time ? { time } : {}),
-      ...(external && preFlowValueTwd !== null ? { preFlowValueTwd } : {})
+      ...(external && boundaryMode === "auto" && date === today
+        ? {
+            time: localTimeKey(),
+            capturePreFlowFromCurrentState: true
+          }
+        : {
+            ...(external && time ? { time } : {}),
+            ...(external && preFlowValueTwd !== null ? { preFlowValueTwd } : {})
+          })
     });
     if (!saved) return;
     closeRef.current?.click();
@@ -500,7 +514,17 @@ function ActivityForm({
         <select className="field" value={type} onChange={(event) => changeType(event.target.value as ActivityType)}>
           {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
-        <input className="field" type="date" max={today} value={date} onChange={(event) => setDate(event.target.value)} />
+        <input
+          className="field"
+          type="date"
+          max={today}
+          value={date}
+          onChange={(event) => {
+            const nextDate = event.target.value;
+            setDate(nextDate);
+            if (nextDate !== today) setBoundaryMode("manual");
+          }}
+        />
       </div>
 
       {date > today ? <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">不能新增未來日期的交易／現金流；請改成實際發生日。</p> : null}
@@ -615,25 +639,57 @@ function ActivityForm({
 
       {external ? (
         <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3.5 dark:border-white/8 dark:bg-white/[.025]">
-          <p className="text-sm font-semibold">Exact TWR 邊界（選填，但建議記錄）</p>
+          <p className="text-sm font-semibold">Exact TWR 邊界</p>
           <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
-            填入這筆入金／出金發生「前一刻」的整體投資組合淨值（TWD）。這不是入金金額，也不是成本。只有每筆外部現金流都有邊界估值時，系統才會顯示 Exact TWR。
+            邊界是入金／出金發生前一刻的整體投資組合淨值，不是現金流金額。當下事件可由系統在寫入前自動擷取；歷史補登不可拿目前淨值代替。
           </p>
-          <div className="mt-3 grid grid-cols-[120px_1fr] gap-3">
-            <input className="field" type="time" value={time} onChange={(event) => setTime(event.target.value)} aria-label="現金流時間" />
-            <input
-              className="field"
-              type="number"
-              min="0"
-              step="any"
-              placeholder="現金流前總淨值（TWD）"
-              value={preFlowValueTwd ?? ""}
-              onChange={(event) => setPreFlowValueTwd(event.target.value === "" ? null : Number(event.target.value))}
-            />
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              disabled={date !== today}
+              className={`min-h-10 rounded-xl border px-3 text-xs font-semibold ${boundaryMode === "auto" ? "border-[#1f332a] bg-[#edf2ee] dark:border-[#dce9e2] dark:bg-[#17201b]" : "border-black/7 dark:border-white/9"} disabled:cursor-not-allowed disabled:opacity-40`}
+              onClick={() => setBoundaryMode("auto")}
+            >
+              現在發生 · 自動擷取
+            </button>
+            <button
+              type="button"
+              className={`min-h-10 rounded-xl border px-3 text-xs font-semibold ${boundaryMode === "manual" ? "border-[#1f332a] bg-[#edf2ee] dark:border-[#dce9e2] dark:bg-[#17201b]" : "border-black/7 dark:border-white/9"}`}
+              onClick={() => setBoundaryMode("manual")}
+            >
+              歷史補登 · 手動
+            </button>
           </div>
-          <p className="mt-2 text-[11px] leading-5 text-black/38 dark:text-white/38">
-            同一天若有兩筆以上入金／出金，請替每筆填不同時間，否則無法確定 TWR 邊界順序。
-          </p>
+
+          {boundaryMode === "auto" && date === today ? (
+            <div className="mt-3 rounded-xl border border-black/6 bg-white/60 p-3 text-xs leading-5 dark:border-white/8 dark:bg-white/[.035]">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-black/48 dark:text-white/48">目前 PortfolioPilot 淨值</span>
+                <strong>{money(currentPortfolioValueTwd)}</strong>
+              </div>
+              <p className="mt-1 text-black/38 dark:text-white/38">
+                送出時會重新擷取現金變動前的淨值並自動保存事件時間；現金異動本身不會被算進 pre-flow 邊界。
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="mt-3 grid grid-cols-[120px_1fr] gap-3">
+                <input className="field" type="time" value={time} onChange={(event) => setTime(event.target.value)} aria-label="現金流時間" />
+                <input
+                  className="field"
+                  type="number"
+                  min="0"
+                  step="any"
+                  placeholder="現金流前總淨值（TWD）"
+                  value={preFlowValueTwd ?? ""}
+                  onChange={(event) => setPreFlowValueTwd(event.target.value === "" ? null : Number(event.target.value))}
+                />
+              </div>
+              <p className="mt-2 text-[11px] leading-5 text-black/38 dark:text-white/38">
+                歷史資料只接受你能確認的當時邊界；不確定可留白，Exact TWR 會維持資料不足而不是猜值。同一天多筆入出金請填不同時間。
+              </p>
+            </>
+          )}
         </div>
       ) : null}
 
@@ -732,7 +788,7 @@ function ActivityForm({
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.56 起，新交易、股息、費用與入出金會同步更新指定現金帳戶；買進與扣款事件不允許負現金。證券與現金都保存前後快照，可在資料仍一致時安全回滾。
+        V0.58 起，今天實際發生的入出金可在寫入現金前自動擷取 Exact TWR pre-flow 淨值；歷史補登仍必須使用當時可確認的手動邊界。交易、股息、費用與入出金持續同步更新指定現金帳戶。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
@@ -755,7 +811,8 @@ function BoundaryForm({ activity, onSave }: { activity: PortfolioActivity; onSav
     const saved = onSave({
       ...activity,
       ...(time ? { time } : { time: undefined }),
-      preFlowValueTwd
+      preFlowValueTwd,
+      preFlowValueSource: "manual"
     });
     if (!saved) return;
     closeRef.current?.click();
@@ -929,7 +986,15 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       {external ? <Badge tone="good">外部現金流</Badge> : <Badge>內部紀錄</Badge>}
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
                       {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
-                      {external ? (activity.preFlowValueTwd !== undefined ? <Badge tone="good">TWR 邊界已記</Badge> : <Badge tone="warn">缺 TWR 邊界</Badge>) : null}
+                      {external ? (activity.preFlowValueTwd !== undefined ? (
+                        <Badge tone="good">
+                          {activity.preFlowValueSource === "system_current_state"
+                            ? "TWR 邊界・系統"
+                            : activity.preFlowValueSource === "manual"
+                              ? "TWR 邊界・手動"
+                              : "TWR 邊界已記"}
+                        </Badge>
+                      ) : <Badge tone="warn">缺 TWR 邊界</Badge>) : null}
                     </div>
                     <p className="mt-1 text-xs text-black/40 dark:text-white/40">{activity.date}{activity.time ? ` · ${activity.time}` : ""}</p>
                     <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -959,7 +1024,16 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                         {accountName(activity.cashImpact.before.account)} · 現金 {activity.cashImpact.delta > 0 ? "+" : ""}{activity.cashImpact.delta.toLocaleString()} · {activity.cashImpact.before.price.toLocaleString()} → {(activity.cashImpact.after?.price ?? 0).toLocaleString()}
                       </p>
                     ) : null}
-                    {external && activity.preFlowValueTwd !== undefined ? <p className="mt-2 text-xs text-black/45 dark:text-white/45">現金流前淨值：{money(activity.preFlowValueTwd)}</p> : null}
+                    {external && activity.preFlowValueTwd !== undefined ? (
+                      <p className="mt-2 text-xs text-black/45 dark:text-white/45">
+                        現金流前淨值：{money(activity.preFlowValueTwd)}
+                        {activity.preFlowValueSource === "system_current_state"
+                          ? " · 系統於事件寫入前擷取"
+                          : activity.preFlowValueSource === "manual"
+                            ? " · 手動輸入"
+                            : ""}
+                      </p>
+                    ) : null}
                     {activity.note ? <p className="mt-2 text-sm leading-6 text-black/55 dark:text-white/55">{activity.note}</p> : null}
                   </div>
                   <div className="flex shrink-0 flex-col gap-2">
