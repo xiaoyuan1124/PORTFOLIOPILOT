@@ -363,13 +363,14 @@ function ActivityForm({
   const tradeCashSufficient = type !== "buy" || (selectedTradeCash !== null && tradeNet <= selectedTradeCash.price + 1e-9);
   const cashOnlySufficient = !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
   const currentPortfolioValueTwd = portfolioSummary(state.holdings, state.usdTwd).total;
+  const effectiveFxRate = external && boundaryMode === "auto" && currency === "USD" ? state.usdTwd : fxRate;
   const boundaryValid = !external ||
     (boundaryMode === "auto"
       ? date === today
       : preFlowValueTwd === null || (Number.isFinite(preFlowValueTwd) && preFlowValueTwd >= 0));
   const valid = Boolean(date) &&
     date <= today &&
-    fxRate > 0 &&
+    effectiveFxRate > 0 &&
     boundaryValid &&
     (trade
       ? Boolean(selectedHolding) &&
@@ -491,7 +492,7 @@ function ActivityForm({
       type: type as "deposit" | "withdrawal" | "dividend" | "fee",
       cashHoldingId: selectedCash.id,
       amount,
-      fxRate: selectedCash.currency === "USD" ? fxRate : 1,
+      fxRate: selectedCash.currency === "USD" ? effectiveFxRate : 1,
       symbol: external ? "" : symbol,
       note,
       ...(external && boundaryMode === "auto" && date === today
@@ -648,7 +649,10 @@ function ActivityForm({
               type="button"
               disabled={date !== today}
               className={`min-h-10 rounded-xl border px-3 text-xs font-semibold ${boundaryMode === "auto" ? "border-[#1f332a] bg-[#edf2ee] dark:border-[#dce9e2] dark:bg-[#17201b]" : "border-black/7 dark:border-white/9"} disabled:cursor-not-allowed disabled:opacity-40`}
-              onClick={() => setBoundaryMode("auto")}
+              onClick={() => {
+                setBoundaryMode("auto");
+                if (currency === "USD") setFxRate(state.usdTwd);
+              }}
             >
               現在發生 · 自動擷取
             </button>
