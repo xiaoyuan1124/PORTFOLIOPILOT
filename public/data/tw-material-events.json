@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-09-30T04:34:40.144Z",
+  "generatedAt": "2026-09-30T04:56:33.404Z",
   "retentionDays": 45,
   "sources": [
     {
       "name": "TWSE MOPS daily material information",
       "market": "TWSE",
       "url": "https://openapi.twse.com.tw/v1/opendata/t187ap04_L",
-      "fetchedAt": "2026-09-30T04:34:40.144Z",
+      "fetchedAt": "2026-09-30T04:56:33.404Z",
       "rowCount": 115
     },
     {
       "name": "TPEx MOPS daily material information",
       "market": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap04_O",
-      "fetchedAt": "2026-09-30T04:34:40.144Z",
+      "fetchedAt": "2026-09-30T04:56:33.404Z",
       "rowCount": 7
     }
   ],
