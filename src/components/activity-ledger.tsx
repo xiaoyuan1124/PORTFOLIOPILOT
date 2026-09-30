@@ -5,7 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownCircle, ArrowRightLeft, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
-import { isCashTransferActivityType, isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
+import { isCashExchangeActivityType, isCashTransferActivityType, isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
 import { localDateKey, localTimeKey, portfolioSummary } from "@/lib/calc";
 import {
   buildHoldingLookupCatalog,
@@ -15,10 +15,13 @@ import {
 import { loadBundledTwQuotes } from "@/lib/market-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
 import {
+  applyCashExchange,
   applyCashLinkedActivity,
   applyCashTransfer,
+  revertCashExchange,
   revertCashLinkedActivity,
   revertCashTransfer,
+  type CashExchangeInput,
   type CashLinkedActivityInput,
   type CashTransferInput
 } from "@/lib/cash-account";
@@ -48,6 +51,7 @@ const labels: Record<ActivityType, string> = {
   dividend: "股息",
   fee: "費用",
   transfer: "內部轉帳",
+  exchange: "換匯",
   corporate_action: "股數調整"
 };
 
@@ -59,6 +63,7 @@ const icons: Record<ActivityType, typeof Banknote> = {
   dividend: ReceiptText,
   fee: ReceiptText,
   transfer: ArrowRightLeft,
+  exchange: ArrowRightLeft,
   corporate_action: Layers3
 };
 
@@ -299,6 +304,205 @@ function OpeningBuyForm({
         首次買進會同時建立新持股、扣現金並寫入交易。之後加碼請使用一般「買進」，避免重複建立相同部位。
       </p>
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />建立部位並買進</Button>
+      <Dialog.Close asChild>
+        <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
+      </Dialog.Close>
+    </form>
+  );
+}
+
+function CashExchangeForm({
+  state,
+  onSave
+}: {
+  state: AppState;
+  onSave: (input: CashExchangeInput) => boolean;
+}) {
+  const today = localDateKey();
+  const cashHoldings = useMemo(
+    () => state.holdings.filter((holding) => holding.type === "cash"),
+    [state.holdings]
+  );
+  const exchangeSources = useMemo(
+    () => cashHoldings.filter((source) =>
+      cashHoldings.some((target) => target.id !== source.id && target.currency !== source.currency)
+    ),
+    [cashHoldings]
+  );
+  const [fromCashHoldingId, setFromCashHoldingId] = useState(exchangeSources[0]?.id ?? "");
+  const selectedFrom =
+    exchangeSources.find((holding) => holding.id === fromCashHoldingId) ??
+    exchangeSources[0] ??
+    null;
+  const compatibleTargets = selectedFrom
+    ? cashHoldings.filter((holding) => holding.id !== selectedFrom.id && holding.currency !== selectedFrom.currency)
+    : [];
+  const [toCashHoldingId, setToCashHoldingId] = useState(compatibleTargets[0]?.id ?? "");
+  const selectedTo =
+    compatibleTargets.find((holding) => holding.id === toCashHoldingId) ??
+    compatibleTargets[0] ??
+    null;
+  const [sourceAmount, setSourceAmount] = useState(0);
+  const [rateTwdPerUsd, setRateTwdPerUsd] = useState(state.usdTwd);
+  const [fee, setFee] = useState(0);
+  const [note, setNote] = useState("");
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  const targetAmount = selectedFrom && rateTwdPerUsd > 0 && sourceAmount > 0
+    ? selectedFrom.currency === "TWD"
+      ? sourceAmount / rateTwdPerUsd
+      : sourceAmount * rateTwdPerUsd
+    : 0;
+  const sourceDebit = sourceAmount + fee;
+  const sufficient = selectedFrom !== null && sourceDebit <= selectedFrom.price + 1e-9;
+  const removedValueTwd = selectedFrom
+    ? selectedFrom.currency === "USD"
+      ? sourceDebit * state.usdTwd
+      : sourceDebit
+    : 0;
+  const addedValueTwd = selectedTo
+    ? selectedTo.currency === "USD"
+      ? targetAmount * state.usdTwd
+      : targetAmount
+    : 0;
+  const valuationDeltaTwd = addedValueTwd - removedValueTwd;
+  const valid = Boolean(selectedFrom) &&
+    Boolean(selectedTo) &&
+    selectedFrom?.currency !== selectedTo?.currency &&
+    sourceAmount > 0 &&
+    rateTwdPerUsd > 0 &&
+    fee >= 0 &&
+    targetAmount > 0 &&
+    sufficient;
+
+  function changeFrom(nextId: string) {
+    setFromCashHoldingId(nextId);
+    const next = exchangeSources.find((holding) => holding.id === nextId);
+    const target = next
+      ? cashHoldings.find((holding) => holding.id !== next.id && holding.currency !== next.currency)
+      : undefined;
+    setToCashHoldingId(target?.id ?? "");
+  }
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!valid || !selectedFrom || !selectedTo) return;
+    const saved = onSave({
+      id: nextActivityId(state.activities, today),
+      date: today,
+      fromCashHoldingId: selectedFrom.id,
+      toCashHoldingId: selectedTo.id,
+      sourceAmount,
+      rateTwdPerUsd,
+      fee,
+      note
+    });
+    if (!saved) return;
+    closeRef.current?.click();
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3">
+      <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3.5 text-xs leading-5 dark:border-white/8 dark:bg-white/[.025]">
+        <p className="font-semibold">今天的實際換匯</p>
+        <p className="mt-1 text-black/45 dark:text-white/45">
+          V0.60 只從目前現金餘額往前套用。成交匯率一律輸入「1 USD = 幾 TWD」；費用目前明確視為從換出幣別扣除。
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="mb-2 block px-1 text-[11px] font-semibold text-black/42 dark:text-white/42">換出帳戶</label>
+          <select className="field" value={selectedFrom?.id ?? ""} onChange={(event) => changeFrom(event.target.value)}>
+            <option value="">選擇換出現金帳戶</option>
+            {exchangeSources.map((holding) => (
+              <option key={holding.id} value={holding.id}>
+                {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-2 block px-1 text-[11px] font-semibold text-black/42 dark:text-white/42">換入帳戶</label>
+          <select className="field" value={selectedTo?.id ?? ""} onChange={(event) => setToCashHoldingId(event.target.value)}>
+            <option value="">選擇另一幣別現金帳戶</option>
+            {compatibleTargets.map((holding) => (
+              <option key={holding.id} value={holding.id}>
+                {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {!exchangeSources.length ? (
+        <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">
+          至少需要一個 TWD 與一個 USD 現金帳戶才能換匯。
+        </p>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-3">
+        <input
+          className="field"
+          type="number"
+          min="0.000001"
+          step="any"
+          placeholder={selectedFrom ? `換出本金（${selectedFrom.currency}）` : "換出本金"}
+          value={sourceAmount || ""}
+          onChange={(event) => setSourceAmount(Number(event.target.value))}
+        />
+        <input
+          className="field"
+          type="number"
+          min="0.000001"
+          step="any"
+          placeholder="成交匯率 TWD/USD"
+          value={rateTwdPerUsd || ""}
+          onChange={(event) => setRateTwdPerUsd(Number(event.target.value))}
+        />
+      </div>
+      <input
+        className="field"
+        type="number"
+        min="0"
+        step="any"
+        placeholder={selectedFrom ? `費用（${selectedFrom.currency}，選填）` : "換匯費用"}
+        value={fee || ""}
+        onChange={(event) => setFee(Number(event.target.value))}
+      />
+
+      {selectedFrom && selectedTo ? (
+        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+          <div className="flex justify-between gap-3">
+            <span>{accountName(selectedFrom.account)} · {selectedFrom.currency}</span>
+            <strong>{selectedFrom.price.toLocaleString()} → {(selectedFrom.price - sourceDebit).toLocaleString()}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>{accountName(selectedTo.account)} · {selectedTo.currency}</span>
+            <strong>{selectedTo.price.toLocaleString()} → {(selectedTo.price + targetAmount).toLocaleString(undefined, { maximumFractionDigits: 6 })}</strong>
+          </div>
+          <div className="mt-2 flex justify-between gap-3 border-t border-black/5 pt-2 dark:border-white/7">
+            <span>預計換入</span>
+            <strong>{selectedTo.currency} {targetAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>依目前 PortfolioPilot FX 的估值影響</span>
+            <strong>{money(valuationDeltaTwd)}</strong>
+          </div>
+          {sourceDebit > selectedFrom.price + 1e-9 ? (
+            <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">換出帳戶現金不足，這筆換匯不會寫入。</p>
+          ) : null}
+          <p className="mt-2 text-black/35 dark:text-white/35">
+            上述是目前估值基準下的淨值變動，不等同投資報酬；成交匯率與費用會造成估值差。
+          </p>
+        </div>
+      ) : null}
+
+      <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
+      <p className="text-xs leading-5 text-black/40 dark:text-white/40">
+        換匯屬內部資產轉換，不計入淨投入，也不建立 Exact TWR 外部現金流邊界。歷史換匯不會回放到目前餘額。
+      </p>
+      <Button type="submit" disabled={!valid} className="w-full"><ArrowRightLeft size={16} />確認換匯</Button>
       <Dialog.Close asChild>
         <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
       </Dialog.Close>
@@ -589,7 +793,7 @@ function ActivityForm({
     <form onSubmit={submit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <select className="field" value={type} onChange={(event) => changeType(event.target.value as ActivityType)}>
-          {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          {Object.entries(labels).filter(([value]) => value !== "exchange").map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
         <input
           className="field"
@@ -1012,12 +1216,21 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
 
   const accounts = useMemo(() => [...new Set([
     ...state.holdings.map((holding) => accountName(holding.account)),
-    ...state.activities.flatMap((activity) => activity.cashTransferImpact
-      ? [
+    ...state.activities.flatMap((activity) => {
+      if (activity.cashTransferImpact) {
+        return [
           accountName(activity.cashTransferImpact.fromBefore.account),
           accountName(activity.cashTransferImpact.toBefore.account)
-        ]
-      : [accountName(activity.account)])
+        ];
+      }
+      if (activity.cashExchangeImpact) {
+        return [
+          accountName(activity.cashExchangeImpact.fromBefore.account),
+          accountName(activity.cashExchangeImpact.toBefore.account)
+        ];
+      }
+      return [accountName(activity.account)];
+    })
   ])].sort((a, b) => a.localeCompare(b, "zh-Hant")), [state.activities, state.holdings]);
 
   const activities = useMemo(() => {
@@ -1027,10 +1240,13 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
         accountName(activity.account) === accountFilter ||
         (activity.cashTransferImpact &&
           (accountName(activity.cashTransferImpact.fromBefore.account) === accountFilter ||
-            accountName(activity.cashTransferImpact.toBefore.account) === accountFilter))
+            accountName(activity.cashTransferImpact.toBefore.account) === accountFilter)) ||
+        (activity.cashExchangeImpact &&
+          (accountName(activity.cashExchangeImpact.fromBefore.account) === accountFilter ||
+            accountName(activity.cashExchangeImpact.toBefore.account) === accountFilter))
       )
       .filter((activity) => {
-        if (filter === "cash") return activity.type === "deposit" || activity.type === "withdrawal" || activity.type === "transfer";
+        if (filter === "cash") return activity.type === "deposit" || activity.type === "withdrawal" || activity.type === "transfer" || activity.type === "exchange";
         if (filter === "trade") return activity.type === "buy" || activity.type === "sell" || activity.type === "corporate_action";
         if (filter === "income") return activity.type === "dividend" || activity.type === "fee";
         return true;
@@ -1062,6 +1278,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       return true;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法安全完成內部現金轉帳");
+      return false;
+    }
+  }
+
+  function addCashExchange(input: CashExchangeInput) {
+    try {
+      const next = applyCashExchange(state, input);
+      if (!onChange(next)) return false;
+      toast.success("換匯已完成，TWD / USD 現金帳戶已同步更新");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全完成換匯");
       return false;
     }
   }
@@ -1124,7 +1352,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           <div className="inline-flex rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
             {[
               ["all", "全部"],
-              ["cash", "現金流/轉帳"],
+              ["cash", "現金流/轉帳/換匯"],
               ["trade", "交易/股數調整"],
               ["income", "股息/費用"]
             ].map(([key, label]) => (
@@ -1142,6 +1370,9 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
         <div className="flex flex-wrap gap-2">
           <Modal title="首次買進新標的" trigger={<GhostButton><Plus size={16} />首次買進</GhostButton>}>
             <OpeningBuyForm state={state} onSave={addOpeningPosition} />
+          </Modal>
+          <Modal title="TWD / USD 換匯" trigger={<GhostButton><ArrowRightLeft size={16} />換匯</GhostButton>}>
+            <CashExchangeForm state={state} onSave={addCashExchange} />
           </Modal>
           <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
             <ActivityForm state={state} onSaveCash={addCashActivity} onSaveTransfer={addCashTransfer} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
@@ -1163,6 +1394,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           const twd = activityAmountTwd(activity);
           const external = isExternalActivityType(activity.type);
           const transfer = isCashTransferActivityType(activity.type);
+          const exchange = isCashExchangeActivityType(activity.type);
           const trade = isTradeActivityType(activity.type);
           const corporate = activity.type === "corporate_action";
 
@@ -1178,10 +1410,11 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="font-semibold">{labels[activity.type]}</p>
                       {!external && activity.symbol ? <span className="text-xs text-black/40 dark:text-white/40">{activity.symbol}</span> : null}
                       <Badge>{accountName(activity.account)}</Badge>
-                      {external ? <Badge tone="good">外部現金流</Badge> : transfer ? <Badge>內部資產搬移</Badge> : <Badge>內部紀錄</Badge>}
+                      {external ? <Badge tone="good">外部現金流</Badge> : transfer ? <Badge>內部資產搬移</Badge> : exchange ? <Badge>內部換匯</Badge> : <Badge>內部紀錄</Badge>}
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
                       {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
                       {activity.cashTransferImpact ? <Badge tone="good">雙帳戶原子更新</Badge> : null}
+                      {activity.cashExchangeImpact ? <Badge tone="good">跨幣別原子更新</Badge> : null}
                       {external ? (activity.preFlowValueTwd !== undefined ? (
                         <Badge tone="good">
                           {activity.preFlowValueSource === "system_current_state"
@@ -1225,6 +1458,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                         <p>{accountName(activity.cashTransferImpact.fromBefore.account)} · {activity.currency} {activity.cashTransferImpact.fromBefore.price.toLocaleString()} → {activity.cashTransferImpact.fromAfter.price.toLocaleString()}</p>
                         <p>{accountName(activity.cashTransferImpact.toBefore.account)} · {activity.currency} {activity.cashTransferImpact.toBefore.price.toLocaleString()} → {activity.cashTransferImpact.toAfter.price.toLocaleString()}</p>
                         <p className="text-black/35 dark:text-white/35">內部轉帳不計入淨投入，也不建立 TWR 外部現金流邊界。</p>
+                      </div>
+                    ) : null}
+                    {activity.cashExchangeImpact ? (
+                      <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+                        <p>
+                          {accountName(activity.cashExchangeImpact.fromBefore.account)} · {activity.cashExchangeImpact.fromBefore.currency} {activity.cashExchangeImpact.fromBefore.price.toLocaleString()} → {activity.cashExchangeImpact.fromAfter.price.toLocaleString()}
+                        </p>
+                        <p>
+                          {accountName(activity.cashExchangeImpact.toBefore.account)} · {activity.cashExchangeImpact.toBefore.currency} {activity.cashExchangeImpact.toBefore.price.toLocaleString()} → {activity.cashExchangeImpact.toAfter.price.toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                        </p>
+                        <p>成交匯率 1 USD = TWD {activity.cashExchangeImpact.rateTwdPerUsd.toLocaleString()} · 換入 {activity.cashExchangeImpact.toBefore.currency} {activity.cashExchangeImpact.targetAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} · 換出幣別費用 {activity.cashExchangeImpact.fee.toLocaleString()}</p>
+                        <p className="text-black/35 dark:text-white/35">換匯不計入淨投入，也不建立 TWR 外部現金流邊界。</p>
                       </div>
                     ) : null}
                     {external && activity.preFlowValueTwd !== undefined ? (
@@ -1272,6 +1517,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                             toast.success("交易已刪除，持股已還原");
                           } catch (error) {
                             toast.error(error instanceof Error ? error.message : "無法安全回滾交易");
+                          }
+                          return;
+                        }
+
+                        if (activity.cashExchangeImpact) {
+                          if (!window.confirm("這筆換匯已同時更新 TWD / USD 現金帳戶。刪除時會嘗試精確還原兩邊餘額；若任一帳戶已有後續事件或手動校正，系統會拒絕回滾。確定繼續？")) return;
+                          try {
+                            const next = revertCashExchange(state, activity.id);
+                            if (!onChange(next)) return;
+                            toast.success("換匯已刪除，兩邊現金餘額已還原");
+                          } catch (error) {
+                            toast.error(error instanceof Error ? error.message : "無法安全回滾換匯");
                           }
                           return;
                         }
