@@ -460,3 +460,15 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Future-dated dividend records are excluded from received-income totals and surfaced as excluded records instead of being treated as expected income.
 - Dividend records without a symbol remain included in total cash received but are grouped under **未指定** rather than guessed against a holding.
 - The center intentionally does not forecast future dividend dates, amounts or yields from historical patterns. Future forecast work will remain separate from actual received-income accounting.
+
+
+## V0.53 Taiwan broker inventory CSV adapter
+
+- Settings now includes a dedicated **台灣券商庫存 CSV** import path for current holdings / inventory exports, separate from PortfolioPilot's own canonical CSV format.
+- The adapter recognizes common Chinese and English header aliases for security code, held quantity, average cost, account and venue.
+- Only security code, held quantity and average cost are required from the broker file. Security name, stock / ETF type, industry, current closing price, price source and as-of date are resolved from PortfolioPilot's bundled TWSE / TPEx official-data catalog.
+- A file-level fallback account is required; if the CSV includes an account field, the row-level account wins.
+- Explicit 上市／上櫃 or TWSE／TPEx venue hints are supported. Same-code cross-venue ambiguity fails closed when no venue hint is supplied.
+- Unknown securities, invalid numbers, duplicate inventory identities and transaction-style files without average cost are rejected atomically; no partial import is written.
+- Existing holding merge protection remains in force: matching market + symbol + account rows require explicit overwrite confirmation.
+- This adapter intentionally imports current inventory only. It does not infer transaction history, realized P/L, cash flows or trade chronology from broker statements.
