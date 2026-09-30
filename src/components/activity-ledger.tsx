@@ -1847,6 +1847,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
                       {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
                       {historicalTrade ? <Badge tone="warn">歷史買賣・Ledger-only</Badge> : null}
+                      {activity.historicalTrade?.importSource === "csv" ? <Badge>CSV 匯入</Badge> : null}
                       {ledgerOnlyCash ? <Badge tone="warn">Ledger-only・未改目前現金</Badge> : null}
                       {activity.cashTransferImpact ? <Badge tone="good">雙帳戶原子更新</Badge> : null}
                       {activity.cashFxImpact ? <Badge tone="good">跨幣別原子更新</Badge> : null}
