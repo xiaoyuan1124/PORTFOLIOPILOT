@@ -834,6 +834,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
     }
   }
 
+  function addOpeningPosition(input: NewPositionBuyInput) {
+    try {
+      const next = applyOpeningBuy(state, input);
+      if (!onChange(next)) return false;
+      toast.success(`${input.position.symbol.toUpperCase()} 已建立並完成首次買進`);
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全建立新持股");
+      return false;
+    }
+  }
+
   function addCorporateAction(input: ShareAdjustmentInput) {
     try {
       const next = applyShareAdjustment(state, input);
@@ -883,9 +895,14 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           </select> : null}
         </div>
 
-        <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
-          <ActivityForm state={state} onSaveCash={addCashActivity} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
-        </Modal>
+        <div className="flex flex-wrap gap-2">
+          <Modal title="首次買進新標的" trigger={<GhostButton><Plus size={16} />首次買進</GhostButton>}>
+            <OpeningBuyForm state={state} onSave={addOpeningPosition} />
+          </Modal>
+          <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
+            <ActivityForm state={state} onSaveCash={addCashActivity} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
+          </Modal>
+        </div>
       </div>
 
       {state.activities.some((activity) => activity.inventoryImpact?.kind === "trade" && activity.type === "sell") ? (
