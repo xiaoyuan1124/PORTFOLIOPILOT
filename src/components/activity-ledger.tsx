@@ -470,7 +470,7 @@ function ActivityForm({
       setPrice(0);
       setFee(0);
       setTax(0);
-      const from = cashHoldings.find((holding) => holding.id === transferFromCashHoldingId) ?? cashHoldings[0];
+      const from = transferSources.find((holding) => holding.id === transferFromCashHoldingId) ?? transferSources[0];
       const to = from
         ? cashHoldings.find((holding) => holding.id !== from.id && holding.currency === from.currency)
         : undefined;
@@ -683,7 +683,7 @@ function ActivityForm({
               <label className="mb-2 block px-1 text-[11px] font-semibold text-black/42 dark:text-white/42">轉出帳戶</label>
               <select
                 className="field"
-                value={transferFromCashHoldingId}
+                value={selectedTransferFrom?.id ?? ""}
                 onChange={(event) => {
                   const nextId = event.target.value;
                   setTransferFromCashHoldingId(nextId);
@@ -712,7 +712,7 @@ function ActivityForm({
               <label className="mb-2 block px-1 text-[11px] font-semibold text-black/42 dark:text-white/42">轉入帳戶</label>
               <select
                 className="field"
-                value={transferToCashHoldingId}
+                value={selectedTransferTo?.id ?? ""}
                 onChange={(event) => setTransferToCashHoldingId(event.target.value)}
               >
                 <option value="">選擇同幣別轉入帳戶</option>
@@ -1012,7 +1012,12 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
 
   const accounts = useMemo(() => [...new Set([
     ...state.holdings.map((holding) => accountName(holding.account)),
-    ...state.activities.map((activity) => accountName(activity.account))
+    ...state.activities.flatMap((activity) => activity.cashTransferImpact
+      ? [
+          accountName(activity.cashTransferImpact.fromBefore.account),
+          accountName(activity.cashTransferImpact.toBefore.account)
+        ]
+      : [accountName(activity.account)])
   ])].sort((a, b) => a.localeCompare(b, "zh-Hant")), [state.activities, state.holdings]);
 
   const activities = useMemo(() => {
@@ -1159,7 +1164,6 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           const external = isExternalActivityType(activity.type);
           const transfer = isCashTransferActivityType(activity.type);
           const trade = isTradeActivityType(activity.type);
-          const transfer = isCashTransferActivityType(activity.type);
           const corporate = activity.type === "corporate_action";
 
           return (
@@ -1215,12 +1219,6 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="mt-1 text-xs text-black/45 dark:text-white/45">
                         {accountName(activity.cashImpact.before.account)} · 現金 {activity.cashImpact.delta > 0 ? "+" : ""}{activity.cashImpact.delta.toLocaleString()} · {activity.cashImpact.before.price.toLocaleString()} → {(activity.cashImpact.after?.price ?? 0).toLocaleString()}
                       </p>
-                    ) : null}
-                    {activity.cashTransferImpact ? (
-                      <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
-                        <p>{accountName(activity.cashTransferImpact.fromBefore.account)} · {activity.cashTransferImpact.fromBefore.price.toLocaleString()} → {activity.cashTransferImpact.fromAfter.price.toLocaleString()}</p>
-                        <p>{accountName(activity.cashTransferImpact.toBefore.account)} · {activity.cashTransferImpact.toBefore.price.toLocaleString()} → {activity.cashTransferImpact.toAfter.price.toLocaleString()}</p>
-                      </div>
                     ) : null}
                     {activity.cashTransferImpact ? (
                       <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
