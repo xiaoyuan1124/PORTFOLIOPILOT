@@ -804,7 +804,7 @@ function ActivityForm({
     <form onSubmit={submit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <select className="field" value={type} onChange={(event) => changeType(event.target.value as ActivityType)}>
-          {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          {Object.entries(labels).filter(([value]) => value !== "fx_conversion").map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
         <input
           className="field"
