@@ -21,14 +21,22 @@ describe("Taiwan quote refresh helpers", () => {
       tables: [
         { fields: ["指數", "收盤"], data: [["發行量加權股價指數", "1"]] },
         {
-          fields: ["證券代號", "證券名稱", "成交股數", "收盤價"],
-          data: [["2330", "台積電", "12,345", "1,250.00"]]
+          fields: ["證券代號", "證券名稱", "成交股數", "收盤價", "漲跌(+/-)", "漲跌價差"],
+          data: [["2330", "台積電", "12,345", "1,250.00", "+", "50.00"]]
         }
       ]
     };
 
     expect(parseTwseMiIndexPayload(payload, "2026-09-29")).toEqual([
-      { code: "2330", name: "台積電", market: "TWSE", close: 1250, date: "2026-09-29" }
+      {
+        code: "2330",
+        name: "台積電",
+        market: "TWSE",
+        close: 1250,
+        date: "2026-09-29",
+        change: 50,
+        changePct: 4.166666666666666
+      }
     ]);
   });
 
@@ -43,14 +51,38 @@ describe("Taiwan quote refresh helpers", () => {
 
   it("parses TWSE OpenAPI fallback and TPEx closing-price payloads", () => {
     const twse = parseTwseQuoteRows([
-      { Date: "1150929", Code: "2330", Name: "台積電", ClosingPrice: "1,250.00" }
+      { Date: "1150929", Code: "2330", Name: "台積電", ClosingPrice: "1,250.00", Change: "50.00" }
     ]);
     const tpex = parseTpexQuoteRows([
-      { Date: "1150929", SecuritiesCompanyCode: "6488", CompanyName: "環球晶", Close: "445.00" }
+      { Date: "1150929", SecuritiesCompanyCode: "6488", CompanyName: "環球晶", Close: "445.00", Change: "-5.00" }
     ]);
 
-    expect(twse[0]).toEqual({ code: "2330", name: "台積電", market: "TWSE", close: 1250, date: "2026-09-29" });
-    expect(tpex[0]).toEqual({ code: "6488", name: "環球晶", market: "TPEx", close: 445, date: "2026-09-29" });
+    expect(twse[0]).toEqual({
+      code: "2330",
+      name: "台積電",
+      market: "TWSE",
+      close: 1250,
+      date: "2026-09-29",
+      change: 50,
+      changePct: 4.166666666666666
+    });
+    expect(tpex[0]).toEqual({
+      code: "6488",
+      name: "環球晶",
+      market: "TPEx",
+      close: 445,
+      date: "2026-09-29",
+      change: -5,
+      changePct: -1.1111111111111112
+    });
+  });
+
+  it("fails closed on ex-right/ex-dividend no-comparison rows", () => {
+    const twse = parseTwseQuoteRows([
+      { Date: "1150929", Code: "2330", Name: "台積電", ClosingPrice: "1,250.00", Change: "X0.00" }
+    ]);
+    expect(twse[0]?.change).toBeNull();
+    expect(twse[0]?.changePct).toBeNull();
   });
 
   it("never regresses one market to an older official date", () => {
