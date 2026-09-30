@@ -643,3 +643,14 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - A downloadable CSV template is available from Settings.
 - Backup format is now V15 so CSV source + fingerprint survive JSON backup / restore. V1–V14 backups remain readable.
 
+## V0.67 historical trade CSV preview
+
+- Historical-trade CSV import now uses a two-step **preview → commit** workflow instead of treating file selection as the final import action.
+- Selecting a file runs the complete V0.65/V0.66 parser and ledger-only engine against an immutable candidate state, so invalid dates, duplicate fingerprints, bad FX, missing costs and other trust-boundary failures are caught before an import button is offered.
+- The preview shows the validated row count, buy / sell split, TW / US split, date range, distinct accounts, explicit fee / tax totals normalized to TWD using each row's saved historical FX, and the first eight normalized executions.
+- Preview does not mutate holdings, cash or activities. It is safe to cancel or replace the selected file.
+- Changing the fallback market or account clears the preview so the visible summary cannot silently refer to different fallback settings.
+- Confirming the import re-parses and re-validates the original CSV against the **current** Portfolio state before committing. If the state changed after preview and now creates a duplicate or other conflict, the import fails closed.
+- The underlying import remains atomic and ledger-only: either the full batch is accepted, or no historical trade rows are added.
+- No backup schema change is required; Backup V15 remains current because V0.67 adds pre-commit UX rather than new persisted data.
+\n
