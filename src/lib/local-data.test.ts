@@ -44,11 +44,48 @@ describe("local data import/export", () => {
         note: "boundary",
         preFlowValueTwd: 5000
       }],
+      allocationTargets: [{ key: "US:ETF", label: "ETF", targetPct: 100 }],
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(4);
+    expect(JSON.parse(serialized).version).toBe(5);
     expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("keeps version 4 backups compatible by defaulting allocation targets to empty", () => {
+    const parsed = parseBackup(JSON.stringify({
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [],
+        snapshots: []
+      }
+    }));
+
+    expect(parsed.allocationTargets).toEqual([]);
+  });
+
+  it("rejects allocation target sets that do not total 100 percent", () => {
+    expect(() => parseBackup(JSON.stringify({
+      version: 5,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [],
+        snapshots: [],
+        allocationTargets: [
+          { key: "TW:2330", label: "台積電", targetPct: 60 },
+          { key: "US:QQQM", label: "QQQM", targetPct: 30 }
+        ]
+      }
+    }))).toThrow(/合計必須為 100%/);
   });
 
   it("keeps version 2 backups compatible without TWR boundary fields", () => {
