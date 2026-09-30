@@ -3,8 +3,10 @@ import type { AppState, Holding } from "./types";
 import { localDateKey } from "./calc";
 import {
   applyCashLinkedActivity,
+  applyCashTransfer,
   nextCashSnapshot,
-  revertCashLinkedActivity
+  revertCashLinkedActivity,
+  revertCashTransfer
 } from "./cash-account";
 
 function cash(patch: Partial<Holding> = {}): Holding {
@@ -326,6 +328,230 @@ describe("cash account linkage", () => {
     };
 
     expect(() => revertCashLinkedActivity(drifted, "deposit")).toThrow(/無法安全自動回滾/);
+  });
+
+  it("moves cash atomically between same-currency accounts without changing total cash value", () => {
+    const base = state();
+    base.holdings.push(cash({
+      id: "cash-2",
+      price: 2000,
+      averageCost: 2000,
+      account: "券商B"
+    }));
+
+    const next = applyCashTransfer(base, {
+      id: "transfer-a",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-2",
+      amount: 1000,
+      note: "內部調撥"
+    });
+
+    expect(next.holdings.find((item) => item.id === "cash")?.price).toBe(4000);
+    expect(next.holdings.find((item) => item.id === "cash-2")?.price).toBe(3000);
+    expect(next.holdings.reduce((sum, item) => sum + item.price, 0)).toBe(7000);
+    expect(next.activities[0]).toMatchObject({
+      type: "transfer",
+      amount: 1000,
+      currency: "TWD",
+      cashTransferImpact: {
+        fromCashHoldingId: "cash",
+        toCashHoldingId: "cash-2",
+        amount: 1000
+      }
+    });
+  });
+
+  it("keeps a source cash account when an internal transfer spends it exactly to zero", () => {
+    const base = state(cash({ price: 1000, averageCost: 1000 }));
+    base.holdings.push(cash({
+      id: "cash-2",
+      price: 0,
+      averageCost: 0,
+      account: "券商B"
+    }));
+
+    const next = applyCashTransfer(base, {
+      id: "transfer-zero",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-2",
+      amount: 1000,
+      note: ""
+    });
+
+    expect(next.holdings.find((item) => item.id === "cash")).toMatchObject({
+      quantity: 1,
+      price: 0,
+      averageCost: 0
+    });
+    expect(next.holdings.find((item) => item.id === "cash-2")?.price).toBe(1000);
+  });
+
+  it("rejects cross-currency, same-account, historical and insufficient internal transfers", () => {
+    const base = state();
+    base.holdings.push(cash({
+      id: "cash-usd",
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 100,
+      averageCost: 100,
+      currency: "USD",
+      account: "美股"
+    }));
+
+    expect(() => applyCashTransfer(base, {
+      id: "cross",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-usd",
+      amount: 10,
+      note: ""
+    })).toThrow(/同幣別/);
+
+    expect(() => applyCashTransfer(base, {
+      id: "same",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash",
+      amount: 10,
+      note: ""
+    })).toThrow(/不可相同/);
+
+    expect(() => applyCashTransfer(base, {
+      id: "historical-transfer",
+      date: "2000-01-01",
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-usd",
+      amount: 10,
+      note: ""
+    })).toThrow(/只允許從今天/);
+
+    const sameCurrency = state();
+    sameCurrency.holdings.push(cash({
+      id: "cash-2",
+      price: 0,
+      averageCost: 0,
+      account: "券商B"
+    }));
+    expect(() => applyCashTransfer(sameCurrency, {
+      id: "too-much",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-2",
+      amount: 6000,
+      note: ""
+    })).toThrow(/現金不足/);
+  });
+
+  it("rolls back both sides of the latest internal transfer exactly", () => {
+    const base = state();
+    base.holdings.push(cash({
+      id: "cash-2",
+      price: 2000,
+      averageCost: 2000,
+      account: "券商B"
+    }));
+    const next = applyCashTransfer(base, {
+      id: "transfer-a",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-2",
+      amount: 1000,
+      note: ""
+    });
+
+    const reverted = revertCashTransfer(next, "transfer-a");
+    expect(reverted.holdings).toEqual(base.holdings);
+    expect(reverted.activities).toEqual([]);
+  });
+
+  it("blocks transfer rollback after either cash account has a later linked event", () => {
+    const base = state();
+    base.holdings.push(cash({
+      id: "cash-2",
+      price: 2000,
+      averageCost: 2000,
+      account: "券商B"
+    }));
+    const transferred = applyCashTransfer(base, {
+      id: "activity-1",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-2",
+      amount: 1000,
+      note: ""
+    });
+    const later = applyCashLinkedActivity(transferred, {
+      id: "activity-2",
+      date: localDateKey(),
+      type: "fee",
+      cashHoldingId: "cash-2",
+      amount: 10,
+      fxRate: 1,
+      symbol: "",
+      note: ""
+    });
+
+    expect(() => revertCashTransfer(later, "activity-1")).toThrow(/最新一筆/);
+  });
+
+  it("blocks rollback of an older cash event when a later transfer touched that account", () => {
+    const base = state();
+    base.holdings.push(cash({
+      id: "cash-2",
+      price: 2000,
+      averageCost: 2000,
+      account: "券商B"
+    }));
+    const deposited = applyCashLinkedActivity(base, {
+      id: "activity-1",
+      date: localDateKey(),
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "",
+      note: ""
+    });
+    const transferred = applyCashTransfer(deposited, {
+      id: "activity-2",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-2",
+      amount: 100,
+      note: ""
+    });
+
+    expect(() => revertCashLinkedActivity(transferred, "activity-1")).toThrow(/最新一筆/);
+  });
+
+  it("rejects transfer rollback after manual drift on either side", () => {
+    const base = state();
+    base.holdings.push(cash({
+      id: "cash-2",
+      price: 2000,
+      averageCost: 2000,
+      account: "券商B"
+    }));
+    const transferred = applyCashTransfer(base, {
+      id: "transfer-a",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-2",
+      amount: 1000,
+      note: ""
+    });
+    const drifted = {
+      ...transferred,
+      holdings: transferred.holdings.map((item) =>
+        item.id === "cash-2" ? { ...item, price: item.price + 1, averageCost: item.averageCost + 1 } : item
+      )
+    };
+
+    expect(() => revertCashTransfer(drifted, "transfer-a")).toThrow(/手動修改或校正/);
   });
 
   it("normalizes cash snapshots and rejects invalid deltas", () => {
