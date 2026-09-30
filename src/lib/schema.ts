@@ -160,7 +160,9 @@ export const historicalTradeSchema = z.object({
   importSource: z.literal("csv").optional(),
   importFingerprint: z.string().min(1).max(500).optional(),
   importBatchId: z.string().min(1).max(500).optional(),
-  importFileName: z.string().trim().min(1).max(240).optional()
+  importFileName: z.string().trim().min(1).max(240)
+    .refine((value) => !/[\\/]/.test(value), "CSV 來源只能保存檔名，不可包含本機路徑。")
+    .optional()
 }).superRefine((trade, ctx) => {
   if (trade.importSource === "csv" && !trade.importFingerprint) {
     ctx.addIssue({
