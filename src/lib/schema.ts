@@ -12,7 +12,7 @@ function isCalendarDateKey(value: string) {
     date.getUTCDate() === day;
 }
 
-export const dateKeySchema = z.string()
+export const dateKeySchema = z.string().trim()
   .regex(DATE_KEY_PATTERN, "日期必須使用 YYYY-MM-DD 格式。")
   .refine(isCalendarDateKey, "日期不是有效的曆日。");
 
