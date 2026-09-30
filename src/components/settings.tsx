@@ -10,6 +10,7 @@ import {
   csvTemplate,
   downloadText,
   holdingsToCsv,
+  holdingMergeConflictCount,
   mergeHoldings,
   parseBackup,
   parseHoldingsCsv,
@@ -93,9 +94,19 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
     try {
       const incoming = parseHoldingsCsv(await file.text());
       const base = state.dataMode === "demo" ? emptyState : state;
+      const conflictCount = holdingMergeConflictCount(base.holdings, incoming);
+      if (
+        conflictCount > 0 &&
+        !window.confirm(
+          `CSV 有 ${conflictCount} 筆與現有持股的「市場＋代號＋帳戶」相同，繼續會以 CSV 的股數、價格、平均成本等欄位覆蓋現有資料。確定繼續？`
+        )
+      ) return;
+
       const merged = mergeHoldings(base.holdings, incoming);
       if (!onChange({ ...base, dataMode: "personal", holdings: merged })) return;
-      toast.success(`已匯入 ${incoming.length} 筆持股`);
+      toast.success(conflictCount > 0
+        ? `已匯入 ${incoming.length} 筆持股，其中覆蓋 ${conflictCount} 筆既有資料`
+        : `已匯入 ${incoming.length} 筆持股`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "CSV 格式不正確");
     } finally {
