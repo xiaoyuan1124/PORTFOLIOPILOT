@@ -1,5 +1,6 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
 import { accountName, holdingIdentityKey } from "./local-data";
+import { hasLaterRecordedActivity } from "./activity-order";
 import {
   activityTouchesCashHolding,
   holdingSnapshotEqual,
@@ -241,10 +242,10 @@ export function revertManagedTrade(state: AppState, activityId: string): AppStat
     throw new Error("這筆紀錄不是可回滾的持股連動交易。");
   }
 
-  const laterLinked = state.activities.some((item) =>
-    item.id !== activity.id &&
-    item.inventoryImpact?.holdingId === impact.holdingId &&
-    (item.date > activity.date || (item.date === activity.date && item.id > activity.id))
+  const laterLinked = hasLaterRecordedActivity(
+    state.activities,
+    activity,
+    (item) => item.inventoryImpact?.holdingId === impact.holdingId
   );
   if (laterLinked) {
     throw new Error("此部位後面已有其他持股連動事件，請先從最新一筆開始回滾。");
@@ -252,10 +253,10 @@ export function revertManagedTrade(state: AppState, activityId: string): AppStat
 
   const cashImpact = activity.cashImpact;
   const laterCash = cashImpact
-    ? state.activities.some((item) =>
-        item.id !== activity.id &&
-        activityTouchesCashHolding(item, cashImpact.cashHoldingId) &&
-        (item.date > activity.date || (item.date === activity.date && item.id > activity.id))
+    ? hasLaterRecordedActivity(
+        state.activities,
+        activity,
+        (item) => activityTouchesCashHolding(item, cashImpact.cashHoldingId)
       )
     : false;
   if (laterCash) {
