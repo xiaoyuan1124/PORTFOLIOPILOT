@@ -7,11 +7,12 @@ import { demoState, emptyState } from "@/lib/demo-data";
 import { localDateKey } from "@/lib/calc";
 import { parseTaiwanBrokerInventoryCsv } from "@/lib/broker-inventory-csv";
 import {
+  historicalTradeCsvBatches,
   historicalTradeCsvTemplate,
   importHistoricalTradeCsv,
-  latestHistoricalTradeCsvBatch,
   previewHistoricalTradeCsv,
   undoHistoricalTradeCsvBatch,
+  type HistoricalTradeCsvBatchSummary,
   type HistoricalTradeCsvPreview
 } from "@/lib/historical-trade-csv";
 import { buildHoldingLookupCatalog } from "@/lib/holding-autofill";
@@ -48,8 +49,10 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
   const [tradeAccount, setTradeAccount] = useState("");
   const [tradeMarket, setTradeMarket] = useState<"" | Market>("");
   const [pendingTradeCsv, setPendingTradeCsv] = useState<PendingHistoricalTradeCsv | null>(null);
+  const [showAllTradeCsvBatches, setShowAllTradeCsvBatches] = useState(false);
   const [usdDraft, setUsdDraft] = useState<string | null>(null);
-  const latestTradeCsvBatch = latestHistoricalTradeCsvBatch(state);
+  const tradeCsvBatches = historicalTradeCsvBatches(state);
+  const visibleTradeCsvBatches = showAllTradeCsvBatches ? tradeCsvBatches : tradeCsvBatches.slice(0, 3);
 
   function exportRecoveryBackup() {
     const raw = getRecoveryBackupRaw();
@@ -249,16 +252,15 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
     }
   }
 
-  function undoLatestHistoricalTradeCsvImport() {
-    if (!latestTradeCsvBatch) return;
+  function undoHistoricalTradeCsvImport(batch: HistoricalTradeCsvBatchSummary) {
     if (!window.confirm(
-      `確定撤銷最近這批 ${latestTradeCsvBatch.remainingCount} 筆歷史成交 CSV 嗎？只會刪除這批 Ledger-only 交易日誌，不會修改目前持股或現金。`
+      `確定撤銷這批 ${batch.remainingCount} 筆歷史成交 CSV 嗎？日期範圍 ${batch.firstDate}～${batch.lastDate}。只會刪除這批 Ledger-only 交易日誌，不會修改目前持股或現金。`
     )) return;
 
     try {
-      const next = undoHistoricalTradeCsvBatch(state, latestTradeCsvBatch.importBatchId);
+      const next = undoHistoricalTradeCsvBatch(state, batch.importBatchId);
       if (!onChange(next)) return;
-      toast.success(`已撤銷 ${latestTradeCsvBatch.remainingCount} 筆歷史成交 CSV，持股與現金未變動`);
+      toast.success(`已撤銷 ${batch.remainingCount} 筆歷史成交 CSV，持股與現金未變動`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法安全撤銷歷史成交 CSV 批次");
     }
