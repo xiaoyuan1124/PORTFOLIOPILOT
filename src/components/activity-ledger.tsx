@@ -5,7 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownCircle, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
-import { isExternalActivityType, isTradeActivityType, normalizeActivitySecurityFields } from "@/lib/activity-data";
+import { isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
 import { localDateKey } from "@/lib/calc";
 import {
   applyCashLinkedActivity,
@@ -98,7 +98,6 @@ function ActivityForm({
   const [corporateHoldingId, setCorporateHoldingId] = useState(defaultTradeHolding?.id ?? "");
   const [shareRatio, setShareRatio] = useState(1);
   const [note, setNote] = useState("");
-  const [account, setAccount] = useState(accountName(defaultCashHolding?.account ?? defaultTradeHolding?.account ?? state.holdings[0]?.account));
   const [preFlowValueTwd, setPreFlowValueTwd] = useState<number | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -162,7 +161,6 @@ function ActivityForm({
       const current = tradeHoldings.find((holding) => holding.id === corporateHoldingId) ?? tradeHoldings[0];
       if (current) {
         setCorporateHoldingId(current.id);
-        setAccount(accountName(current.account));
         setCurrency(current.currency);
         setFxRate(current.currency === "USD" ? state.usdTwd : 1);
       }
@@ -177,7 +175,6 @@ function ActivityForm({
       const currentCash = cashHoldings.find((holding) => holding.id === cashHoldingId) ?? cashHoldings[0];
       if (currentCash) {
         setCashHoldingId(currentCash.id);
-        setAccount(accountName(currentCash.account));
         setCurrency(currentCash.currency);
         setFxRate(currentCash.currency === "USD" ? state.usdTwd : 1);
       }
@@ -185,7 +182,6 @@ function ActivityForm({
       const current = tradeHoldings.find((holding) => holding.id === tradeHoldingId) ?? tradeHoldings[0];
       if (current) {
         setTradeHoldingId(current.id);
-        setAccount(accountName(current.account));
         setCurrency(current.currency);
         setFxRate(current.currency === "USD" ? state.usdTwd : 1);
         const preferredCash =
@@ -274,7 +270,6 @@ function ActivityForm({
               setTradeHoldingId(nextId);
               const next = tradeHoldings.find((holding) => holding.id === nextId);
               if (next) {
-                setAccount(accountName(next.account));
                 setCurrency(next.currency);
                 setFxRate(next.currency === "USD" ? state.usdTwd : 1);
                 const preferredCash =
@@ -327,7 +322,6 @@ function ActivityForm({
               setCorporateHoldingId(nextId);
               const next = tradeHoldings.find((holding) => holding.id === nextId);
               if (next) {
-                setAccount(accountName(next.account));
                 setCurrency(next.currency);
                 setFxRate(next.currency === "USD" ? state.usdTwd : 1);
               }
@@ -354,7 +348,6 @@ function ActivityForm({
               setCashHoldingId(nextId);
               const next = cashHoldings.find((holding) => holding.id === nextId);
               if (next) {
-                setAccount(accountName(next.account));
                 setCurrency(next.currency);
                 setFxRate(next.currency === "USD" ? state.usdTwd : 1);
               }
