@@ -48,7 +48,61 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(5);
+    expect(JSON.parse(serialized).version).toBe(6);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("round-trips V6 managed trade inventory metadata", () => {
+    const before = {
+      id: "h1",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW" as const,
+      type: "stock" as const,
+      quantity: 10,
+      price: 1000,
+      averageCost: 900,
+      currency: "TWD" as const,
+      sector: "半導體",
+      account: "券商A"
+    };
+    const after = { ...before, quantity: 8 };
+
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [after],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "managed-sell",
+        date: "2026-09-30",
+        type: "sell",
+        symbol: "2330",
+        amount: 1980,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 2,
+        price: 1000,
+        note: "",
+        account: "券商A",
+        inventoryImpact: {
+          kind: "trade",
+          holdingId: "h1",
+          before,
+          after,
+          fee: 10,
+          tax: 10,
+          realizedPnl: 180,
+          method: "average_cost"
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(6);
     expect(parseBackup(serialized)).toEqual(state);
   });
 

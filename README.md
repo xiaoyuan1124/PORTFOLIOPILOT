@@ -472,3 +472,16 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Unknown securities, invalid numbers, duplicate inventory identities and transaction-style files without average cost are rejected atomically; no partial import is written.
 - Existing holding merge protection remains in force: matching market + symbol + account rows require explicit overwrite confirmation.
 - This adapter intentionally imports current inventory only. It does not infer transaction history, realized P/L, cash flows or trade chronology from broker statements.
+
+
+## V0.54 managed trade → inventory integration
+
+- New buy / sell entries can now be linked directly to an existing non-cash holding. V0.54 treats the current holdings at upgrade time as the inventory baseline; legacy trade rows remain historical-only and are never replayed into inventory.
+- Managed trades are forward-only from the current day in the UI, preventing historical backfill from being double-counted against an inventory state that already reflects those past trades.
+- Buys update quantity and weighted-average cost. Explicit fees and transaction taxes are included in acquisition basis.
+- Sells reduce quantity using average-cost accounting, preserve the remaining average cost, and store realized P/L after fees and transaction taxes. Fully sold positions are removed from current holdings.
+- The holding's current market price and TWSE / TPEx provenance are not replaced by the trade execution price.
+- Each managed trade stores a before / after holding snapshot plus fee, tax, realized P/L and accounting method in backup V6.
+- Deleting the latest managed trade attempts an exact inventory rollback. Rollback fails closed if a later managed trade exists for the same holding or the current holding was manually edited / reconciled after the trade.
+- Managed USD trades preserve the transaction FX rate for realized-P/L TWD conversion.
+- The activity ledger now labels inventory-applied trades and surfaces cumulative realized P/L from V0.54 managed sells.

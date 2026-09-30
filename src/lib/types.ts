@@ -64,6 +64,17 @@ export interface JournalEntry {
   invalidation: string;
 }
 
+export interface InventoryImpact {
+  kind: "trade";
+  holdingId: string;
+  before: Holding;
+  after: Holding | null;
+  fee: number;
+  tax: number;
+  realizedPnl: number;
+  method: "average_cost";
+}
+
 export interface PortfolioActivity {
   id: string;
   date: string;
@@ -78,6 +89,7 @@ export interface PortfolioActivity {
   note: string;
   account?: string;
   preFlowValueTwd?: number;
+  inventoryImpact?: InventoryImpact;
 }
 
 export interface NetWorthSnapshot {
