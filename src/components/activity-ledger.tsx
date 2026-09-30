@@ -1537,7 +1537,7 @@ function ActivityForm({
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.64 起，持股帳戶移轉也採 forward-only：只從今天的目前庫存往前搬移，並保留 V0.62 對買進、賣出與股數調整的 engine-level 日期防線。歷史現金事件維持 ledger-only；任何歷史證券 mutation 都不會被重播到今天的庫存。
+        V0.65 起，過去日期的買進／賣出可用 Ledger-only 模式補登：只保存成交資料與明確輸入的 fee / tax，不修改今天持股或現金，也不反推 realized P/L。今天的持股連動交易與持股移轉仍維持 forward-only。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
@@ -1665,6 +1665,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
     }
   }
 
+  function addHistoricalTrade(input: HistoricalTradeInput) {
+    try {
+      const next = recordHistoricalTrade(state, input);
+      if (!onChange(next)) return false;
+      toast.success("歷史買賣已補登，目前持股與現金未變動");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全補登歷史買賣");
+      return false;
+    }
+  }
+
   function addCashTransfer(input: CashTransferInput) {
     try {
       const next = applyCashTransfer(state, input);
@@ -1775,6 +1787,9 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <Modal title="補登歷史買賣" trigger={<GhostButton><ReceiptText size={16} />補歷史買賣</GhostButton>}>
+            <HistoricalTradeForm state={state} onSave={addHistoricalTrade} />
+          </Modal>
           <Modal title="首次買進新標的" trigger={<GhostButton><Plus size={16} />首次買進</GhostButton>}>
             <OpeningBuyForm state={state} onSave={addOpeningPosition} />
           </Modal>
@@ -1808,6 +1823,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           const positionTransfer = isPositionTransferActivityType(activity.type);
           const trade = isTradeActivityType(activity.type);
           const corporate = activity.type === "corporate_action";
+          const historicalTrade = activity.historicalTrade?.mode === "ledger_only";
           const ledgerOnlyCash =
             (activity.type === "deposit" ||
               activity.type === "withdrawal" ||
@@ -1830,6 +1846,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       {external ? <Badge tone="good">外部現金流</Badge> : (transfer || fxConversion || positionTransfer) ? <Badge>內部資產搬移</Badge> : <Badge>內部紀錄</Badge>}
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
                       {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
+                      {historicalTrade ? <Badge tone="warn">歷史買賣・Ledger-only</Badge> : null}
                       {ledgerOnlyCash ? <Badge tone="warn">Ledger-only・未改目前現金</Badge> : null}
                       {activity.cashTransferImpact ? <Badge tone="good">雙帳戶原子更新</Badge> : null}
                       {activity.cashFxImpact ? <Badge tone="good">跨幣別原子更新</Badge> : null}
@@ -1869,6 +1886,14 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                         手續費 {activity.currency} {activity.inventoryImpact.fee.toLocaleString()} · 交易稅 {activity.currency} {activity.inventoryImpact.tax.toLocaleString()}
                         {activity.type === "sell" ? ` · 已實現損益 ${activity.currency} ${activity.inventoryImpact.realizedPnl.toLocaleString()}` : ""}
                       </p>
+                    ) : null}
+                    {activity.historicalTrade ? (
+                      <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+                        <p>手續費 {activity.currency} {activity.historicalTrade.fee.toLocaleString()} · 交易稅 {activity.currency} {activity.historicalTrade.tax.toLocaleString()}</p>
+                        <p className="text-black/35 dark:text-white/35">
+                          {activity.type === "buy" ? "歷史總成本" : "歷史淨收入"}已保存；未反推 realized P/L，也未修改目前持股或現金。
+                        </p>
+                      </div>
                     ) : null}
                     {activity.inventoryImpact?.kind === "corporate_action" ? (
                       <p className="mt-2 text-xs text-black/45 dark:text-white/45">
@@ -2004,6 +2029,13 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                           if (!window.confirm("這筆是 Ledger-only 歷史／舊資料，未修改目前現金餘額。刪除只會移除帳務與績效紀錄，確定繼續？")) return;
                           if (!onChange({ ...state, activities: state.activities.filter((item) => item.id !== activity.id) })) return;
                           toast.success("歷史帳務紀錄已刪除，目前現金餘額未變動");
+                          return;
+                        }
+
+                        if (historicalTrade) {
+                          if (!window.confirm("這筆是 Ledger-only 歷史買賣，未修改目前持股或現金。刪除只會移除交易日誌與成本透明化紀錄，確定繼續？")) return;
+                          if (!onChange({ ...state, activities: state.activities.filter((item) => item.id !== activity.id) })) return;
+                          toast.success("歷史買賣紀錄已刪除，目前持股與現金未變動");
                           return;
                         }
 
