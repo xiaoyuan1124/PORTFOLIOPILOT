@@ -39,6 +39,47 @@ export const holdingSchema = z.object({
       message: "股票／ETF 平均成本必須大於 0。"
     });
   }
+
+  if ((holding.market === "TW" && holding.currency !== "TWD") ||
+      (holding.market === "US" && holding.currency !== "USD")) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["currency"],
+      message: "持股市場與幣別不一致，可能造成資產換匯錯誤。"
+    });
+  }
+
+  if (holding.type === "cash" && (holding.priceSource !== undefined || holding.priceAsOf !== undefined)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["priceSource"],
+      message: "現金不可附帶證券市場價格來源或資料日。"
+    });
+  }
+
+  if ((holding.priceSource === "TWSE" || holding.priceSource === "TPEx") && holding.market !== "TW") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["priceSource"],
+      message: "TWSE／TPEx 價格來源只能套用於台灣持股。"
+    });
+  }
+
+  if ((holding.priceSource === "TWSE" || holding.priceSource === "TPEx") && !holding.priceAsOf) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["priceAsOf"],
+      message: "官方價格來源必須同時保留資料日。"
+    });
+  }
+
+  if (holding.priceAsOf && !holding.priceSource) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["priceSource"],
+      message: "價格資料日不可缺少對應來源。"
+    });
+  }
 });
 
 export const etfConstituentSchema = z.object({
@@ -249,6 +290,15 @@ export const holdingCsvRowSchema = z.object({
       code: "custom",
       path: ["averageCost"],
       message: "股票／ETF 平均成本必須大於 0。"
+    });
+  }
+
+  if ((holding.market === "TW" && holding.currency !== "TWD") ||
+      (holding.market === "US" && holding.currency !== "USD")) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["currency"],
+      message: "持股市場與幣別不一致，可能造成資產換匯錯誤。"
     });
   }
 });
