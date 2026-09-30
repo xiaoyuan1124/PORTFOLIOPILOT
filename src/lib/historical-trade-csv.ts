@@ -168,6 +168,17 @@ function resolveMarket(
   return resolved;
 }
 
+function normalizeSourceFileName(value?: string) {
+  const raw = (value ?? "").trim().replace(/\0/g, "");
+  if (!raw) return "";
+  const fileName = raw.replace(/\\/g, "/").split("/").at(-1)?.trim() ?? "";
+  if (!fileName) return "";
+  if (fileName.length > 240) {
+    throw new Error("歷史成交 CSV 檔名過長，請將檔名縮短至 240 個字元以內。");
+  }
+  return fileName;
+}
+
 function stableHash(value: string) {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -211,9 +222,11 @@ export function historicalTradeCsvTemplate() {
 export function parseHistoricalTradeCsv(
   text: string,
   fallbackAccount: string,
-  fallbackMarket: Market | null
+  fallbackMarket: Market | null,
+  sourceFileName = ""
 ): HistoricalTradeInput[] {
   const accountFallback = fallbackAccount.trim();
+  const importFileName = normalizeSourceFileName(sourceFileName);
 
   const parsed = Papa.parse<Record<string, unknown>>(text, {
     header: true,
@@ -316,7 +329,8 @@ export function parseHistoricalTradeCsv(
 
   return inputs.map((input) => ({
     ...input,
-    importBatchId
+    importBatchId,
+    ...(importFileName ? { importFileName } : {})
   }));
 }
 
@@ -335,6 +349,7 @@ export interface HistoricalTradeCsvPreviewRow {
 
 export interface HistoricalTradeCsvPreview {
   importBatchId: string;
+  sourceFileName?: string;
   importedCount: number;
   buyCount: number;
   sellCount: number;
@@ -343,6 +358,7 @@ export interface HistoricalTradeCsvPreview {
   firstDate: string;
   lastDate: string;
   accounts: string[];
+  sourceFileNames: string[];
   feesTwd: number;
   taxesTwd: number;
   sampleRows: HistoricalTradeCsvPreviewRow[];
@@ -360,9 +376,10 @@ export function previewHistoricalTradeCsv(
   state: AppState,
   text: string,
   fallbackAccount: string,
-  fallbackMarket: Market | null
+  fallbackMarket: Market | null,
+  sourceFileName = ""
 ): HistoricalTradeCsvPreview {
-  const inputs = parseHistoricalTradeCsv(text, fallbackAccount, fallbackMarket);
+  const inputs = parseHistoricalTradeCsv(text, fallbackAccount, fallbackMarket, sourceFileName);
 
   // Run the exact engine against an immutable candidate state so duplicate
   // fingerprints, historical-date rules and every V0.65 invariant are checked
@@ -382,6 +399,7 @@ export function previewHistoricalTradeCsv(
 
   return {
     importBatchId: inputs[0]?.importBatchId ?? "",
+    ...(inputs[0]?.importFileName ? { sourceFileName: inputs[0].importFileName } : {}),
     importedCount: inputs.length,
     buyCount: inputs.filter((input) => input.type === "buy").length,
     sellCount: inputs.filter((input) => input.type === "sell").length,
@@ -411,14 +429,16 @@ export function importHistoricalTradeCsv(
   state: AppState,
   text: string,
   fallbackAccount: string,
-  fallbackMarket: Market | null
+  fallbackMarket: Market | null,
+  sourceFileName = ""
 ) {
-  const inputs = parseHistoricalTradeCsv(text, fallbackAccount, fallbackMarket);
+  const inputs = parseHistoricalTradeCsv(text, fallbackAccount, fallbackMarket, sourceFileName);
   const next = validateHistoricalTradeInputs(state, inputs);
   return {
     state: next,
     importedCount: inputs.length,
-    importBatchId: inputs[0]?.importBatchId ?? ""
+    importBatchId: inputs[0]?.importBatchId ?? "",
+    ...(inputs[0]?.importFileName ? { sourceFileName: inputs[0].importFileName } : {})
   };
 }
 
@@ -462,6 +482,11 @@ export function historicalTradeCsvBatches(state: AppState): HistoricalTradeCsvBa
     const accounts = [...new Set(
       activities.map((activity) => activity.account?.trim() || "預設帳戶")
     )].sort((a, b) => a.localeCompare(b, "zh-Hant"));
+    const sourceFileNames = [...new Set(
+      activities
+        .map((activity) => activity.historicalTrade?.importFileName?.trim())
+        .filter((value): value is string => Boolean(value))
+    )].sort((a, b) => a.localeCompare(b, "zh-Hant"));
 
     return {
       importBatchId,
@@ -473,6 +498,7 @@ export function historicalTradeCsvBatches(state: AppState): HistoricalTradeCsvBa
       firstDate: dates[0] ?? "",
       lastDate: dates.at(-1) ?? "",
       accounts,
+      sourceFileNames,
       feesTwd: activities.reduce(
         (sum, activity) =>
           sum +
