@@ -42,6 +42,18 @@ describe("material event helpers", () => {
     }]);
   });
 
+  it("skips incomplete rows that cannot form a trustworthy publication timestamp", () => {
+    const rows = parseMaterialEventRows([{
+      "發言日期": "1150930",
+      "發言時間": "",
+      "公司代號": "2330",
+      "公司名稱": "台積電",
+      "主旨": "缺時間"
+    }], "TWSE");
+
+    expect(rows).toEqual([]);
+  });
+
   it("merges history by stable event identity and prunes outside retention", () => {
     const old = {
       market: "TWSE",
