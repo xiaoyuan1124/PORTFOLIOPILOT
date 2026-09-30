@@ -1,5 +1,5 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
-import { accountName } from "./local-data";
+import { accountName, holdingIdentityKey } from "./local-data";
 import {
   holdingSnapshotEqual,
   nextCashSnapshot,
@@ -20,12 +20,115 @@ export type ManagedTradeInput = {
   note: string;
 };
 
+export type NewPositionDraft = Omit<Holding, "quantity" | "averageCost">;
+
+export type NewPositionBuyInput = {
+  id: string;
+  date: string;
+  cashHoldingId: string;
+  position: NewPositionDraft;
+  quantity: number;
+  price: number;
+  fee: number;
+  tax: number;
+  fxRate: number;
+  note: string;
+};
+
 function assertPositive(value: number, label: string) {
   if (!Number.isFinite(value) || value <= 0) throw new Error(`${label}必須大於 0。`);
 }
 
 function assertNonnegative(value: number, label: string) {
   if (!Number.isFinite(value) || value < 0) throw new Error(`${label}不可小於 0。`);
+}
+
+export function applyOpeningBuy(state: AppState, input: NewPositionBuyInput): AppState {
+  const cash = state.holdings.find((item) => item.id === input.cashHoldingId);
+  if (!cash || cash.type !== "cash") {
+    throw new Error("找不到可連動的現金帳戶，請先建立現金部位。");
+  }
+  if (input.position.type === "cash") {
+    throw new Error("首次買進只能建立股票或 ETF 部位。");
+  }
+  if (cash.currency !== input.position.currency) {
+    throw new Error(`新部位幣別為 ${input.position.currency}，不可連動 ${cash.currency} 現金帳戶。`);
+  }
+
+  assertPositive(input.quantity, "交易數量");
+  assertPositive(input.price, "成交價");
+  assertPositive(input.position.price, "目前價格");
+  assertNonnegative(input.fee, "手續費");
+  assertNonnegative(input.tax, "交易稅");
+  assertPositive(input.fxRate, "匯率");
+
+  const normalizedPosition = {
+    ...input.position,
+    symbol: input.position.symbol.trim().toUpperCase(),
+    name: input.position.name.trim(),
+    sector: input.position.sector.trim(),
+    account: accountName(input.position.account)
+  };
+  if (!normalizedPosition.symbol || !normalizedPosition.name || !normalizedPosition.sector) {
+    throw new Error("首次買進需要完整的標的代號、名稱與分類。");
+  }
+
+  const duplicate = state.holdings.some((item) =>
+    item.type !== "cash" &&
+    holdingIdentityKey(item) === holdingIdentityKey(normalizedPosition)
+  );
+  if (duplicate) {
+    throw new Error("相同市場、代號與帳戶的持股已存在，請改用一般買進。");
+  }
+
+  const gross = input.quantity * input.price;
+  const amount = gross + input.fee + input.tax;
+  const cashAfter = nextCashSnapshot(cash, -amount);
+  const after: Holding = {
+    ...normalizedPosition,
+    quantity: input.quantity,
+    averageCost: amount / input.quantity
+  };
+
+  const activity: PortfolioActivity = {
+    id: input.id,
+    date: input.date,
+    type: "buy",
+    symbol: after.symbol,
+    amount,
+    currency: after.currency,
+    fxRate: after.currency === "TWD" ? 1 : input.fxRate,
+    quantity: input.quantity,
+    price: input.price,
+    note: input.note.trim(),
+    account: accountName(after.account),
+    inventoryImpact: {
+      kind: "trade",
+      holdingId: after.id,
+      before: null,
+      after,
+      fee: input.fee,
+      tax: input.tax,
+      realizedPnl: 0,
+      method: "average_cost"
+    },
+    cashImpact: {
+      cashHoldingId: cash.id,
+      before: { ...cash },
+      after: cashAfter,
+      delta: -amount,
+      reason: "trade"
+    }
+  };
+
+  const withPosition = replaceHoldingSnapshot(state.holdings, after.id, after);
+  const holdings = replaceHoldingSnapshot(withPosition, cash.id, cashAfter);
+
+  return {
+    ...state,
+    holdings,
+    activities: [...state.activities, activity]
+  };
 }
 
 export function applyManagedTrade(state: AppState, input: ManagedTradeInput): AppState {

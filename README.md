@@ -514,3 +514,19 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Deposits / withdrawals remain the only activity types allowed to carry Exact TWR pre-flow boundaries.
 - Legacy V0.55-and-earlier activities are not replayed into cash. V0.56 uses the current cash holdings as the migration baseline to prevent double-counting old transactions.
 - The UI requires an existing cash holding rather than inventing a starting balance. Users can create TWD / USD cash from the Holdings page before recording new cash-linked events.
+
+
+## V0.57 first-buy position creation
+
+- The activity ledger now has a dedicated **首次買進** workflow for securities that do not yet exist in current holdings.
+- A first buy atomically creates the security holding, deducts the selected same-currency cash account and records the buy activity. No placeholder / fake pre-existing holding is required.
+- Taiwan first buys use PortfolioPilot's bundled TWSE / TPEx official-security catalog. Users search by symbol or name, then choose an official match; name, stock / ETF type, industry, current close, price source and as-of date are filled from the official cache.
+- If the Taiwan official catalog cannot load or no official match is selected, the first-buy submission fails closed rather than guessing identity.
+- US first buys remain manual for symbol, name, asset type, sector and current price because PortfolioPilot still has no zero-cost official US closing-price source. The current US price is explicitly marked manual, while the execution price is stored separately.
+- First-buy average cost equals (execution value + fees + taxes) / quantity. Current market price is kept separate from the execution price.
+- The new position inherits the selected cash account name, preserving the existing market + symbol + account identity model.
+- Duplicate market + symbol + account positions are rejected and must use the ordinary add-to-position buy flow instead.
+- Opening buys fail closed on insufficient cash or currency mismatch.
+- Backup V9 allows a managed trade inventory impact with `before: null` only for a buy that creates a non-null after holding. Sell-from-nothing remains invalid.
+- Deleting the latest opening buy uses the existing managed-trade rollback path: the newly created holding is removed and the linked cash balance is restored, provided neither side has later linked events or manual drift.
+- Legacy V1–V8 backups remain readable.

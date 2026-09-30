@@ -48,7 +48,7 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(8);
+    expect(JSON.parse(serialized).version).toBe(9);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -102,7 +102,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(8);
+    expect(JSON.parse(serialized).version).toBe(9);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -154,7 +154,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(8);
+    expect(JSON.parse(serialized).version).toBe(9);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -205,7 +205,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(8);
+    expect(JSON.parse(serialized).version).toBe(9);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -258,6 +258,80 @@ describe("local data import/export", () => {
     };
 
     expect(() => parseBackup(JSON.stringify(backup))).toThrow(/after 快照/);
+  });
+
+  it("round-trips V9 opening-buy metadata with null before snapshot", () => {
+    const cashBefore = {
+      id: "cash",
+      symbol: "CASH-TWD",
+      name: "TWD 現金",
+      market: "TW" as const,
+      type: "cash" as const,
+      quantity: 1,
+      price: 5000,
+      averageCost: 5000,
+      currency: "TWD" as const,
+      sector: "現金",
+      account: "券商A"
+    };
+    const cashAfter = { ...cashBefore, price: 4000, averageCost: 4000 };
+    const position = {
+      id: "new-position",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW" as const,
+      type: "stock" as const,
+      quantity: 1,
+      price: 1000,
+      averageCost: 1000,
+      currency: "TWD" as const,
+      sector: "半導體",
+      account: "券商A"
+    };
+
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [cashAfter, position],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "open",
+        date: "2026-09-30",
+        type: "buy",
+        symbol: "2330",
+        amount: 1000,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 1,
+        price: 1000,
+        note: "",
+        account: "券商A",
+        inventoryImpact: {
+          kind: "trade",
+          holdingId: "new-position",
+          before: null,
+          after: position,
+          fee: 0,
+          tax: 0,
+          realizedPnl: 0,
+          method: "average_cost"
+        },
+        cashImpact: {
+          cashHoldingId: "cash",
+          before: cashBefore,
+          after: cashAfter,
+          delta: -1000,
+          reason: "trade"
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(9);
+    expect(parseBackup(serialized)).toEqual(state);
   });
 
   it("keeps version 4 backups compatible by defaulting allocation targets to empty", () => {

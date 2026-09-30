@@ -94,7 +94,7 @@ export const inventoryImpactSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("trade"),
     holdingId: z.string().min(1),
-    before: holdingSchema,
+    before: holdingSchema.nullable(),
     after: holdingSchema.nullable(),
     fee: z.number().finite().nonnegative(),
     tax: z.number().finite().nonnegative(),
@@ -232,30 +232,58 @@ export const activitySchema = z.object({
 
   if (activity.inventoryImpact) {
     const impact = activity.inventoryImpact;
-    const expectedSymbol = impact.before.symbol.trim().toUpperCase();
-    const expectedAccount = (impact.before.account?.trim() || "預設帳戶").toLowerCase();
+    const anchor = impact.before ?? impact.after;
     const activityAccount = (activity.account?.trim() || "預設帳戶").toLowerCase();
 
-    if (impact.before.id !== impact.holdingId || (impact.after && impact.after.id !== impact.holdingId)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["inventoryImpact", "holdingId"],
-        message: "持股連動快照的部位 ID 不一致。"
-      });
-    }
-    if (activity.symbol.trim().toUpperCase() !== expectedSymbol) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["symbol"],
-        message: "交易代號與持股連動快照不一致。"
-      });
-    }
-    if (activity.currency !== impact.before.currency || activityAccount !== expectedAccount) {
+    if (!anchor) {
       ctx.addIssue({
         code: "custom",
         path: ["inventoryImpact"],
-        message: "交易幣別或帳戶與持股連動快照不一致。"
+        message: "持股連動交易至少需要 before 或 after 快照。"
       });
+    } else {
+      const expectedSymbol = anchor.symbol.trim().toUpperCase();
+      const expectedAccount = (anchor.account?.trim() || "預設帳戶").toLowerCase();
+
+      if ((impact.before && impact.before.id !== impact.holdingId) ||
+          (impact.after && impact.after.id !== impact.holdingId)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["inventoryImpact", "holdingId"],
+          message: "持股連動快照的部位 ID 不一致。"
+        });
+      }
+      if (activity.symbol.trim().toUpperCase() !== expectedSymbol) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["symbol"],
+          message: "交易代號與持股連動快照不一致。"
+        });
+      }
+      if (activity.currency !== anchor.currency || activityAccount !== expectedAccount) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["inventoryImpact"],
+          message: "交易幣別或帳戶與持股連動快照不一致。"
+        });
+      }
+    }
+
+    if (impact.kind === "trade") {
+      if (activity.type === "sell" && impact.before === null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["inventoryImpact", "before"],
+          message: "賣出交易不可從不存在的持股開始。"
+        });
+      }
+      if (impact.before === null && (activity.type !== "buy" || impact.after === null)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["inventoryImpact"],
+          message: "首次建倉只能由買進建立新的 after 持股。"
+        });
+      }
     }
   }
 
@@ -504,7 +532,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),

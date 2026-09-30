@@ -68,7 +68,7 @@ export type InventoryImpact =
   | {
       kind: "trade";
       holdingId: string;
-      before: Holding;
+      before: Holding | null;
       after: Holding | null;
       fee: number;
       tax: number;
