@@ -42,14 +42,79 @@ describe("local data import/export", () => {
         quantity: 0,
         price: 0,
         note: "boundary",
-        preFlowValueTwd: 5000
+        preFlowValueTwd: 5000,
+        preFlowValueSource: "manual"
       }],
       allocationTargets: [{ key: "US:ETF", label: "ETF", targetPct: 100 }],
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(9);
+    expect(JSON.parse(serialized).version).toBe(10);
     expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("keeps version 9 backups readable without boundary provenance", () => {
+    const parsed = parseBackup(JSON.stringify({
+      version: 9,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [{
+          id: "legacy-flow",
+          date: "2026-09-30",
+          time: "09:30",
+          type: "deposit",
+          symbol: "",
+          amount: 1000,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 0,
+          price: 0,
+          note: "",
+          preFlowValueTwd: 5000
+        }],
+        snapshots: [],
+        allocationTargets: []
+      }
+    }));
+
+    expect(parsed.activities[0]?.preFlowValueTwd).toBe(5000);
+    expect(parsed.activities[0]?.preFlowValueSource).toBeUndefined();
+  });
+
+  it("rejects forged system TWR provenance without a linked cash event", () => {
+    expect(() => parseBackup(JSON.stringify({
+      version: 10,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [{
+          id: "forged-system-flow",
+          date: "2026-09-30",
+          time: "09:30",
+          type: "deposit",
+          symbol: "",
+          amount: 1000,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 0,
+          price: 0,
+          note: "",
+          preFlowValueTwd: 5000,
+          preFlowValueSource: "system_current_state"
+        }],
+        snapshots: [],
+        allocationTargets: []
+      }
+    }))).toThrow(/已連動現金帳戶/);
   });
 
   it("round-trips V6 managed trade inventory metadata", () => {
@@ -102,7 +167,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(9);
+    expect(JSON.parse(serialized).version).toBe(10);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -154,7 +219,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(9);
+    expect(JSON.parse(serialized).version).toBe(10);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -205,7 +270,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(9);
+    expect(JSON.parse(serialized).version).toBe(10);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -330,7 +395,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(9);
+    expect(JSON.parse(serialized).version).toBe(10);
     expect(parseBackup(serialized)).toEqual(state);
   });
 

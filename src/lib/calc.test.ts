@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppState } from "./types";
-import { allocationByAccount, dailySnapshotDelta, localDateKey, officialPriceCoverage, portfolioCashSummary, portfolioSummary, snapshotsForRange, snapshotsThroughDate, withTodaySnapshot } from "./calc";
+import { allocationByAccount, dailySnapshotDelta, localDateKey, localTimeKey, officialPriceCoverage, portfolioCashSummary, portfolioSummary, snapshotsForRange, snapshotsThroughDate, withTodaySnapshot } from "./calc";
 
 const state: AppState = {
   usdTwd: 32,
@@ -24,6 +24,10 @@ describe("portfolio calculations", () => {
 
   it("formats dates using the runtime local calendar day", () => {
     expect(localDateKey(new Date(2026, 8, 30, 1, 30))).toBe("2026-09-30");
+  });
+
+  it("formats times using the runtime local clock", () => {
+    expect(localTimeKey(new Date(2026, 8, 30, 7, 5))).toBe("07:05");
   });
 
   it("keeps only one snapshot per local day and updates it", () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppState, Holding } from "./types";
+import { localDateKey } from "./calc";
 import {
   applyCashLinkedActivity,
   nextCashSnapshot,
@@ -59,11 +60,140 @@ describe("cash account linkage", () => {
       currency: "TWD",
       time: "09:30",
       preFlowValueTwd: 5000,
+      preFlowValueSource: "manual",
       cashImpact: {
         delta: 1000,
         reason: "deposit"
       }
     });
+  });
+
+  it("auto-captures the current portfolio value before a same-day external cash flow", () => {
+    const base = state();
+    base.holdings.push({
+      id: "usd-stock",
+      symbol: "TEST",
+      name: "Test",
+      market: "US",
+      type: "stock",
+      quantity: 2,
+      price: 100,
+      averageCost: 90,
+      currency: "USD",
+      sector: "Test",
+      account: "美股"
+    });
+
+    const next = applyCashLinkedActivity(base, {
+      id: "auto-deposit",
+      date: localDateKey(),
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 1000,
+      fxRate: 1,
+      symbol: "",
+      note: "",
+      time: "10:15",
+      capturePreFlowFromCurrentState: true
+    });
+
+    expect(next.activities[0]).toMatchObject({
+      preFlowValueTwd: 11360,
+      preFlowValueSource: "system_current_state",
+      time: "10:15"
+    });
+    expect(next.holdings.find((item) => item.id === "cash")?.price).toBe(6000);
+  });
+
+  it("uses the current portfolio FX for an automatically captured USD boundary", () => {
+    const usdCash = cash({
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 100,
+      averageCost: 100,
+      currency: "USD"
+    });
+
+    const next = applyCashLinkedActivity(state(usdCash), {
+      id: "auto-usd-deposit",
+      date: localDateKey(),
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 10,
+      fxRate: 25,
+      symbol: "",
+      note: "",
+      time: "10:16",
+      capturePreFlowFromCurrentState: true
+    });
+
+    expect(next.activities[0]).toMatchObject({
+      preFlowValueTwd: 3180,
+      preFlowValueSource: "system_current_state",
+      fxRate: 31.8
+    });
+    expect(next.holdings[0]?.price).toBe(110);
+  });
+
+  it("rejects current-state boundary capture for historical flows", () => {
+    expect(() => applyCashLinkedActivity(state(), {
+      id: "historical",
+      date: "2000-01-01",
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "",
+      note: "",
+      time: "10:15",
+      capturePreFlowFromCurrentState: true
+    })).toThrow(/歷史入金／出金不可使用目前淨值/);
+  });
+
+  it("rejects auto boundary capture on non-external cash events", () => {
+    expect(() => applyCashLinkedActivity(state(), {
+      id: "dividend-auto",
+      date: localDateKey(),
+      type: "dividend",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "2330",
+      note: "",
+      time: "10:15",
+      capturePreFlowFromCurrentState: true
+    })).toThrow(/只有入金／出金/);
+  });
+
+  it("rejects an automatic boundary when another external flow already uses the same minute", () => {
+    const base = state();
+    base.activities.push({
+      id: "existing-flow",
+      date: localDateKey(),
+      time: "10:15",
+      type: "deposit",
+      symbol: "",
+      amount: 10,
+      currency: "TWD",
+      fxRate: 1,
+      quantity: 0,
+      price: 0,
+      note: ""
+    });
+
+    expect(() => applyCashLinkedActivity(base, {
+      id: "ambiguous-auto",
+      date: localDateKey(),
+      type: "withdrawal",
+      cashHoldingId: "cash",
+      amount: 10,
+      fxRate: 1,
+      symbol: "",
+      note: "",
+      time: "10:15",
+      capturePreFlowFromCurrentState: true
+    })).toThrow(/同一分鐘已有入金／出金事件/);
   });
 
   it("subtracts withdrawals and preserves a zero-balance cash account", () => {

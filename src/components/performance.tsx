@@ -71,7 +71,7 @@ export function Performance({ state }: { state: AppState }) {
           </CardHeader>
           <CardContent className="space-y-3 pt-4 text-sm leading-6 text-black/55 dark:text-white/55">
             <p><strong className="text-black/80 dark:text-white/80">XIRR</strong> 使用你記錄的入金、出金日期與目前投資組合淨值，計算年化資金加權報酬。入金視為投資人的現金流出，出金與目前淨值視為現金流入。</p>
-            <p><strong className="text-black/80 dark:text-white/80">Exact TWR</strong> 只在每筆入金／出金都記錄「現金流發生前的投資組合淨值」時，才把現金流切成子期間並幾何鏈結。缺任何必要邊界就顯示資料不足，不會用 Proxy 補洞冒充精確值。</p>
+            <p><strong className="text-black/80 dark:text-white/80">Exact TWR</strong> 只在每筆入金／出金都有「現金流發生前的投資組合淨值」時，才把現金流切成子期間並幾何鏈結。今天實際發生的外部現金流可在寫入前由系統擷取目前 PortfolioPilot 淨值；歷史補登仍需使用當時可確認的手動邊界。缺任何必要邊界就顯示資料不足，不會用 Proxy 補洞冒充精確值。</p>
             <p><strong className="text-black/80 dark:text-white/80">TWR Proxy</strong> 使用每日淨值快照與 Modified Dietz 做現金流調整。它仍是透明的近似值，用來支援舊資料與缺少事件邊界的期間。</p>
           </CardContent>
         </Card>

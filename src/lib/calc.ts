@@ -160,6 +160,12 @@ export function localDateKey(date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
+export function localTimeKey(date = new Date()) {
+  const h = String(date.getHours()).padStart(2, "0");
+  const m = String(date.getMinutes()).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
 export function makeSnapshot(state: AppState, date = new Date()): NetWorthSnapshot {
   const summary = portfolioSummary(state.holdings, state.usdTwd);
   return {

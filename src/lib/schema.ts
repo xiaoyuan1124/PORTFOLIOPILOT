@@ -171,6 +171,7 @@ export const activitySchema = z.object({
   note: z.string(),
   account: z.string().trim().min(1).max(120).optional(),
   preFlowValueTwd: z.number().finite().nonnegative().optional(),
+  preFlowValueSource: z.enum(["system_current_state", "manual"]).optional(),
   inventoryImpact: inventoryImpactSchema.optional(),
   cashImpact: cashImpactSchema.optional()
 }).superRefine((activity, ctx) => {
@@ -204,6 +205,39 @@ export const activitySchema = z.object({
       path: ["preFlowValueTwd"],
       message: "TWR 邊界估值只適用於入金或出金。"
     });
+  }
+
+  if (activity.preFlowValueSource !== undefined && !isExternalActivityType(activity.type)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["preFlowValueSource"],
+      message: "TWR 邊界來源只適用於入金或出金。"
+    });
+  }
+
+  if (activity.preFlowValueSource !== undefined && activity.preFlowValueTwd === undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["preFlowValueSource"],
+      message: "TWR 邊界來源不可缺少對應的邊界估值。"
+    });
+  }
+
+  if (activity.preFlowValueSource === "system_current_state") {
+    if (!activity.time) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["time"],
+        message: "系統擷取的 TWR 邊界必須保留事件時間。"
+      });
+    }
+    if (!activity.cashImpact) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact"],
+        message: "系統擷取的 TWR 邊界必須來自已連動現金帳戶的事件。"
+      });
+    }
   }
 
   if (activity.inventoryImpact?.kind === "trade" && !isTradeActivityType(activity.type)) {
@@ -402,6 +436,7 @@ export const activitySchema = z.object({
   if (!isExternalActivityType(activity.type)) {
     delete normalized.time;
     delete normalized.preFlowValueTwd;
+    delete normalized.preFlowValueSource;
   }
 
   return normalized;
@@ -532,7 +567,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),

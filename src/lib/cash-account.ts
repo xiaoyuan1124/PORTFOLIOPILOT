@@ -1,4 +1,5 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
+import { localDateKey, portfolioSummary } from "./calc";
 import { accountName } from "./local-data";
 
 export type CashLinkedActivityInput = {
@@ -12,6 +13,7 @@ export type CashLinkedActivityInput = {
   note: string;
   time?: string;
   preFlowValueTwd?: number;
+  capturePreFlowFromCurrentState?: boolean;
 };
 
 export function cashBalance(holding: Holding) {
@@ -77,11 +79,43 @@ export function applyCashLinkedActivity(state: AppState, input: CashLinkedActivi
     throw new Error("匯率必須大於 0。");
   }
 
+  const external = input.type === "deposit" || input.type === "withdrawal";
+  if (input.capturePreFlowFromCurrentState && !external) {
+    throw new Error("只有入金／出金可以自動擷取 TWR 邊界。");
+  }
+  if (input.capturePreFlowFromCurrentState && input.preFlowValueTwd !== undefined) {
+    throw new Error("自動擷取與手動 TWR 邊界不可同時使用。");
+  }
+  if (input.capturePreFlowFromCurrentState && input.date !== localDateKey()) {
+    throw new Error("歷史入金／出金不可使用目前淨值作為 TWR 邊界，請改用手動補登。");
+  }
+  if (input.capturePreFlowFromCurrentState && !input.time) {
+    throw new Error("自動擷取 TWR 邊界時必須保留事件時間。");
+  }
+  if (
+    input.capturePreFlowFromCurrentState &&
+    state.activities.some((activity) =>
+      (activity.type === "deposit" || activity.type === "withdrawal") &&
+      activity.date === input.date &&
+      activity.time === input.time
+    )
+  ) {
+    throw new Error("同一分鐘已有入金／出金事件，無法安全自動決定 TWR 邊界順序；請改用手動模式填入實際時間與邊界。");
+  }
+
   const cash = assertCashHolding(state.holdings.find((item) => item.id === input.cashHoldingId));
   const delta = signedDelta(input.type, input.amount);
   const after = nextCashSnapshot(cash, delta);
 
-  const external = input.type === "deposit" || input.type === "withdrawal";
+  const capturedPreFlowValueTwd = input.capturePreFlowFromCurrentState
+    ? portfolioSummary(state.holdings, state.usdTwd).total
+    : input.preFlowValueTwd;
+  const preFlowValueSource = input.capturePreFlowFromCurrentState
+    ? "system_current_state" as const
+    : input.preFlowValueTwd !== undefined
+      ? "manual" as const
+      : undefined;
+
   const activity: PortfolioActivity = {
     id: input.id,
     date: input.date,
@@ -90,12 +124,15 @@ export function applyCashLinkedActivity(state: AppState, input: CashLinkedActivi
     symbol: input.symbol.trim().toUpperCase(),
     amount: input.amount,
     currency: cash.currency,
-    fxRate: cash.currency === "USD" ? input.fxRate : 1,
+    fxRate: cash.currency === "USD"
+      ? (input.capturePreFlowFromCurrentState ? state.usdTwd : input.fxRate)
+      : 1,
     quantity: 0,
     price: 0,
     note: input.note.trim(),
     account: accountName(cash.account),
-    ...(external && input.preFlowValueTwd !== undefined ? { preFlowValueTwd: input.preFlowValueTwd } : {}),
+    ...(external && capturedPreFlowValueTwd !== undefined ? { preFlowValueTwd: capturedPreFlowValueTwd } : {}),
+    ...(external && preFlowValueSource ? { preFlowValueSource } : {}),
     cashImpact: {
       cashHoldingId: cash.id,
       before: { ...cash },
