@@ -212,7 +212,8 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
         base,
         text,
         fallbackAccount,
-        fallbackMarket
+        fallbackMarket,
+        file.name
       );
 
       setPendingTradeCsv({
@@ -240,7 +241,8 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
         base,
         pendingTradeCsv.text,
         pendingTradeCsv.fallbackAccount,
-        pendingTradeCsv.fallbackMarket
+        pendingTradeCsv.fallbackMarket,
+        pendingTradeCsv.fileName
       );
 
       if (!onChange({ ...result.state, dataMode: "personal" })) return;
@@ -438,7 +440,13 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-xs font-semibold">{index === 0 ? "最近匯入" : `較早批次 ${index + 1}`}</p>
+                          <p className="text-xs font-semibold">
+                            {batch.sourceFileNames.length
+                              ? batch.sourceFileNames.join("、")
+                              : index === 0
+                                ? "最近匯入（舊版未保存檔名）"
+                                : `較早批次 ${index + 1}（舊版未保存檔名）`}
+                          </p>
                           <span className="rounded-full bg-black/[.045] px-2 py-0.5 text-[10px] font-semibold text-black/45 dark:bg-white/[.06] dark:text-white/45">
                             {batch.remainingCount} 筆
                           </span>
@@ -468,7 +476,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
                 <div>
                   <p className="text-sm font-semibold">匯入前預覽 · {pendingTradeCsv.fileName}</p>
                   <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
-                    尚未寫入任何資料。確認時會再用當下 Portfolio state 完整驗證一次。
+                    尚未寫入任何資料。來源檔名會保存為 provenance；確認時會再用當下 Portfolio state 完整驗證一次。
                   </p>
                 </div>
                 <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-black/55 dark:bg-white/8 dark:text-white/55">
