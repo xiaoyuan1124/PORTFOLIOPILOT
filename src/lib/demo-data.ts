@@ -26,6 +26,7 @@ export const demoState: AppState = {
     { id: "a2", date: "2026-07-01", type: "deposit", symbol: "", amount: 6000, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "定期投入", account: "台股證券" },
     { id: "a3", date: "2026-09-10", type: "dividend", symbol: "2330", amount: 120, currency: "TWD", fxRate: 1, quantity: 0, price: 0, note: "示範股息", account: "台股證券" }
   ],
+  allocationTargets: [],
   snapshots: [
     { date: "2026-09-22", total: 55320, cost: 51100, gain: 4220, usdTwd: 31.7 },
     { date: "2026-09-23", total: 56140, cost: 51100, gain: 5040, usdTwd: 31.72 },
@@ -42,6 +43,7 @@ export const emptyState: AppState = {
   etfCompositions: [],
   journal: [],
   activities: [],
+  allocationTargets: [],
   snapshots: []
 };
 
