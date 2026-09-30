@@ -106,6 +106,7 @@ export interface PortfolioActivity {
   note: string;
   account?: string;
   preFlowValueTwd?: number;
+  preFlowValueSource?: "system_current_state" | "manual";
   inventoryImpact?: InventoryImpact;
   cashImpact?: CashImpact;
 }
