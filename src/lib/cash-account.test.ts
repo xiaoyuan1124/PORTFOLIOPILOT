@@ -66,7 +66,7 @@ describe("cash account linkage", () => {
     });
   });
 
-  it("subtracts withdrawals and removes a cash holding when balance reaches zero", () => {
+  it("subtracts withdrawals and preserves a zero-balance cash account", () => {
     const next = applyCashLinkedActivity(state(cash({ price: 1000, averageCost: 1000 })), {
       id: "withdrawal",
       date: "2026-09-30",
@@ -78,8 +78,9 @@ describe("cash account linkage", () => {
       note: ""
     });
 
-    expect(next.holdings).toHaveLength(0);
-    expect(next.activities[0]?.cashImpact?.after).toBeNull();
+    expect(next.holdings).toHaveLength(1);
+    expect(next.holdings[0]).toMatchObject({ quantity: 1, price: 0, averageCost: 0 });
+    expect(next.activities[0]?.cashImpact?.after).toMatchObject({ price: 0, averageCost: 0 });
 
     const reverted = revertCashLinkedActivity(next, "withdrawal");
     expect(reverted.holdings).toEqual([cash({ price: 1000, averageCost: 1000 })]);
