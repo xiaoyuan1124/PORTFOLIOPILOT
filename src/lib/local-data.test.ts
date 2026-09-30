@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   etfCompositionsToCsv,
   holdingIdentityKey,
+  holdingMergeConflictCount,
   mergeHoldings,
   parseBackup,
   parseEtfCompositionCsv,
@@ -671,6 +672,40 @@ describe("local data import/export", () => {
       symbol: "2330",
       account: "券商A"
     }));
+  });
+
+  it("rejects duplicate holding identities inside one CSV file", () => {
+    const csv = [
+      "symbol,name,market,type,quantity,price,averageCost,currency,sector,account",
+      "2330,台積電,TW,stock,10,1000,900,TWD,半導體,券商A",
+      "2330,台積電,TW,stock,5,1010,920,TWD,半導體,券商A"
+    ].join("\n");
+
+    expect(() => parseHoldingsCsv(csv)).toThrow(/CSV 內有重複持股/);
+  });
+
+  it("counts existing holdings that CSV merge would overwrite", () => {
+    const existing = [{
+      id: "existing",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW" as const,
+      type: "stock" as const,
+      quantity: 10,
+      price: 1000,
+      averageCost: 900,
+      currency: "TWD" as const,
+      sector: "半導體",
+      account: "券商A"
+    }];
+
+    const incoming = parseHoldingsCsv([
+      "symbol,name,market,type,quantity,price,averageCost,currency,sector,account",
+      "2330,台積電,TW,stock,12,1010,910,TWD,半導體,券商A",
+      "2317,鴻海,TW,stock,5,220,200,TWD,電子,券商A"
+    ].join("\n"));
+
+    expect(holdingMergeConflictCount(existing, incoming)).toBe(1);
   });
 
   it("keeps identical symbols separate across accounts", () => {

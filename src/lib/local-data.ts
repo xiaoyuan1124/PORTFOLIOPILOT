@@ -81,7 +81,7 @@ export function parseHoldingsCsv(text: string): Holding[] {
     throw new Error(`CSV 解析失敗：${parsed.errors[0]?.message ?? "格式錯誤"}`);
   }
 
-  return parsed.data.map((row, index) => {
+  const holdings = parsed.data.map((row, index) => {
     const result = holdingCsvRowSchema.safeParse(row);
     if (!result.success) {
       throw new Error(`CSV 第 ${index + 2} 列格式不正確：${result.error.issues[0]?.message ?? "欄位錯誤"}`);
@@ -94,10 +94,31 @@ export function parseHoldingsCsv(text: string): Holding[] {
       account: accountName(result.data.account)
     };
   });
+
+  const seen = new Set<string>();
+  for (const holding of holdings) {
+    const key = holdingIdentityKey(holding);
+    if (seen.has(key)) {
+      throw new Error(`CSV 內有重複持股：${holding.market} ${holding.symbol}／${accountName(holding.account)}。請先合併成單一列。`);
+    }
+    seen.add(key);
+  }
+
+  return holdings;
 }
 
 export function holdingIdentityKey(holding: Pick<Holding, "market" | "symbol" | "account">) {
   return `${holding.market}:${holding.symbol.trim().toUpperCase()}:${accountName(holding.account).toLowerCase()}`;
+}
+
+export function holdingMergeConflictCount(existing: Holding[], incoming: Holding[]) {
+  const existingKeys = new Set(existing.map(holdingIdentityKey));
+  const conflicts = new Set(
+    incoming
+      .map(holdingIdentityKey)
+      .filter((key) => existingKeys.has(key))
+  );
+  return conflicts.size;
 }
 
 export function mergeHoldings(existing: Holding[], incoming: Holding[]) {

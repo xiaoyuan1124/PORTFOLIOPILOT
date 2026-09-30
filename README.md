@@ -363,3 +363,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Imported TWD activities normalize fxRate to 1, matching runtime calculation semantics and preventing meaningless stale FX values in backups.
 - USD activities keep their explicitly supplied historical USD/TWD rate.
 - Regression tests cover zero-amount rejection and TWD FX normalization.
+
+
+## V0.46 CSV overwrite integrity
+
+- Holdings CSV now fails closed when the file itself contains duplicate market + symbol + account identities instead of silently keeping the last row.
+- Before a CSV merge overwrites an existing holding with the same identity, the UI explicitly reports the number of affected positions and asks for confirmation.
+- Cancelling the confirmation leaves the current portfolio unchanged.
+- Successful overwrite imports clearly report how many existing positions were replaced.
+- Regression tests cover duplicate rows inside a CSV and existing-position conflict counting.
