@@ -425,41 +425,74 @@ export function importHistoricalTradeCsv(
 export interface HistoricalTradeCsvBatchSummary {
   importBatchId: string;
   remainingCount: number;
+  buyCount: number;
+  sellCount: number;
+  twCount: number;
+  usCount: number;
   firstDate: string;
   lastDate: string;
   accounts: string[];
+  feesTwd: number;
+  taxesTwd: number;
+}
+
+export function historicalTradeCsvBatches(state: AppState): HistoricalTradeCsvBatchSummary[] {
+  const order: string[] = [];
+  const grouped = new Map<string, typeof state.activities>();
+
+  for (let index = state.activities.length - 1; index >= 0; index -= 1) {
+    const activity = state.activities[index];
+    const trade = activity?.historicalTrade;
+    const importBatchId =
+      trade?.importSource === "csv" && trade.importBatchId
+        ? trade.importBatchId
+        : "";
+    if (!importBatchId || !activity) continue;
+
+    if (!grouped.has(importBatchId)) {
+      grouped.set(importBatchId, []);
+      order.push(importBatchId);
+    }
+    grouped.get(importBatchId)!.push(activity);
+  }
+
+  return order.map((importBatchId) => {
+    const activities = grouped.get(importBatchId) ?? [];
+    const dates = activities.map((activity) => activity.date).sort();
+    const accounts = [...new Set(
+      activities.map((activity) => activity.account?.trim() || "預設帳戶")
+    )].sort((a, b) => a.localeCompare(b, "zh-Hant"));
+
+    return {
+      importBatchId,
+      remainingCount: activities.length,
+      buyCount: activities.filter((activity) => activity.type === "buy").length,
+      sellCount: activities.filter((activity) => activity.type === "sell").length,
+      twCount: activities.filter((activity) => activity.historicalTrade?.market === "TW").length,
+      usCount: activities.filter((activity) => activity.historicalTrade?.market === "US").length,
+      firstDate: dates[0] ?? "",
+      lastDate: dates.at(-1) ?? "",
+      accounts,
+      feesTwd: activities.reduce(
+        (sum, activity) =>
+          sum +
+          (activity.historicalTrade?.fee ?? 0) *
+            (activity.currency === "USD" ? activity.fxRate : 1),
+        0
+      ),
+      taxesTwd: activities.reduce(
+        (sum, activity) =>
+          sum +
+          (activity.historicalTrade?.tax ?? 0) *
+            (activity.currency === "USD" ? activity.fxRate : 1),
+        0
+      )
+    };
+  });
 }
 
 export function latestHistoricalTradeCsvBatch(state: AppState): HistoricalTradeCsvBatchSummary | null {
-  let importBatchId = "";
-  for (let index = state.activities.length - 1; index >= 0; index -= 1) {
-    const candidate = state.activities[index]?.historicalTrade;
-    if (candidate?.importSource === "csv" && candidate.importBatchId) {
-      importBatchId = candidate.importBatchId;
-      break;
-    }
-  }
-  if (!importBatchId) return null;
-
-  const activities = state.activities.filter(
-    (activity) =>
-      activity.historicalTrade?.importSource === "csv" &&
-      activity.historicalTrade.importBatchId === importBatchId
-  );
-  if (!activities.length) return null;
-
-  const dates = activities.map((activity) => activity.date).sort();
-  const accounts = [...new Set(
-    activities.map((activity) => activity.account?.trim() || "預設帳戶")
-  )].sort((a, b) => a.localeCompare(b, "zh-Hant"));
-
-  return {
-    importBatchId,
-    remainingCount: activities.length,
-    firstDate: dates[0] ?? "",
-    lastDate: dates.at(-1) ?? "",
-    accounts
-  };
+  return historicalTradeCsvBatches(state)[0] ?? null;
 }
 
 export function undoHistoricalTradeCsvBatch(state: AppState, importBatchId: string): AppState {

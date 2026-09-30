@@ -664,3 +664,13 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - V0.66/V0.67 CSV rows restored from older backups do not have a batch ID. PortfolioPilot keeps them readable but does not guess which historical rows belonged to one import batch.
 - Backup format is now V16 and validates that a batch ID can exist only on CSV-imported historical trades that also retain a row fingerprint. Valid V1–V15 backups remain readable.
 
+## V0.69 historical trade CSV batch history
+
+- Settings now lists **all remaining V0.68+ historical-trade CSV batches**, not only the latest batch.
+- Batch ordering follows actual activity insertion/import order rather than historical execution date, so a newly imported file containing older trades still appears as the newest import action.
+- Each batch summary shows remaining row count, buy / sell split, TW / US split, historical date range, affected accounts, and explicit fee / tax totals normalized to TWD using each row's saved historical FX.
+- Any listed batch can be undone independently. Undo still removes only rows carrying that exact batch ID and never changes current holdings, current cash or managed-trade realized P/L.
+- If individual rows were already deleted, the history view and cost totals automatically reflect only the remaining rows in that batch.
+- The mobile view initially shows the three newest batches and can expand to the full history to avoid an unnecessarily long Settings screen.
+- No new persisted fields are required; Backup V16 remains current and V1–V15 compatibility is unchanged.
+

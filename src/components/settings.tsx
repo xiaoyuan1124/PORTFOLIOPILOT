@@ -7,11 +7,12 @@ import { demoState, emptyState } from "@/lib/demo-data";
 import { localDateKey } from "@/lib/calc";
 import { parseTaiwanBrokerInventoryCsv } from "@/lib/broker-inventory-csv";
 import {
+  historicalTradeCsvBatches,
   historicalTradeCsvTemplate,
   importHistoricalTradeCsv,
-  latestHistoricalTradeCsvBatch,
   previewHistoricalTradeCsv,
   undoHistoricalTradeCsvBatch,
+  type HistoricalTradeCsvBatchSummary,
   type HistoricalTradeCsvPreview
 } from "@/lib/historical-trade-csv";
 import { buildHoldingLookupCatalog } from "@/lib/holding-autofill";
@@ -48,8 +49,10 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
   const [tradeAccount, setTradeAccount] = useState("");
   const [tradeMarket, setTradeMarket] = useState<"" | Market>("");
   const [pendingTradeCsv, setPendingTradeCsv] = useState<PendingHistoricalTradeCsv | null>(null);
+  const [showAllTradeCsvBatches, setShowAllTradeCsvBatches] = useState(false);
   const [usdDraft, setUsdDraft] = useState<string | null>(null);
-  const latestTradeCsvBatch = latestHistoricalTradeCsvBatch(state);
+  const tradeCsvBatches = historicalTradeCsvBatches(state);
+  const visibleTradeCsvBatches = showAllTradeCsvBatches ? tradeCsvBatches : tradeCsvBatches.slice(0, 3);
 
   function exportRecoveryBackup() {
     const raw = getRecoveryBackupRaw();
@@ -249,16 +252,15 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
     }
   }
 
-  function undoLatestHistoricalTradeCsvImport() {
-    if (!latestTradeCsvBatch) return;
+  function undoHistoricalTradeCsvImport(batch: HistoricalTradeCsvBatchSummary) {
     if (!window.confirm(
-      `確定撤銷最近這批 ${latestTradeCsvBatch.remainingCount} 筆歷史成交 CSV 嗎？只會刪除這批 Ledger-only 交易日誌，不會修改目前持股或現金。`
+      `確定撤銷這批 ${batch.remainingCount} 筆歷史成交 CSV 嗎？日期範圍 ${batch.firstDate}～${batch.lastDate}。只會刪除這批 Ledger-only 交易日誌，不會修改目前持股或現金。`
     )) return;
 
     try {
-      const next = undoHistoricalTradeCsvBatch(state, latestTradeCsvBatch.importBatchId);
+      const next = undoHistoricalTradeCsvBatch(state, batch.importBatchId);
       if (!onChange(next)) return;
-      toast.success(`已撤銷 ${latestTradeCsvBatch.remainingCount} 筆歷史成交 CSV，持股與現金未變動`);
+      toast.success(`已撤銷 ${batch.remainingCount} 筆歷史成交 CSV，持股與現金未變動`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法安全撤銷歷史成交 CSV 批次");
     }
@@ -411,26 +413,55 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
           <p className="mt-3 text-xs leading-5 text-black/35 dark:text-white/35">
             若券商檔有成交序號，系統會用「市場＋帳戶＋成交序號」建立穩定 fingerprint；沒有成交序號時則用完整成交內容與同內容出現次序建立 fingerprint。再次匯入同一批資料會 fail closed，避免重複計入。
           </p>
-          {latestTradeCsvBatch ? (
+          {tradeCsvBatches.length ? (
             <div className="mt-5 rounded-2xl border border-black/6 bg-black/[.018] p-4 dark:border-white/8 dark:bg-white/[.025]">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold">最近一次 CSV 匯入可整批撤銷</p>
+                  <p className="text-sm font-semibold">CSV 匯入批次歷史</p>
                   <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
-                    {latestTradeCsvBatch.remainingCount} 筆 · {latestTradeCsvBatch.firstDate} → {latestTradeCsvBatch.lastDate}
-                    {" · "}{latestTradeCsvBatch.accounts.join("、")}
+                    目前有 {tradeCsvBatches.length} 批可辨識的 V0.68+ 歷史成交匯入；任一批都可獨立撤銷。
                   </p>
                   <p className="mt-1 text-[11px] leading-5 text-black/35 dark:text-white/35">
-                    僅 V0.68 之後帶 batch ID 的新匯入支援；撤銷只刪 Ledger-only 歷史交易，不碰今天的持股、現金或已實現損益。
+                    撤銷只刪除該 batch 剩餘的 Ledger-only 歷史交易，不碰今天持股、現金或 managed trade 的已實現損益。
                   </p>
                 </div>
-                <GhostButton onClick={undoLatestHistoricalTradeCsvImport}>
-                  <RotateCcw size={16} />撤銷這批匯入
-                </GhostButton>
+                {tradeCsvBatches.length > 3 ? (
+                  <GhostButton onClick={() => setShowAllTradeCsvBatches((value) => !value)}>
+                    {showAllTradeCsvBatches ? "收合" : "查看全部批次"}
+                  </GhostButton>
+                ) : null}
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {visibleTradeCsvBatches.map((batch, index) => (
+                  <div key={batch.importBatchId} className="rounded-xl border border-black/5 bg-white/60 p-3 dark:border-white/6 dark:bg-white/[.035]">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-xs font-semibold">{index === 0 ? "最近匯入" : `較早批次 ${index + 1}`}</p>
+                          <span className="rounded-full bg-black/[.045] px-2 py-0.5 text-[10px] font-semibold text-black/45 dark:bg-white/[.06] dark:text-white/45">
+                            {batch.remainingCount} 筆
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs leading-5 text-black/48 dark:text-white/48">
+                          {batch.firstDate} → {batch.lastDate} · 買 {batch.buyCount} / 賣 {batch.sellCount}
+                          {" · "}台股 {batch.twCount} / 美股 {batch.usCount}
+                        </p>
+                        <p className="mt-1 text-[11px] leading-5 text-black/35 dark:text-white/35">
+                          {batch.accounts.join("、")}
+                          {" · "}fee 約 TWD {batch.feesTwd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          {" · "}tax 約 TWD {batch.taxesTwd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <GhostButton onClick={() => undoHistoricalTradeCsvImport(batch)}>
+                        <RotateCcw size={15} />撤銷此批
+                      </GhostButton>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ) : null}
-
           {pendingTradeCsv ? (
             <div className="mt-5 rounded-2xl border border-[#6c8c79]/25 bg-[#edf2ee] p-4 dark:border-[#6c8c79]/20 dark:bg-[#17201b]">
               <div className="flex flex-wrap items-start justify-between gap-3">
