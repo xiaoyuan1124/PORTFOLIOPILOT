@@ -1,7 +1,7 @@
 export type Market = "TW" | "US";
 export type AssetType = "stock" | "etf" | "cash";
 export type Currency = "TWD" | "USD";
-export type ActivityType = "deposit" | "withdrawal" | "buy" | "sell" | "dividend" | "fee";
+export type ActivityType = "deposit" | "withdrawal" | "buy" | "sell" | "dividend" | "fee" | "corporate_action";
 export type PriceSource = "manual" | "TWSE" | "TPEx";
 export type EtfCompositionSourceType = "user_import" | "official_issuer" | "official_exchange";
 export type DataMode = "personal" | "demo";
@@ -64,16 +64,25 @@ export interface JournalEntry {
   invalidation: string;
 }
 
-export interface InventoryImpact {
-  kind: "trade";
-  holdingId: string;
-  before: Holding;
-  after: Holding | null;
-  fee: number;
-  tax: number;
-  realizedPnl: number;
-  method: "average_cost";
-}
+export type InventoryImpact =
+  | {
+      kind: "trade";
+      holdingId: string;
+      before: Holding;
+      after: Holding | null;
+      fee: number;
+      tax: number;
+      realizedPnl: number;
+      method: "average_cost";
+    }
+  | {
+      kind: "corporate_action";
+      holdingId: string;
+      before: Holding;
+      after: Holding;
+      action: "share_adjustment";
+      ratio: number;
+    };
 
 export interface PortfolioActivity {
   id: string;
