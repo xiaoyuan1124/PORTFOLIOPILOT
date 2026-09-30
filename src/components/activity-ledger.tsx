@@ -1195,7 +1195,7 @@ function ActivityForm({
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.60 起，只有今天實際發生的現金事件會修改目前餘額；過去日期一律以 ledger-only 歷史補登保存，避免舊入出金、股息或費用重播到現在。內部同幣別轉帳仍不算外部現金流。
+        V0.61 起，同幣別轉帳與 TWD／USD 內部換匯都屬於內部資產搬移，不算外部現金流。換匯只接受今天目前帳戶狀態，並保存實際轉出／實收金額與成交匯率；歷史現金事件仍維持 ledger-only，不重播到現在。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
@@ -1572,6 +1572,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                           return;
                         }
 
+                        if (activity.cashFxImpact) {
+                          if (!window.confirm("這筆內部換匯已同時更新 TWD／USD 現金帳戶。刪除時會嘗試精確還原雙方餘額；若任一帳戶已有後續事件或手動校正，系統會拒絕回滾。確定繼續？")) return;
+                          try {
+                            const next = revertCashFxConversion(state, activity.id);
+                            if (!onChange(next)) return;
+                            toast.success("內部換匯已刪除，兩邊現金餘額已還原");
+                          } catch (error) {
+                            toast.error(error instanceof Error ? error.message : "無法安全回滾內部換匯");
+                          }
+                          return;
+                        }
+
                         if (activity.cashTransferImpact) {
                           if (!window.confirm("這筆內部轉帳已同時更新兩個現金帳戶。刪除時會嘗試精確還原雙方餘額；若任一帳戶已有後續事件或手動校正，系統會拒絕回滾。確定繼續？")) return;
                           try {
@@ -1621,7 +1633,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       {!activities.length ? (
         <div className="py-14 text-center">
           <p className="text-sm text-black/40 dark:text-white/40">
-            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流／轉帳紀錄。" : "目前尚未記錄任何交易／現金流／轉帳。"}
+            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流／轉帳／換匯紀錄。" : "目前尚未記錄任何交易／現金流／轉帳／換匯。"}
           </p>
           {state.activities.length && (filter !== "all" || accountFilter !== "all") ? (
             <GhostButton className="mt-4" onClick={() => { setFilter("all"); setAccountFilter("all"); }}>
