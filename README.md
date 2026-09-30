@@ -530,3 +530,14 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Backup V9 allows a managed trade inventory impact with `before: null` only for a buy that creates a non-null after holding. Sell-from-nothing remains invalid.
 - Deleting the latest opening buy uses the existing managed-trade rollback path: the newly created holding is removed and the linked cash balance is restored, provided neither side has later linked events or manual drift.
 - Legacy V1–V8 backups remain readable.
+
+## V0.58 automatic Exact TWR boundary capture
+
+- New same-day deposit / withdrawal entries can use **現在發生 · 自動擷取** to capture the whole PortfolioPilot net worth immediately before the linked cash mutation.
+- Automatic capture stores the event minute and marks the boundary provenance as `system_current_state`; manually entered or later-edited boundaries are marked `manual`.
+- Automatic capture is allowed only for today's external cash flows. Historical backfill cannot reuse today's portfolio value and must use a manually confirmed historical boundary or remain incomplete.
+- If another deposit / withdrawal already uses the same minute, automatic capture fails closed instead of inventing an ordering; the user must provide the actual manual boundary / time.
+- The captured value is calculated from the complete pre-mutation holdings state using the current saved USD/TWD rate, so the deposit / withdrawal itself is never included in its own pre-flow boundary.
+- Exact TWR behavior remains strict: any external cash flow without a valid boundary keeps Exact TWR incomplete, while Modified Dietz remains labeled only as TWR Proxy / approximation.
+- Backup format is now V10 to preserve boundary provenance; V1–V9 backups remain readable.
+
