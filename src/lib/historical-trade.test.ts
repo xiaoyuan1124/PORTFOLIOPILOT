@@ -7,6 +7,7 @@ import {
   ledgerEconomicsSummary,
   netExternalContributions
 } from "./performance";
+import { realizedManagedTradePnlTwd } from "./trade-inventory";
 
 function state(): AppState {
   return {
@@ -192,6 +193,43 @@ describe("historical ledger-only trades", () => {
     const economics = ledgerEconomicsSummary(both.activities);
     expect(economics.tradeFeesTwd).toBe(70);
     expect(economics.tradeTaxesTwd).toBe(33);
+  });
+
+  it("never fabricates realized managed P/L from historical sells", () => {
+    const next = recordHistoricalTrade(state(), {
+      id: "old-sell-no-pnl",
+      date: "2020-01-02",
+      type: "sell",
+      market: "TW",
+      symbol: "2330",
+      account: "券商A",
+      quantity: 2,
+      price: 600,
+      fee: 5,
+      tax: 3,
+      fxRate: 1,
+      note: ""
+    });
+
+    expect(realizedManagedTradePnlTwd(next.activities)).toBe(0);
+    expect(next.activities[0]?.inventoryImpact).toBeUndefined();
+  });
+
+  it("rejects malformed historical dates", () => {
+    expect(() => recordHistoricalTrade(state(), {
+      id: "bad-date",
+      date: "20200102",
+      type: "buy",
+      market: "TW",
+      symbol: "2330",
+      account: "券商A",
+      quantity: 1,
+      price: 100,
+      fee: 0,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    })).toThrow(/YYYY-MM-DD/);
   });
 
   it("rejects duplicate activity IDs and normalizes TWD FX to one", () => {
