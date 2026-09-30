@@ -196,9 +196,6 @@ export function applyCashLinkedActivity(state: AppState, input: CashLinkedActivi
   if (input.capturePreFlowFromCurrentState && input.preFlowValueTwd !== undefined) {
     throw new Error("自動擷取與手動 TWR 邊界不可同時使用。");
   }
-  if (input.capturePreFlowFromCurrentState && input.date !== localDateKey()) {
-    throw new Error("歷史入金／出金不可使用目前淨值作為 TWR 邊界，請改用手動補登。");
-  }
   if (input.capturePreFlowFromCurrentState && !input.time) {
     throw new Error("自動擷取 TWR 邊界時必須保留事件時間。");
   }
