@@ -400,3 +400,10 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - A transient MOPS quarterly-financial refresh failure no longer blocks otherwise successful Taiwan quote, revenue, material-event and benchmark refreshes from being built and deployed.
 - Quarterly refresh still retries and fails closed; when all retries fail, the workflow keeps the previously committed quarterly-margin cache instead of fabricating or partially publishing new quarterly data.
 - GitHub Actions emits an explicit warning and job summary whenever this fallback is used, so stale quarterly research data cannot be mistaken for a successful fresh pull.
+
+
+## V0.48.2 quarterly refresh timebox
+
+- The optional MOPS quarterly-financial refresh is capped at four minutes in the market-data workflow.
+- If the official endpoint remains slow or unavailable beyond that window, the step exits into the existing V0.48.1 fallback path, preserving the last valid quarterly-margin cache and continuing with other official-data updates.
+- The quarterly updater writes its cache only after a complete derivation pass, so terminating the timed step cannot publish a partially written quarterly dataset.
