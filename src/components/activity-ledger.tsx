@@ -1248,12 +1248,21 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
 
   const accounts = useMemo(() => [...new Set([
     ...state.holdings.map((holding) => accountName(holding.account)),
-    ...state.activities.flatMap((activity) => activity.cashTransferImpact
-      ? [
+    ...state.activities.flatMap((activity) => {
+      if (activity.cashFxImpact) {
+        return [
+          accountName(activity.cashFxImpact.fromBefore.account),
+          accountName(activity.cashFxImpact.toBefore.account)
+        ];
+      }
+      if (activity.cashTransferImpact) {
+        return [
           accountName(activity.cashTransferImpact.fromBefore.account),
           accountName(activity.cashTransferImpact.toBefore.account)
-        ]
-      : [accountName(activity.account)])
+        ];
+      }
+      return [accountName(activity.account)];
+    })
   ])].sort((a, b) => a.localeCompare(b, "zh-Hant")), [state.activities, state.holdings]);
 
   const activities = useMemo(() => {
@@ -1263,10 +1272,13 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
         accountName(activity.account) === accountFilter ||
         (activity.cashTransferImpact &&
           (accountName(activity.cashTransferImpact.fromBefore.account) === accountFilter ||
-            accountName(activity.cashTransferImpact.toBefore.account) === accountFilter))
+            accountName(activity.cashTransferImpact.toBefore.account) === accountFilter)) ||
+        (activity.cashFxImpact &&
+          (accountName(activity.cashFxImpact.fromBefore.account) === accountFilter ||
+            accountName(activity.cashFxImpact.toBefore.account) === accountFilter))
       )
       .filter((activity) => {
-        if (filter === "cash") return activity.type === "deposit" || activity.type === "withdrawal" || activity.type === "transfer";
+        if (filter === "cash") return activity.type === "deposit" || activity.type === "withdrawal" || activity.type === "transfer" || activity.type === "fx_conversion";
         if (filter === "trade") return activity.type === "buy" || activity.type === "sell" || activity.type === "corporate_action";
         if (filter === "income") return activity.type === "dividend" || activity.type === "fee";
         return true;
@@ -1310,6 +1322,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       return true;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法安全完成內部現金轉帳");
+      return false;
+    }
+  }
+
+  function addCashFxConversion(input: CashFxConversionInput) {
+    try {
+      const next = applyCashFxConversion(state, input);
+      if (!onChange(next)) return false;
+      toast.success("內部換匯已完成，未建立外部現金流");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全完成內部換匯");
       return false;
     }
   }
@@ -1372,7 +1396,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           <div className="inline-flex rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
             {[
               ["all", "全部"],
-              ["cash", "現金流/轉帳"],
+              ["cash", "現金流/轉帳/換匯"],
               ["trade", "交易/股數調整"],
               ["income", "股息/費用"]
             ].map(([key, label]) => (
@@ -1390,6 +1414,9 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
         <div className="flex flex-wrap gap-2">
           <Modal title="首次買進新標的" trigger={<GhostButton><Plus size={16} />首次買進</GhostButton>}>
             <OpeningBuyForm state={state} onSave={addOpeningPosition} />
+          </Modal>
+          <Modal title="內部換匯" trigger={<GhostButton><ArrowRightLeft size={16} />換匯</GhostButton>}>
+            <FxConversionForm state={state} onSave={addCashFxConversion} />
           </Modal>
           <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
             <ActivityForm state={state} onSaveCash={addCashActivity} onSaveHistoricalCash={addHistoricalCashActivity} onSaveTransfer={addCashTransfer} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
@@ -1411,6 +1438,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           const twd = activityAmountTwd(activity);
           const external = isExternalActivityType(activity.type);
           const transfer = isCashTransferActivityType(activity.type);
+          const fxConversion = isCashFxActivityType(activity.type);
           const trade = isTradeActivityType(activity.type);
           const corporate = activity.type === "corporate_action";
           const ledgerOnlyCash =
@@ -1432,11 +1460,12 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="font-semibold">{labels[activity.type]}</p>
                       {!external && activity.symbol ? <span className="text-xs text-black/40 dark:text-white/40">{activity.symbol}</span> : null}
                       <Badge>{accountName(activity.account)}</Badge>
-                      {external ? <Badge tone="good">外部現金流</Badge> : transfer ? <Badge>內部資產搬移</Badge> : <Badge>內部紀錄</Badge>}
+                      {external ? <Badge tone="good">外部現金流</Badge> : (transfer || fxConversion) ? <Badge>內部資產搬移</Badge> : <Badge>內部紀錄</Badge>}
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
                       {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
                       {ledgerOnlyCash ? <Badge tone="warn">Ledger-only・未改目前現金</Badge> : null}
                       {activity.cashTransferImpact ? <Badge tone="good">雙帳戶原子更新</Badge> : null}
+                      {activity.cashFxImpact ? <Badge tone="good">跨幣別原子更新</Badge> : null}
                       {external ? (activity.preFlowValueTwd !== undefined ? (
                         <Badge tone="good">
                           {activity.preFlowValueSource === "system_current_state"
@@ -1451,6 +1480,10 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                     <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                       {corporate ? (
                         <p className="text-sm font-semibold">非現金股數調整</p>
+                      ) : fxConversion && activity.cashFxImpact ? (
+                        <p className="text-lg font-semibold tabular-nums">
+                          {activity.cashFxImpact.fromBefore.currency} {activity.cashFxImpact.fromAmount.toLocaleString()} → {activity.cashFxImpact.toBefore.currency} {activity.cashFxImpact.toAmount.toLocaleString()}
+                        </p>
                       ) : (
                         <>
                           <p className="text-lg font-semibold tabular-nums">{activity.currency} {activity.amount.toLocaleString()}</p>
@@ -1480,6 +1513,14 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                         <p>{accountName(activity.cashTransferImpact.fromBefore.account)} · {activity.currency} {activity.cashTransferImpact.fromBefore.price.toLocaleString()} → {activity.cashTransferImpact.fromAfter.price.toLocaleString()}</p>
                         <p>{accountName(activity.cashTransferImpact.toBefore.account)} · {activity.currency} {activity.cashTransferImpact.toBefore.price.toLocaleString()} → {activity.cashTransferImpact.toAfter.price.toLocaleString()}</p>
                         <p className="text-black/35 dark:text-white/35">內部轉帳不計入淨投入，也不建立 TWR 外部現金流邊界。</p>
+                      </div>
+                    ) : null}
+                    {activity.cashFxImpact ? (
+                      <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+                        <p>{accountName(activity.cashFxImpact.fromBefore.account)} · {activity.cashFxImpact.fromBefore.currency} {activity.cashFxImpact.fromBefore.price.toLocaleString()} → {activity.cashFxImpact.fromAfter.price.toLocaleString()}</p>
+                        <p>{accountName(activity.cashFxImpact.toBefore.account)} · {activity.cashFxImpact.toBefore.currency} {activity.cashFxImpact.toBefore.price.toLocaleString()} → {activity.cashFxImpact.toAfter.price.toLocaleString()}</p>
+                        <p>成交 TWD/USD {activity.cashFxImpact.executionTwdPerUsd.toFixed(4)} · 當時估值匯率 {activity.cashFxImpact.valuationTwdPerUsd.toFixed(4)}</p>
+                        <p className="text-black/35 dark:text-white/35">內部換匯不計入淨投入，也不建立 TWR 外部現金流邊界；轉出與實收金額直接保存，不猜 spread 或費用。</p>
                       </div>
                     ) : null}
                     {external && activity.preFlowValueTwd !== undefined ? (
