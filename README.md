@@ -302,3 +302,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Future-dated snapshots remain preserved in local data; they are ignored rather than deleted.
 - The overview surfaces how many future snapshots were excluded and the local cutoff date.
 - Shared snapshot filtering is covered by regression tests so a future import cannot silently distort current net-worth movement.
+
+
+## V0.39 imported date integrity
+
+- JSON/local-state validation now requires real YYYY-MM-DD calendar dates for activities, journals, snapshots, ETF composition dates and holding price as-of dates.
+- Impossible dates such as 2026-02-31 and malformed date strings fail closed instead of entering sorting, performance or trust displays.
+- ETF CSV date input keeps whitespace trimming compatibility before strict calendar validation.
+- Regression tests cover malformed activity dates, impossible snapshot dates and invalid official price as-of dates.

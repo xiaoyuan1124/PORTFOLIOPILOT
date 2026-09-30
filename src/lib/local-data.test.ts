@@ -134,6 +134,87 @@ describe("local data import/export", () => {
     expect(() => parseBackup(JSON.stringify(backup))).toThrow();
   });
 
+  it("rejects malformed activity date keys in JSON backups", () => {
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [{
+          id: "bad-date",
+          date: "09/30/2026",
+          type: "deposit",
+          symbol: "",
+          amount: 1000,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 0,
+          price: 0,
+          note: ""
+        }],
+        snapshots: []
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/YYYY-MM-DD/);
+  });
+
+  it("rejects impossible calendar dates instead of sorting them as valid data", () => {
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        activities: [],
+        snapshots: [{
+          date: "2026-02-31",
+          total: 100,
+          cost: 90,
+          gain: 10,
+          usdTwd: 31.8
+        }]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/有效的曆日/);
+  });
+
+  it("rejects invalid official price as-of dates in backups", () => {
+    const backup = {
+      version: 4,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        usdTwd: 31.8,
+        holdings: [{
+          id: "tw",
+          symbol: "2330",
+          name: "台積電",
+          market: "TW",
+          type: "stock",
+          quantity: 1,
+          price: 1000,
+          averageCost: 900,
+          currency: "TWD",
+          sector: "半導體",
+          priceSource: "TWSE",
+          priceAsOf: "2026-13-01"
+        }],
+        etfCompositions: [],
+        journal: [],
+        activities: [],
+        snapshots: []
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/有效的曆日/);
+  });
+
   it("accepts legacy backup data without snapshots or ETF compositions", () => {
     const parsed = parseBackup(JSON.stringify({
       holdings: [],
