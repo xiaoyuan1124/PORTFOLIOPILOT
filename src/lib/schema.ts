@@ -1,6 +1,20 @@
 import { z } from "zod";
 
 export const ETF_WEIGHT_EPSILON = 1e-6;
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function isCalendarDateKey(value: string) {
+  if (!DATE_KEY_PATTERN.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, (month ?? 1) - 1, day ?? 1));
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === (month ?? 1) - 1 &&
+    date.getUTCDate() === day;
+}
+
+export const dateKeySchema = z.string()
+  .regex(DATE_KEY_PATTERN, "日期必須使用 YYYY-MM-DD 格式。")
+  .refine(isCalendarDateKey, "日期不是有效的曆日。");
 
 export const holdingSchema = z.object({
   id: z.string().min(1),
@@ -15,7 +29,7 @@ export const holdingSchema = z.object({
   sector: z.string().min(1).max(120),
   account: z.string().trim().min(1).max(120).optional(),
   priceSource: z.enum(["manual", "TWSE", "TPEx"]).optional(),
-  priceAsOf: z.string().optional()
+  priceAsOf: dateKeySchema.optional()
 });
 
 export const etfConstituentSchema = z.object({
@@ -31,7 +45,7 @@ export const etfCompositionSchema = z.object({
   etfMarket: z.enum(["TW", "US"]),
   etfSymbol: z.string().trim().min(1).max(32),
   etfName: z.string().trim().min(1).max(160),
-  asOf: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  asOf: dateKeySchema,
   sourceName: z.string().trim().min(1).max(240),
   sourceUrl: z.string().url(),
   sourceType: z.enum(["user_import", "official_issuer", "official_exchange"]),
@@ -49,7 +63,7 @@ export const etfCompositionSchema = z.object({
 
 export const journalEntrySchema = z.object({
   id: z.string().min(1),
-  date: z.string().min(1),
+  date: dateKeySchema,
   symbol: z.string(),
   title: z.string().min(1).max(200),
   thesis: z.string(),
@@ -58,7 +72,7 @@ export const journalEntrySchema = z.object({
 
 export const activitySchema = z.object({
   id: z.string().min(1),
-  date: z.string().min(1),
+  date: dateKeySchema,
   time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).optional(),
   type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee"]),
   symbol: z.string(),
@@ -81,7 +95,7 @@ export const activitySchema = z.object({
 });
 
 export const snapshotSchema = z.object({
-  date: z.string().min(1),
+  date: dateKeySchema,
   total: z.number().finite().nonnegative(),
   cost: z.number().finite().nonnegative(),
   gain: z.number().finite(),
@@ -127,7 +141,7 @@ export const etfCompositionCsvRowSchema = z.object({
   etfMarket: z.enum(["TW", "US"]),
   etfSymbol: z.string().trim().min(1).max(32),
   etfName: z.string().trim().min(1).max(160),
-  asOf: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/),
+  asOf: dateKeySchema,
   sourceName: z.string().trim().min(1).max(240),
   sourceUrl: z.string().trim().url(),
   componentMarket: z.enum(["TW", "US"]),
