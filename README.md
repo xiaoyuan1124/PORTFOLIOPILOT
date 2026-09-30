@@ -426,3 +426,14 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Both writer workflows explicitly check out the latest `main` branch when execution begins instead of writing from a stale trigger SHA.
 - This prevents simultaneous quote-cache commits from racing into non-fast-forward pushes while keeping the lightweight after-close refresh schedule intact.
 - Data commits made with the workflow token remain non-recursive, so serialization does not create an Actions loop.
+
+
+## V0.50 daily portfolio drivers
+
+- Overview now answers “今天我的資產為什麼變動？” with a dedicated daily-drivers card.
+- Taiwan holding impact is estimated from official TWSE / TPEx comparable closing-price changes multiplied by the currently held quantity; it is explicitly labeled an estimate rather than exact trade-level attribution.
+- Positive and negative holding contributors are separated so users can see which current positions pushed or dragged the portfolio estimate.
+- External deposits and withdrawals for the current local date are shown separately from investment movement, preserving the distinction between net-worth change and investment return.
+- Today’s official held-security material-event count and the strongest / weakest held-sector daily breadth context are shown alongside the holding contribution estimate.
+- Venue ambiguity, non-comparable quote rows and mixed official quote dates fail closed. Older-date holdings are excluded from the daily total rather than silently mixed across trading dates.
+- The card tolerates partial research-source failure: missing material-event or revenue context does not hide a valid official quote contribution estimate.
