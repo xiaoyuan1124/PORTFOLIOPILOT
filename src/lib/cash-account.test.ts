@@ -9,6 +9,7 @@ import {
   revertCashLinkedActivity,
   revertCashTransfer
 } from "./cash-account";
+import { applyCashFxConversion } from "./cash-fx";
 
 function cash(patch: Partial<Holding> = {}): Holding {
   return {
@@ -329,6 +330,45 @@ describe("cash account linkage", () => {
       time: "10:15",
       capturePreFlowFromCurrentState: true
     })).toThrow(/同一分鐘已有入金／出金事件/);
+  });
+
+  it("rejects cash-event rollback after a later FX conversion touched the same cash account", () => {
+    const base = state();
+    base.holdings.push({
+      id: "usd-cash",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      market: "US",
+      type: "cash",
+      quantity: 1,
+      price: 100,
+      averageCost: 100,
+      currency: "USD",
+      sector: "現金",
+      account: "美元帳戶"
+    });
+
+    const deposited = applyCashLinkedActivity(base, {
+      id: "activity-1",
+      date: localDateKey(),
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "",
+      note: ""
+    });
+    const converted = applyCashFxConversion(deposited, {
+      id: "activity-2",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "usd-cash",
+      fromAmount: 3200,
+      toAmount: 100,
+      note: ""
+    });
+
+    expect(() => revertCashLinkedActivity(converted, "activity-1")).toThrow(/後面已有其他連動事件/);
   });
 
   it("subtracts withdrawals and preserves a zero-balance cash account", () => {
