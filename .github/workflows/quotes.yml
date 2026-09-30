@@ -20,14 +20,16 @@ permissions:
   id-token: write
 
 concurrency:
-  group: taiwan-closing-quotes
-  cancel-in-progress: true
+  group: taiwan-market-data-writers
+  cancel-in-progress: false
 
 jobs:
   refresh-and-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 24
