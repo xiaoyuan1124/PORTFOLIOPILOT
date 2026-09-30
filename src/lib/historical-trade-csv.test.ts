@@ -387,6 +387,11 @@ describe("historical trade CSV adapter", () => {
       "broker-history.csv"
     );
     const baseHoldings = imported.state.holdings;
+    const fullAudit = Papa.parse<Record<string, string>>(
+      historicalTradeCsvBatchToCsv(imported.state, imported.importBatchId),
+      { header: true, skipEmptyLines: true }
+    );
+    expect(fullAudit.data.map((row) => row.date)).toEqual(["2020-01-02", "2020-02-03"]);
 
     // Simulate a row having been individually deleted: audit export must reflect
     // the batch that still exists, in original activity order.
