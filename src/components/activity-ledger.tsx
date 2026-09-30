@@ -437,6 +437,26 @@ function ActivityForm({
     setTime("");
     setPreFlowValueTwd(null);
 
+    if (isCashTransferActivityType(nextType)) {
+      setDate(today);
+      setSymbol("");
+      setQuantity(0);
+      setPrice(0);
+      setFee(0);
+      setTax(0);
+      const from = cashHoldings.find((holding) => holding.id === transferFromCashHoldingId) ?? cashHoldings[0];
+      const to = from
+        ? cashHoldings.find((holding) => holding.id !== from.id && holding.currency === from.currency)
+        : undefined;
+      if (from) {
+        setTransferFromCashHoldingId(from.id);
+        setTransferToCashHoldingId(to?.id ?? "");
+        setCurrency(from.currency);
+        setFxRate(from.currency === "USD" ? state.usdTwd : 1);
+      }
+      return;
+    }
+
     if (nextType === "corporate_action") {
       setQuantity(0);
       setPrice(0);
@@ -496,6 +516,21 @@ function ActivityForm({
         fee,
         tax,
         fxRate: selectedHolding.currency === "USD" ? fxRate : 1,
+        note
+      });
+      if (!saved) return;
+      closeRef.current?.click();
+      return;
+    }
+
+    if (transfer) {
+      if (!selectedTransferFrom || !selectedTransferTo) return;
+      const saved = onSaveTransfer({
+        id: nextActivityId(state.activities, date),
+        date,
+        fromCashHoldingId: selectedTransferFrom.id,
+        toCashHoldingId: selectedTransferTo.id,
+        amount,
         note
       });
       if (!saved) return;
