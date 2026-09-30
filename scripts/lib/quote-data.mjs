@@ -22,6 +22,26 @@ export function normalizeQuoteDate(value) {
   return raw;
 }
 
+export function quoteChangeMetrics(close, rawChange) {
+  const raw = String(rawChange ?? "").trim();
+  if (!raw || raw === "--" || raw === "---" || /^X/i.test(raw)) {
+    return { change: null, changePct: null };
+  }
+
+  const change = cleanQuoteNumber(raw);
+  if (change === null) return { change: null, changePct: null };
+
+  const previousClose = close - change;
+  if (!Number.isFinite(previousClose) || previousClose <= 0) {
+    return { change, changePct: null };
+  }
+
+  return {
+    change,
+    changePct: (change / previousClose) * 100
+  };
+}
+
 export function parseTwseQuoteRows(rows) {
   return rows.flatMap((row) => {
     const close = cleanQuoteNumber(row.ClosingPrice);
@@ -30,7 +50,8 @@ export function parseTwseQuoteRows(rows) {
     const date = normalizeQuoteDate(row.Date);
 
     if (!code || !name || !date || close === null || close < 0) return [];
-    return [{ code, name, market: "TWSE", close, date }];
+    const metrics = quoteChangeMetrics(close, row.Change);
+    return [{ code, name, market: "TWSE", close, date, ...metrics }];
   });
 }
 
@@ -65,6 +86,8 @@ export function parseTwseMiIndexPayload(payload, date) {
   const codeIndex = findFieldIndex(fields, ["證券代號", "股票代號"]);
   const nameIndex = findFieldIndex(fields, ["證券名稱", "股票名稱"]);
   const closeIndex = findFieldIndex(fields, ["收盤價"]);
+  const directionIndex = findFieldIndex(fields, ["漲跌(+/-)", "漲跌"]);
+  const changeIndex = findFieldIndex(fields, ["漲跌價差", "漲跌"]);
 
   if ([codeIndex, nameIndex, closeIndex].some((index) => index < 0)) return [];
 
@@ -75,7 +98,21 @@ export function parseTwseMiIndexPayload(payload, date) {
     const close = cleanQuoteNumber(plainCell(row[closeIndex]));
 
     if (!code || !name || close === null || close < 0) return [];
-    return [{ code, name, market: "TWSE", close, date }];
+
+    let rawChange = changeIndex >= 0 ? plainCell(row[changeIndex]) : "";
+    if (directionIndex >= 0) {
+      const direction = plainCell(row[directionIndex]);
+      if (direction === "X") {
+        rawChange = "X";
+      } else if (direction === "-" && rawChange && !rawChange.startsWith("-")) {
+        rawChange = `-${rawChange}`;
+      } else if (direction === "+" && rawChange && !rawChange.startsWith("+")) {
+        rawChange = `+${rawChange}`;
+      }
+    }
+
+    const metrics = quoteChangeMetrics(close, rawChange);
+    return [{ code, name, market: "TWSE", close, date, ...metrics }];
   });
 }
 
@@ -87,7 +124,8 @@ export function parseTpexQuoteRows(rows) {
     const date = normalizeQuoteDate(row.Date);
 
     if (!code || !name || !date || close === null || close < 0) return [];
-    return [{ code, name, market: "TPEx", close, date }];
+    const metrics = quoteChangeMetrics(close, row.Change);
+    return [{ code, name, market: "TPEx", close, date, ...metrics }];
   });
 }
 

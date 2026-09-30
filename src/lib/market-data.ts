@@ -6,6 +6,8 @@ const quoteSchema = z.object({
   name: z.string().min(1),
   market: z.enum(["TWSE", "TPEx"]),
   close: z.number().finite().nonnegative(),
+  change: z.number().finite().nullable().optional(),
+  changePct: z.number().finite().nullable().optional(),
   date: z.string().min(1)
 });
 

@@ -407,3 +407,14 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - The optional MOPS quarterly-financial refresh is capped at four minutes in the market-data workflow.
 - If the official endpoint remains slow or unavailable beyond that window, the step exits into the existing V0.48.1 fallback path, preserving the last valid quarterly-margin cache and continuing with other official-data updates.
 - The quarterly updater writes its cache only after a complete derivation pass, so terminating the timed step cannot publish a partially written quarterly dataset.
+
+
+## V0.49 official market sector pulse
+
+- Research → 族群脈動 now has two focused views: **市場日行情** and the existing **月營收基本面**.
+- Market pulse uses official TWSE / TPEx daily closing-change fields and the latest official monthly-revenue industry classification to aggregate sector-level daily breadth.
+- Each sector shows median daily change plus advancing, declining and flat company shares, with separate TWSE / TPEx source dates.
+- Ex-right / ex-dividend or otherwise non-comparable official rows are excluded instead of forcing a synthetic daily return.
+- At least five comparable companies are required before an industry is shown; generic / unclassified industries remain excluded.
+- The held-sector filter is venue-aware, so same-code TWSE / TPEx securities cannot silently cross-match.
+- Market pulse is descriptive end-of-day data only. It does not label sectors as buy/sell, score investment value or forecast future returns.
