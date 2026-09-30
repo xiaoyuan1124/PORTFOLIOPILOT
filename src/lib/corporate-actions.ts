@@ -1,7 +1,7 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
 import { accountName } from "./local-data";
 import { localDateKey } from "./calc";
-import { hasLaterRecordedActivity } from "./activity-order";
+import { activityTouchesSecurityHolding, hasLaterRecordedActivity } from "./activity-order";
 
 export type ShareAdjustmentInput = {
   id: string;
@@ -83,7 +83,7 @@ export function revertCorporateAction(state: AppState, activityId: string): AppS
   const laterLinked = hasLaterRecordedActivity(
     state.activities,
     activity,
-    (item) => item.inventoryImpact?.holdingId === impact.holdingId
+    (item) => activityTouchesSecurityHolding(item, impact.holdingId)
   );
   if (laterLinked) {
     throw new Error("此部位後面已有其他持股連動事件，請先從最新一筆開始回滾。");
