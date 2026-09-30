@@ -173,6 +173,12 @@ export const snapshotSchema = z.object({
   usdTwd: z.number().finite().positive()
 });
 
+export const allocationTargetSchema = z.object({
+  key: z.string().trim().min(1).max(120),
+  label: z.string().trim().min(1).max(200),
+  targetPct: z.number().finite().positive("目標配置必須大於 0。").max(100)
+});
+
 function duplicateIndexes<T>(items: T[], keyOf: (item: T) => string) {
   const seen = new Set<string>();
   const duplicates: number[] = [];
@@ -196,6 +202,7 @@ export const appStateSchema = z.object({
   journal: z.array(journalEntrySchema),
   activities: z.array(activitySchema).default([]),
   snapshots: z.array(snapshotSchema).default([]),
+  allocationTargets: z.array(allocationTargetSchema).default([]),
   usdTwd: z.number().finite().positive(),
   dataMode: z.enum(["personal", "demo"]).default("personal")
 }).superRefine((state, ctx) => {
@@ -260,11 +267,30 @@ export const appStateSchema = z.object({
       message: "同一天只能有一筆淨值快照。"
     });
   }
+
+  for (const index of duplicateIndexes(state.allocationTargets, (target) => target.key.toLowerCase())) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["allocationTargets", index, "key"],
+      message: "同一個配置目標不可重複。"
+    });
+  }
+
+  if (state.allocationTargets.length) {
+    const total = state.allocationTargets.reduce((sum, target) => sum + target.targetPct, 0);
+    if (Math.abs(total - 100) > 0.05) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["allocationTargets"],
+        message: "配置目標合計必須為 100%。"
+      });
+    }
+  }
 });
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),

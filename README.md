@@ -437,3 +437,15 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Today’s official held-security material-event count and the strongest / weakest held-sector daily breadth context are shown alongside the holding contribution estimate.
 - Venue ambiguity, non-comparable quote rows and mixed official quote dates fail closed. Older-date holdings are excluded from the daily total rather than silently mixed across trading dates.
 - The card tolerates partial research-source failure: missing material-event or revenue context does not hide a valid official quote contribution estimate.
+
+
+## V0.51 target allocation and drift
+
+- Portfolio now includes a **配置目標** tab for defining a personal target allocation and comparing it with the current portfolio.
+- Targets are asset-based rather than account-based: the same stock / ETF held across multiple broker accounts is aggregated into one target bucket.
+- TWD and USD cash are tracked as separate target buckets.
+- The first target edit starts from the current allocation as a neutral baseline; users can then change percentages to their own plan.
+- Saved targets must total 100%, reject duplicate keys and are included in local storage plus version-5 JSON backups.
+- Legacy local state and version-1 through version-4 backups migrate with an empty target set.
+- Drift is shown in percentage points as current allocation minus the user’s own target. The UI does not convert drift into buy, sell or rebalance instructions.
+- Targets for assets no longer held can remain visible at 0% current allocation, while currently held but untargeted assets appear with a 0% target so hidden exposure cannot disappear from the comparison.

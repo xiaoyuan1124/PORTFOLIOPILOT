@@ -20,6 +20,7 @@ function migrateLegacyState(value: unknown): AppState {
     journal: Array.isArray(record.journal) ? record.journal : [],
     activities: Array.isArray(record.activities) ? record.activities : [],
     snapshots: Array.isArray(record.snapshots) ? record.snapshots : [],
+    allocationTargets: Array.isArray(record.allocationTargets) ? record.allocationTargets : [],
     usdTwd: record.usdTwd ?? 31.8,
     dataMode: record.dataMode ?? "personal"
   });

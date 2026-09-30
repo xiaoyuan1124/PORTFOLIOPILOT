@@ -88,12 +88,19 @@ export interface NetWorthSnapshot {
   usdTwd: number;
 }
 
+export interface AllocationTarget {
+  key: string;
+  label: string;
+  targetPct: number;
+}
+
 export interface AppState {
   holdings: Holding[];
   etfCompositions: EtfComposition[];
   journal: JournalEntry[];
   activities: PortfolioActivity[];
   snapshots: NetWorthSnapshot[];
+  allocationTargets?: AllocationTarget[];
   usdTwd: number;
   dataMode?: DataMode;
 }
