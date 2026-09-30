@@ -122,6 +122,12 @@ function addUtcMonths(date: Date, months: number) {
   return next;
 }
 
+export function snapshotsThroughDate(snapshots: NetWorthSnapshot[], throughDate: string) {
+  return [...snapshots]
+    .filter((snapshot) => snapshot.date <= throughDate)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export function snapshotsForRange(snapshots: NetWorthSnapshot[], range: SnapshotRange) {
   const sorted = [...snapshots].sort((a, b) => a.date.localeCompare(b.date));
   const latest = sorted.at(-1);
