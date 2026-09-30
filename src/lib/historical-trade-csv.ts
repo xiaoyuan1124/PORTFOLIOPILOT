@@ -69,7 +69,7 @@ function normalizeSymbol(value: unknown, rowNumber: number) {
   const symbol = rawText(value)
     .replace(/^'+/, "")
     .toUpperCase();
-  if (!symbol || !/^[0-9A-Z.]+$/.test(symbol)) {
+  if (!symbol || !/^[0-9A-Z.-]+$/.test(symbol)) {
     throw new Error(`歷史成交 CSV 第 ${rowNumber} 列的證券代號無法辨識：${symbol || "空白"}。`);
   }
   return symbol;
@@ -90,26 +90,33 @@ function dateKey(year: number, month: number, day: number, rowNumber: number) {
 }
 
 function normalizeTradeDate(value: unknown, rowNumber: number) {
-  const raw = rawText(value)
+  const normalized = rawText(value)
     .replace(/年/g, "/")
     .replace(/月/g, "/")
     .replace(/日/g, "")
     .trim();
+  const raw = normalized.split(/[ T]/)[0] ?? "";
 
   const compact = raw.match(/^(\d{4})(\d{2})(\d{2})$/);
   if (compact) {
     return dateKey(Number(compact[1]), Number(compact[2]), Number(compact[3]), rowNumber);
   }
 
-  const separated = raw.match(/^(\d{2,4})[\/-](\d{1,2})[\/-](\d{1,2})$/);
-  if (!separated) {
-    throw new Error(`歷史成交 CSV 第 ${rowNumber} 列的日期無法辨識：${raw || "空白"}。`);
+  const rocCompact = raw.match(/^(\d{3})(\d{2})(\d{2})$/);
+  if (rocCompact) {
+    return dateKey(Number(rocCompact[1]) + 1911, Number(rocCompact[2]), Number(rocCompact[3]), rowNumber);
   }
 
-  let year = Number(separated[1]);
+  const separated = raw.match(/^(\d{2,4})[\/-](\d{1,2})[\/-](\d{1,2})$/);
+  if (!separated) {
+    throw new Error(`歷史成交 CSV 第 ${rowNumber} 列的日期無法辨識：${normalized || "空白"}。`);
+  }
+
+  const yearToken = separated[1];
+  let year = Number(yearToken);
   const month = Number(separated[2]);
   const day = Number(separated[3]);
-  if (year < 1911) year += 1911;
+  if (yearToken.length <= 3) year += 1911;
   return dateKey(year, month, day, rowNumber);
 }
 
