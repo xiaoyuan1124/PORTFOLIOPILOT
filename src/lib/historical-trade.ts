@@ -34,6 +34,9 @@ export function recordHistoricalTrade(
   input: HistoricalTradeInput
 ): AppState {
   const today = localDateKey();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) {
+    throw new Error("歷史買賣日期格式必須為 YYYY-MM-DD。");
+  }
   if (input.date >= today) {
     throw new Error("歷史買賣補登只接受今天以前的日期；今天實際發生的交易請使用持股連動買進／賣出。");
   }
