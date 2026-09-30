@@ -103,6 +103,14 @@ export const inventoryImpactSchema = z.discriminatedUnion("kind", [
   })
 ]);
 
+export const cashImpactSchema = z.object({
+  cashHoldingId: z.string().min(1),
+  before: holdingSchema,
+  after: holdingSchema.nullable(),
+  delta: z.number().finite().refine((value) => Math.abs(value) > 1e-12, "現金異動不可為 0。"),
+  reason: z.enum(["trade", "deposit", "withdrawal", "dividend", "fee"])
+});
+
 export const etfConstituentSchema = z.object({
   market: z.enum(["TW", "US"]),
   symbol: z.string().trim().min(1).max(32),
@@ -155,7 +163,8 @@ export const activitySchema = z.object({
   note: z.string(),
   account: z.string().trim().min(1).max(120).optional(),
   preFlowValueTwd: z.number().finite().nonnegative().optional(),
-  inventoryImpact: inventoryImpactSchema.optional()
+  inventoryImpact: inventoryImpactSchema.optional(),
+  cashImpact: cashImpactSchema.optional()
 }).superRefine((activity, ctx) => {
   if (activity.type !== "corporate_action" && activity.amount <= 0) {
     ctx.addIssue({
@@ -240,6 +249,68 @@ export const activitySchema = z.object({
         message: "交易幣別或帳戶與持股連動快照不一致。"
       });
     }
+  }
+
+  if (activity.cashImpact) {
+    const cash = activity.cashImpact;
+    const expectedDeltaSign =
+      activity.type === "deposit" || activity.type === "dividend" || activity.type === "sell"
+        ? 1
+        : activity.type === "withdrawal" || activity.type === "fee" || activity.type === "buy"
+          ? -1
+          : 0;
+
+    if (cash.before.type !== "cash" || (cash.after && cash.after.type !== "cash")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact"],
+        message: "現金連動快照只能指向現金部位。"
+      });
+    }
+    if (cash.before.id !== cash.cashHoldingId || (cash.after && cash.after.id !== cash.cashHoldingId)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "cashHoldingId"],
+        message: "現金連動快照的部位 ID 不一致。"
+      });
+    }
+    if (activity.currency !== cash.before.currency) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact"],
+        message: "活動幣別與現金帳戶幣別不一致。"
+      });
+    }
+    if (expectedDeltaSign === 0 || Math.sign(cash.delta) !== expectedDeltaSign) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "delta"],
+        message: "現金異動方向與活動類型不一致。"
+      });
+    }
+    if (Math.abs(Math.abs(cash.delta) - activity.amount) > 1e-8) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "delta"],
+        message: "活動金額與現金異動金額不一致。"
+      });
+    }
+    const expectedReason = isTradeActivityType(activity.type) ? "trade" : activity.type;
+    if (cash.reason !== expectedReason) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashImpact", "reason"],
+        message: "現金連動原因與活動類型不一致。"
+      });
+    }
+  }
+
+  if (activity.type === "corporate_action" && activity.cashImpact) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashImpact"],
+      message: "非現金股數調整不可附帶現金連動。"
+    });
   }
 }).transform((activity) => {
   const normalized = {
@@ -381,7 +452,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),
