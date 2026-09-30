@@ -247,7 +247,7 @@ export function parseHistoricalTradeCsv(
   const occurrenceByContent = new Map<string, number>();
   const seenTradeIds = new Set<string>();
 
-  return parsed.data.map((row, index) => {
+  const inputs = parsed.data.map((row, index) => {
     const rowNumber = index + 2;
     const date = normalizeTradeDate(rowValue(row, headerByField, "date"), rowNumber);
     const type = normalizeTradeType(rowValue(row, headerByField, "type"), rowNumber);
@@ -308,6 +308,16 @@ export function parseHistoricalTradeCsv(
       importFingerprint
     };
   });
+
+  const batchKey = inputs
+    .map((input) => input.importFingerprint)
+    .join("|");
+  const importBatchId = `csv-batch-${stableHash(batchKey)}`;
+
+  return inputs.map((input) => ({
+    ...input,
+    importBatchId
+  }));
 }
 
 export interface HistoricalTradeCsvPreviewRow {
@@ -324,6 +334,7 @@ export interface HistoricalTradeCsvPreviewRow {
 }
 
 export interface HistoricalTradeCsvPreview {
+  importBatchId: string;
   importedCount: number;
   buyCount: number;
   sellCount: number;
@@ -370,6 +381,7 @@ export function previewHistoricalTradeCsv(
   );
 
   return {
+    importBatchId: inputs[0]?.importBatchId ?? "",
     importedCount: inputs.length,
     buyCount: inputs.filter((input) => input.type === "buy").length,
     sellCount: inputs.filter((input) => input.type === "sell").length,
@@ -405,6 +417,73 @@ export function importHistoricalTradeCsv(
   const next = validateHistoricalTradeInputs(state, inputs);
   return {
     state: next,
-    importedCount: inputs.length
+    importedCount: inputs.length,
+    importBatchId: inputs[0]?.importBatchId ?? ""
+  };
+}
+
+export interface HistoricalTradeCsvBatchSummary {
+  importBatchId: string;
+  remainingCount: number;
+  firstDate: string;
+  lastDate: string;
+  accounts: string[];
+}
+
+export function latestHistoricalTradeCsvBatch(state: AppState): HistoricalTradeCsvBatchSummary | null {
+  let importBatchId = "";
+  for (let index = state.activities.length - 1; index >= 0; index -= 1) {
+    const candidate = state.activities[index]?.historicalTrade;
+    if (candidate?.importSource === "csv" && candidate.importBatchId) {
+      importBatchId = candidate.importBatchId;
+      break;
+    }
+  }
+  if (!importBatchId) return null;
+
+  const activities = state.activities.filter(
+    (activity) =>
+      activity.historicalTrade?.importSource === "csv" &&
+      activity.historicalTrade.importBatchId === importBatchId
+  );
+  if (!activities.length) return null;
+
+  const dates = activities.map((activity) => activity.date).sort();
+  const accounts = [...new Set(
+    activities.map((activity) => activity.account?.trim() || "預設帳戶")
+  )].sort((a, b) => a.localeCompare(b, "zh-Hant"));
+
+  return {
+    importBatchId,
+    remainingCount: activities.length,
+    firstDate: dates[0] ?? "",
+    lastDate: dates.at(-1) ?? "",
+    accounts
+  };
+}
+
+export function undoHistoricalTradeCsvBatch(state: AppState, importBatchId: string): AppState {
+  const batchId = importBatchId.trim();
+  if (!batchId) {
+    throw new Error("找不到可撤銷的歷史成交 CSV 批次。");
+  }
+
+  const removableIds = new Set(
+    state.activities
+      .filter(
+        (activity) =>
+          activity.historicalTrade?.importSource === "csv" &&
+          activity.historicalTrade.importBatchId === batchId
+      )
+      .map((activity) => activity.id)
+  );
+
+  if (!removableIds.size) {
+    throw new Error("這個歷史成交 CSV 批次已不存在，請重新整理後再試。");
+  }
+
+  return {
+    ...state,
+    activities: state.activities.filter((activity) => !removableIds.has(activity.id))
   };
 }
