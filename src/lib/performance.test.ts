@@ -62,6 +62,41 @@ describe("performance math", () => {
     expect(twr.value).toBeCloseTo(0.1, 10);
   });
 
+  it("does not treat currency exchange as contribution, income or a TWR boundary", () => {
+    const exchange = {
+      id: "exchange",
+      date: "2026-02-05",
+      type: "exchange" as const,
+      symbol: "",
+      amount: 31800,
+      currency: "TWD" as const,
+      fxRate: 1,
+      quantity: 0,
+      price: 0,
+      note: ""
+    };
+
+    expect(netExternalContributions([exchange])).toBe(0);
+    expect(incomeAfterFees([exchange])).toBe(0);
+
+    const state: AppState = {
+      usdTwd: 31.8,
+      holdings: [
+        { id: "cash-twd", symbol: "CASH-TWD", name: "TWD Cash", market: "TW", type: "cash", quantity: 1, price: 0, averageCost: 0, currency: "TWD", sector: "現金" },
+        { id: "cash-usd", symbol: "CASH-USD", name: "USD Cash", market: "US", type: "cash", quantity: 1, price: 1000, averageCost: 1000, currency: "USD", sector: "現金" }
+      ],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [{ date: "2026-01-01", total: 31800, cost: 31800, gain: 0, usdTwd: 31.8 }],
+      activities: [exchange]
+    };
+
+    const twr = exactTimeWeightedReturn(state, "2026-02-10");
+    expect(twr.externalFlowCount).toBe(0);
+    expect(twr.status).toBe("exact");
+    expect(twr.value).toBeCloseTo(0, 10);
+  });
+
   it("excludes future external cash flows from current contribution totals", () => {
     const activities = [
       { id: "past", date: "2026-09-29", type: "deposit" as const, symbol: "", amount: 1000, currency: "TWD" as const, fxRate: 1, quantity: 0, price: 0, note: "" },
