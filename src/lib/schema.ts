@@ -642,7 +642,7 @@ export const activitySchema = z.object({
     }
 
     const snapshots = [source, sourceAfter, destinationBefore, destinationAfter]
-      .filter((item): item is NonNullable<typeof item> => item !== null);
+      .filter((item): item is typeof source => item !== null);
     if (snapshots.some((item) => item.type === "cash")) {
       ctx.addIssue({
         code: "custom",
