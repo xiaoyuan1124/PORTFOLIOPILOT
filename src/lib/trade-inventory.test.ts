@@ -3,6 +3,7 @@ import type { AppState, Holding } from "./types";
 import { localDateKey } from "./calc";
 import { applyCashTransfer } from "./cash-account";
 import { applyCashFxConversion } from "./cash-fx";
+import { applySecurityAccountTransfer } from "./security-transfer";
 import {
   applyManagedTrade,
   applyOpeningBuy,
@@ -544,6 +545,55 @@ describe("managed trade inventory", () => {
     });
 
     expect(() => revertManagedTrade(converted, "activity-1")).toThrow(/現金帳戶後面已有/);
+  });
+
+  it("rejects trade rollback after a later security transfer touched the holding", () => {
+    const bought = applyManagedTrade(state(), {
+      id: "activity-1",
+      date: localDateKey(),
+      type: "buy",
+      holdingId: "h1",
+      cashHoldingId: "cash",
+      quantity: 1,
+      price: 900,
+      fee: 0,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    });
+    const transferred = applySecurityAccountTransfer(bought, {
+      id: "activity-2",
+      date: localDateKey(),
+      sourceHoldingId: "h1",
+      destinationAccount: "券商B",
+      quantity: 1,
+      note: ""
+    });
+
+    expect(() => revertManagedTrade(transferred, "activity-1")).toThrow(/持股連動事件/);
+  });
+
+  it("rejects restoring a fully sold holding when the same account identity was manually recreated", () => {
+    const sold = applyManagedTrade(state(), {
+      id: "sell-all-collision",
+      date: localDateKey(),
+      type: "sell",
+      holdingId: "h1",
+      cashHoldingId: "cash",
+      quantity: 10,
+      price: 950,
+      fee: 0,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    });
+    const recreated = { ...holding(), id: "manual-recreated" };
+    const conflicted = {
+      ...sold,
+      holdings: [...sold.holdings, recreated]
+    };
+
+    expect(() => revertManagedTrade(conflicted, "sell-all-collision")).toThrow(/已重新建立同一標的/);
   });
 
   it("converts realized USD P&L using the saved historical FX rate", () => {
