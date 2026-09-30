@@ -124,7 +124,9 @@ export function applyCashLinkedActivity(state: AppState, input: CashLinkedActivi
     symbol: input.symbol.trim().toUpperCase(),
     amount: input.amount,
     currency: cash.currency,
-    fxRate: cash.currency === "USD" ? input.fxRate : 1,
+    fxRate: cash.currency === "USD"
+      ? (input.capturePreFlowFromCurrentState ? state.usdTwd : input.fxRate)
+      : 1,
     quantity: 0,
     price: 0,
     note: input.note.trim(),
