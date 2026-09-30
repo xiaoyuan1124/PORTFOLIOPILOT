@@ -559,6 +559,7 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - **Today:** deposits, withdrawals, dividends and fees continue to update the selected current cash account atomically and preserve reversible before / after snapshots.
 - **Past dates:** the same four event types are recorded as **ledger-only historical backfill**. They preserve account, currency, saved historical USD/TWD, note and applicable TWR boundary fields, but never mutate current holdings.
 - Historical deposits / withdrawals still participate in net external contributions, XIRR, Exact TWR and Modified Dietz according to their recorded date and FX.
+- Historical USD cash events require an explicit positive USD/TWD input; switching to a past date clears the current FX value so today's rate cannot silently masquerade as a historical rate.
 - Historical dividends / fees still participate in received-income reporting using their saved historical FX.
 - A historical withdrawal or fee is not rejected merely because today's cash balance is lower; today's cash is intentionally irrelevant to a ledger-only past event.
 - The current-state cash engine now rejects any non-today date, so historical events cannot bypass the UI and replay into current cash through the mutation path.
