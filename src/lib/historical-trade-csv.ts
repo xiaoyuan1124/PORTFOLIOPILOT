@@ -358,7 +358,6 @@ export interface HistoricalTradeCsvPreview {
   firstDate: string;
   lastDate: string;
   accounts: string[];
-  sourceFileNames: string[];
   feesTwd: number;
   taxesTwd: number;
   sampleRows: HistoricalTradeCsvPreviewRow[];
@@ -452,6 +451,7 @@ export interface HistoricalTradeCsvBatchSummary {
   firstDate: string;
   lastDate: string;
   accounts: string[];
+  sourceFileNames: string[];
   feesTwd: number;
   taxesTwd: number;
 }
