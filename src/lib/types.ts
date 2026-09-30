@@ -133,6 +133,7 @@ export interface HistoricalTradeMeta {
   importSource?: "csv";
   importFingerprint?: string;
   importBatchId?: string;
+  importFileName?: string;
 }
 
 export interface PortfolioActivity {

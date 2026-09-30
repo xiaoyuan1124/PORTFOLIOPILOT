@@ -673,4 +673,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - If individual rows were already deleted, the history view and cost totals automatically reflect only the remaining rows in that batch.
 - The mobile view initially shows the three newest batches and can expand to the full history to avoid an unnecessarily long Settings screen.
 - No new persisted fields are required; Backup V16 remains current and V1–V15 compatibility is unchanged.
+## V0.70 historical trade CSV source filename provenance
 
+- New historical-trade CSV imports now preserve the **source filename** alongside the existing row fingerprint and deterministic batch ID.
+- The filename is provenance only: it does **not** participate in duplicate detection or batch identity. Renaming an otherwise identical CSV cannot bypass the existing duplicate guard.
+- PortfolioPilot stores only a normalized basename. Browser or manually supplied path components are stripped before import, and Backup V17 rejects path-like filename metadata so local folder paths are not persisted or surfaced.
+- The pre-import preview passes the selected browser file name into the exact parser, and the final commit reuses the same filename while revalidating the CSV against current state.
+- CSV batch history now identifies V0.70+ batches by their saved source filename. Older V0.68/V0.69 batches without filename provenance remain readable and are labeled as legacy imports instead of being guessed.
+- Backup format is now V17. Valid V1–V16 backups remain readable; V16 batch metadata does not require a filename.
