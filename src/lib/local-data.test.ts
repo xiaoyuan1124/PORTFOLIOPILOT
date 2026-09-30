@@ -310,38 +310,46 @@ describe("local data import/export", () => {
 
     expect(() => parseBackup(JSON.stringify(base))).toThrow(/成交數量、成交價、手續費與交易稅一致/);
 
-    const linked = structuredClone(base);
-    linked.state.activities[0].amount = 1013;
-    linked.state.activities[0].cashImpact = {
-      cashHoldingId: "cash",
-      before: {
-        id: "cash",
-        symbol: "CASH-TWD",
-        name: "TWD 現金",
-        market: "TW",
-        type: "cash",
-        quantity: 1,
-        price: 5000,
-        averageCost: 5000,
-        currency: "TWD",
-        sector: "現金",
-        account: "券商A"
-      },
-      after: {
-        id: "cash",
-        symbol: "CASH-TWD",
-        name: "TWD 現金",
-        market: "TW",
-        type: "cash",
-        quantity: 1,
-        price: 3987,
-        averageCost: 3987,
-        currency: "TWD",
-        sector: "現金",
-        account: "券商A"
-      },
-      delta: -1013,
-      reason: "trade"
+    const linked = {
+      ...base,
+      state: {
+        ...base.state,
+        activities: [{
+          ...base.state.activities[0],
+          amount: 1013,
+          cashImpact: {
+            cashHoldingId: "cash",
+            before: {
+              id: "cash",
+              symbol: "CASH-TWD",
+              name: "TWD 現金",
+              market: "TW",
+              type: "cash",
+              quantity: 1,
+              price: 5000,
+              averageCost: 5000,
+              currency: "TWD",
+              sector: "現金",
+              account: "券商A"
+            },
+            after: {
+              id: "cash",
+              symbol: "CASH-TWD",
+              name: "TWD 現金",
+              market: "TW",
+              type: "cash",
+              quantity: 1,
+              price: 3987,
+              averageCost: 3987,
+              currency: "TWD",
+              sector: "現金",
+              account: "券商A"
+            },
+            delta: -1013,
+            reason: "trade"
+          }
+        }]
+      }
     };
 
     expect(() => parseBackup(JSON.stringify(linked))).toThrow(/Ledger-only 歷史買賣不可附帶/);
