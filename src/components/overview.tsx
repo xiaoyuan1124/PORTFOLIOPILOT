@@ -8,11 +8,13 @@ import {
   allocationByAccount,
   allocationBySector,
   dailySnapshotDelta,
+  localDateKey,
   officialPriceCoverage,
   portfolioCashSummary,
   portfolioSummary,
   snapshotPeriodDelta,
   snapshotsForRange,
+  snapshotsThroughDate,
   topHoldings,
   type SnapshotRange
 } from "@/lib/calc";
@@ -40,9 +42,11 @@ export function Overview({
   const sectors = allocationBySector(state.holdings, state.usdTwd).filter((item) => item.name !== "現金");
   const accounts = allocationByAccount(state.holdings, state.usdTwd);
   const topPositions = topHoldings(state.holdings, state.usdTwd, 5);
-  const allSnapshots = useMemo(() => [...state.snapshots].sort((a, b) => a.date.localeCompare(b.date)), [state.snapshots]);
-  const snapshots = useMemo(() => snapshotsForRange(allSnapshots, range), [allSnapshots, range]);
-  const daily = dailySnapshotDelta(allSnapshots);
+  const today = localDateKey();
+  const currentSnapshots = useMemo(() => snapshotsThroughDate(state.snapshots, today), [state.snapshots, today]);
+  const futureSnapshotCount = state.snapshots.length - currentSnapshots.length;
+  const snapshots = useMemo(() => snapshotsForRange(currentSnapshots, range), [currentSnapshots, range]);
+  const daily = dailySnapshotDelta(currentSnapshots);
   const period = snapshotPeriodDelta(snapshots);
   const priceCoverage = officialPriceCoverage(state.holdings);
   const topSector = sectors[0];
@@ -132,6 +136,12 @@ export function Overview({
               {period ? <span className="tabular-nums">{period.firstDate} 起淨值變動：{percent(period.pct)}</span> : null}
             </div>
             <p className="mt-2 text-[11px] leading-5 text-black/32 dark:text-white/32">淨值變動會受入出金影響，不等同投資報酬率；精確績效請看「投資組合 → 績效」。</p>
+            {futureSnapshotCount > 0 ? (
+              <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-[#8b6538] dark:text-[#d4ad7c]">
+                <AlertTriangle className="mt-0.5 shrink-0" size={13} />
+                已排除 {futureSnapshotCount} 筆晚於今天（{today}）的未來淨值快照，避免污染目前趨勢與變動數字。
+              </p>
+            ) : null}
           </CardContent>
         </Card>
 

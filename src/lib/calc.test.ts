@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppState } from "./types";
-import { allocationByAccount, dailySnapshotDelta, localDateKey, officialPriceCoverage, portfolioCashSummary, portfolioSummary, snapshotsForRange, withTodaySnapshot } from "./calc";
+import { allocationByAccount, dailySnapshotDelta, localDateKey, officialPriceCoverage, portfolioCashSummary, portfolioSummary, snapshotsForRange, snapshotsThroughDate, withTodaySnapshot } from "./calc";
 
 const state: AppState = {
   usdTwd: 32,
@@ -116,6 +116,17 @@ describe("portfolio calculations", () => {
     ], state.usdTwd);
     expect(result.cash).toBe(800);
     expect(result.total).toBe(6000);
+  });
+
+  it("excludes future snapshots from current-date views", () => {
+    const rows = snapshotsThroughDate([
+      { date: "2026-09-29", total: 100, cost: 90, gain: 10, usdTwd: 32 },
+      { date: "2026-09-30", total: 110, cost: 90, gain: 20, usdTwd: 32 },
+      { date: "2026-10-05", total: 999, cost: 90, gain: 909, usdTwd: 32 }
+    ], "2026-09-30");
+
+    expect(rows.map((row) => row.date)).toEqual(["2026-09-29", "2026-09-30"]);
+    expect(dailySnapshotDelta(rows)?.amount).toBe(10);
   });
 
   it("filters snapshots by year to date", () => {
