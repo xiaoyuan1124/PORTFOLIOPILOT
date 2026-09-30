@@ -24,7 +24,7 @@ export const holdingSchema = z.object({
   market: z.enum(["TW", "US"]),
   type: z.enum(["stock", "etf", "cash"]),
   quantity: z.number().finite().positive("持股數量必須大於 0。"),
-  price: z.number().finite().positive("目前價格／現金餘額必須大於 0。"),
+  price: z.number().finite().nonnegative("目前價格／現金餘額不可小於 0。"),
   averageCost: z.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
   sector: z.string().min(1).max(120),
@@ -32,6 +32,14 @@ export const holdingSchema = z.object({
   priceSource: z.enum(["manual", "TWSE", "TPEx"]).optional(),
   priceAsOf: dateKeySchema.optional()
 }).superRefine((holding, ctx) => {
+  if (holding.type !== "cash" && holding.price <= 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["price"],
+      message: "股票／ETF 目前價格必須大於 0。"
+    });
+  }
+
   if (holding.type !== "cash" && holding.averageCost <= 0) {
     ctx.addIssue({
       code: "custom",
@@ -106,7 +114,7 @@ export const inventoryImpactSchema = z.discriminatedUnion("kind", [
 export const cashImpactSchema = z.object({
   cashHoldingId: z.string().min(1),
   before: holdingSchema,
-  after: holdingSchema.nullable(),
+  after: holdingSchema,
   delta: z.number().finite().refine((value) => Math.abs(value) > 1e-12, "現金異動不可為 0。"),
   reason: z.enum(["trade", "deposit", "withdrawal", "dividend", "fee"])
 });
@@ -260,14 +268,14 @@ export const activitySchema = z.object({
           ? -1
           : 0;
 
-    if (cash.before.type !== "cash" || (cash.after && cash.after.type !== "cash")) {
+    if (cash.before.type !== "cash" || cash.after.type !== "cash") {
       ctx.addIssue({
         code: "custom",
         path: ["cashImpact"],
         message: "現金連動快照只能指向現金部位。"
       });
     }
-    if (cash.before.id !== cash.cashHoldingId || (cash.after && cash.after.id !== cash.cashHoldingId)) {
+    if (cash.before.id !== cash.cashHoldingId || cash.after.id !== cash.cashHoldingId) {
       ctx.addIssue({
         code: "custom",
         path: ["cashImpact", "cashHoldingId"],
@@ -299,10 +307,9 @@ export const activitySchema = z.object({
     const beforeNormalized =
       Math.abs(cash.before.quantity - 1) <= 1e-9 &&
       Math.abs(cash.before.averageCost - cash.before.price) <= 1e-8;
-    const afterNormalized = !cash.after || (
+    const afterNormalized =
       Math.abs(cash.after.quantity - 1) <= 1e-9 &&
-      Math.abs(cash.after.averageCost - cash.after.price) <= 1e-8
-    );
+      Math.abs(cash.after.averageCost - cash.after.price) <= 1e-8;
     if (!beforeNormalized || !afterNormalized) {
       ctx.addIssue({
         code: "custom",
@@ -318,24 +325,18 @@ export const activitySchema = z.object({
         path: ["cashImpact", "delta"],
         message: "現金連動不可產生負餘額。"
       });
-    } else if (expectedBalance <= 1e-8) {
-      if (cash.after !== null) {
+    } else {
+      const normalizedExpected = expectedBalance <= 1e-8 ? 0 : expectedBalance;
+      if (
+        Math.abs(cash.after.price - normalizedExpected) > 1e-8 ||
+        Math.abs(cash.after.averageCost - normalizedExpected) > 1e-8
+      ) {
         ctx.addIssue({
           code: "custom",
           path: ["cashImpact", "after"],
-          message: "現金餘額歸零時，after 快照必須為 null。"
+          message: "現金 after 快照必須等於 before 餘額加上本次 delta。"
         });
       }
-    } else if (
-      !cash.after ||
-      Math.abs(cash.after.price - expectedBalance) > 1e-8 ||
-      Math.abs(cash.after.averageCost - expectedBalance) > 1e-8
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["cashImpact", "after"],
-        message: "現金 after 快照必須等於 before 餘額加上本次 delta。"
-      });
     }
 
     if (isTradeActivityType(activity.type) && activity.inventoryImpact?.kind !== "trade") {
@@ -516,7 +517,7 @@ export const holdingCsvRowSchema = z.object({
   market: z.enum(["TW", "US"]),
   type: z.enum(["stock", "etf", "cash"]),
   quantity: z.coerce.number().finite().positive("持股數量必須大於 0。"),
-  price: z.coerce.number().finite().positive("目前價格／現金餘額必須大於 0。"),
+  price: z.coerce.number().finite().nonnegative("目前價格／現金餘額不可小於 0。"),
   averageCost: z.coerce.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
   sector: z.string().trim().min(1).max(120),
@@ -525,6 +526,14 @@ export const holdingCsvRowSchema = z.object({
     z.string().trim().min(1).max(120).optional()
   )
 }).superRefine((holding, ctx) => {
+  if (holding.type !== "cash" && holding.price <= 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["price"],
+      message: "股票／ETF 目前價格必須大於 0。"
+    });
+  }
+
   if (holding.type !== "cash" && holding.averageCost <= 0) {
     ctx.addIssue({
       code: "custom",
