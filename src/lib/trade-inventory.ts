@@ -1,6 +1,7 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
 import { accountName, holdingIdentityKey } from "./local-data";
 import {
+  activityTouchesCashHolding,
   holdingSnapshotEqual,
   nextCashSnapshot,
   replaceHoldingSnapshot
@@ -253,7 +254,7 @@ export function revertManagedTrade(state: AppState, activityId: string): AppStat
   const laterCash = cashImpact
     ? state.activities.some((item) =>
         item.id !== activity.id &&
-        item.cashImpact?.cashHoldingId === cashImpact.cashHoldingId &&
+        activityTouchesCashHolding(item, cashImpact.cashHoldingId) &&
         (item.date > activity.date || (item.date === activity.date && item.id > activity.id))
       )
     : false;
