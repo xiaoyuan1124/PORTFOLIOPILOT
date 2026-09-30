@@ -135,6 +135,36 @@ describe("cash account linkage", () => {
     })).toThrow(/只有入金／出金/);
   });
 
+  it("rejects an automatic boundary when another external flow already uses the same minute", () => {
+    const base = state();
+    base.activities.push({
+      id: "existing-flow",
+      date: localDateKey(),
+      time: "10:15",
+      type: "deposit",
+      symbol: "",
+      amount: 10,
+      currency: "TWD",
+      fxRate: 1,
+      quantity: 0,
+      price: 0,
+      note: ""
+    });
+
+    expect(() => applyCashLinkedActivity(base, {
+      id: "ambiguous-auto",
+      date: localDateKey(),
+      type: "withdrawal",
+      cashHoldingId: "cash",
+      amount: 10,
+      fxRate: 1,
+      symbol: "",
+      note: "",
+      time: "10:15",
+      capturePreFlowFromCurrentState: true
+    })).toThrow(/同一分鐘已有入金／出金事件/);
+  });
+
   it("subtracts withdrawals and preserves a zero-balance cash account", () => {
     const next = applyCashLinkedActivity(state(cash({ price: 1000, averageCost: 1000 })), {
       id: "withdrawal",
