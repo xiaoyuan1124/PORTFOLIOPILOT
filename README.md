@@ -613,3 +613,16 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Existing trade and corporate-action rollback logic now treats a later security transfer as a dependency, preventing older snapshots from overwriting newer account movements.
 - Backup format is now V13 with structural validation for position identity, quantity arithmetic, weighted cost basis, price provenance and total value / basis conservation. V1–V12 backups remain readable.
 
+## V0.65 historical trade backfill
+
+- The activity ledger now has a dedicated **補歷史買賣** workflow for past stock / ETF buys and sells that should be preserved in history without replaying them into today's portfolio state.
+- Historical trade backfill is strictly **ledger-only**: it never changes current holdings, never changes current cash and never creates inventory or cash snapshots.
+- Only dates before today are accepted. Today's real trades must continue through the managed trade / first-buy flows so current holdings and cash remain atomic.
+- Users enter the market, symbol, account, quantity, execution price, fee, tax and—when the market is US—the explicitly known historical USD/TWD rate. PortfolioPilot does not substitute today's FX for an unknown historical rate.
+- Buy amount is stored as execution gross + explicit fee + explicit tax. Sell amount is stored as execution gross − explicit fee − explicit tax. Invalid or non-positive sell proceeds fail closed.
+- Historical trades remain outside net external contributions and Exact TWR cash-flow boundaries because they are trades, not deposits / withdrawals.
+- Explicitly entered historical fee and tax values are included in V0.63 cost-transparency totals, but the app does not infer missing costs.
+- Historical sells do **not** fabricate realized P/L. Without a complete historical inventory-cost chain, realized P/L remains unavailable rather than being guessed.
+- Ledger rows clearly distinguish historical trades from managed trades and can be deleted without any holding / cash rollback because they never mutated current state.
+- Backup format is now V14. Historical-trade metadata validates market/currency consistency, positive quantity / price, explicit fee / tax arithmetic and the absence of current-state inventory / cash linkage. V1–V13 backups remain readable.
+

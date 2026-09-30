@@ -125,6 +125,13 @@ export interface PositionTransferImpact {
   quantity: number;
 }
 
+export interface HistoricalTradeMeta {
+  mode: "ledger_only";
+  market: Market;
+  fee: number;
+  tax: number;
+}
+
 export interface PortfolioActivity {
   id: string;
   date: string;
@@ -145,6 +152,7 @@ export interface PortfolioActivity {
   cashTransferImpact?: CashTransferImpact;
   cashFxImpact?: CashFxImpact;
   positionTransferImpact?: PositionTransferImpact;
+  historicalTrade?: HistoricalTradeMeta;
 }
 
 export interface NetWorthSnapshot {

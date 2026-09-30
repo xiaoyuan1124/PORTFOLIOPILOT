@@ -49,7 +49,7 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(13);
+    expect(JSON.parse(serialized).version).toBe(14);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -104,7 +104,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(13);
+    expect(JSON.parse(serialized).version).toBe(14);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -174,7 +174,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(13);
+    expect(JSON.parse(serialized).version).toBe(14);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -235,8 +235,124 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(13);
+    expect(JSON.parse(serialized).version).toBe(14);
     expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("round-trips V14 historical ledger-only trade metadata", () => {
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "historical-trade",
+        date: "2020-01-02",
+        type: "buy",
+        symbol: "2330",
+        amount: 1013,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 2,
+        price: 500,
+        note: "補登",
+        account: "券商A",
+        historicalTrade: {
+          mode: "ledger_only",
+          market: "TW",
+          fee: 10,
+          tax: 3
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(14);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("rejects tampered V14 historical trade arithmetic and linked snapshots", () => {
+    const base = {
+      version: 14,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        snapshots: [],
+        allocationTargets: [],
+        activities: [{
+          id: "bad-historical-trade",
+          date: "2020-01-02",
+          type: "buy",
+          symbol: "2330",
+          amount: 999,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 2,
+          price: 500,
+          note: "",
+          account: "券商A",
+          historicalTrade: {
+            mode: "ledger_only",
+            market: "TW",
+            fee: 10,
+            tax: 3
+          }
+        }]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(base))).toThrow(/成交數量、成交價、手續費與交易稅一致/);
+
+    const linked = {
+      ...base,
+      state: {
+        ...base.state,
+        activities: [{
+          ...base.state.activities[0],
+          amount: 1013,
+          cashImpact: {
+            cashHoldingId: "cash",
+            before: {
+              id: "cash",
+              symbol: "CASH-TWD",
+              name: "TWD 現金",
+              market: "TW",
+              type: "cash",
+              quantity: 1,
+              price: 5000,
+              averageCost: 5000,
+              currency: "TWD",
+              sector: "現金",
+              account: "券商A"
+            },
+            after: {
+              id: "cash",
+              symbol: "CASH-TWD",
+              name: "TWD 現金",
+              market: "TW",
+              type: "cash",
+              quantity: 1,
+              price: 3987,
+              averageCost: 3987,
+              currency: "TWD",
+              sector: "現金",
+              account: "券商A"
+            },
+            delta: -1013,
+            reason: "trade"
+          }
+        }]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(linked))).toThrow(/Ledger-only 歷史買賣不可附帶/);
   });
 
   it("rejects tampered V13 security transfer cost basis", () => {
@@ -540,7 +656,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(13);
+    expect(JSON.parse(serialized).version).toBe(14);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -592,7 +708,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(13);
+    expect(JSON.parse(serialized).version).toBe(14);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -643,7 +759,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(13);
+    expect(JSON.parse(serialized).version).toBe(14);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -768,7 +884,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(13);
+    expect(JSON.parse(serialized).version).toBe(14);
     expect(parseBackup(serialized)).toEqual(state);
   });
 

@@ -52,6 +52,9 @@ export function ledgerEconomicsSummary(
     if (activity.inventoryImpact?.kind === "trade") {
       summary.tradeFeesTwd += activity.inventoryImpact.fee * fx;
       summary.tradeTaxesTwd += activity.inventoryImpact.tax * fx;
+    } else if (activity.historicalTrade?.mode === "ledger_only") {
+      summary.tradeFeesTwd += activity.historicalTrade.fee * fx;
+      summary.tradeTaxesTwd += activity.historicalTrade.tax * fx;
     }
     if (activity.cashFxImpact) {
       const impact = activity.cashFxImpact;
