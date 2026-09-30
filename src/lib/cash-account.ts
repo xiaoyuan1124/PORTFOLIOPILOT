@@ -26,6 +26,17 @@ export type CashTransferInput = {
   note: string;
 };
 
+export type CashExchangeInput = {
+  id: string;
+  date: string;
+  fromCashHoldingId: string;
+  toCashHoldingId: string;
+  sourceAmount: number;
+  rateTwdPerUsd: number;
+  fee: number;
+  note: string;
+};
+
 export function cashBalance(holding: Holding) {
   if (holding.type !== "cash") throw new Error("指定部位不是現金帳戶。");
   return holding.price;
@@ -84,7 +95,112 @@ function signedDelta(type: CashLinkedActivityInput["type"], amount: number) {
 export function activityTouchesCashHolding(activity: PortfolioActivity, cashHoldingId: string) {
   return activity.cashImpact?.cashHoldingId === cashHoldingId ||
     activity.cashTransferImpact?.fromCashHoldingId === cashHoldingId ||
-    activity.cashTransferImpact?.toCashHoldingId === cashHoldingId;
+    activity.cashTransferImpact?.toCashHoldingId === cashHoldingId ||
+    activity.cashExchangeImpact?.fromCashHoldingId === cashHoldingId ||
+    activity.cashExchangeImpact?.toCashHoldingId === cashHoldingId;
+}
+
+export function applyCashExchange(state: AppState, input: CashExchangeInput): AppState {
+  if (input.date !== localDateKey()) {
+    throw new Error("換匯只允許從今天的目前現金帳戶狀態往前套用，避免歷史重播造成餘額失真。");
+  }
+  if (!Number.isFinite(input.sourceAmount) || input.sourceAmount <= 0) {
+    throw new Error("換出本金必須大於 0。");
+  }
+  if (!Number.isFinite(input.rateTwdPerUsd) || input.rateTwdPerUsd <= 0) {
+    throw new Error("實際成交匯率必須大於 0，並以 TWD / USD 表示。");
+  }
+  if (!Number.isFinite(input.fee) || input.fee < 0) {
+    throw new Error("換匯費用不可小於 0。");
+  }
+  if (input.fromCashHoldingId === input.toCashHoldingId) {
+    throw new Error("換匯的轉出與轉入現金帳戶不可相同。");
+  }
+
+  const from = assertCashHolding(state.holdings.find((item) => item.id === input.fromCashHoldingId));
+  const to = assertCashHolding(state.holdings.find((item) => item.id === input.toCashHoldingId));
+  if (from.currency === to.currency) {
+    throw new Error("換匯必須在 TWD 與 USD 兩種不同幣別現金帳戶間進行；同幣別請使用內部轉帳。");
+  }
+
+  const targetAmount = from.currency === "TWD"
+    ? input.sourceAmount / input.rateTwdPerUsd
+    : input.sourceAmount * input.rateTwdPerUsd;
+  if (!Number.isFinite(targetAmount) || targetAmount <= 0) {
+    throw new Error("依成交匯率計算出的換入金額無效。");
+  }
+
+  const sourceDebit = input.sourceAmount + input.fee;
+  const fromAfter = nextCashSnapshot(from, -sourceDebit);
+  const toAfter = nextCashSnapshot(to, targetAmount);
+  const activity: PortfolioActivity = {
+    id: input.id,
+    date: input.date,
+    type: "exchange",
+    symbol: "",
+    amount: input.sourceAmount,
+    currency: from.currency,
+    fxRate: from.currency === "USD" ? input.rateTwdPerUsd : 1,
+    quantity: 0,
+    price: 0,
+    note: input.note.trim(),
+    account: accountName(from.account),
+    cashExchangeImpact: {
+      fromCashHoldingId: from.id,
+      toCashHoldingId: to.id,
+      fromBefore: { ...from },
+      fromAfter,
+      toBefore: { ...to },
+      toAfter,
+      sourceAmount: input.sourceAmount,
+      targetAmount,
+      rateTwdPerUsd: input.rateTwdPerUsd,
+      fee: input.fee
+    }
+  };
+
+  let holdings = replaceHoldingSnapshot(state.holdings, from.id, fromAfter);
+  holdings = replaceHoldingSnapshot(holdings, to.id, toAfter);
+
+  return {
+    ...state,
+    holdings,
+    activities: [...state.activities, activity]
+  };
+}
+
+export function revertCashExchange(state: AppState, activityId: string): AppState {
+  const activity = state.activities.find((item) => item.id === activityId);
+  const impact = activity?.cashExchangeImpact;
+  if (!activity || activity.type !== "exchange" || !impact) {
+    throw new Error("這筆紀錄不是可回滾的換匯事件。");
+  }
+
+  const laterTouchesEither = hasLaterRecordedActivity(
+    state.activities,
+    activity,
+    (item) =>
+      activityTouchesCashHolding(item, impact.fromCashHoldingId) ||
+      activityTouchesCashHolding(item, impact.toCashHoldingId)
+  );
+  if (laterTouchesEither) {
+    throw new Error("換出或換入帳戶後面已有其他現金連動事件，請先從最新一筆開始回滾。");
+  }
+
+  const currentFrom = state.holdings.find((item) => item.id === impact.fromCashHoldingId) ?? null;
+  const currentTo = state.holdings.find((item) => item.id === impact.toCashHoldingId) ?? null;
+  if (!holdingSnapshotEqual(currentFrom, impact.fromAfter) || !holdingSnapshotEqual(currentTo, impact.toAfter)) {
+    throw new Error("換出或換入帳戶已被後續手動修改或校正，無法安全自動回滾。");
+  }
+
+  let holdings = replaceHoldingSnapshot(state.holdings, impact.fromCashHoldingId, impact.fromBefore);
+  holdings = replaceHoldingSnapshot(holdings, impact.toCashHoldingId, impact.toBefore);
+
+  return {
+    ...state,
+    holdings,
+    activities: state.activities.filter((item) => item.id !== activity.id)
+  };
 }
 
 export function applyCashTransfer(state: AppState, input: CashTransferInput): AppState {
