@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AppState, Holding } from "./types";
 import {
   applyManagedTrade,
+  applyOpeningBuy,
   realizedManagedTradePnlTwd,
   revertManagedTrade
 } from "./trade-inventory";
@@ -55,6 +56,144 @@ function state(baseHolding = holding()): AppState {
 }
 
 describe("managed trade inventory", () => {
+  it("opens a brand-new Taiwan position and deducts cash atomically", () => {
+    const base = state();
+    base.holdings = [cashFor(holding())];
+
+    const next = applyOpeningBuy(base, {
+      id: "open-2330",
+      date: "2026-09-30",
+      cashHoldingId: "cash",
+      position: {
+        id: "holding-open-2330",
+        symbol: "2330",
+        name: "台積電",
+        market: "TW",
+        type: "stock",
+        price: 1000,
+        currency: "TWD",
+        sector: "半導體",
+        account: "交易現金",
+        priceSource: "TWSE",
+        priceAsOf: "2026-09-30"
+      },
+      quantity: 2,
+      price: 990,
+      fee: 20,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    });
+
+    expect(next.holdings.find((item) => item.id === "holding-open-2330")).toMatchObject({
+      symbol: "2330",
+      quantity: 2,
+      averageCost: 1000,
+      price: 1000,
+      priceSource: "TWSE",
+      priceAsOf: "2026-09-30"
+    });
+    expect(next.holdings.find((item) => item.id === "cash")?.price).toBe(8000);
+    expect(next.activities[0]).toMatchObject({
+      type: "buy",
+      amount: 2000,
+      inventoryImpact: {
+        kind: "trade",
+        before: null,
+        holdingId: "holding-open-2330"
+      },
+      cashImpact: {
+        delta: -2000,
+        reason: "trade"
+      }
+    });
+
+    const reverted = revertManagedTrade(next, "open-2330");
+    expect(reverted.holdings.some((item) => item.id === "holding-open-2330")).toBe(false);
+    expect(reverted.holdings.find((item) => item.id === "cash")?.price).toBe(10000);
+  });
+
+  it("rejects opening a duplicate market-symbol-account position", () => {
+    const base = state();
+    expect(() => applyOpeningBuy(base, {
+      id: "duplicate",
+      date: "2026-09-30",
+      cashHoldingId: "cash",
+      position: {
+        id: "new-id",
+        symbol: "2330",
+        name: "台積電",
+        market: "TW",
+        type: "stock",
+        price: 1000,
+        currency: "TWD",
+        sector: "半導體",
+        account: "券商A",
+        priceSource: "TWSE",
+        priceAsOf: "2026-09-30"
+      },
+      quantity: 1,
+      price: 1000,
+      fee: 0,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    })).toThrow(/已存在/);
+  });
+
+  it("rejects opening a position when cash currency does not match", () => {
+    const base = state();
+    expect(() => applyOpeningBuy(base, {
+      id: "wrong-currency-open",
+      date: "2026-09-30",
+      cashHoldingId: "cash",
+      position: {
+        id: "us-new",
+        symbol: "QQQM",
+        name: "QQQM",
+        market: "US",
+        type: "etf",
+        price: 250,
+        currency: "USD",
+        sector: "ETF",
+        account: "交易現金"
+      },
+      quantity: 1,
+      price: 250,
+      fee: 0,
+      tax: 0,
+      fxRate: 31.5,
+      note: ""
+    })).toThrow(/不可連動 TWD/);
+  });
+
+  it("rejects opening a position when linked cash is insufficient", () => {
+    const base = state();
+    base.holdings = [cashFor(holding())];
+
+    expect(() => applyOpeningBuy(base, {
+      id: "too-large-open",
+      date: "2026-09-30",
+      cashHoldingId: "cash",
+      position: {
+        id: "new",
+        symbol: "2454",
+        name: "聯發科",
+        market: "TW",
+        type: "stock",
+        price: 1500,
+        currency: "TWD",
+        sector: "半導體",
+        account: "交易現金"
+      },
+      quantity: 10,
+      price: 1500,
+      fee: 0,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    })).toThrow(/現金不足/);
+  });
   it("applies a buy using weighted-average cost including fees", () => {
     const next = applyManagedTrade(state(), {
       id: "buy-1",
