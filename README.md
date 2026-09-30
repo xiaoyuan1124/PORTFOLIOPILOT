@@ -579,3 +579,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - The ledger surfaces both the execution rate and saved valuation rate. Any mark-to-current-rate net-worth difference is descriptive valuation impact, not an external cash flow or a separately fabricated return.
 - Backup format is now V12 and validates FX account identity, opposite currencies, normalized cash snapshots, before / after arithmetic and execution-rate consistency. V1–V11 backups remain readable.
 
+## V0.62 forward-only current-state mutation guards
+
+- Security mutations that directly change today's holdings are now enforced as **forward-only at the engine layer**, not only in the UI.
+- `applyOpeningBuy`, `applyManagedTrade` and `applyShareAdjustment` accept only today's local date. A historical date fails closed before holdings, cash or activities can be changed.
+- This closes a lower-level safety gap where a future alternate UI or direct engine call could otherwise replay an old buy, sell or corporate action into current inventory even though the current Activity Ledger UI already intended those workflows to be same-day only.
+- The Activity Ledger disables the date field for buy / sell / corporate-action current-state mutation and explicitly explains that historical securities events are not replayed into current holdings.
+- Historical cash events remain the separate V0.60 ledger-only path. PortfolioPilot does not fabricate historical securities inventory, historical cash balances or cost-basis reconstruction from incomplete data.
+- No backup schema change is required for V0.62; Backup V12 remains current.
+
