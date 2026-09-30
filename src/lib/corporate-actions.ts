@@ -1,5 +1,6 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
 import { accountName } from "./local-data";
+import { hasLaterRecordedActivity } from "./activity-order";
 
 export type ShareAdjustmentInput = {
   id: string;
@@ -74,10 +75,10 @@ export function revertCorporateAction(state: AppState, activityId: string): AppS
     throw new Error("這筆紀錄不是可回滾的股數調整。");
   }
 
-  const laterLinked = state.activities.some((item) =>
-    item.id !== activity.id &&
-    item.inventoryImpact?.holdingId === impact.holdingId &&
-    (item.date > activity.date || (item.date === activity.date && item.id > activity.id))
+  const laterLinked = hasLaterRecordedActivity(
+    state.activities,
+    activity,
+    (item) => item.inventoryImpact?.holdingId === impact.holdingId
   );
   if (laterLinked) {
     throw new Error("此部位後面已有其他持股連動事件，請先從最新一筆開始回滾。");

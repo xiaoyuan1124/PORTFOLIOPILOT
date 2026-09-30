@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowDownCircle, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
+import { ArrowDownCircle, ArrowRightLeft, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
-import { isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
+import { isCashTransferActivityType, isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
 import { localDateKey, localTimeKey, portfolioSummary } from "@/lib/calc";
 import {
   buildHoldingLookupCatalog,
@@ -16,8 +16,11 @@ import { loadBundledTwQuotes } from "@/lib/market-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
 import {
   applyCashLinkedActivity,
+  applyCashTransfer,
   revertCashLinkedActivity,
-  type CashLinkedActivityInput
+  revertCashTransfer,
+  type CashLinkedActivityInput,
+  type CashTransferInput
 } from "@/lib/cash-account";
 import {
   applyShareAdjustment,
@@ -44,6 +47,7 @@ const labels: Record<ActivityType, string> = {
   sell: "賣出",
   dividend: "股息",
   fee: "費用",
+  transfer: "內部轉帳",
   corporate_action: "股數調整"
 };
 
@@ -54,6 +58,7 @@ const icons: Record<ActivityType, typeof Banknote> = {
   sell: Banknote,
   dividend: ReceiptText,
   fee: ReceiptText,
+  transfer: ArrowRightLeft,
   corporate_action: Layers3
 };
 
@@ -304,11 +309,13 @@ function OpeningBuyForm({
 function ActivityForm({
   state,
   onSaveCash,
+  onSaveTransfer,
   onSaveTrade,
   onSaveCorporateAction
 }: {
   state: AppState;
   onSaveCash: (input: CashLinkedActivityInput) => boolean;
+  onSaveTransfer: (input: CashTransferInput) => boolean;
   onSaveTrade: (input: ManagedTradeInput) => boolean;
   onSaveCorporateAction: (input: ShareAdjustmentInput) => boolean;
 }) {
@@ -340,6 +347,13 @@ function ActivityForm({
   const [tradeHoldingId, setTradeHoldingId] = useState(defaultTradeHolding?.id ?? "");
   const [tradeCashHoldingId, setTradeCashHoldingId] = useState(defaultCashHolding?.id ?? "");
   const [cashHoldingId, setCashHoldingId] = useState(defaultCashHolding?.id ?? "");
+  const [transferFromCashHoldingId, setTransferFromCashHoldingId] = useState(cashHoldings[0]?.id ?? "");
+  const [transferToCashHoldingId, setTransferToCashHoldingId] = useState(
+    cashHoldings.find((holding) =>
+      holding.id !== cashHoldings[0]?.id &&
+      holding.currency === cashHoldings[0]?.currency
+    )?.id ?? ""
+  );
   const [corporateHoldingId, setCorporateHoldingId] = useState(defaultTradeHolding?.id ?? "");
   const [shareRatio, setShareRatio] = useState(1);
   const [note, setNote] = useState("");
@@ -348,11 +362,29 @@ function ActivityForm({
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const external = isExternalActivityType(type);
+  const transfer = isCashTransferActivityType(type);
   const trade = isTradeActivityType(type);
   const corporate = type === "corporate_action";
   const selectedHolding = tradeHoldings.find((holding) => holding.id === tradeHoldingId) ?? null;
   const selectedTradeCash = cashHoldings.find((holding) => holding.id === tradeCashHoldingId) ?? null;
   const selectedCash = cashHoldings.find((holding) => holding.id === cashHoldingId) ?? null;
+  const transferSources = cashHoldings.filter((source) =>
+    cashHoldings.some((target) => target.id !== source.id && target.currency === source.currency)
+  );
+  const selectedTransferFrom =
+    transferSources.find((holding) => holding.id === transferFromCashHoldingId) ??
+    transferSources[0] ??
+    null;
+  const compatibleTransferTargets = selectedTransferFrom
+    ? cashHoldings.filter((holding) =>
+        holding.id !== selectedTransferFrom.id &&
+        holding.currency === selectedTransferFrom.currency
+      )
+    : [];
+  const selectedTransferTo =
+    compatibleTransferTargets.find((holding) => holding.id === transferToCashHoldingId) ??
+    compatibleTransferTargets[0] ??
+    null;
   const selectedCorporateHolding = tradeHoldings.find((holding) => holding.id === corporateHoldingId) ?? null;
   const compatibleTradeCash = selectedHolding
     ? cashHoldings.filter((holding) => holding.currency === selectedHolding.currency)
@@ -362,6 +394,7 @@ function ActivityForm({
   const cashOnlyDebit = type === "withdrawal" || type === "fee";
   const tradeCashSufficient = type !== "buy" || (selectedTradeCash !== null && tradeNet <= selectedTradeCash.price + 1e-9);
   const cashOnlySufficient = !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
+  const transferSufficient = selectedTransferFrom !== null && amount <= selectedTransferFrom.price + 1e-9;
   const currentPortfolioValueTwd = portfolioSummary(state.holdings, state.usdTwd).total;
   const effectiveFxRate = external && boundaryMode === "auto" && currency === "USD" ? state.usdTwd : fxRate;
   const boundaryValid = !external ||
@@ -383,13 +416,21 @@ function ActivityForm({
         tax >= 0 &&
         tradeCashSufficient &&
         (type !== "sell" || (selectedHolding !== null && quantity <= selectedHolding.quantity && tradeNet > 0))
-      : corporate
-        ? Boolean(selectedCorporateHolding) &&
+      : transfer
+        ? Boolean(selectedTransferFrom) &&
+          Boolean(selectedTransferTo) &&
+          selectedTransferFrom?.id !== selectedTransferTo?.id &&
+          selectedTransferFrom?.currency === selectedTransferTo?.currency &&
           date === today &&
-          Number.isFinite(shareRatio) &&
-          shareRatio > 0 &&
-          Math.abs(shareRatio - 1) > 1e-12
-        : Boolean(selectedCash) && amount > 0 && cashOnlySufficient);
+          amount > 0 &&
+          transferSufficient
+        : corporate
+          ? Boolean(selectedCorporateHolding) &&
+            date === today &&
+            Number.isFinite(shareRatio) &&
+            shareRatio > 0 &&
+            Math.abs(shareRatio - 1) > 1e-12
+          : Boolean(selectedCash) && amount > 0 && cashOnlySufficient);
 
   function changeType(nextType: ActivityType) {
     setType(nextType);
@@ -404,6 +445,26 @@ function ActivityForm({
 
     setTime("");
     setPreFlowValueTwd(null);
+
+    if (isCashTransferActivityType(nextType)) {
+      setDate(today);
+      setSymbol("");
+      setQuantity(0);
+      setPrice(0);
+      setFee(0);
+      setTax(0);
+      const from = transferSources.find((holding) => holding.id === transferFromCashHoldingId) ?? transferSources[0];
+      const to = from
+        ? cashHoldings.find((holding) => holding.id !== from.id && holding.currency === from.currency)
+        : undefined;
+      if (from) {
+        setTransferFromCashHoldingId(from.id);
+        setTransferToCashHoldingId(to?.id ?? "");
+        setCurrency(from.currency);
+        setFxRate(from.currency === "USD" ? state.usdTwd : 1);
+      }
+      return;
+    }
 
     if (nextType === "corporate_action") {
       setQuantity(0);
@@ -471,6 +532,21 @@ function ActivityForm({
       return;
     }
 
+    if (transfer) {
+      if (!selectedTransferFrom || !selectedTransferTo) return;
+      const saved = onSaveTransfer({
+        id: nextActivityId(state.activities, date),
+        date,
+        fromCashHoldingId: selectedTransferFrom.id,
+        toCashHoldingId: selectedTransferTo.id,
+        amount,
+        note
+      });
+      if (!saved) return;
+      closeRef.current?.click();
+      return;
+    }
+
     if (corporate) {
       if (!selectedCorporateHolding) return;
       const saved = onSaveCorporateAction({
@@ -520,6 +596,7 @@ function ActivityForm({
           type="date"
           max={today}
           value={date}
+          disabled={transfer}
           onChange={(event) => {
             const nextDate = event.target.value;
             setDate(nextDate);
@@ -580,6 +657,63 @@ function ActivityForm({
           ) : null}
           <p className="mt-2 px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
             V0.56 會讓證券與現金在同一次操作中一起更新；買進現金不足時直接拒絕。舊交易不會被回溯重播。
+          </p>
+        </div>
+      ) : transfer ? (
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block px-1 text-[11px] font-semibold text-black/42 dark:text-white/42">轉出帳戶</label>
+              <select
+                className="field"
+                value={selectedTransferFrom?.id ?? ""}
+                onChange={(event) => {
+                  const nextId = event.target.value;
+                  setTransferFromCashHoldingId(nextId);
+                  const next = cashHoldings.find((holding) => holding.id === nextId);
+                  if (!next) {
+                    setTransferToCashHoldingId("");
+                    return;
+                  }
+                  setCurrency(next.currency);
+                  setFxRate(next.currency === "USD" ? state.usdTwd : 1);
+                  const nextTarget = cashHoldings.find((holding) =>
+                    holding.id !== next.id && holding.currency === next.currency
+                  );
+                  setTransferToCashHoldingId(nextTarget?.id ?? "");
+                }}
+              >
+                <option value="">選擇轉出現金帳戶</option>
+                {transferSources.map((holding) => (
+                  <option key={holding.id} value={holding.id}>
+                    {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block px-1 text-[11px] font-semibold text-black/42 dark:text-white/42">轉入帳戶</label>
+              <select
+                className="field"
+                value={selectedTransferTo?.id ?? ""}
+                onChange={(event) => setTransferToCashHoldingId(event.target.value)}
+              >
+                <option value="">選擇同幣別轉入帳戶</option>
+                {compatibleTransferTargets.map((holding) => (
+                  <option key={holding.id} value={holding.id}>
+                    {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {!transferSources.length ? (
+            <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">
+              至少需要兩個相同幣別的現金帳戶才能內部轉帳。
+            </p>
+          ) : null}
+          <p className="px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
+            V0.59 只支援同幣別帳戶間移轉，且只從今天的目前餘額往前套用。這是內部資產搬移，不是入金／出金，不會切斷 Exact TWR，也不會進入淨投入。
           </p>
         </div>
       ) : corporate ? (
@@ -707,7 +841,24 @@ function ActivityForm({
         </div>
       ) : null}
 
-      {currency === "USD" && !corporate ? (
+      {transfer && selectedTransferFrom && selectedTransferTo ? (
+        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+          <div className="flex justify-between gap-3">
+            <span>{accountName(selectedTransferFrom.account)} 轉出</span>
+            <strong>{selectedTransferFrom.currency} {selectedTransferFrom.price.toLocaleString()} → {(selectedTransferFrom.price - amount).toLocaleString()}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>{accountName(selectedTransferTo.account)} 轉入</span>
+            <strong>{selectedTransferTo.currency} {selectedTransferTo.price.toLocaleString()} → {(selectedTransferTo.price + amount).toLocaleString()}</strong>
+          </div>
+          {amount > selectedTransferFrom.price + 1e-9 ? (
+            <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">轉出帳戶現金不足，這筆內部轉帳不會寫入。</p>
+          ) : null}
+          <p className="mt-2 text-black/38 dark:text-white/38">總現金與總淨值不因同幣別內部轉帳改變。</p>
+        </div>
+      ) : null}
+
+      {currency === "USD" && !corporate && !transfer ? (
         <div>
           <input
             className="field"
@@ -727,7 +878,7 @@ function ActivityForm({
         </div>
       ) : null}
 
-      {!external && !trade && !corporate ? (
+      {!external && !trade && !corporate && !transfer ? (
         <input
           className="field"
           placeholder="股票代號（選填）"
@@ -791,7 +942,7 @@ function ActivityForm({
         </div>
       ) : null}
 
-      {!trade && !corporate && selectedCash ? (
+      {!trade && !corporate && !transfer && selectedCash ? (
         <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
           <div className="flex justify-between gap-3">
             <span>現金餘額</span>
@@ -808,7 +959,7 @@ function ActivityForm({
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.58 起，今天實際發生的入出金可在寫入現金前自動擷取 Exact TWR pre-flow 淨值；歷史補登仍必須使用當時可確認的手動邊界。交易、股息、費用與入出金持續同步更新指定現金帳戶。
+        V0.59 起，同幣別現金帳戶可用內部轉帳原子搬移餘額，不會誤算成外部現金流。今天的入出金仍可在寫入前自動擷取 Exact TWR pre-flow 淨值；跨幣別換匯暫不偽裝成轉帳。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
@@ -861,14 +1012,25 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
 
   const accounts = useMemo(() => [...new Set([
     ...state.holdings.map((holding) => accountName(holding.account)),
-    ...state.activities.map((activity) => accountName(activity.account))
+    ...state.activities.flatMap((activity) => activity.cashTransferImpact
+      ? [
+          accountName(activity.cashTransferImpact.fromBefore.account),
+          accountName(activity.cashTransferImpact.toBefore.account)
+        ]
+      : [accountName(activity.account)])
   ])].sort((a, b) => a.localeCompare(b, "zh-Hant")), [state.activities, state.holdings]);
 
   const activities = useMemo(() => {
     return [...state.activities]
-      .filter((activity) => accountFilter === "all" || accountName(activity.account) === accountFilter)
+      .filter((activity) =>
+        accountFilter === "all" ||
+        accountName(activity.account) === accountFilter ||
+        (activity.cashTransferImpact &&
+          (accountName(activity.cashTransferImpact.fromBefore.account) === accountFilter ||
+            accountName(activity.cashTransferImpact.toBefore.account) === accountFilter))
+      )
       .filter((activity) => {
-        if (filter === "cash") return activity.type === "deposit" || activity.type === "withdrawal";
+        if (filter === "cash") return activity.type === "deposit" || activity.type === "withdrawal" || activity.type === "transfer";
         if (filter === "trade") return activity.type === "buy" || activity.type === "sell" || activity.type === "corporate_action";
         if (filter === "income") return activity.type === "dividend" || activity.type === "fee";
         return true;
@@ -888,6 +1050,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       return true;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法安全更新現金帳戶");
+      return false;
+    }
+  }
+
+  function addCashTransfer(input: CashTransferInput) {
+    try {
+      const next = applyCashTransfer(state, input);
+      if (!onChange(next)) return false;
+      toast.success("內部轉帳已完成，總現金與淨值不變");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全完成內部現金轉帳");
       return false;
     }
   }
@@ -950,7 +1124,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           <div className="inline-flex rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
             {[
               ["all", "全部"],
-              ["cash", "入出金"],
+              ["cash", "現金流/轉帳"],
               ["trade", "交易/股數調整"],
               ["income", "股息/費用"]
             ].map(([key, label]) => (
@@ -970,7 +1144,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
             <OpeningBuyForm state={state} onSave={addOpeningPosition} />
           </Modal>
           <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
-            <ActivityForm state={state} onSaveCash={addCashActivity} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
+            <ActivityForm state={state} onSaveCash={addCashActivity} onSaveTransfer={addCashTransfer} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
           </Modal>
         </div>
       </div>
@@ -988,6 +1162,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           const Icon = icons[activity.type];
           const twd = activityAmountTwd(activity);
           const external = isExternalActivityType(activity.type);
+          const transfer = isCashTransferActivityType(activity.type);
           const trade = isTradeActivityType(activity.type);
           const corporate = activity.type === "corporate_action";
 
@@ -1003,9 +1178,10 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="font-semibold">{labels[activity.type]}</p>
                       {!external && activity.symbol ? <span className="text-xs text-black/40 dark:text-white/40">{activity.symbol}</span> : null}
                       <Badge>{accountName(activity.account)}</Badge>
-                      {external ? <Badge tone="good">外部現金流</Badge> : <Badge>內部紀錄</Badge>}
+                      {external ? <Badge tone="good">外部現金流</Badge> : transfer ? <Badge>內部資產搬移</Badge> : <Badge>內部紀錄</Badge>}
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
                       {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
+                      {activity.cashTransferImpact ? <Badge tone="good">雙帳戶原子更新</Badge> : null}
                       {external ? (activity.preFlowValueTwd !== undefined ? (
                         <Badge tone="good">
                           {activity.preFlowValueSource === "system_current_state"
@@ -1043,6 +1219,13 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="mt-1 text-xs text-black/45 dark:text-white/45">
                         {accountName(activity.cashImpact.before.account)} · 現金 {activity.cashImpact.delta > 0 ? "+" : ""}{activity.cashImpact.delta.toLocaleString()} · {activity.cashImpact.before.price.toLocaleString()} → {(activity.cashImpact.after?.price ?? 0).toLocaleString()}
                       </p>
+                    ) : null}
+                    {activity.cashTransferImpact ? (
+                      <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+                        <p>{accountName(activity.cashTransferImpact.fromBefore.account)} · {activity.currency} {activity.cashTransferImpact.fromBefore.price.toLocaleString()} → {activity.cashTransferImpact.fromAfter.price.toLocaleString()}</p>
+                        <p>{accountName(activity.cashTransferImpact.toBefore.account)} · {activity.currency} {activity.cashTransferImpact.toBefore.price.toLocaleString()} → {activity.cashTransferImpact.toAfter.price.toLocaleString()}</p>
+                        <p className="text-black/35 dark:text-white/35">內部轉帳不計入淨投入，也不建立 TWR 外部現金流邊界。</p>
+                      </div>
                     ) : null}
                     {external && activity.preFlowValueTwd !== undefined ? (
                       <p className="mt-2 text-xs text-black/45 dark:text-white/45">
@@ -1093,6 +1276,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                           return;
                         }
 
+                        if (activity.cashTransferImpact) {
+                          if (!window.confirm("這筆內部轉帳已同時更新兩個現金帳戶。刪除時會嘗試精確還原雙方餘額；若任一帳戶已有後續事件或手動校正，系統會拒絕回滾。確定繼續？")) return;
+                          try {
+                            const next = revertCashTransfer(state, activity.id);
+                            if (!onChange(next)) return;
+                            toast.success("內部轉帳已刪除，兩邊現金餘額已還原");
+                          } catch (error) {
+                            toast.error(error instanceof Error ? error.message : "無法安全回滾內部轉帳");
+                          }
+                          return;
+                        }
+
                         if (activity.cashImpact) {
                           if (!window.confirm("這筆紀錄已連動現金帳戶。刪除時會嘗試精確還原現金餘額；若後續事件或手動修改使資料不一致，系統會拒絕回滾。確定繼續？")) return;
                           try {
@@ -1123,7 +1318,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       {!activities.length ? (
         <div className="py-14 text-center">
           <p className="text-sm text-black/40 dark:text-white/40">
-            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流紀錄。" : "目前尚未記錄任何交易／現金流。"}
+            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流／轉帳紀錄。" : "目前尚未記錄任何交易／現金流／轉帳。"}
           </p>
           {state.activities.length && (filter !== "all" || accountFilter !== "all") ? (
             <GhostButton className="mt-4" onClick={() => { setFilter("all"); setAccountFilter("all"); }}>

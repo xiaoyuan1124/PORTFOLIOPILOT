@@ -541,3 +541,15 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Exact TWR behavior remains strict: any external cash flow without a valid boundary keeps Exact TWR incomplete, while Modified Dietz remains labeled only as TWR Proxy / approximation.
 - Backup format is now V10 to preserve boundary provenance; V1–V9 backups remain readable.
 
+## V0.59 internal cash transfers
+
+- The activity ledger now supports **內部轉帳** between two existing same-currency cash accounts.
+- A transfer atomically subtracts the source cash balance and adds the destination balance; spending the source exactly to zero preserves the persistent cash-account identity.
+- Internal transfers are deliberately **not** deposits or withdrawals: they do not change net external contributions, do not create Exact TWR external-flow boundaries and do not enter dividend / fee income.
+- Transfers are forward-only from today's current account state, matching managed-trade safety. Historical transfers are not replayed into current balances.
+- V0.59 supports same-currency transfers only. TWD ↔ USD conversion is intentionally rejected until a separate FX-conversion model can preserve execution rate, spread / fee and accounting semantics without guessing.
+- Each transfer stores both cash accounts' before / after snapshots. Deleting the latest transfer restores both sides exactly only when neither account has later linked events or manual drift.
+- Earlier cash-linked trades / deposits / withdrawals / dividends / fees also recognize a later transfer as a dependency and refuse unsafe rollback across it.
+- Backup V11 validates transfer account IDs, currency consistency, normalized cash snapshots and exact before ± amount = after arithmetic; tampered transfer backups fail closed.
+- Legacy V1–V10 backups remain readable.
+

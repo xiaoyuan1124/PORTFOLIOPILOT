@@ -163,6 +163,36 @@ describe("corporate share adjustments", () => {
     expect(() => revertCorporateAction(withLater, "a")).toThrow(/最新一筆/);
   });
 
+  it("uses recorded order instead of lexicographic IDs for same-day rollback safety", () => {
+    const first = applyShareAdjustment(state(), {
+      id: "activity-2026-09-30-9",
+      date: "2026-09-30",
+      holdingId: "h1",
+      ratio: 2,
+      note: ""
+    });
+    const second = applyShareAdjustment(first, {
+      id: "activity-2026-09-30-10",
+      date: "2026-09-30",
+      holdingId: "h1",
+      ratio: 2,
+      note: ""
+    });
+    const third = applyShareAdjustment(second, {
+      id: "activity-2026-09-30-11",
+      date: "2026-09-30",
+      holdingId: "h1",
+      ratio: 0.5,
+      note: ""
+    });
+
+    // The two later adjustments net back to the first adjustment's snapshot.
+    // A lexicographic ID comparison would mis-order "-10"/"-11" before "-9"
+    // and could otherwise allow an unsafe rollback.
+    expect(third.holdings[0]).toEqual(first.holdings[0]);
+    expect(() => revertCorporateAction(third, "activity-2026-09-30-9")).toThrow(/最新一筆/);
+  });
+
   it("rejects rollback after manual holding drift", () => {
     const adjusted = applyShareAdjustment(state(), {
       id: "split",
