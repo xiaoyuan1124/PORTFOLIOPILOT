@@ -49,7 +49,7 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(14);
+    expect(JSON.parse(serialized).version).toBe(15);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -104,7 +104,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(14);
+    expect(JSON.parse(serialized).version).toBe(15);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -174,7 +174,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(14);
+    expect(JSON.parse(serialized).version).toBe(15);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -235,7 +235,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(14);
+    expect(JSON.parse(serialized).version).toBe(15);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -270,8 +270,83 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(14);
+    expect(JSON.parse(serialized).version).toBe(15);
     expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("round-trips V15 historical CSV provenance", () => {
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "historical-csv-id",
+        date: "2020-01-02",
+        type: "buy",
+        symbol: "2330",
+        amount: 1010,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 2,
+        price: 500,
+        note: "",
+        account: "券商A",
+        historicalTrade: {
+          mode: "ledger_only",
+          market: "TW",
+          fee: 10,
+          tax: 0,
+          importSource: "csv",
+          importFingerprint: "csv-id-example"
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(15);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("rejects incomplete V15 historical CSV provenance", () => {
+    const backup = {
+      version: 15,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        snapshots: [],
+        allocationTargets: [],
+        activities: [{
+          id: "bad-csv-provenance",
+          date: "2020-01-02",
+          type: "buy",
+          symbol: "2330",
+          amount: 1010,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 2,
+          price: 500,
+          note: "",
+          account: "券商A",
+          historicalTrade: {
+            mode: "ledger_only",
+            market: "TW",
+            fee: 10,
+            tax: 0,
+            importSource: "csv"
+          }
+        }]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/fingerprint/);
   });
 
   it("rejects tampered V14 historical trade arithmetic and linked snapshots", () => {
@@ -656,7 +731,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(14);
+    expect(JSON.parse(serialized).version).toBe(15);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -708,7 +783,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(14);
+    expect(JSON.parse(serialized).version).toBe(15);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -759,7 +834,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(14);
+    expect(JSON.parse(serialized).version).toBe(15);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -884,7 +959,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(14);
+    expect(JSON.parse(serialized).version).toBe(15);
     expect(parseBackup(serialized)).toEqual(state);
   });
 

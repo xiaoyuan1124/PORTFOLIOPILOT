@@ -626,3 +626,20 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Ledger rows clearly distinguish historical trades from managed trades and can be deleted without any holding / cash rollback because they never mutated current state.
 - Backup format is now V14. Historical-trade metadata validates market/currency consistency, positive quantity / price, explicit fee / tax arithmetic and the absence of current-state inventory / cash linkage. V1–V13 backups remain readable.
 
+## V0.66 historical trade CSV adapter
+
+- Settings now includes a dedicated **歷史買賣 CSV** importer that batches past stock / ETF executions through the V0.65 ledger-only engine.
+- The adapter recognizes common Chinese / English aliases for execution date, buy / sell side, market / currency, symbol, quantity, execution price, fee, tax, historical FX, account and optional execution ID.
+- Western dates (`YYYY-MM-DD`, `YYYY/MM/DD`, `YYYYMMDD`) and Taiwan ROC-year dates such as `109/01/02` are normalized deterministically. Invalid calendar dates fail closed.
+- Market is taken from an explicit row market or currency first, then an optional user-selected fallback. Conflicting market / currency fields are rejected instead of guessed.
+- Account is taken from the row first, then an optional fallback. A row with neither is rejected.
+- Fee and tax columns are mandatory, even when the value is zero. PortfolioPilot does not assume a missing cost means zero.
+- US rows require an explicit positive historical USD/TWD rate. Today's saved FX is never substituted for a missing historical rate.
+- Fee and tax are interpreted in the same currency as the trade row. Files that use a different fee currency are outside this adapter's trust boundary and should be normalized before import.
+- If a broker supplies an execution / transaction ID, PortfolioPilot builds a stable fingerprint from market + account + execution ID. It intentionally does **not** treat an order ID as an execution ID because one order can have multiple fills.
+- Without an execution ID, the fingerprint is derived from the complete normalized transaction content plus the occurrence number for identical fills. Re-importing the same batch fails closed instead of duplicating history.
+- The entire batch is atomic: any malformed row, missing account / market, invalid historical FX, duplicate execution ID, current / future date or previously imported fingerprint rejects the import before state is committed.
+- CSV-import provenance is persisted inside historical-trade metadata and surfaced in the Activity Ledger.
+- A downloadable CSV template is available from Settings.
+- Backup format is now V15 so CSV source + fingerprint survive JSON backup / restore. V1–V14 backups remain readable.
+

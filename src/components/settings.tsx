@@ -6,10 +6,14 @@ import { toast } from "sonner";
 import { demoState, emptyState } from "@/lib/demo-data";
 import { localDateKey } from "@/lib/calc";
 import { parseTaiwanBrokerInventoryCsv } from "@/lib/broker-inventory-csv";
+import {
+  historicalTradeCsvTemplate,
+  importHistoricalTradeCsv
+} from "@/lib/historical-trade-csv";
 import { buildHoldingLookupCatalog } from "@/lib/holding-autofill";
 import { loadBundledTwQuotes } from "@/lib/market-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
-import type { AppState } from "@/lib/types";
+import type { AppState, Market } from "@/lib/types";
 import {
   csvTemplate,
   downloadText,
@@ -27,7 +31,10 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
   const jsonRef = useRef<HTMLInputElement>(null);
   const csvRef = useRef<HTMLInputElement>(null);
   const brokerCsvRef = useRef<HTMLInputElement>(null);
+  const tradeCsvRef = useRef<HTMLInputElement>(null);
   const [brokerAccount, setBrokerAccount] = useState("");
+  const [tradeAccount, setTradeAccount] = useState("");
+  const [tradeMarket, setTradeMarket] = useState<"" | Market>("");
   const [usdDraft, setUsdDraft] = useState<string | null>(null);
 
   function exportRecoveryBackup() {
@@ -176,6 +183,31 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
     }
   }
 
+  async function importHistoricalTradeCsvFile(file?: File) {
+    if (!file) return;
+
+    try {
+      const base = state.dataMode === "demo" ? emptyState : state;
+      const result = importHistoricalTradeCsv(
+        base,
+        await file.text(),
+        tradeAccount,
+        tradeMarket || null
+      );
+
+      if (!window.confirm(
+        `已驗證 ${result.importedCount} 筆歷史買賣。繼續後只會新增 Ledger-only 交易日誌與明確 fee / tax，不會修改目前持股或現金。確定匯入？`
+      )) return;
+
+      if (!onChange({ ...result.state, dataMode: "personal" })) return;
+      toast.success(`已補登 ${result.importedCount} 筆歷史買賣，目前持股與現金未變動`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法匯入歷史成交 CSV");
+    } finally {
+      if (tradeCsvRef.current) tradeCsvRef.current.value = "";
+    }
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {hasRecoveryBackup || storageWriteBlocked ? (
@@ -281,6 +313,55 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
               accept=".csv,text/csv"
               className="hidden"
               onChange={(event) => void importBrokerInventoryCsv(event.target.files?.[0])}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="lg:col-span-2">
+        <CardContent>
+          <h3 className="font-semibold">歷史買賣 CSV</h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-black/50 dark:text-white/50">
+            批次補登過去的股票／ETF 成交明細。所有列都走 V0.65 Ledger-only：不修改今天持股、不修改今天現金，也不推算已實現損益；只有 CSV 明確提供的 fee / tax 會進成本透明化。
+          </p>
+          <div className="mt-4 rounded-2xl border border-black/6 bg-black/[.018] p-3.5 text-xs leading-5 text-black/45 dark:border-white/8 dark:bg-white/[.025] dark:text-white/45">
+            必要欄位：成交日期、買賣別、證券代號、成交股數、成交價、手續費、交易稅。市場／幣別與帳戶可放在 CSV，也可用下方 fallback；美股每列必須有可確認的歷史 USD/TWD。任一列錯誤時整份停止，不會部分寫入。
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold text-black/45 dark:text-white/45">預設市場（CSV 有市場／幣別時會覆蓋）</label>
+              <select className="field mt-2" value={tradeMarket} onChange={(event) => setTradeMarket(event.target.value as "" | Market)}>
+                <option value="">不指定，要求 CSV 自行提供</option>
+                <option value="TW">台股 · TWD</option>
+                <option value="US">美股 · USD</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-black/45 dark:text-white/45">預設帳戶（CSV 有帳戶時會優先使用）</label>
+              <input
+                className="field mt-2"
+                value={tradeAccount}
+                onChange={(event) => setTradeAccount(event.target.value)}
+                placeholder="例如：永豐證券、IBKR"
+              />
+            </div>
+          </div>
+          <p className="mt-3 text-xs leading-5 text-black/35 dark:text-white/35">
+            若券商檔有成交序號，系統會用「市場＋帳戶＋成交序號」建立穩定 fingerprint；沒有成交序號時則用完整成交內容與同內容出現次序建立 fingerprint。再次匯入同一批資料會 fail closed，避免重複計入。
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button onClick={() => tradeCsvRef.current?.click()}>
+              <Upload size={16} />匯入歷史成交 CSV
+            </Button>
+            <GhostButton onClick={() => downloadText("portfoliopilot-historical-trades-template.csv", historicalTradeCsvTemplate(), "text/csv;charset=utf-8")}>
+              <FileSpreadsheet size={16} />下載成交範本
+            </GhostButton>
+            <input
+              ref={tradeCsvRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(event) => void importHistoricalTradeCsvFile(event.target.files?.[0])}
             />
           </div>
         </CardContent>
