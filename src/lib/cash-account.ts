@@ -81,10 +81,11 @@ export function applyCashLinkedActivity(state: AppState, input: CashLinkedActivi
   const delta = signedDelta(input.type, input.amount);
   const after = nextCashSnapshot(cash, delta);
 
+  const external = input.type === "deposit" || input.type === "withdrawal";
   const activity: PortfolioActivity = {
     id: input.id,
     date: input.date,
-    ...(input.time ? { time: input.time } : {}),
+    ...(external && input.time ? { time: input.time } : {}),
     type: input.type,
     symbol: input.symbol.trim().toUpperCase(),
     amount: input.amount,
@@ -94,7 +95,7 @@ export function applyCashLinkedActivity(state: AppState, input: CashLinkedActivi
     price: 0,
     note: input.note.trim(),
     account: accountName(cash.account),
-    ...(input.preFlowValueTwd !== undefined ? { preFlowValueTwd: input.preFlowValueTwd } : {}),
+    ...(external && input.preFlowValueTwd !== undefined ? { preFlowValueTwd: input.preFlowValueTwd } : {}),
     cashImpact: {
       cashHoldingId: cash.id,
       before: { ...cash },
