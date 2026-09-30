@@ -1,5 +1,14 @@
 import type { PortfolioActivity } from "./types";
 
+export function activityTouchesSecurityHolding(
+  activity: PortfolioActivity,
+  holdingId: string
+) {
+  return activity.inventoryImpact?.holdingId === holdingId ||
+    activity.positionTransferImpact?.sourceHoldingId === holdingId ||
+    activity.positionTransferImpact?.destinationHoldingId === holdingId;
+}
+
 export function hasLaterRecordedActivity(
   activities: PortfolioActivity[],
   target: PortfolioActivity,
