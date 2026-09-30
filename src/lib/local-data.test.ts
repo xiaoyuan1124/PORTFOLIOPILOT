@@ -789,6 +789,42 @@ describe("local data import/export", () => {
     expect(() => parseHoldingsCsv(csv)).toThrow(/必須大於 0/);
   });
 
+  it("allows a persistent zero cash balance in JSON backups", () => {
+    const parsed = parseBackup(JSON.stringify({
+      version: 8,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [{
+          id: "cash-zero",
+          symbol: "CASH-TWD",
+          name: "TWD 現金",
+          market: "TW",
+          type: "cash",
+          quantity: 1,
+          price: 0,
+          averageCost: 0,
+          currency: "TWD",
+          sector: "現金",
+          account: "券商A"
+        }],
+        etfCompositions: [],
+        journal: [],
+        activities: [],
+        snapshots: [],
+        allocationTargets: []
+      }
+    }));
+
+    expect(parsed.holdings[0]).toMatchObject({
+      id: "cash-zero",
+      type: "cash",
+      price: 0,
+      averageCost: 0
+    });
+  });
+
   it("allows a persistent zero cash balance in imported holdings", () => {
     const csv = [
       "symbol,name,market,type,quantity,price,averageCost,currency,sector",
