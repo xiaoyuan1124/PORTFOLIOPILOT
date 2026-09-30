@@ -294,3 +294,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Dividends/fees may keep a symbol but never keep trade quantity/price.
 - Buy/sell entries require a security symbol.
 - Legacy external-flow rows with stale quantity/price no longer render those stock-trade fields in the activity card.
+
+
+## V0.38 overview future-snapshot integrity
+
+- Home overview now excludes snapshots dated after the device-local current date before calculating recent daily change, period change, or chart trends.
+- Future-dated snapshots remain preserved in local data; they are ignored rather than deleted.
+- The overview surfaces how many future snapshots were excluded and the local cutoff date.
+- Shared snapshot filtering is covered by regression tests so a future import cannot silently distort current net-worth movement.
