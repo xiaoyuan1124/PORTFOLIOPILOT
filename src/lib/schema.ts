@@ -123,6 +123,23 @@ export const snapshotSchema = z.object({
   usdTwd: z.number().finite().positive()
 });
 
+function duplicateIndexes<T>(items: T[], keyOf: (item: T) => string) {
+  const seen = new Set<string>();
+  const duplicates: number[] = [];
+
+  items.forEach((item, index) => {
+    const key = keyOf(item);
+    if (seen.has(key)) duplicates.push(index);
+    else seen.add(key);
+  });
+
+  return duplicates;
+}
+
+function normalizedAccountKey(account?: string) {
+  return (account?.trim() || "預設帳戶").toLowerCase();
+}
+
 export const appStateSchema = z.object({
   holdings: z.array(holdingSchema),
   etfCompositions: z.array(etfCompositionSchema).default([]),
@@ -131,6 +148,51 @@ export const appStateSchema = z.object({
   snapshots: z.array(snapshotSchema).default([]),
   usdTwd: z.number().finite().positive(),
   dataMode: z.enum(["personal", "demo"]).default("personal")
+}).superRefine((state, ctx) => {
+  for (const index of duplicateIndexes(
+    state.holdings,
+    (holding) => `${holding.market}:${holding.symbol.trim().toUpperCase()}:${normalizedAccountKey(holding.account)}`
+  )) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["holdings", index],
+      message: "同一市場、代號與帳戶不可重複建立持股。"
+    });
+  }
+
+  for (const [collection, items] of [
+    ["holdings", state.holdings],
+    ["etfCompositions", state.etfCompositions],
+    ["journal", state.journal],
+    ["activities", state.activities]
+  ] as const) {
+    for (const index of duplicateIndexes(items, (item) => item.id)) {
+      ctx.addIssue({
+        code: "custom",
+        path: [collection, index, "id"],
+        message: "同一類型資料不可使用重複 ID。"
+      });
+    }
+  }
+
+  for (const index of duplicateIndexes(
+    state.etfCompositions,
+    (composition) => `${composition.etfMarket}:${composition.etfSymbol.trim().toUpperCase()}`
+  )) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["etfCompositions", index],
+      message: "同一市場與 ETF 代號只能保留一份成分資料。"
+    });
+  }
+
+  for (const index of duplicateIndexes(state.snapshots, (snapshot) => snapshot.date)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["snapshots", index, "date"],
+      message: "同一天只能有一筆淨值快照。"
+    });
+  }
 });
 
 export const backupSchema = z.union([
