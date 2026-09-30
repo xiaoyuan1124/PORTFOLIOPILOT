@@ -103,7 +103,8 @@ function ActivityForm({
         ? Boolean(selectedCorporateHolding) &&
           date === today &&
           Number.isFinite(shareRatio) &&
-          shareRatio > 0
+          shareRatio > 0 &&
+          Math.abs(shareRatio - 1) > 1e-12
         : amount > 0);
 
   function changeType(nextType: ActivityType) {
