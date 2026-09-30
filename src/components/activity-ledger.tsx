@@ -495,7 +495,7 @@ function ActivityForm({
       if (currentCash) {
         setCashHoldingId(currentCash.id);
         setCurrency(currentCash.currency);
-        setFxRate(currentCash.currency === "USD" ? state.usdTwd : 1);
+        setFxRate(currentCash.currency === "USD" ? (date < today ? 0 : state.usdTwd) : 1);
       }
     } else {
       const current = tradeHoldings.find((holding) => holding.id === tradeHoldingId) ?? tradeHoldings[0];
