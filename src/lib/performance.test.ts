@@ -131,6 +131,40 @@ describe("performance math", () => {
     expect(twr.value).toBeCloseTo(0.1, 10);
   });
 
+  it("does not treat security account transfer as contribution, income or TWR boundary", () => {
+    const transfer = {
+      id: "position-transfer",
+      date: "2026-02-05",
+      type: "position_transfer" as const,
+      symbol: "2330",
+      amount: 0,
+      currency: "TWD" as const,
+      fxRate: 1,
+      quantity: 4,
+      price: 0,
+      note: ""
+    };
+
+    expect(netExternalContributions([transfer])).toBe(0);
+    expect(incomeAfterFees([transfer])).toBe(0);
+
+    const state: AppState = {
+      usdTwd: 1,
+      holdings: [
+        { id: "h", symbol: "2330", name: "Test", market: "TW", type: "stock", quantity: 1, price: 1100, averageCost: 1000, currency: "TWD", sector: "Test" }
+      ],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [{ date: "2026-01-01", total: 1000, cost: 1000, gain: 0, usdTwd: 1 }],
+      activities: [transfer]
+    };
+
+    const twr = exactTimeWeightedReturn(state, "2026-02-10");
+    expect(twr.externalFlowCount).toBe(0);
+    expect(twr.status).toBe("exact");
+    expect(twr.value).toBeCloseTo(0.1, 10);
+  });
+
   it("excludes future external cash flows from current contribution totals", () => {
     const activities = [
       { id: "past", date: "2026-09-29", type: "deposit" as const, symbol: "", amount: 1000, currency: "TWD" as const, fxRate: 1, quantity: 0, price: 0, note: "" },
