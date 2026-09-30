@@ -633,12 +633,21 @@ function ActivityForm({
           disabled={transfer}
           onChange={(event) => {
             const nextDate = event.target.value;
+            const enteringHistory = date === today && nextDate !== today;
             setDate(nextDate);
             if (nextDate !== today) {
               setBoundaryMode("manual");
-              if (currency === "USD") setFxRate(0);
-            } else if (currency === "USD") {
-              setFxRate(state.usdTwd);
+              if (enteringHistory) {
+                setHistoricalAccount("");
+                setHistoricalCurrency("");
+                setFxRate(0);
+              }
+            } else {
+              const currentCash = cashHoldings.find((holding) => holding.id === cashHoldingId) ?? cashHoldings[0];
+              if (currentCash) {
+                setCurrency(currentCash.currency);
+                setFxRate(currentCash.currency === "USD" ? state.usdTwd : 1);
+              }
             }
           }}
         />
@@ -647,7 +656,7 @@ function ActivityForm({
       {date > today ? <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">不能新增未來日期的交易／現金流；請改成實際發生日。</p> : null}
       {historicalCash ? (
         <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-xs leading-5 text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
-          <strong>歷史補登模式：</strong>只新增帳務紀錄，不修改目前現金餘額。選擇現金帳戶只用來保存帳戶名稱與幣別；歷史入出金仍納入 XIRR／TWR，歷史股息／費用仍納入收入統計。
+          <strong>歷史補登模式：</strong>只新增帳務紀錄，不修改目前現金餘額。請直接填當時帳戶名稱與幣別；不需要目前仍有該現金帳戶，也不會建立假的現金部位。歷史入出金仍納入 XIRR／TWR，歷史股息／費用仍納入收入統計。
         </div>
       ) : null}
 
@@ -786,6 +795,18 @@ function ActivityForm({
             只用於非現金比例式調整，例如 1 拆 2、5 併 1、10% 股票股利。現金增資／認購不屬於此類。
           </p>
         </div>
+      ) : historicalCash ? (
+        <div className="space-y-3">
+          <input
+            className="field"
+            placeholder="歷史帳戶名稱（必填），例如 已關閉券商A"
+            value={historicalAccount}
+            onChange={(event) => setHistoricalAccount(event.target.value)}
+          />
+          <p className="px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
+            這只是歷史 activity metadata，不會建立或修改目前的現金帳戶。
+          </p>
+        </div>
       ) : (
         <div>
           <select
@@ -797,11 +818,11 @@ function ActivityForm({
               const next = cashHoldings.find((holding) => holding.id === nextId);
               if (next) {
                 setCurrency(next.currency);
-                setFxRate(next.currency === "USD" ? (date < today ? 0 : state.usdTwd) : 1);
+                setFxRate(next.currency === "USD" ? state.usdTwd : 1);
               }
             }}
           >
-            <option value="">{historicalCash ? "選擇歷史紀錄所屬現金帳戶" : "選擇要連動的現金帳戶"}</option>
+            <option value="">選擇要連動的現金帳戶</option>
             {cashHoldings.map((holding) => (
               <option key={holding.id} value={holding.id}>
                 {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
@@ -810,7 +831,7 @@ function ActivityForm({
           </select>
           {!cashHoldings.length ? (
             <p className="mt-2 px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">
-              目前沒有現金部位。請先到「持股」新增 TWD 或 USD 現金，再記錄現金流、股息或費用。
+              目前沒有現金部位。請先到「持股」新增 TWD 或 USD 現金，再記錄今天的現金流、股息或費用。
             </p>
           ) : null}
         </div>
