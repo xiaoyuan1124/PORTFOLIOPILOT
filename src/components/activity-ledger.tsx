@@ -1385,7 +1385,7 @@ function ActivityForm({
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.63 起，持股帳戶移轉也採 forward-only：只從今天的目前庫存往前搬移，並保留 V0.62 對買進、賣出與股數調整的 engine-level 日期防線。歷史現金事件維持 ledger-only；任何歷史證券 mutation 都不會被重播到今天的庫存。
+        V0.64 起，持股帳戶移轉也採 forward-only：只從今天的目前庫存往前搬移，並保留 V0.62 對買進、賣出與股數調整的 engine-level 日期防線。歷史現金事件維持 ledger-only；任何歷史證券 mutation 都不會被重播到今天的庫存。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
