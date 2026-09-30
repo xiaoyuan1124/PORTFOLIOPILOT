@@ -15,6 +15,7 @@ export type HistoricalTradeInput = {
   tax: number;
   fxRate: number;
   note: string;
+  importFingerprint?: string;
 };
 
 function assertPositive(value: number, label: string) {
@@ -42,6 +43,14 @@ export function recordHistoricalTrade(
   }
   if (state.activities.some((activity) => activity.id === input.id)) {
     throw new Error("交易紀錄 ID 已存在，請重新建立這筆補登。");
+  }
+  if (
+    input.importFingerprint &&
+    state.activities.some((activity) =>
+      activity.historicalTrade?.importFingerprint === input.importFingerprint
+    )
+  ) {
+    throw new Error("這筆 CSV 歷史交易已經匯入過，為避免重複計入已停止匯入。");
   }
 
   const symbol = input.symbol.trim().toUpperCase();
@@ -79,7 +88,13 @@ export function recordHistoricalTrade(
       mode: "ledger_only",
       market: input.market,
       fee: input.fee,
-      tax: input.tax
+      tax: input.tax,
+      ...(input.importFingerprint
+        ? {
+            importSource: "csv" as const,
+            importFingerprint: input.importFingerprint
+          }
+        : {})
     }
   };
 
