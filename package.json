@@ -1,6 +1,6 @@
 {
   "name": "portfoliopilot",
-  "version": "0.42.0",
+  "version": "0.43.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
-    "@supabase/supabase-js": "^2.57.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.468.0",
     "next": "^16.0.0",
