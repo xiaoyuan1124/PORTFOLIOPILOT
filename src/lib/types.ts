@@ -132,6 +132,7 @@ export interface HistoricalTradeMeta {
   tax: number;
   importSource?: "csv";
   importFingerprint?: string;
+  importBatchId?: string;
 }
 
 export interface PortfolioActivity {
