@@ -105,6 +105,37 @@ describe("cash account linkage", () => {
     expect(next.holdings.find((item) => item.id === "cash")?.price).toBe(6000);
   });
 
+  it("uses the current portfolio FX for an automatically captured USD boundary", () => {
+    const usdCash = cash({
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 100,
+      averageCost: 100,
+      currency: "USD"
+    });
+
+    const next = applyCashLinkedActivity(state(usdCash), {
+      id: "auto-usd-deposit",
+      date: localDateKey(),
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 10,
+      fxRate: 25,
+      symbol: "",
+      note: "",
+      time: "10:16",
+      capturePreFlowFromCurrentState: true
+    });
+
+    expect(next.activities[0]).toMatchObject({
+      preFlowValueTwd: 3180,
+      preFlowValueSource: "system_current_state",
+      fxRate: 31.8
+    });
+    expect(next.holdings[0]?.price).toBe(110);
+  });
+
   it("rejects current-state boundary capture for historical flows", () => {
     expect(() => applyCashLinkedActivity(state(), {
       id: "historical",
