@@ -154,13 +154,15 @@ describe("cash account linkage", () => {
     })).toThrow(/歷史補登只能寫入帳務紀錄/);
   });
 
-  it("records historical deposits without mutating the current cash balance", () => {
+  it("records historical deposits for a closed account without creating a current holding", () => {
     const base = state();
+    base.holdings = [];
     const next = recordHistoricalCashActivity(base, {
       id: "historical-deposit",
       date: "2000-01-01",
       type: "deposit",
-      cashHoldingId: "cash",
+      account: "已關閉券商",
+      currency: "TWD",
       amount: 1000,
       fxRate: 1,
       symbol: "",
@@ -170,6 +172,7 @@ describe("cash account linkage", () => {
     });
 
     expect(next.holdings).toEqual(base.holdings);
+    expect(next.holdings).toEqual([]);
     expect(next.activities[0]).toMatchObject({
       type: "deposit",
       amount: 1000,
@@ -177,7 +180,7 @@ describe("cash account linkage", () => {
       time: "09:30",
       preFlowValueTwd: 5000,
       preFlowValueSource: "manual",
-      account: "券商現金"
+      account: "已關閉券商"
     });
     expect(next.activities[0]?.cashImpact).toBeUndefined();
   });
@@ -188,7 +191,8 @@ describe("cash account linkage", () => {
       id: "historical-withdrawal",
       date: "2000-01-01",
       type: "withdrawal",
-      cashHoldingId: "cash",
+      account: "已關閉券商",
+      currency: "TWD",
       amount: 5000,
       fxRate: 1,
       symbol: "",
@@ -198,7 +202,8 @@ describe("cash account linkage", () => {
       id: "historical-fee",
       date: "2000-01-02",
       type: "fee",
-      cashHoldingId: "cash",
+      account: "已關閉券商",
+      currency: "TWD",
       amount: 100,
       fxRate: 1,
       symbol: "",
@@ -223,7 +228,8 @@ describe("cash account linkage", () => {
       id: "historical-dividend",
       date: "2000-01-01",
       type: "dividend",
-      cashHoldingId: "cash",
+      account: "舊美股券商",
+      currency: "USD",
       amount: 5,
       fxRate: 29.5,
       symbol: "QQQM",
@@ -235,7 +241,8 @@ describe("cash account linkage", () => {
       type: "dividend",
       currency: "USD",
       fxRate: 29.5,
-      symbol: "QQQM"
+      symbol: "QQQM",
+      account: "舊美股券商"
     });
     expect(next.activities[0]?.cashImpact).toBeUndefined();
   });
@@ -254,7 +261,8 @@ describe("cash account linkage", () => {
       id: "missing-historical-fx",
       date: "2000-01-01",
       type: "deposit",
-      cashHoldingId: "cash",
+      account: "舊美股券商",
+      currency: "USD",
       amount: 10,
       fxRate: 0,
       symbol: "",
@@ -262,12 +270,27 @@ describe("cash account linkage", () => {
     })).toThrow(/歷史 USD\/TWD 匯率必須大於 0/);
   });
 
+  it("rejects historical backfill without explicit account metadata", () => {
+    expect(() => recordHistoricalCashActivity(state(), {
+      id: "missing-historical-account",
+      date: "2000-01-01",
+      type: "deposit",
+      account: "   ",
+      currency: "TWD",
+      amount: 100,
+      fxRate: 1,
+      symbol: "",
+      note: ""
+    })).toThrow(/歷史帳戶名稱必填/);
+  });
+
   it("rejects historical ledger backfill for today or the future", () => {
     expect(() => recordHistoricalCashActivity(state(), {
       id: "today-backfill",
       date: localDateKey(),
       type: "deposit",
-      cashHoldingId: "cash",
+      account: "舊券商",
+      currency: "TWD",
       amount: 100,
       fxRate: 1,
       symbol: "",
@@ -278,7 +301,8 @@ describe("cash account linkage", () => {
       id: "future-backfill",
       date: "2999-01-01",
       type: "deposit",
-      cashHoldingId: "cash",
+      account: "舊券商",
+      currency: "TWD",
       amount: 100,
       fxRate: 1,
       symbol: "",
