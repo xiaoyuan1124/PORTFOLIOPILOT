@@ -171,7 +171,6 @@ describe("cash account linkage", () => {
       preFlowValueTwd: 5000
     });
 
-    expect(next.holdings).toEqual(base.holdings);
     expect(next.holdings).toEqual([]);
     expect(next.activities[0]).toMatchObject({
       type: "deposit",
