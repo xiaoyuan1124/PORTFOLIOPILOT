@@ -1,5 +1,6 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
 import { accountName } from "./local-data";
+import { localDateKey } from "./calc";
 import { hasLaterRecordedActivity } from "./activity-order";
 
 export type ShareAdjustmentInput = {
@@ -16,6 +17,10 @@ function snapshotsEqual(a: Holding | null | undefined, b: Holding | null | undef
 }
 
 export function applyShareAdjustment(state: AppState, input: ShareAdjustmentInput): AppState {
+  if (input.date !== localDateKey()) {
+    throw new Error("股數調整只允許記錄今天已反映在目前持股的事件；歷史 corporate action 不可重播到目前庫存。");
+  }
+
   const holding = state.holdings.find((item) => item.id === input.holdingId);
   if (!holding || holding.type === "cash") {
     throw new Error("找不到可套用股數調整的投資部位。");
