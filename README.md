@@ -418,3 +418,11 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - At least five comparable companies are required before an industry is shown; generic / unclassified industries remain excluded.
 - The held-sector filter is venue-aware, so same-code TWSE / TPEx securities cannot silently cross-match.
 - Market pulse is descriptive end-of-day data only. It does not label sectors as buy/sell, score investment value or forecast future returns.
+
+
+## V0.49.1 market-data writer serialization
+
+- The full Taiwan market-data workflow and the lightweight closing-quote workflow now share one writer concurrency group, so only one cache-writing job can run at a time.
+- Both writer workflows explicitly check out the latest `main` branch when execution begins instead of writing from a stale trigger SHA.
+- This prevents simultaneous quote-cache commits from racing into non-fast-forward pushes while keeping the lightweight after-close refresh schedule intact.
+- Data commits made with the workflow token remain non-recursive, so serialization does not create an Actions loop.
