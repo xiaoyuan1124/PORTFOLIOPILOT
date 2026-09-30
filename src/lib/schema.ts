@@ -129,6 +129,19 @@ export const cashTransferImpactSchema = z.object({
   amount: z.number().finite().positive()
 });
 
+export const cashExchangeImpactSchema = z.object({
+  fromCashHoldingId: z.string().min(1),
+  toCashHoldingId: z.string().min(1),
+  fromBefore: holdingSchema,
+  fromAfter: holdingSchema,
+  toBefore: holdingSchema,
+  toAfter: holdingSchema,
+  sourceAmount: z.number().finite().positive(),
+  targetAmount: z.number().finite().positive(),
+  rateTwdPerUsd: z.number().finite().positive(),
+  fee: z.number().finite().nonnegative()
+});
+
 export const etfConstituentSchema = z.object({
   market: z.enum(["TW", "US"]),
   symbol: z.string().trim().min(1).max(32),
@@ -171,7 +184,7 @@ export const activitySchema = z.object({
   id: z.string().min(1),
   date: dateKeySchema,
   time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).optional(),
-  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee", "transfer", "corporate_action"]),
+  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee", "transfer", "exchange", "corporate_action"]),
   symbol: z.string(),
   amount: z.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
@@ -184,7 +197,8 @@ export const activitySchema = z.object({
   preFlowValueSource: z.enum(["system_current_state", "manual"]).optional(),
   inventoryImpact: inventoryImpactSchema.optional(),
   cashImpact: cashImpactSchema.optional(),
-  cashTransferImpact: cashTransferImpactSchema.optional()
+  cashTransferImpact: cashTransferImpactSchema.optional(),
+  cashExchangeImpact: cashExchangeImpactSchema.optional()
 }).superRefine((activity, ctx) => {
   if (activity.type !== "corporate_action" && activity.amount <= 0) {
     ctx.addIssue({
@@ -553,6 +567,150 @@ export const activitySchema = z.object({
       });
     }
   }
+
+  if (activity.type === "exchange" && !activity.cashExchangeImpact) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashExchangeImpact"],
+      message: "換匯必須保留轉出與轉入現金帳戶、成交匯率與前後快照。"
+    });
+  }
+
+  if (activity.type !== "exchange" && activity.cashExchangeImpact) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashExchangeImpact"],
+      message: "只有換匯活動可以附帶跨幣別現金快照。"
+    });
+  }
+
+  if (
+    activity.type === "exchange" &&
+    (activity.cashImpact || activity.cashTransferImpact || activity.inventoryImpact)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashExchangeImpact"],
+      message: "換匯不可同時附帶一般現金、同幣別轉帳或證券持股連動。"
+    });
+  }
+
+  if (activity.cashExchangeImpact) {
+    const exchange = activity.cashExchangeImpact;
+    const snapshots = [exchange.fromBefore, exchange.fromAfter, exchange.toBefore, exchange.toAfter];
+    const normalized = snapshots.every((cash) =>
+      cash.type === "cash" &&
+      Math.abs(cash.quantity - 1) <= 1e-9 &&
+      Math.abs(cash.averageCost - cash.price) <= 1e-8
+    );
+
+    if (exchange.fromCashHoldingId === exchange.toCashHoldingId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashExchangeImpact"],
+        message: "換匯的轉出與轉入現金帳戶不可相同。"
+      });
+    }
+    if (
+      exchange.fromBefore.id !== exchange.fromCashHoldingId ||
+      exchange.fromAfter.id !== exchange.fromCashHoldingId ||
+      exchange.toBefore.id !== exchange.toCashHoldingId ||
+      exchange.toAfter.id !== exchange.toCashHoldingId
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashExchangeImpact"],
+        message: "換匯快照的現金帳戶 ID 不一致。"
+      });
+    }
+    if (!normalized) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashExchangeImpact"],
+        message: "換匯現金快照必須使用 1 × 餘額的標準格式。"
+      });
+    }
+
+    const fromCurrency = exchange.fromBefore.currency;
+    const toCurrency = exchange.toBefore.currency;
+    if (
+      exchange.fromAfter.currency !== fromCurrency ||
+      exchange.toAfter.currency !== toCurrency ||
+      fromCurrency === toCurrency ||
+      activity.currency !== fromCurrency
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashExchangeImpact"],
+        message: "換匯必須在 TWD 與 USD 不同幣別帳戶間進行，且活動幣別必須等於來源幣別。"
+      });
+    }
+    if (Math.abs(exchange.sourceAmount - activity.amount) > 1e-8) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashExchangeImpact", "sourceAmount"],
+        message: "換匯活動金額與換出本金不一致。"
+      });
+    }
+    if (
+      (fromCurrency === "USD" && Math.abs(activity.fxRate - exchange.rateTwdPerUsd) > 1e-8) ||
+      (fromCurrency === "TWD" && Math.abs(activity.fxRate - 1) > 1e-8)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["fxRate"],
+        message: "換匯活動的 FX 欄位與來源幣別／成交匯率不一致。"
+      });
+    }
+
+    const expectedTarget = fromCurrency === "TWD"
+      ? exchange.sourceAmount / exchange.rateTwdPerUsd
+      : exchange.sourceAmount * exchange.rateTwdPerUsd;
+    const targetTolerance = Math.max(1e-8, Math.abs(expectedTarget) * 1e-10);
+    if (Math.abs(exchange.targetAmount - expectedTarget) > targetTolerance) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashExchangeImpact", "targetAmount"],
+        message: "換入金額與換出本金及實際成交匯率不一致。"
+      });
+    }
+
+    const expectedFrom = exchange.fromBefore.price - exchange.sourceAmount - exchange.fee;
+    const expectedTo = exchange.toBefore.price + exchange.targetAmount;
+    const fromTolerance = Math.max(1e-8, Math.abs(expectedFrom) * 1e-10);
+    const toTolerance = Math.max(1e-8, Math.abs(expectedTo) * 1e-10);
+    if (
+      expectedFrom < -1e-8 ||
+      Math.abs(exchange.fromAfter.price - Math.max(0, expectedFrom)) > fromTolerance ||
+      Math.abs(exchange.fromAfter.averageCost - Math.max(0, expectedFrom)) > fromTolerance
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashExchangeImpact", "fromAfter"],
+        message: "換匯的轉出 after 快照與 before－本金－費用不一致。"
+      });
+    }
+    if (
+      Math.abs(exchange.toAfter.price - expectedTo) > toTolerance ||
+      Math.abs(exchange.toAfter.averageCost - expectedTo) > toTolerance
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashExchangeImpact", "toAfter"],
+        message: "換匯的轉入 after 快照與 before＋換入金額不一致。"
+      });
+    }
+
+    const activityAccount = (activity.account?.trim() || "預設帳戶").toLowerCase();
+    const fromAccount = (exchange.fromBefore.account?.trim() || "預設帳戶").toLowerCase();
+    if (activityAccount !== fromAccount) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["account"],
+        message: "換匯活動帳戶必須對應換出現金帳戶。"
+      });
+    }
+  }
 }).transform((activity) => {
   const normalized = {
     ...activity,
@@ -694,7 +852,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),
