@@ -209,6 +209,57 @@ describe("local data import/export", () => {
     expect(parseBackup(serialized)).toEqual(state);
   });
 
+  it("rejects tampered V8 cash snapshots whose arithmetic does not match delta", () => {
+    const before = {
+      id: "cash",
+      symbol: "CASH-TWD",
+      name: "TWD 現金",
+      market: "TW",
+      type: "cash",
+      quantity: 1,
+      price: 5000,
+      averageCost: 5000,
+      currency: "TWD",
+      sector: "現金",
+      account: "券商現金"
+    };
+    const backup = {
+      version: 8,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [{ ...before, price: 5050, averageCost: 5050 }],
+        etfCompositions: [],
+        journal: [],
+        snapshots: [],
+        allocationTargets: [],
+        activities: [{
+          id: "bad-cash",
+          date: "2026-09-30",
+          type: "dividend",
+          symbol: "2330",
+          amount: 100,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 0,
+          price: 0,
+          note: "",
+          account: "券商現金",
+          cashImpact: {
+            cashHoldingId: "cash",
+            before,
+            after: { ...before, price: 5050, averageCost: 5050 },
+            delta: 100,
+            reason: "dividend"
+          }
+        }]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/after 快照/);
+  });
+
   it("keeps version 4 backups compatible by defaulting allocation targets to empty", () => {
     const parsed = parseBackup(JSON.stringify({
       version: 4,
