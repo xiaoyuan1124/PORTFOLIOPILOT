@@ -294,6 +294,23 @@ function OpeningBuyForm({
         {selectedCash && !sufficientCash ? <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">現金不足，首次買進不會寫入任何資料。</p> : null}
       </div>
 
+      {transfer && selectedTransferFrom && selectedTransferTo ? (
+        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+          <div className="flex justify-between gap-3">
+            <span>{accountName(selectedTransferFrom.account)} 轉出</span>
+            <strong>{selectedTransferFrom.currency} {selectedTransferFrom.price.toLocaleString()} → {(selectedTransferFrom.price - amount).toLocaleString()}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>{accountName(selectedTransferTo.account)} 轉入</span>
+            <strong>{selectedTransferTo.currency} {selectedTransferTo.price.toLocaleString()} → {(selectedTransferTo.price + amount).toLocaleString()}</strong>
+          </div>
+          {amount > selectedTransferFrom.price + 1e-9 ? (
+            <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">轉出帳戶現金不足，這筆內部轉帳不會寫入。</p>
+          ) : null}
+          <p className="mt-2 text-black/38 dark:text-white/38">總現金與總淨值不因同幣別內部轉帳改變。</p>
+        </div>
+      ) : null}
+
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
         首次買進會同時建立新持股、扣現金並寫入交易。之後加碼請使用一般「買進」，避免重複建立相同部位。
@@ -370,6 +387,9 @@ function ActivityForm({
   const selectedCash = cashHoldings.find((holding) => holding.id === cashHoldingId) ?? null;
   const selectedTransferFrom = cashHoldings.find((holding) => holding.id === transferFromCashHoldingId) ?? null;
   const selectedTransferTo = cashHoldings.find((holding) => holding.id === transferToCashHoldingId) ?? null;
+  const transferSources = cashHoldings.filter((source) =>
+    cashHoldings.some((target) => target.id !== source.id && target.currency === source.currency)
+  );
   const compatibleTransferTargets = selectedTransferFrom
     ? cashHoldings.filter((holding) =>
         holding.id !== selectedTransferFrom.id &&
@@ -587,6 +607,7 @@ function ActivityForm({
           type="date"
           max={today}
           value={date}
+          disabled={transfer}
           onChange={(event) => {
             const nextDate = event.target.value;
             setDate(nextDate);
@@ -647,6 +668,63 @@ function ActivityForm({
           ) : null}
           <p className="mt-2 px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
             V0.56 會讓證券與現金在同一次操作中一起更新；買進現金不足時直接拒絕。舊交易不會被回溯重播。
+          </p>
+        </div>
+      ) : transfer ? (
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block px-1 text-[11px] font-semibold text-black/42 dark:text-white/42">轉出帳戶</label>
+              <select
+                className="field"
+                value={transferFromCashHoldingId}
+                onChange={(event) => {
+                  const nextId = event.target.value;
+                  setTransferFromCashHoldingId(nextId);
+                  const next = cashHoldings.find((holding) => holding.id === nextId);
+                  if (!next) {
+                    setTransferToCashHoldingId("");
+                    return;
+                  }
+                  setCurrency(next.currency);
+                  setFxRate(next.currency === "USD" ? state.usdTwd : 1);
+                  const nextTarget = cashHoldings.find((holding) =>
+                    holding.id !== next.id && holding.currency === next.currency
+                  );
+                  setTransferToCashHoldingId(nextTarget?.id ?? "");
+                }}
+              >
+                <option value="">選擇轉出現金帳戶</option>
+                {transferSources.map((holding) => (
+                  <option key={holding.id} value={holding.id}>
+                    {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block px-1 text-[11px] font-semibold text-black/42 dark:text-white/42">轉入帳戶</label>
+              <select
+                className="field"
+                value={transferToCashHoldingId}
+                onChange={(event) => setTransferToCashHoldingId(event.target.value)}
+              >
+                <option value="">選擇同幣別轉入帳戶</option>
+                {compatibleTransferTargets.map((holding) => (
+                  <option key={holding.id} value={holding.id}>
+                    {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {!transferSources.length ? (
+            <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">
+              至少需要兩個相同幣別的現金帳戶才能內部轉帳。
+            </p>
+          ) : null}
+          <p className="px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
+            V0.59 只支援同幣別帳戶間移轉，且只從今天的目前餘額往前套用。這是內部資產搬移，不是入金／出金，不會切斷 Exact TWR，也不會進入淨投入。
           </p>
         </div>
       ) : corporate ? (
@@ -774,7 +852,7 @@ function ActivityForm({
         </div>
       ) : null}
 
-      {currency === "USD" && !corporate ? (
+      {currency === "USD" && !corporate && !transfer ? (
         <div>
           <input
             className="field"
@@ -794,7 +872,7 @@ function ActivityForm({
         </div>
       ) : null}
 
-      {!external && !trade && !corporate ? (
+      {!external && !trade && !corporate && !transfer ? (
         <input
           className="field"
           placeholder="股票代號（選填）"
@@ -858,7 +936,7 @@ function ActivityForm({
         </div>
       ) : null}
 
-      {!trade && !corporate && selectedCash ? (
+      {!trade && !corporate && !transfer && selectedCash ? (
         <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
           <div className="flex justify-between gap-3">
             <span>現金餘額</span>
@@ -875,7 +953,7 @@ function ActivityForm({
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.58 起，今天實際發生的入出金可在寫入現金前自動擷取 Exact TWR pre-flow 淨值；歷史補登仍必須使用當時可確認的手動邊界。交易、股息、費用與入出金持續同步更新指定現金帳戶。
+        V0.59 起，同幣別現金帳戶可用內部轉帳原子搬移餘額，不會誤算成外部現金流。今天的入出金仍可在寫入前自動擷取 Exact TWR pre-flow 淨值；跨幣別換匯暫不偽裝成轉帳。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
