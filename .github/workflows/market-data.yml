@@ -41,7 +41,7 @@ jobs:
       - name: Fetch official MOPS quarterly financials
         id: quarterly
         continue-on-error: true
-        run: node scripts/update-quarterly-financials.mjs
+        run: timeout 240s node scripts/update-quarterly-financials.mjs
       - name: Report quarterly cache fallback
         if: steps.quarterly.outcome == 'failure'
         run: |
