@@ -89,7 +89,10 @@ describe("managed trade inventory", () => {
     expect(next.holdings[0]?.quantity).toBe(6);
     expect(next.holdings[0]?.averageCost).toBe(900);
     expect(next.activities[0]?.amount).toBe(3968);
-    expect(next.activities[0]?.inventoryImpact?.realizedPnl).toBe(368);
+    const impact = next.activities[0]?.inventoryImpact;
+    expect(impact?.kind).toBe("trade");
+    if (impact?.kind !== "trade") throw new Error("Expected trade inventory impact");
+    expect(impact.realizedPnl).toBe(368);
     expect(realizedManagedTradePnlTwd(next.activities)).toBe(368);
   });
 
@@ -210,7 +213,10 @@ describe("managed trade inventory", () => {
       note: ""
     });
 
-    expect(sold.activities[0]?.inventoryImpact?.realizedPnl).toBe(59);
+    const impact = sold.activities[0]?.inventoryImpact;
+    expect(impact?.kind).toBe("trade");
+    if (impact?.kind !== "trade") throw new Error("Expected trade inventory impact");
+    expect(impact.realizedPnl).toBe(59);
     expect(realizedManagedTradePnlTwd(sold.activities)).toBeCloseTo(1858.5, 8);
   });
 });

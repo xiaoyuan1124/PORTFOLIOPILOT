@@ -485,3 +485,16 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Deleting the latest managed trade attempts an exact inventory rollback. Rollback fails closed if a later managed trade exists for the same holding or the current holding was manually edited / reconciled after the trade.
 - Managed USD trades preserve the transaction FX rate for realized-P/L TWD conversion.
 - The activity ledger now labels inventory-applied trades and surfaces cumulative realized P/L from V0.54 managed sells.
+
+
+## V0.55 corporate share adjustments
+
+- The activity ledger now supports **股數調整** as a non-cash corporate action for proportional share changes such as stock splits, reverse splits and stock-dividend-style share increases.
+- Users select an existing holding and enter a share ratio: 2 means 1-for-2 split, 0.2 means 5-for-1 reverse split, and 1.1 means a 10% share increase.
+- Quantity is multiplied by the ratio while average cost is divided by the same ratio, preserving total cost basis.
+- Current market price and TWSE / TPEx price provenance remain untouched; the event only adjusts inventory quantity and cost basis.
+- Corporate actions are forward-only from the current day, matching the V0.54 inventory baseline model and avoiding historical double application.
+- Each event stores before / after holding snapshots in backup V7 and can be exactly rolled back when it is the latest linked inventory event for that holding.
+- Rollback fails closed if a later linked trade / corporate action exists or the holding has been manually edited / reconciled.
+- Corporate actions carry zero cash amount and remain separate from deposits, withdrawals, dividends and fees.
+- Cash subscriptions, rights offerings and other actions involving additional cash are intentionally not treated as simple share adjustments; they should be recorded with their actual cash / trade flows instead of being guessed.

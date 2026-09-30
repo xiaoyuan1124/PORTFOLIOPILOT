@@ -82,16 +82,26 @@ export const holdingSchema = z.object({
   }
 });
 
-export const inventoryImpactSchema = z.object({
-  kind: z.literal("trade"),
-  holdingId: z.string().min(1),
-  before: holdingSchema,
-  after: holdingSchema.nullable(),
-  fee: z.number().finite().nonnegative(),
-  tax: z.number().finite().nonnegative(),
-  realizedPnl: z.number().finite(),
-  method: z.literal("average_cost")
-});
+export const inventoryImpactSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("trade"),
+    holdingId: z.string().min(1),
+    before: holdingSchema,
+    after: holdingSchema.nullable(),
+    fee: z.number().finite().nonnegative(),
+    tax: z.number().finite().nonnegative(),
+    realizedPnl: z.number().finite(),
+    method: z.literal("average_cost")
+  }),
+  z.object({
+    kind: z.literal("corporate_action"),
+    holdingId: z.string().min(1),
+    before: holdingSchema,
+    after: holdingSchema,
+    action: z.literal("share_adjustment"),
+    ratio: z.number().finite().positive()
+  })
+]);
 
 export const etfConstituentSchema = z.object({
   market: z.enum(["TW", "US"]),
@@ -135,9 +145,9 @@ export const activitySchema = z.object({
   id: z.string().min(1),
   date: dateKeySchema,
   time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).optional(),
-  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee"]),
+  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee", "corporate_action"]),
   symbol: z.string(),
-  amount: z.number().finite().positive("交易／現金流金額必須大於 0。"),
+  amount: z.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
   fxRate: z.number().finite().positive(),
   quantity: z.number().finite().nonnegative(),
@@ -147,7 +157,23 @@ export const activitySchema = z.object({
   preFlowValueTwd: z.number().finite().nonnegative().optional(),
   inventoryImpact: inventoryImpactSchema.optional()
 }).superRefine((activity, ctx) => {
-  if (isTradeActivityType(activity.type) && !activity.symbol.trim()) {
+  if (activity.type !== "corporate_action" && activity.amount <= 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["amount"],
+      message: "交易／現金流金額必須大於 0。"
+    });
+  }
+
+  if (activity.type === "corporate_action" && activity.amount !== 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["amount"],
+      message: "非現金股數調整不可帶入現金金額。"
+    });
+  }
+
+  if ((isTradeActivityType(activity.type) || activity.type === "corporate_action") && !activity.symbol.trim()) {
     ctx.addIssue({
       code: "custom",
       path: ["symbol"],
@@ -163,11 +189,27 @@ export const activitySchema = z.object({
     });
   }
 
-  if (activity.inventoryImpact && !isTradeActivityType(activity.type)) {
+  if (activity.inventoryImpact?.kind === "trade" && !isTradeActivityType(activity.type)) {
     ctx.addIssue({
       code: "custom",
       path: ["inventoryImpact"],
-      message: "持股連動資訊只能附在買進／賣出交易。"
+      message: "交易持股連動資訊只能附在買進／賣出交易。"
+    });
+  }
+
+  if (activity.inventoryImpact?.kind === "corporate_action" && activity.type !== "corporate_action") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["inventoryImpact"],
+      message: "股數調整持股連動資訊只能附在 corporate action。"
+    });
+  }
+
+  if (activity.type === "corporate_action" && activity.inventoryImpact?.kind !== "corporate_action") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["inventoryImpact"],
+      message: "股數調整必須保留可回滾的持股連動快照。"
     });
   }
 
@@ -339,7 +381,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),

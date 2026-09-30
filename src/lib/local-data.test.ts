@@ -48,7 +48,7 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(6);
+    expect(JSON.parse(serialized).version).toBe(7);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -102,7 +102,59 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(6);
+    expect(JSON.parse(serialized).version).toBe(7);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("round-trips V7 corporate share-adjustment metadata", () => {
+    const before = {
+      id: "h1",
+      symbol: "2330",
+      name: "台積電",
+      market: "TW" as const,
+      type: "stock" as const,
+      quantity: 10,
+      price: 1000,
+      averageCost: 900,
+      currency: "TWD" as const,
+      sector: "半導體",
+      account: "券商A"
+    };
+    const after = { ...before, quantity: 20, averageCost: 450 };
+
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [after],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "split",
+        date: "2026-09-30",
+        type: "corporate_action",
+        symbol: "2330",
+        amount: 0,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 0,
+        price: 0,
+        note: "1拆2",
+        account: "券商A",
+        inventoryImpact: {
+          kind: "corporate_action",
+          holdingId: "h1",
+          before,
+          after,
+          action: "share_adjustment",
+          ratio: 2
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(7);
     expect(parseBackup(serialized)).toEqual(state);
   });
 

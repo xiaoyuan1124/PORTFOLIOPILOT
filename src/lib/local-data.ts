@@ -30,7 +30,7 @@ export function downloadText(filename: string, text: string, type = "text/plain;
 
 export function serializeBackup(state: AppState) {
   return JSON.stringify({
-    version: 6,
+    version: 7,
     exportedAt: new Date().toISOString(),
     state: appStateSchema.parse(state)
   }, null, 2);
