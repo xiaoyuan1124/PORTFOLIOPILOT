@@ -391,5 +391,5 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Data comes from TWSE and TPEx daily MOPS OpenAPI endpoints; no media-news scraper, AI summary or subjective importance score is used.
 - The build-time updater merges daily official snapshots into a rolling 45-calendar-day local cache so the PWA can stay zero-cost and does not need a runtime market-data server.
 - Each event preserves company statement date/time, fact date, disclosure rule, subject, original description, venue and direct official-source metadata.
-- Holding matching reuses the venue-aware TWSE/TPEx identity rules: known venue is exact, unknown venue resolves only when the code is unique and otherwise fails closed.
+- Holding matching is deliberately strict: only positions with known TWSE/TPEx provenance are eligible, so a short announcement cache can never be used to guess the venue of a manual holding.
 - GitHub Actions refreshes and deploys the material-event cache with the existing Taiwan market-data workflow.
