@@ -4,18 +4,20 @@ import { useState } from "react";
 import type { AppState } from "@/lib/types";
 import { ActivityLedger } from "./activity-ledger";
 import { AllocationTargets } from "./allocation-targets";
+import { DividendCenter } from "./dividend-center";
 import { EtfLookThrough } from "./etf-lookthrough";
 import { HoldingsPanel } from "./holdings";
 import { PortfolioRisk } from "./portfolio-risk";
 import { Performance } from "./performance";
 
-type PortfolioTab = "holdings" | "lookthrough" | "risk" | "targets" | "activity" | "performance";
+type PortfolioTab = "holdings" | "lookthrough" | "risk" | "targets" | "dividends" | "activity" | "performance";
 
 const tabs: Array<{ key: PortfolioTab; label: string }> = [
   { key: "holdings", label: "持股" },
   { key: "lookthrough", label: "ETF 穿透" },
   { key: "risk", label: "風險曝險" },
   { key: "targets", label: "配置目標" },
+  { key: "dividends", label: "股息" },
   { key: "activity", label: "交易／現金流" },
   { key: "performance", label: "績效" }
 ];
@@ -41,6 +43,7 @@ export function Portfolio({ state, onChange, onResearch }: { state: AppState; on
       {tab === "lookthrough" ? <EtfLookThrough state={state} onChange={onChange} /> : null}
       {tab === "risk" ? <PortfolioRisk state={state} /> : null}
       {tab === "targets" ? <AllocationTargets state={state} onChange={onChange} /> : null}
+      {tab === "dividends" ? <DividendCenter state={state} /> : null}
       {tab === "activity" ? <ActivityLedger state={state} onChange={onChange} /> : null}
       {tab === "performance" ? <Performance state={state} /> : null}
     </div>
