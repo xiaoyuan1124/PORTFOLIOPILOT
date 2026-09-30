@@ -385,17 +385,23 @@ function ActivityForm({
   const selectedHolding = tradeHoldings.find((holding) => holding.id === tradeHoldingId) ?? null;
   const selectedTradeCash = cashHoldings.find((holding) => holding.id === tradeCashHoldingId) ?? null;
   const selectedCash = cashHoldings.find((holding) => holding.id === cashHoldingId) ?? null;
-  const selectedTransferFrom = cashHoldings.find((holding) => holding.id === transferFromCashHoldingId) ?? null;
-  const selectedTransferTo = cashHoldings.find((holding) => holding.id === transferToCashHoldingId) ?? null;
   const transferSources = cashHoldings.filter((source) =>
     cashHoldings.some((target) => target.id !== source.id && target.currency === source.currency)
   );
+  const selectedTransferFrom =
+    transferSources.find((holding) => holding.id === transferFromCashHoldingId) ??
+    transferSources[0] ??
+    null;
   const compatibleTransferTargets = selectedTransferFrom
     ? cashHoldings.filter((holding) =>
         holding.id !== selectedTransferFrom.id &&
         holding.currency === selectedTransferFrom.currency
       )
     : [];
+  const selectedTransferTo =
+    compatibleTransferTargets.find((holding) => holding.id === transferToCashHoldingId) ??
+    compatibleTransferTargets[0] ??
+    null;
   const selectedCorporateHolding = tradeHoldings.find((holding) => holding.id === corporateHoldingId) ?? null;
   const compatibleTradeCash = selectedHolding
     ? cashHoldings.filter((holding) => holding.currency === selectedHolding.currency)
@@ -1153,6 +1159,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           const external = isExternalActivityType(activity.type);
           const transfer = isCashTransferActivityType(activity.type);
           const trade = isTradeActivityType(activity.type);
+          const transfer = isCashTransferActivityType(activity.type);
           const corporate = activity.type === "corporate_action";
 
           return (
@@ -1208,6 +1215,12 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       <p className="mt-1 text-xs text-black/45 dark:text-white/45">
                         {accountName(activity.cashImpact.before.account)} · 現金 {activity.cashImpact.delta > 0 ? "+" : ""}{activity.cashImpact.delta.toLocaleString()} · {activity.cashImpact.before.price.toLocaleString()} → {(activity.cashImpact.after?.price ?? 0).toLocaleString()}
                       </p>
+                    ) : null}
+                    {activity.cashTransferImpact ? (
+                      <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+                        <p>{accountName(activity.cashTransferImpact.fromBefore.account)} · {activity.cashTransferImpact.fromBefore.price.toLocaleString()} → {activity.cashTransferImpact.fromAfter.price.toLocaleString()}</p>
+                        <p>{accountName(activity.cashTransferImpact.toBefore.account)} · {activity.cashTransferImpact.toBefore.price.toLocaleString()} → {activity.cashTransferImpact.toAfter.price.toLocaleString()}</p>
+                      </div>
                     ) : null}
                     {activity.cashTransferImpact ? (
                       <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
@@ -1307,7 +1320,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       {!activities.length ? (
         <div className="py-14 text-center">
           <p className="text-sm text-black/40 dark:text-white/40">
-            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流紀錄。" : "目前尚未記錄任何交易／現金流。"}
+            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流／轉帳紀錄。" : "目前尚未記錄任何交易／現金流／轉帳。"}
           </p>
           {state.activities.length && (filter !== "all" || accountFilter !== "all") ? (
             <GhostButton className="mt-4" onClick={() => { setFilter("all"); setAccountFilter("all"); }}>
