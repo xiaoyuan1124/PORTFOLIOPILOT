@@ -130,6 +130,8 @@ export interface HistoricalTradeMeta {
   market: Market;
   fee: number;
   tax: number;
+  importSource?: "csv";
+  importFingerprint?: string;
 }
 
 export interface PortfolioActivity {
