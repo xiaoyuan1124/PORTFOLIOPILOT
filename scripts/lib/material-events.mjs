@@ -66,7 +66,7 @@ export function parseMaterialEventRows(rows, market) {
     const factDate = normalizeMaterialEventDate(factDateRaw);
     const detail = fieldValue(row, ["說明", "Description"]);
 
-    if (!code || !subject || !publishedDate) return [];
+    if (!code || !subject || !publishedDate || !publishedTime) return [];
 
     return [{
       market,
