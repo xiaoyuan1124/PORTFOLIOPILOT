@@ -5,7 +5,7 @@ import type { AppState } from "@/lib/types";
 import { localDateKey, portfolioSummary } from "@/lib/calc";
 import {
   exactTimeWeightedReturn,
-  incomeAfterFees,
+  ledgerEconomicsSummary,
   modifiedDietzReturn,
   netExternalContributions,
   portfolioXirr
@@ -18,7 +18,7 @@ export function Performance({ state }: { state: AppState }) {
   const valuationDate = localDateKey();
   const summary = portfolioSummary(state.holdings, state.usdTwd);
   const contributions = netExternalContributions(state.activities, valuationDate);
-  const income = incomeAfterFees(state.activities, valuationDate);
+  const economics = ledgerEconomicsSummary(state.activities, valuationDate);
   const xirr = portfolioXirr(state, valuationDate);
   const exactTwr = exactTimeWeightedReturn(state, valuationDate);
   const currentSnapshots = state.snapshots.filter((snapshot) => snapshot.date <= valuationDate);
@@ -73,6 +73,7 @@ export function Performance({ state }: { state: AppState }) {
             <p><strong className="text-black/80 dark:text-white/80">XIRR</strong> 使用你記錄的入金、出金日期與目前投資組合淨值，計算年化資金加權報酬。入金視為投資人的現金流出，出金與目前淨值視為現金流入。</p>
             <p><strong className="text-black/80 dark:text-white/80">Exact TWR</strong> 只在每筆入金／出金都有「現金流發生前的投資組合淨值」時，才把現金流切成子期間並幾何鏈結。今天實際發生的外部現金流可在寫入前由系統擷取目前 PortfolioPilot 淨值；歷史補登仍需使用當時可確認的手動邊界。缺任何必要邊界就顯示資料不足，不會用 Proxy 補洞冒充精確值。</p>
             <p><strong className="text-black/80 dark:text-white/80">TWR Proxy</strong> 使用每日淨值快照與 Modified Dietz 做現金流調整。它仍是透明的近似值，用來支援舊資料與缺少事件邊界的期間。</p>
+            <p><strong className="text-black/80 dark:text-white/80">費用與換匯</strong> 另外拆開顯示獨立費用、交易手續費、交易稅與換匯估值差額。它們是帳務成本／估值效果的透明拆解，不會另外從 XIRR 或 TWR 再扣一次，避免重複計算。</p>
           </CardContent>
         </Card>
 
@@ -88,7 +89,12 @@ export function Performance({ state }: { state: AppState }) {
             <div className="mini-metric"><span>交易／現金流</span><strong>{state.activities.length.toLocaleString()} 筆</strong></div>
             <div className="mini-metric"><span>TWR 邊界</span><strong>{exactTwr.boundedFlowCount}/{exactTwr.externalFlowCount}</strong></div>
             <div className="mini-metric"><span>Exact 子期間</span><strong>{exactTwr.status === "exact" ? exactTwr.periods : "—"}</strong></div>
-            <div className="mini-metric"><span>股息－費用</span><strong>{money(income)}</strong></div>
+            <div className="mini-metric"><span>股息收入</span><strong>{money(economics.dividendsTwd)}</strong></div>
+            <div className="mini-metric"><span>獨立費用</span><strong>{money(economics.standaloneFeesTwd)}</strong></div>
+            <div className="mini-metric"><span>股息－獨立費用</span><strong>{money(economics.incomeAfterStandaloneFeesTwd)}</strong></div>
+            <div className="mini-metric"><span>交易手續費</span><strong>{money(economics.tradeFeesTwd)}</strong></div>
+            <div className="mini-metric"><span>交易稅／其他稅費</span><strong>{money(economics.tradeTaxesTwd)}</strong></div>
+            <div className="mini-metric"><span>換匯估值差額</span><strong>{money(economics.fxConversionValuationDeltaTwd)}</strong></div>
             <div className="mini-metric"><span>未實現損益</span><strong>{money(summary.gain)}</strong></div>
           </CardContent>
         </Card>
@@ -115,7 +121,7 @@ export function Performance({ state }: { state: AppState }) {
           <CircleHelp size={18} className="mt-0.5 shrink-0 text-[#7a6549]" />
           <div className="text-sm leading-6 text-black/50 dark:text-white/50">
             <p className="font-semibold text-black/75 dark:text-white/75">入金／出金才是外部現金流。</p>
-            <p className="mt-1">買進、賣出、股息與費用可以做完整日誌，但不會切斷 TWR 子期間。不要把買股票誤記成入金；記錄 TWR 邊界時，填的是現金流前的整體淨值，不是交易金額或持股成本。</p>
+            <p className="mt-1">買進、賣出、股息、費用、內部轉帳與內部換匯都不會被當成外部投入／提領。交易費稅與換匯差額會透過持股、現金與淨值自然反映在績效中；成本區塊只做拆解，不會把它們再從報酬率扣一次。</p>
           </div>
         </CardContent>
       </Card>
