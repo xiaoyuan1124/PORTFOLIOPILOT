@@ -5,6 +5,7 @@ import {
   applyCashLinkedActivity,
   applyCashTransfer,
   nextCashSnapshot,
+  recordHistoricalCashActivity,
   revertCashLinkedActivity,
   revertCashTransfer
 } from "./cash-account";
@@ -43,7 +44,7 @@ describe("cash account linkage", () => {
   it("adds deposits to cash and keeps the TWR boundary", () => {
     const next = applyCashLinkedActivity(state(), {
       id: "deposit",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "deposit",
       cashHoldingId: "cash",
       amount: 1000,
@@ -150,7 +151,117 @@ describe("cash account linkage", () => {
       note: "",
       time: "10:15",
       capturePreFlowFromCurrentState: true
-    })).toThrow(/歷史入金／出金不可使用目前淨值/);
+    })).toThrow(/歷史補登只能寫入帳務紀錄/);
+  });
+
+  it("records historical deposits without mutating the current cash balance", () => {
+    const base = state();
+    const next = recordHistoricalCashActivity(base, {
+      id: "historical-deposit",
+      date: "2000-01-01",
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 1000,
+      fxRate: 1,
+      symbol: "",
+      note: "歷史補登",
+      time: "09:30",
+      preFlowValueTwd: 5000
+    });
+
+    expect(next.holdings).toEqual(base.holdings);
+    expect(next.activities[0]).toMatchObject({
+      type: "deposit",
+      amount: 1000,
+      currency: "TWD",
+      time: "09:30",
+      preFlowValueTwd: 5000,
+      preFlowValueSource: "manual",
+      account: "券商現金"
+    });
+    expect(next.activities[0]?.cashImpact).toBeUndefined();
+  });
+
+  it("records historical withdrawals and fees even when today's cash would be insufficient", () => {
+    const base = state(cash({ price: 10, averageCost: 10 }));
+    const withdrawal = recordHistoricalCashActivity(base, {
+      id: "historical-withdrawal",
+      date: "2000-01-01",
+      type: "withdrawal",
+      cashHoldingId: "cash",
+      amount: 5000,
+      fxRate: 1,
+      symbol: "",
+      note: ""
+    });
+    const fee = recordHistoricalCashActivity(withdrawal, {
+      id: "historical-fee",
+      date: "2000-01-02",
+      type: "fee",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "",
+      note: ""
+    });
+
+    expect(fee.holdings[0]?.price).toBe(10);
+    expect(fee.activities.map((activity) => activity.type)).toEqual(["withdrawal", "fee"]);
+    expect(fee.activities.every((activity) => activity.cashImpact === undefined)).toBe(true);
+  });
+
+  it("preserves historical USD FX without changing today's USD cash", () => {
+    const usdCash = cash({
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      price: 100,
+      averageCost: 100,
+      currency: "USD"
+    });
+    const next = recordHistoricalCashActivity(state(usdCash), {
+      id: "historical-dividend",
+      date: "2000-01-01",
+      type: "dividend",
+      cashHoldingId: "cash",
+      amount: 5,
+      fxRate: 29.5,
+      symbol: "QQQM",
+      note: ""
+    });
+
+    expect(next.holdings[0]?.price).toBe(100);
+    expect(next.activities[0]).toMatchObject({
+      type: "dividend",
+      currency: "USD",
+      fxRate: 29.5,
+      symbol: "QQQM"
+    });
+    expect(next.activities[0]?.cashImpact).toBeUndefined();
+  });
+
+  it("rejects historical ledger backfill for today or the future", () => {
+    expect(() => recordHistoricalCashActivity(state(), {
+      id: "today-backfill",
+      date: localDateKey(),
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "",
+      note: ""
+    })).toThrow(/早於今天/);
+
+    expect(() => recordHistoricalCashActivity(state(), {
+      id: "future-backfill",
+      date: "2999-01-01",
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 100,
+      fxRate: 1,
+      symbol: "",
+      note: ""
+    })).toThrow(/早於今天/);
   });
 
   it("rejects auto boundary capture on non-external cash events", () => {
@@ -201,7 +312,7 @@ describe("cash account linkage", () => {
   it("subtracts withdrawals and preserves a zero-balance cash account", () => {
     const next = applyCashLinkedActivity(state(cash({ price: 1000, averageCost: 1000 })), {
       id: "withdrawal",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "withdrawal",
       cashHoldingId: "cash",
       amount: 1000,
@@ -222,7 +333,7 @@ describe("cash account linkage", () => {
   it("adds dividends and subtracts standalone fees", () => {
     const withDividend = applyCashLinkedActivity(state(), {
       id: "dividend",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "dividend",
       cashHoldingId: "cash",
       amount: 120,
@@ -234,7 +345,7 @@ describe("cash account linkage", () => {
 
     const withFee = applyCashLinkedActivity(withDividend, {
       id: "fee",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "fee",
       cashHoldingId: "cash",
       amount: 20,
@@ -248,7 +359,7 @@ describe("cash account linkage", () => {
   it("rejects withdrawals or fees that would create negative cash", () => {
     expect(() => applyCashLinkedActivity(state(), {
       id: "bad",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "fee",
       cashHoldingId: "cash",
       amount: 6000,
@@ -270,7 +381,7 @@ describe("cash account linkage", () => {
 
     const next = applyCashLinkedActivity(state(usdCash), {
       id: "usd-dividend",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "dividend",
       cashHoldingId: "cash",
       amount: 5,
@@ -289,7 +400,7 @@ describe("cash account linkage", () => {
   it("rejects rollback when a later event touched the same cash account", () => {
     const first = applyCashLinkedActivity(state(), {
       id: "a",
-      date: "2026-09-29",
+      date: localDateKey(),
       type: "deposit",
       cashHoldingId: "cash",
       amount: 100,
@@ -299,7 +410,7 @@ describe("cash account linkage", () => {
     });
     const second = applyCashLinkedActivity(first, {
       id: "b",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "fee",
       cashHoldingId: "cash",
       amount: 10,
@@ -314,7 +425,7 @@ describe("cash account linkage", () => {
   it("rejects rollback after manual cash drift", () => {
     const next = applyCashLinkedActivity(state(), {
       id: "deposit",
-      date: "2026-09-30",
+      date: localDateKey(),
       type: "deposit",
       cashHoldingId: "cash",
       amount: 100,
