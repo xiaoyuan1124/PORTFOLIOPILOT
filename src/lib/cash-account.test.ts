@@ -240,6 +240,28 @@ describe("cash account linkage", () => {
     expect(next.activities[0]?.cashImpact).toBeUndefined();
   });
 
+  it("rejects a historical USD cash event without an explicit positive FX rate", () => {
+    const usdCash = cash({
+      market: "US",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      currency: "USD",
+      price: 100,
+      averageCost: 100
+    });
+
+    expect(() => recordHistoricalCashActivity(state(usdCash), {
+      id: "missing-historical-fx",
+      date: "2000-01-01",
+      type: "deposit",
+      cashHoldingId: "cash",
+      amount: 10,
+      fxRate: 0,
+      symbol: "",
+      note: ""
+    })).toThrow(/歷史 USD\/TWD 匯率必須大於 0/);
+  });
+
   it("rejects historical ledger backfill for today or the future", () => {
     expect(() => recordHistoricalCashActivity(state(), {
       id: "today-backfill",
