@@ -5,7 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownCircle, ArrowRightLeft, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
-import { isCashTransferActivityType, isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
+import { isCashFxActivityType, isCashTransferActivityType, isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
 import { localDateKey, localTimeKey, portfolioSummary } from "@/lib/calc";
 import {
   buildHoldingLookupCatalog,
@@ -29,6 +29,11 @@ import {
   revertCorporateAction,
   type ShareAdjustmentInput
 } from "@/lib/corporate-actions";
+import {
+  applyCashFxConversion,
+  revertCashFxConversion,
+  type CashFxConversionInput
+} from "@/lib/cash-fx";
 import { accountName } from "@/lib/local-data";
 import { activityAmountTwd } from "@/lib/performance";
 import {
@@ -50,6 +55,7 @@ const labels: Record<ActivityType, string> = {
   dividend: "股息",
   fee: "費用",
   transfer: "內部轉帳",
+  fx_conversion: "內部換匯",
   corporate_action: "股數調整"
 };
 
@@ -61,6 +67,7 @@ const icons: Record<ActivityType, typeof Banknote> = {
   dividend: ReceiptText,
   fee: ReceiptText,
   transfer: ArrowRightLeft,
+  fx_conversion: ArrowRightLeft,
   corporate_action: Layers3
 };
 
