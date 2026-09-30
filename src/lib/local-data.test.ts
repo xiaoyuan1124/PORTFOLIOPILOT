@@ -49,8 +49,120 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(10);
+    expect(JSON.parse(serialized).version).toBe(11);
     expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("round-trips V11 internal cash transfer metadata", () => {
+    const fromBefore = {
+      id: "cash-a",
+      symbol: "CASH-TWD",
+      name: "TWD 現金",
+      market: "TW" as const,
+      type: "cash" as const,
+      quantity: 1,
+      price: 5000,
+      averageCost: 5000,
+      currency: "TWD" as const,
+      sector: "現金",
+      account: "券商A"
+    };
+    const toBefore = { ...fromBefore, id: "cash-b", price: 2000, averageCost: 2000, account: "券商B" };
+    const fromAfter = { ...fromBefore, price: 4000, averageCost: 4000 };
+    const toAfter = { ...toBefore, price: 3000, averageCost: 3000 };
+
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [fromAfter, toAfter],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "transfer",
+        date: "2026-09-30",
+        type: "transfer",
+        symbol: "",
+        amount: 1000,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 0,
+        price: 0,
+        note: "",
+        account: "券商A",
+        cashTransferImpact: {
+          fromCashHoldingId: "cash-a",
+          toCashHoldingId: "cash-b",
+          fromBefore,
+          fromAfter,
+          toBefore,
+          toAfter,
+          amount: 1000
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(11);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("rejects tampered V11 transfer snapshot arithmetic", () => {
+    const fromBefore = {
+      id: "cash-a",
+      symbol: "CASH-TWD",
+      name: "TWD 現金",
+      market: "TW",
+      type: "cash",
+      quantity: 1,
+      price: 5000,
+      averageCost: 5000,
+      currency: "TWD",
+      sector: "現金",
+      account: "券商A"
+    };
+    const toBefore = { ...fromBefore, id: "cash-b", price: 2000, averageCost: 2000, account: "券商B" };
+    const backup = {
+      version: 11,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [
+          { ...fromBefore, price: 4500, averageCost: 4500 },
+          { ...toBefore, price: 3000, averageCost: 3000 }
+        ],
+        etfCompositions: [],
+        journal: [],
+        snapshots: [],
+        allocationTargets: [],
+        activities: [{
+          id: "bad-transfer",
+          date: "2026-09-30",
+          type: "transfer",
+          symbol: "",
+          amount: 1000,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 0,
+          price: 0,
+          note: "",
+          account: "券商A",
+          cashTransferImpact: {
+            fromCashHoldingId: "cash-a",
+            toCashHoldingId: "cash-b",
+            fromBefore,
+            fromAfter: { ...fromBefore, price: 4500, averageCost: 4500 },
+            toBefore,
+            toAfter: { ...toBefore, price: 3000, averageCost: 3000 },
+            amount: 1000
+          }
+        }]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/轉出 after 快照/);
   });
 
   it("keeps version 9 backups readable without boundary provenance", () => {
@@ -167,7 +279,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(10);
+    expect(JSON.parse(serialized).version).toBe(11);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -219,7 +331,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(10);
+    expect(JSON.parse(serialized).version).toBe(11);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -270,7 +382,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(10);
+    expect(JSON.parse(serialized).version).toBe(11);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -395,7 +507,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(10);
+    expect(JSON.parse(serialized).version).toBe(11);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
