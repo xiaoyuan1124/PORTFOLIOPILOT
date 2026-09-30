@@ -20,6 +20,7 @@ import {
 } from "@/lib/calc";
 import { money, percent } from "@/lib/utils";
 import { Badge, Card, CardContent, CardHeader, GhostButton, Metric } from "./ui";
+import { DailyPortfolioDrivers } from "./daily-portfolio-drivers";
 
 const ranges: Array<{ key: SnapshotRange; label: string }> = [
   { key: "1M", label: "1月" },
@@ -169,6 +170,8 @@ export function Overview({
           </CardContent>
         </Card>
       </section>
+
+      <DailyPortfolioDrivers state={state} onNavigate={onNavigate} />
 
       <section className="grid gap-4 xl:grid-cols-3">
         <Card>
