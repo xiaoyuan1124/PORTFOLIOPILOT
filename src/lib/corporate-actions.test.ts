@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { AppState, Holding } from "./types";
 import { localDateKey } from "./calc";
-import { applyShareAdjustment, revertCorporateAction } from "./corporate-actions";\nimport { applySecurityAccountTransfer } from "./security-transfer";
+import { applyShareAdjustment, revertCorporateAction } from "./corporate-actions";
+import { applySecurityAccountTransfer } from "./security-transfer";
 
 function holding(patch: Partial<Holding> = {}): Holding {
   return {
