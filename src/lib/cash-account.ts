@@ -1,4 +1,4 @@
-import type { AppState, Holding, PortfolioActivity } from "./types";
+import type { AppState, Currency, Holding, PortfolioActivity } from "./types";
 import { localDateKey, portfolioSummary } from "./calc";
 import { accountName } from "./local-data";
 import { hasLaterRecordedActivity } from "./activity-order";
@@ -17,10 +17,19 @@ export type CashLinkedActivityInput = {
   capturePreFlowFromCurrentState?: boolean;
 };
 
-export type HistoricalCashActivityInput = Omit<
-  CashLinkedActivityInput,
-  "capturePreFlowFromCurrentState"
->;
+export type HistoricalCashActivityInput = {
+  id: string;
+  date: string;
+  type: "deposit" | "withdrawal" | "dividend" | "fee";
+  account: string;
+  currency: Currency;
+  amount: number;
+  fxRate: number;
+  symbol: string;
+  note: string;
+  time?: string;
+  preFlowValueTwd?: number;
+};
 
 export type CashTransferInput = {
   id: string;
@@ -267,11 +276,16 @@ export function recordHistoricalCashActivity(
   if (!Number.isFinite(input.amount) || input.amount <= 0) {
     throw new Error("歷史現金事件金額必須大於 0。");
   }
-  if (!Number.isFinite(input.fxRate) || input.fxRate <= 0) {
+  if (!input.account.trim()) {
+    throw new Error("歷史帳戶名稱必填，避免用假的目前帳戶補洞。");
+  }
+  if (input.currency !== "TWD" && input.currency !== "USD") {
+    throw new Error("歷史現金事件幣別無效。");
+  }
+  if (input.currency === "USD" && (!Number.isFinite(input.fxRate) || input.fxRate <= 0)) {
     throw new Error("歷史 USD/TWD 匯率必須大於 0。");
   }
 
-  const cash = assertCashHolding(state.holdings.find((item) => item.id === input.cashHoldingId));
   const external = input.type === "deposit" || input.type === "withdrawal";
 
   if (!external && (input.time || input.preFlowValueTwd !== undefined)) {
@@ -291,12 +305,12 @@ export function recordHistoricalCashActivity(
     type: input.type,
     symbol: external ? "" : input.symbol.trim().toUpperCase(),
     amount: input.amount,
-    currency: cash.currency,
-    fxRate: cash.currency === "USD" ? input.fxRate : 1,
+    currency: input.currency,
+    fxRate: input.currency === "USD" ? input.fxRate : 1,
     quantity: 0,
     price: 0,
     note: input.note.trim(),
-    account: accountName(cash.account),
+    account: input.account.trim(),
     ...(external && input.preFlowValueTwd !== undefined
       ? {
           preFlowValueTwd: input.preFlowValueTwd,
