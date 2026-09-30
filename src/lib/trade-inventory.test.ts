@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppState, Holding } from "./types";
+import { localDateKey } from "./calc";
+import { applyCashTransfer } from "./cash-account";
 import {
   applyManagedTrade,
   applyOpeningBuy,
@@ -463,6 +465,42 @@ describe("managed trade inventory", () => {
     });
 
     expect(() => revertManagedTrade(bought, "a")).toThrow(/現金帳戶後面已有/);
+  });
+
+  it("rejects trade rollback after a later internal transfer touched its cash account", () => {
+    const base = state();
+    base.holdings.push({
+      ...cashFor(holding()),
+      id: "cash-2",
+      price: 2000,
+      averageCost: 2000,
+      account: "券商B"
+    });
+
+    const bought = applyManagedTrade(base, {
+      id: "activity-1",
+      date: localDateKey(),
+      type: "buy",
+      holdingId: "h1",
+      cashHoldingId: "cash",
+      quantity: 1,
+      price: 900,
+      fee: 0,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    });
+
+    const transferred = applyCashTransfer(bought, {
+      id: "activity-2",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "cash-2",
+      amount: 100,
+      note: ""
+    });
+
+    expect(() => revertManagedTrade(transferred, "activity-1")).toThrow(/現金帳戶後面已有/);
   });
 
   it("converts realized USD P&L using the saved historical FX rate", () => {
