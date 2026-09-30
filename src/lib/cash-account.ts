@@ -92,6 +92,16 @@ export function applyCashLinkedActivity(state: AppState, input: CashLinkedActivi
   if (input.capturePreFlowFromCurrentState && !input.time) {
     throw new Error("自動擷取 TWR 邊界時必須保留事件時間。");
   }
+  if (
+    input.capturePreFlowFromCurrentState &&
+    state.activities.some((activity) =>
+      (activity.type === "deposit" || activity.type === "withdrawal") &&
+      activity.date === input.date &&
+      activity.time === input.time
+    )
+  ) {
+    throw new Error("同一分鐘已有入金／出金事件，無法安全自動決定 TWR 邊界順序；請改用手動模式填入實際時間與邊界。");
+  }
 
   const cash = assertCashHolding(state.holdings.find((item) => item.id === input.cashHoldingId));
   const delta = signedDelta(input.type, input.amount);
