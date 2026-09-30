@@ -630,6 +630,11 @@ function ActivityForm({
       </div>
 
       {date > today ? <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">不能新增未來日期的交易／現金流；請改成實際發生日。</p> : null}
+      {historicalCash ? (
+        <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-xs leading-5 text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+          <strong>歷史補登模式：</strong>只新增帳務紀錄，不修改目前現金餘額。選擇現金帳戶只用來保存帳戶名稱與幣別；歷史入出金仍納入 XIRR／TWR，歷史股息／費用仍納入收入統計。
+        </div>
+      ) : null}
 
       {trade ? (
         <div>
@@ -781,7 +786,7 @@ function ActivityForm({
               }
             }}
           >
-            <option value="">選擇要連動的現金帳戶</option>
+            <option value="">{historicalCash ? "選擇歷史紀錄所屬現金帳戶" : "選擇要連動的現金帳戶"}</option>
             {cashHoldings.map((holding) => (
               <option key={holding.id} value={holding.id}>
                 {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
@@ -967,23 +972,30 @@ function ActivityForm({
       ) : null}
 
       {!trade && !corporate && !transfer && selectedCash ? (
-        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
-          <div className="flex justify-between gap-3">
-            <span>現金餘額</span>
-            <strong>
-              {selectedCash.currency} {selectedCash.price.toLocaleString()} → {(selectedCash.price + ((type === "deposit" || type === "dividend") ? amount : -amount)).toLocaleString()}
-            </strong>
+        historicalCash ? (
+          <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+            <div className="flex justify-between gap-3"><span>目前現金餘額</span><strong>{selectedCash.currency} {selectedCash.price.toLocaleString()}</strong></div>
+            <p className="mt-2 text-black/38 dark:text-white/38">儲存後仍維持相同餘額；系統不會把過去的現金事件重新套用到今天。</p>
           </div>
-          {cashOnlyDebit && amount > selectedCash.price + 1e-9 ? (
-            <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">現金不足，這筆紀錄不會寫入。</p>
-          ) : null}
-        </div>
+        ) : (
+          <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+            <div className="flex justify-between gap-3">
+              <span>現金餘額</span>
+              <strong>
+                {selectedCash.currency} {selectedCash.price.toLocaleString()} → {(selectedCash.price + ((type === "deposit" || type === "dividend") ? amount : -amount)).toLocaleString()}
+              </strong>
+            </div>
+            {cashOnlyDebit && amount > selectedCash.price + 1e-9 ? (
+              <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">現金不足，這筆紀錄不會寫入。</p>
+            ) : null}
+          </div>
+        )
       ) : null}
 
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.59 起，同幣別現金帳戶可用內部轉帳原子搬移餘額，不會誤算成外部現金流。今天的入出金仍可在寫入前自動擷取 Exact TWR pre-flow 淨值；跨幣別換匯暫不偽裝成轉帳。
+        V0.60 起，只有今天實際發生的現金事件會修改目前餘額；過去日期一律以 ledger-only 歷史補登保存，避免舊入出金、股息或費用重播到現在。內部同幣別轉帳仍不算外部現金流。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
