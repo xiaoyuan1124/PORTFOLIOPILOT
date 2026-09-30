@@ -1090,6 +1090,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
     }
   }
 
+  function addHistoricalCashActivity(input: HistoricalCashActivityInput) {
+    try {
+      const next = recordHistoricalCashActivity(state, input);
+      if (!onChange(next)) return false;
+      toast.success("歷史帳務紀錄已新增，目前現金餘額未變動");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全補登歷史現金事件");
+      return false;
+    }
+  }
+
   function addCashTransfer(input: CashTransferInput) {
     try {
       const next = applyCashTransfer(state, input);
@@ -1180,7 +1192,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
             <OpeningBuyForm state={state} onSave={addOpeningPosition} />
           </Modal>
           <Modal title="新增交易／現金流" trigger={<Button><Plus size={16} />新增紀錄</Button>}>
-            <ActivityForm state={state} onSaveCash={addCashActivity} onSaveTransfer={addCashTransfer} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
+            <ActivityForm state={state} onSaveCash={addCashActivity} onSaveHistoricalCash={addHistoricalCashActivity} onSaveTransfer={addCashTransfer} onSaveTrade={addManagedTrade} onSaveCorporateAction={addCorporateAction} />
           </Modal>
         </div>
       </div>
@@ -1201,6 +1213,12 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
           const transfer = isCashTransferActivityType(activity.type);
           const trade = isTradeActivityType(activity.type);
           const corporate = activity.type === "corporate_action";
+          const ledgerOnlyCash =
+            (activity.type === "deposit" ||
+              activity.type === "withdrawal" ||
+              activity.type === "dividend" ||
+              activity.type === "fee") &&
+            !activity.cashImpact;
 
           return (
             <Card key={activity.id}>
@@ -1217,6 +1235,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       {external ? <Badge tone="good">外部現金流</Badge> : transfer ? <Badge>內部資產搬移</Badge> : <Badge>內部紀錄</Badge>}
                       {activity.inventoryImpact ? <Badge tone="good">已套用持股</Badge> : null}
                       {activity.cashImpact ? <Badge tone="good">已連動現金</Badge> : null}
+                      {ledgerOnlyCash ? <Badge tone="warn">Ledger-only・未改目前現金</Badge> : null}
                       {activity.cashTransferImpact ? <Badge tone="good">雙帳戶原子更新</Badge> : null}
                       {external ? (activity.preFlowValueTwd !== undefined ? (
                         <Badge tone="good">
