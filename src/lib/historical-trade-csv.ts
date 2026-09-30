@@ -14,7 +14,7 @@ const HEADER_ALIASES = {
   tax: ["tax", "transactiontax", "交易稅", "證交稅", "成交稅", "其他稅費"],
   fxRate: ["fxrate", "usd/twd", "usdtwd", "匯率", "成交匯率", "換匯匯率"],
   account: ["account", "accountno", "帳戶", "帳號", "證券帳號", "交易帳號", "券商帳戶"],
-  tradeId: ["tradeid", "transactionid", "dealid", "成交序號", "成交編號", "交易序號", "交易編號", "委託序號"]
+  tradeId: ["tradeid", "transactionid", "dealid", "成交序號", "成交編號", "交易序號", "交易編號"]
 } as const;
 
 type CanonicalField = keyof typeof HEADER_ALIASES;
