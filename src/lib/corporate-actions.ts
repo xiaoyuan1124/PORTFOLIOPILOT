@@ -22,6 +22,9 @@ export function applyShareAdjustment(state: AppState, input: ShareAdjustmentInpu
   if (!Number.isFinite(input.ratio) || input.ratio <= 0) {
     throw new Error("股數調整比例必須大於 0。");
   }
+  if (Math.abs(input.ratio - 1) <= 1e-12) {
+    throw new Error("股數調整比例不可為 1，因為這不會改變股數或成本。");
+  }
 
   const before = { ...holding };
   const after: Holding = {
