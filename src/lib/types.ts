@@ -87,7 +87,7 @@ export type InventoryImpact =
 export interface CashImpact {
   cashHoldingId: string;
   before: Holding;
-  after: Holding | null;
+  after: Holding;
   delta: number;
   reason: "trade" | "deposit" | "withdrawal" | "dividend" | "fee";
 }
