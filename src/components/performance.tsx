@@ -115,7 +115,7 @@ export function Performance({ state }: { state: AppState }) {
           <CircleHelp size={18} className="mt-0.5 shrink-0 text-[#7a6549]" />
           <div className="text-sm leading-6 text-black/50 dark:text-white/50">
             <p className="font-semibold text-black/75 dark:text-white/75">入金／出金才是外部現金流。</p>
-            <p className="mt-1">買進、賣出、股息與費用可以做完整日誌，但不會切斷 TWR 子期間。不要把買股票誤記成入金；記錄 TWR 邊界時，填的是現金流前的整體淨值，不是交易金額或持股成本。</p>
+            <p className="mt-1">買進、賣出、股息、費用、同幣別內部轉帳與 TWD / USD 換匯可以做完整日誌，但都不會被當成外部現金流或切斷 TWR 子期間。換匯造成的估值變動可能來自成交匯率、目前估值 FX 與費用差異，不應被重新標成入金／出金來「修正」。</p>
           </div>
         </CardContent>
       </Card>
