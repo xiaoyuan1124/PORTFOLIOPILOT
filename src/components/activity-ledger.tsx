@@ -294,23 +294,6 @@ function OpeningBuyForm({
         {selectedCash && !sufficientCash ? <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">現金不足，首次買進不會寫入任何資料。</p> : null}
       </div>
 
-      {transfer && selectedTransferFrom && selectedTransferTo ? (
-        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
-          <div className="flex justify-between gap-3">
-            <span>{accountName(selectedTransferFrom.account)} 轉出</span>
-            <strong>{selectedTransferFrom.currency} {selectedTransferFrom.price.toLocaleString()} → {(selectedTransferFrom.price - amount).toLocaleString()}</strong>
-          </div>
-          <div className="mt-1 flex justify-between gap-3">
-            <span>{accountName(selectedTransferTo.account)} 轉入</span>
-            <strong>{selectedTransferTo.currency} {selectedTransferTo.price.toLocaleString()} → {(selectedTransferTo.price + amount).toLocaleString()}</strong>
-          </div>
-          {amount > selectedTransferFrom.price + 1e-9 ? (
-            <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">轉出帳戶現金不足，這筆內部轉帳不會寫入。</p>
-          ) : null}
-          <p className="mt-2 text-black/38 dark:text-white/38">總現金與總淨值不因同幣別內部轉帳改變。</p>
-        </div>
-      ) : null}
-
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
         首次買進會同時建立新持股、扣現金並寫入交易。之後加碼請使用一般「買進」，避免重複建立相同部位。
@@ -855,6 +838,23 @@ function ActivityForm({
             <option value="TWD">TWD</option>
             <option value="USD">USD</option>
           </select>
+        </div>
+      ) : null}
+
+      {transfer && selectedTransferFrom && selectedTransferTo ? (
+        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+          <div className="flex justify-between gap-3">
+            <span>{accountName(selectedTransferFrom.account)} 轉出</span>
+            <strong>{selectedTransferFrom.currency} {selectedTransferFrom.price.toLocaleString()} → {(selectedTransferFrom.price - amount).toLocaleString()}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>{accountName(selectedTransferTo.account)} 轉入</span>
+            <strong>{selectedTransferTo.currency} {selectedTransferTo.price.toLocaleString()} → {(selectedTransferTo.price + amount).toLocaleString()}</strong>
+          </div>
+          {amount > selectedTransferFrom.price + 1e-9 ? (
+            <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">轉出帳戶現金不足，這筆內部轉帳不會寫入。</p>
+          ) : null}
+          <p className="mt-2 text-black/38 dark:text-white/38">總現金與總淨值不因同幣別內部轉帳改變。</p>
         </div>
       ) : null}
 
