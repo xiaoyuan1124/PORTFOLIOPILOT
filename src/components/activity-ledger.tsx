@@ -315,6 +315,189 @@ function OpeningBuyForm({
   );
 }
 
+function FxConversionForm({
+  state,
+  onSave
+}: {
+  state: AppState;
+  onSave: (input: CashFxConversionInput) => boolean;
+}) {
+  const today = localDateKey();
+  const cashHoldings = useMemo(
+    () => state.holdings.filter((holding) => holding.type === "cash"),
+    [state.holdings]
+  );
+  const sources = useMemo(
+    () => cashHoldings.filter((source) =>
+      cashHoldings.some((target) =>
+        target.id !== source.id && target.currency !== source.currency
+      )
+    ),
+    [cashHoldings]
+  );
+  const [fromCashHoldingId, setFromCashHoldingId] = useState("");
+  const [toCashHoldingId, setToCashHoldingId] = useState("");
+  const [fromAmount, setFromAmount] = useState(0);
+  const [toAmount, setToAmount] = useState(0);
+  const [note, setNote] = useState("");
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  const selectedFrom =
+    sources.find((holding) => holding.id === fromCashHoldingId) ??
+    sources[0] ??
+    null;
+  const compatibleTargets = selectedFrom
+    ? cashHoldings.filter((holding) =>
+        holding.id !== selectedFrom.id &&
+        holding.currency !== selectedFrom.currency
+      )
+    : [];
+  const selectedTo =
+    compatibleTargets.find((holding) => holding.id === toCashHoldingId) ??
+    compatibleTargets[0] ??
+    null;
+
+  const executionRate =
+    selectedFrom && fromAmount > 0 && toAmount > 0
+      ? selectedFrom.currency === "TWD"
+        ? fromAmount / toAmount
+        : toAmount / fromAmount
+      : null;
+  const sourceValueTwd = selectedFrom
+    ? fromAmount * (selectedFrom.currency === "USD" ? state.usdTwd : 1)
+    : 0;
+  const destinationValueTwd = selectedTo
+    ? toAmount * (selectedTo.currency === "USD" ? state.usdTwd : 1)
+    : 0;
+  const valuationDeltaTwd = destinationValueTwd - sourceValueTwd;
+  const sufficient = selectedFrom !== null && fromAmount <= selectedFrom.price + 1e-9;
+  const valid = Boolean(selectedFrom) &&
+    Boolean(selectedTo) &&
+    fromAmount > 0 &&
+    toAmount > 0 &&
+    Number.isFinite(fromAmount) &&
+    Number.isFinite(toAmount) &&
+    sufficient;
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!valid || !selectedFrom || !selectedTo) return;
+
+    const saved = onSave({
+      id: nextActivityId(state.activities, today),
+      date: today,
+      fromCashHoldingId: selectedFrom.id,
+      toCashHoldingId: selectedTo.id,
+      fromAmount,
+      toAmount,
+      note
+    });
+    if (!saved) return;
+    closeRef.current?.click();
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3">
+      <p className="text-sm leading-6 text-black/50 dark:text-white/50">
+        只記錄你實際被扣掉與實際收到的兩個金額。系統由這兩個值推導成交 TWD/USD，不猜銀行 spread、手續費或優惠匯率。
+      </p>
+
+      <select
+        className="field"
+        value={selectedFrom?.id ?? ""}
+        onChange={(event) => {
+          setFromCashHoldingId(event.target.value);
+          setToCashHoldingId("");
+        }}
+      >
+        <option value="">選擇轉出現金帳戶</option>
+        {sources.map((holding) => (
+          <option key={holding.id} value={holding.id}>
+            {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+          </option>
+        ))}
+      </select>
+
+      <select
+        className="field"
+        value={selectedTo?.id ?? ""}
+        onChange={(event) => setToCashHoldingId(event.target.value)}
+      >
+        <option value="">選擇轉入現金帳戶</option>
+        {compatibleTargets.map((holding) => (
+          <option key={holding.id} value={holding.id}>
+            {accountName(holding.account)} · {holding.currency} {holding.price.toLocaleString()}
+          </option>
+        ))}
+      </select>
+
+      {!sources.length ? (
+        <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">
+          至少需要一個 TWD 現金帳戶與一個 USD 現金帳戶才能記錄內部換匯。
+        </p>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-3">
+        <input
+          className="field"
+          type="number"
+          min="0.000001"
+          step="any"
+          placeholder={selectedFrom ? `實際轉出（${selectedFrom.currency}）` : "實際轉出"}
+          value={fromAmount || ""}
+          onChange={(event) => setFromAmount(Number(event.target.value))}
+        />
+        <input
+          className="field"
+          type="number"
+          min="0.000001"
+          step="any"
+          placeholder={selectedTo ? `實際收到（${selectedTo.currency}）` : "實際收到"}
+          value={toAmount || ""}
+          onChange={(event) => setToAmount(Number(event.target.value))}
+        />
+      </div>
+
+      {selectedFrom && selectedTo ? (
+        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+          <div className="flex justify-between gap-3">
+            <span>{accountName(selectedFrom.account)} · {selectedFrom.currency}</span>
+            <strong>{selectedFrom.price.toLocaleString()} → {(selectedFrom.price - fromAmount).toLocaleString()}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>{accountName(selectedTo.account)} · {selectedTo.currency}</span>
+            <strong>{selectedTo.price.toLocaleString()} → {(selectedTo.price + toAmount).toLocaleString()}</strong>
+          </div>
+          <div className="mt-2 flex justify-between gap-3">
+            <span>推導成交 TWD/USD</span>
+            <strong>{executionRate && Number.isFinite(executionRate) ? executionRate.toFixed(4) : "—"}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>目前估值匯率</span>
+            <strong>{state.usdTwd.toFixed(4)}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>按目前估值匯率的淨值差異</span>
+            <strong>{money(valuationDeltaTwd)}</strong>
+          </div>
+          {fromAmount > selectedFrom.price + 1e-9 ? (
+            <p className="mt-2 text-[#8b6538] dark:text-[#e0bd8c]">轉出帳戶現金不足，換匯不會寫入任何資料。</p>
+          ) : null}
+          <p className="mt-2 text-black/35 dark:text-white/35">
+            上述差異只是以目前 PortfolioPilot 匯率重新估值後的差額，可能包含成交匯率、spread 或費用效果；它不是外部現金流，也不會建立 TWR 邊界。
+          </p>
+        </div>
+      ) : null}
+
+      <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
+      <Button type="submit" disabled={!valid} className="w-full"><ArrowRightLeft size={16} />完成換匯</Button>
+      <Dialog.Close asChild>
+        <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
+      </Dialog.Close>
+    </form>
+  );
+}
+
 function ActivityForm({
   state,
   onSaveCash,
