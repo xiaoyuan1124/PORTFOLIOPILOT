@@ -1385,7 +1385,7 @@ function ActivityForm({
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
 
       <p className="text-xs leading-5 text-black/40 dark:text-white/40">
-        V0.62 起，所有會直接修改目前持股或現金的交易／股數調整也統一採 forward-only：只接受今天的目前狀態。歷史現金事件維持 ledger-only；歷史證券 mutation 不會被重播到今天的庫存。
+        V0.63 起，持股帳戶移轉也採 forward-only：只從今天的目前庫存往前搬移，並保留 V0.62 對買進、賣出與股數調整的 engine-level 日期防線。歷史現金事件維持 ledger-only；任何歷史證券 mutation 都不會被重播到今天的庫存。
       </p>
 
       <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />新增紀錄</Button>
@@ -1743,6 +1743,14 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                         <p className="text-black/35 dark:text-white/35">內部換匯不計入淨投入，也不建立 TWR 外部現金流邊界；轉出與實收金額直接保存，不猜 spread 或費用。</p>
                       </div>
                     ) : null}
+                    {activity.positionTransferImpact ? (
+                      <div className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+                        <p>{accountName(activity.positionTransferImpact.sourceBefore.account)} · 股數 {activity.positionTransferImpact.sourceBefore.quantity.toLocaleString()} → {(activity.positionTransferImpact.sourceAfter?.quantity ?? 0).toLocaleString()}</p>
+                        <p>{accountName(activity.positionTransferImpact.destinationAfter.account)} · 股數 {(activity.positionTransferImpact.destinationBefore?.quantity ?? 0).toLocaleString()} → {activity.positionTransferImpact.destinationAfter.quantity.toLocaleString()}</p>
+                        <p>移轉成本基礎 {activity.currency} {(activity.positionTransferImpact.quantity * activity.positionTransferImpact.sourceBefore.averageCost).toLocaleString()} · 目的平均成本 {activity.positionTransferImpact.destinationAfter.averageCost.toLocaleString()}</p>
+                        <p className="text-black/35 dark:text-white/35">持股移轉不視為買賣，不產生現金流或已實現損益；總成本基礎與總市值必須守恆。</p>
+                      </div>
+                    ) : null}
                     {external && activity.preFlowValueTwd !== undefined ? (
                       <p className="mt-2 text-xs text-black/45 dark:text-white/45">
                         現金流前淨值：{money(activity.preFlowValueTwd)}
@@ -1768,6 +1776,18 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
                       className="h-10 min-h-10 w-10 px-0"
                       aria-label="刪除紀錄"
                       onClick={() => {
+                        if (activity.positionTransferImpact) {
+                          if (!window.confirm("這筆持股移轉已同時更新來源與目的帳戶。刪除時會嘗試精確還原雙方庫存；若任一部位已有後續交易、股數調整、其他移轉或手動校正，系統會拒絕回滾。確定繼續？")) return;
+                          try {
+                            const next = revertSecurityAccountTransfer(state, activity.id);
+                            if (!onChange(next)) return;
+                            toast.success("持股移轉已刪除，來源與目的庫存已還原");
+                          } catch (error) {
+                            toast.error(error instanceof Error ? error.message : "無法安全回滾持股移轉");
+                          }
+                          return;
+                        }
+
                         if (activity.inventoryImpact?.kind === "corporate_action") {
                           if (!window.confirm("這筆股數調整已套用到持股。刪除時會嘗試精確還原事件前庫存；若後續交易或手動修改使資料不一致，系統會拒絕回滾。確定繼續？")) return;
                           try {
@@ -1853,7 +1873,7 @@ export function ActivityLedger({ state, onChange }: { state: AppState; onChange:
       {!activities.length ? (
         <div className="py-14 text-center">
           <p className="text-sm text-black/40 dark:text-white/40">
-            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流／轉帳／換匯紀錄。" : "目前尚未記錄任何交易／現金流／轉帳／換匯。"}
+            {state.activities.length ? "目前沒有符合篩選條件的交易／現金流／轉帳／換匯／持股移轉紀錄。" : "目前尚未記錄任何交易／現金流／轉帳／換匯／持股移轉。"}
           </p>
           {state.activities.length && (filter !== "all" || accountFilter !== "all") ? (
             <GhostButton className="mt-4" onClick={() => { setFilter("all"); setAccountFilter("all"); }}>
