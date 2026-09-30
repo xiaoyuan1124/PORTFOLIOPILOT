@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppState, Holding } from "./types";
-import { applyShareAdjustment, revertCorporateAction } from "./corporate-actions";
+import { localDateKey } from "./calc";
+import { applyShareAdjustment, revertCorporateAction } from "./corporate-actions";\nimport { applySecurityAccountTransfer } from "./security-transfer";
 
 function holding(patch: Partial<Holding> = {}): Holding {
   return {
@@ -208,4 +209,24 @@ describe("corporate share adjustments", () => {
 
     expect(() => revertCorporateAction(drifted, "split")).toThrow(/無法安全回滾/);
   });
+  it("rejects corporate-action rollback after a later security transfer touched the holding", () => {
+    const adjusted = applyShareAdjustment(state(), {
+      id: "activity-1",
+      date: localDateKey(),
+      holdingId: "h1",
+      ratio: 2,
+      note: ""
+    });
+    const transferred = applySecurityAccountTransfer(adjusted, {
+      id: "activity-2",
+      date: localDateKey(),
+      sourceHoldingId: "h1",
+      destinationAccount: "券商B",
+      quantity: 1,
+      note: ""
+    });
+
+    expect(() => revertCorporateAction(transferred, "activity-1")).toThrow(/持股連動事件/);
+  });
+
 });
