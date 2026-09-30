@@ -116,13 +116,6 @@ function OpeningBuyForm({
     };
   }, []);
 
-  useEffect(() => {
-    const preferred = compatibleCash[0]?.id ?? "";
-    if (!compatibleCash.some((holding) => holding.id === cashHoldingId)) {
-      setCashHoldingId(preferred);
-    }
-  }, [cashHoldingId, compatibleCash]);
-
   const lookupResults = useMemo(
     () => market === "TW" && query.trim() ? searchHoldingLookupCatalog(catalog, query) : [],
     [catalog, market, query]
