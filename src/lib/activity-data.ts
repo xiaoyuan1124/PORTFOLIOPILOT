@@ -16,6 +16,10 @@ export function isCashFxActivityType(type: ActivityType) {
   return type === "fx_conversion";
 }
 
+export function isPositionTransferActivityType(type: ActivityType) {
+  return type === "position_transfer";
+}
+
 export function normalizeActivitySecurityFields(
   type: ActivityType,
   symbol: string,
@@ -33,6 +37,14 @@ export function normalizeActivitySecurityFields(
       symbol: normalizedSymbol,
       quantity: Number.isFinite(quantity) && quantity >= 0 ? quantity : 0,
       price: Number.isFinite(price) && price >= 0 ? price : 0
+    };
+  }
+
+  if (isPositionTransferActivityType(type)) {
+    return {
+      symbol: normalizedSymbol,
+      quantity: Number.isFinite(quantity) && quantity >= 0 ? quantity : 0,
+      price: 0
     };
   }
 
