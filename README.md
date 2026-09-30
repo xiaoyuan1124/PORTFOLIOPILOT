@@ -23,6 +23,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Official revenue sector pulse: latest-period industry median YoY, positive-growth breadth and >20% breadth, with minimum-sample and non-price-signal labels
 - Official TWSE / TPEx valuation research with P/E, P/B and dividend yield, preserving source date and missing official fields
 - Company Snapshot research home combining official price, valuation, revenue, margin and 10D institutional data without guessing missing values; quote-only ETFs are supported with company-only metrics explicitly marked not applicable
+- Held-security material-events center using official TWSE / TPEx MOPS OpenAPI disclosures, preserving company statement time, fact date, rule, subject and original description without sentiment or buy/sell labels
 - Official MOPS 3-month revenue history and a real first Scanner gate (3 consecutive YoY > 20%)
 - Official TWSE / TPEx 10-trading-day foreign and investment-trust net-flow gates
 - Official MOPS single-quarter gross-margin history with strict three-quarter improvement gate
@@ -382,3 +383,13 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Security identity, account, market and currency are intentionally read-only during quick reconciliation.
 - If a user manually changes a current security price, stale TWSE/TPEx provenance is cleared and the price is explicitly marked manual; quantity/cost-only changes preserve official source/date.
 - The entire correction is persisted atomically through the existing app-state save path, with validation failing closed on invalid or stale rows.
+
+
+## V0.48 held material-events center
+
+- Research now includes a dedicated 「持股重訊」 view that only shows official material disclosures matching currently held Taiwan securities.
+- Data comes from TWSE and TPEx daily MOPS OpenAPI endpoints; no media-news scraper, AI summary or subjective importance score is used.
+- The build-time updater merges daily official snapshots into a rolling 45-calendar-day local cache so the PWA can stay zero-cost and does not need a runtime market-data server.
+- Each event preserves company statement date/time, fact date, disclosure rule, subject, original description, venue and direct official-source metadata.
+- Holding matching reuses the venue-aware TWSE/TPEx identity rules: known venue is exact, unknown venue resolves only when the code is unique and otherwise fails closed.
+- GitHub Actions refreshes and deploys the material-event cache with the existing Taiwan market-data workflow.
