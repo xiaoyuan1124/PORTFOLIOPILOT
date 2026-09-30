@@ -1,7 +1,7 @@
 import type { AppState, Holding, PortfolioActivity } from "./types";
 import { accountName, holdingIdentityKey } from "./local-data";
 import { localDateKey } from "./calc";
-import { hasLaterRecordedActivity } from "./activity-order";
+import { activityTouchesSecurityHolding, hasLaterRecordedActivity } from "./activity-order";
 import {
   activityTouchesCashHolding,
   holdingSnapshotEqual,
@@ -254,7 +254,7 @@ export function revertManagedTrade(state: AppState, activityId: string): AppStat
   const laterLinked = hasLaterRecordedActivity(
     state.activities,
     activity,
-    (item) => item.inventoryImpact?.holdingId === impact.holdingId
+    (item) => activityTouchesSecurityHolding(item, impact.holdingId)
   );
   if (laterLinked) {
     throw new Error("此部位後面已有其他持股連動事件，請先從最新一筆開始回滾。");
@@ -282,6 +282,17 @@ export function revertManagedTrade(state: AppState, activityId: string): AppStat
     if (!holdingSnapshotEqual(currentCash, cashImpact.after)) {
       throw new Error("目前現金餘額已被後續修改或校正，無法安全自動回滾這筆交易。");
     }
+  }
+
+  if (
+    impact.after === null &&
+    impact.before &&
+    state.holdings.some((item) =>
+      item.id !== impact.holdingId &&
+      holdingIdentityKey(item) === holdingIdentityKey(impact.before!)
+    )
+  ) {
+    throw new Error("原持股帳戶已重新建立同一標的部位，無法安全還原已賣出的舊持股。");
   }
 
   let holdings = replaceHoldingSnapshot(state.holdings, impact.holdingId, impact.before);
