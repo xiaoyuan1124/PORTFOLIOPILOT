@@ -12,6 +12,10 @@ export function isCashTransferActivityType(type: ActivityType) {
   return type === "transfer";
 }
 
+export function isCashExchangeActivityType(type: ActivityType) {
+  return type === "exchange";
+}
+
 export function normalizeActivitySecurityFields(
   type: ActivityType,
   symbol: string,
@@ -20,7 +24,7 @@ export function normalizeActivitySecurityFields(
 ) {
   const normalizedSymbol = symbol.trim().toUpperCase();
 
-  if (isExternalActivityType(type) || isCashTransferActivityType(type)) {
+  if (isExternalActivityType(type) || isCashTransferActivityType(type) || isCashExchangeActivityType(type)) {
     return { symbol: "", quantity: 0, price: 0 };
   }
 
