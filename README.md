@@ -566,3 +566,16 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Activity cards explicitly label cash records without a current-state cash snapshot as **Ledger-only · 未改目前現金**; deleting one removes only ledger/performance history.
 - Backup format remains V11 because the existing activity schema already safely represents ledger-only historical events; no synthetic current-cash snapshot is added.
 
+## V0.61 internal FX conversion
+
+- The activity ledger now has a dedicated **內部換匯** workflow for TWD ↔ USD cash conversion between existing local cash accounts.
+- Users enter the **actual source-account debit** and **actual destination-account credit**. PortfolioPilot derives the execution TWD/USD rate from those two observed amounts instead of guessing bank spread, commission or promotional FX terms.
+- FX conversion is an internal asset movement, not a deposit or withdrawal. It does not change net external contributions and never creates an Exact TWR external-flow boundary.
+- Conversion is forward-only from today's current cash balances. Historical FX events are not replayed into current accounts.
+- Source cash insufficiency fails closed before either account is written. Spending the source exactly to zero preserves the persistent cash-account identity.
+- Each conversion stores both cash accounts' before / after snapshots, source and destination amounts, derived execution TWD/USD and the PortfolioPilot valuation USD/TWD that was active when the event was recorded.
+- Deleting the latest conversion restores both cash accounts exactly only when neither account has later cash-linked events, transfers, conversions or manual drift.
+- Earlier trades, cash events and same-currency transfers treat a later FX conversion as a rollback dependency and refuse to overwrite it.
+- The ledger surfaces both the execution rate and saved valuation rate. Any mark-to-current-rate net-worth difference is descriptive valuation impact, not an external cash flow or a separately fabricated return.
+- Backup format is now V12 and validates FX account identity, opposite currencies, normalized cash snapshots, before / after arithmetic and execution-rate consistency. V1–V11 backups remain readable.
+
