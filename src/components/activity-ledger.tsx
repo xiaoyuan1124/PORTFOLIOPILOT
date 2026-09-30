@@ -43,6 +43,14 @@ const icons: Record<ActivityType, typeof Banknote> = {
   corporate_action: Layers3
 };
 
+function nextActivityId(activities: PortfolioActivity[], date: string) {
+  const prefix = `activity-${date}-`;
+  const used = new Set(activities.map((activity) => activity.id));
+  let sequence = activities.length + 1;
+  while (used.has(`${prefix}${sequence}`)) sequence += 1;
+  return `${prefix}${sequence}`;
+}
+
 function ActivityForm({
   state,
   onSave,
@@ -159,7 +167,7 @@ function ActivityForm({
     if (trade) {
       if (!selectedHolding) return;
       const saved = onSaveTrade({
-        id: `activity-${Date.now()}`,
+        id: nextActivityId(state.activities, date),
         date,
         type,
         holdingId: selectedHolding.id,
@@ -178,7 +186,7 @@ function ActivityForm({
     if (corporate) {
       if (!selectedCorporateHolding) return;
       const saved = onSaveCorporateAction({
-        id: `activity-${Date.now()}`,
+        id: nextActivityId(state.activities, date),
         date,
         holdingId: selectedCorporateHolding.id,
         ratio: shareRatio,
@@ -191,7 +199,7 @@ function ActivityForm({
 
     const security = normalizeActivitySecurityFields(type, symbol, quantity, price);
     const saved = onSave({
-      id: `activity-${Date.now()}`,
+      id: nextActivityId(state.activities, date),
       date,
       ...(external && time ? { time } : {}),
       type,
