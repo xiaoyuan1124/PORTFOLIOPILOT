@@ -5,6 +5,10 @@ import { AlertTriangle, DatabaseBackup, Download, FileSpreadsheet, RotateCcw, Tr
 import { toast } from "sonner";
 import { demoState, emptyState } from "@/lib/demo-data";
 import { localDateKey } from "@/lib/calc";
+import { parseTaiwanBrokerInventoryCsv } from "@/lib/broker-inventory-csv";
+import { buildHoldingLookupCatalog } from "@/lib/holding-autofill";
+import { loadBundledTwQuotes } from "@/lib/market-data";
+import { loadBundledRevenue } from "@/lib/revenue-data";
 import type { AppState } from "@/lib/types";
 import {
   csvTemplate,
@@ -22,6 +26,8 @@ import { Button, Card, CardContent, GhostButton } from "./ui";
 export function Settings({ state, onChange, hasRecoveryBackup = false, onRecoveryBackupCleared, storageWriteBlocked = false }: { state: AppState; onChange: (state: AppState) => boolean; hasRecoveryBackup?: boolean; onRecoveryBackupCleared?: () => void; storageWriteBlocked?: boolean }) {
   const jsonRef = useRef<HTMLInputElement>(null);
   const csvRef = useRef<HTMLInputElement>(null);
+  const brokerCsvRef = useRef<HTMLInputElement>(null);
+  const [brokerAccount, setBrokerAccount] = useState("");
   const [usdDraft, setUsdDraft] = useState<string | null>(null);
 
   function exportRecoveryBackup() {
@@ -114,6 +120,62 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
     }
   }
 
+
+  async function importBrokerInventoryCsv(file?: File) {
+    if (!file) return;
+    if (!brokerAccount.trim()) {
+      toast.error("請先填寫預設匯入帳戶名稱");
+      if (brokerCsvRef.current) brokerCsvRef.current.value = "";
+      return;
+    }
+
+    try {
+      const [quotes, revenue] = await Promise.all([
+        loadBundledTwQuotes(),
+        loadBundledRevenue()
+      ]);
+      const catalog = buildHoldingLookupCatalog(quotes, revenue);
+      const incoming = parseTaiwanBrokerInventoryCsv(
+        await file.text(),
+        brokerAccount,
+        catalog
+      );
+      const base = state.dataMode === "demo" ? emptyState : state;
+      const conflictCount = holdingMergeConflictCount(base.holdings, incoming);
+
+      if (
+        conflictCount > 0 &&
+        !window.confirm(
+          `券商庫存 CSV 有 ${conflictCount} 筆與現有持股的「市場＋代號＋帳戶」相同。繼續會用這次庫存的股數、官方收盤價與平均成本覆蓋既有資料，確定繼續？`
+        )
+      ) return;
+
+      const merged = mergeHoldings(base.holdings, incoming);
+      if (!onChange({ ...base, dataMode: "personal", holdings: merged })) return;
+
+      const dates = [...new Set(
+        incoming
+          .map((holding) => holding.priceAsOf)
+          .filter((value): value is string => Boolean(value))
+      )].sort();
+      const dateLabel = dates.length === 1
+        ? dates[0]
+        : dates.length > 1
+          ? `${dates[0]}～${dates.at(-1)}`
+          : "日期未提供";
+
+      toast.success(
+        conflictCount > 0
+          ? `已匯入 ${incoming.length} 筆券商庫存，覆蓋 ${conflictCount} 筆既有部位 · 官方價格日 ${dateLabel}`
+          : `已匯入 ${incoming.length} 筆券商庫存 · 官方價格日 ${dateLabel}`
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法匯入券商庫存 CSV");
+    } finally {
+      if (brokerCsvRef.current) brokerCsvRef.current.value = "";
+    }
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {hasRecoveryBackup || storageWriteBlocked ? (
@@ -185,6 +247,41 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
             <GhostButton onClick={() => csvRef.current?.click()}><Upload size={16} />匯入 CSV</GhostButton>
             <GhostButton onClick={() => downloadText("portfoliopilot-holdings-template.csv", csvTemplate(), "text/csv;charset=utf-8")}>下載範本</GhostButton>
             <input ref={csvRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => importCsv(e.target.files?.[0])} />
+          </div>
+        </CardContent>
+      </Card>
+
+
+      <Card>
+        <CardContent>
+          <h3 className="font-semibold">台灣券商庫存 CSV</h3>
+          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
+            給券商「目前庫存／持有部位」匯出檔使用，不是逐筆成交明細。系統辨識常見中文欄名，只要求證券代號、持有股數與平均成本；名稱、股票／ETF 類型、產業與目前價格會用 TWSE／TPEx 官方快取確認後補齊。
+          </p>
+          <div className="mt-4 rounded-2xl border border-black/6 bg-black/[.018] p-3.5 text-xs leading-5 text-black/45 dark:border-white/8 dark:bg-white/[.025] dark:text-white/45">
+            若同一代號在不同市場出現、官方標的找不到、數值無效或檔案內有重複庫存，整份匯入會停止，不會猜測或寫入部分資料。成交明細 CSV 因沒有平均成本也會被拒絕。
+          </div>
+          <label className="mt-4 block text-xs font-semibold text-black/45 dark:text-white/45">預設匯入帳戶名稱</label>
+          <input
+            className="field mt-2"
+            value={brokerAccount}
+            onChange={(event) => setBrokerAccount(event.target.value)}
+            placeholder="例如：永豐證券、國泰證券-A"
+          />
+          <p className="mt-2 text-xs leading-5 text-black/35 dark:text-white/35">
+            若 CSV 本身有帳戶／帳號欄位，會優先使用檔案中的值；否則套用這個名稱。
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button disabled={!brokerAccount.trim()} onClick={() => brokerCsvRef.current?.click()}>
+              <Upload size={16} />匯入券商庫存 CSV
+            </Button>
+            <input
+              ref={brokerCsvRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(event) => void importBrokerInventoryCsv(event.target.files?.[0])}
+            />
           </div>
         </CardContent>
       </Card>
