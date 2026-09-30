@@ -160,19 +160,36 @@ export const appStateSchema = z.object({
     });
   }
 
-  for (const [collection, items] of [
-    ["holdings", state.holdings],
-    ["etfCompositions", state.etfCompositions],
-    ["journal", state.journal],
-    ["activities", state.activities]
-  ] as const) {
-    for (const index of duplicateIndexes(items, (item) => item.id)) {
-      ctx.addIssue({
-        code: "custom",
-        path: [collection, index, "id"],
-        message: "同一類型資料不可使用重複 ID。"
-      });
-    }
+  for (const index of duplicateIndexes(state.holdings, (item) => item.id)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["holdings", index, "id"],
+      message: "同一類型資料不可使用重複 ID。"
+    });
+  }
+
+  for (const index of duplicateIndexes(state.etfCompositions, (item) => item.id)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["etfCompositions", index, "id"],
+      message: "同一類型資料不可使用重複 ID。"
+    });
+  }
+
+  for (const index of duplicateIndexes(state.journal, (item) => item.id)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["journal", index, "id"],
+      message: "同一類型資料不可使用重複 ID。"
+    });
+  }
+
+  for (const index of duplicateIndexes(state.activities, (item) => item.id)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["activities", index, "id"],
+      message: "同一類型資料不可使用重複 ID。"
+    });
   }
 
   for (const index of duplicateIndexes(
