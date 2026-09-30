@@ -135,8 +135,8 @@ export function applyHoldingCorrections(existing: Holding[], corrections: Holdin
     }
 
     if (current.type === "cash") {
-      if (!Number.isFinite(correction.price) || correction.price <= 0) {
-        throw new Error(`${current.currency} 現金餘額必須大於 0。`);
+      if (!Number.isFinite(correction.price) || correction.price < 0) {
+        throw new Error(`${current.currency} 現金餘額不可小於 0。`);
       }
 
       updated.set(current.id, {
