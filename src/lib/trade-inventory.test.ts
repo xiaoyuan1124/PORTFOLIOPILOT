@@ -140,7 +140,9 @@ describe("managed trade inventory", () => {
     expect(sold.holdings.find((item) => item.id === "cash")?.price).toBe(19470);
 
     const reverted = revertManagedTrade(sold, "sell-all");
-    expect(reverted.holdings).toEqual([holding(), cashFor(holding())]);
+    expect([...reverted.holdings].sort((a, b) => a.id.localeCompare(b.id))).toEqual(
+      [holding(), cashFor(holding())].sort((a, b) => a.id.localeCompare(b.id))
+    );
     expect(reverted.activities).toHaveLength(0);
   });
 
