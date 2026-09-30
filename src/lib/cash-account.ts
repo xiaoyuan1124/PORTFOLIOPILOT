@@ -26,7 +26,7 @@ function assertCashHolding(holding: Holding | undefined) {
   return holding;
 }
 
-export function nextCashSnapshot(holding: Holding, delta: number): Holding | null {
+export function nextCashSnapshot(holding: Holding, delta: number): Holding {
   const cash = assertCashHolding(holding);
   if (!Number.isFinite(delta) || delta === 0) throw new Error("現金異動金額無效。");
 
@@ -34,13 +34,13 @@ export function nextCashSnapshot(holding: Holding, delta: number): Holding | nul
   if (nextBalance < -1e-9) {
     throw new Error(`${cash.currency} 現金不足：目前 ${cash.price.toLocaleString()}，需要 ${Math.abs(delta).toLocaleString()}。`);
   }
-  if (nextBalance <= 1e-9) return null;
+  const normalizedBalance = Math.abs(nextBalance) <= 1e-9 ? 0 : nextBalance;
 
   return {
     ...cash,
     quantity: 1,
-    price: nextBalance,
-    averageCost: nextBalance,
+    price: normalizedBalance,
+    averageCost: normalizedBalance,
     priceSource: undefined,
     priceAsOf: undefined
   };
