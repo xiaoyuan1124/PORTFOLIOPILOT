@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowDownCircle, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
+import { ArrowDownCircle, ArrowRightLeft, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
-import { isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
+import { isCashTransferActivityType, isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
 import { localDateKey, localTimeKey, portfolioSummary } from "@/lib/calc";
 import {
   buildHoldingLookupCatalog,
@@ -16,8 +16,11 @@ import { loadBundledTwQuotes } from "@/lib/market-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
 import {
   applyCashLinkedActivity,
+  applyCashTransfer,
   revertCashLinkedActivity,
-  type CashLinkedActivityInput
+  revertCashTransfer,
+  type CashLinkedActivityInput,
+  type CashTransferInput
 } from "@/lib/cash-account";
 import {
   applyShareAdjustment,
@@ -44,6 +47,7 @@ const labels: Record<ActivityType, string> = {
   sell: "賣出",
   dividend: "股息",
   fee: "費用",
+  transfer: "內部轉帳",
   corporate_action: "股數調整"
 };
 
@@ -54,6 +58,7 @@ const icons: Record<ActivityType, typeof Banknote> = {
   sell: Banknote,
   dividend: ReceiptText,
   fee: ReceiptText,
+  transfer: ArrowRightLeft,
   corporate_action: Layers3
 };
 
@@ -304,11 +309,13 @@ function OpeningBuyForm({
 function ActivityForm({
   state,
   onSaveCash,
+  onSaveTransfer,
   onSaveTrade,
   onSaveCorporateAction
 }: {
   state: AppState;
   onSaveCash: (input: CashLinkedActivityInput) => boolean;
+  onSaveTransfer: (input: CashTransferInput) => boolean;
   onSaveTrade: (input: ManagedTradeInput) => boolean;
   onSaveCorporateAction: (input: ShareAdjustmentInput) => boolean;
 }) {
@@ -340,6 +347,13 @@ function ActivityForm({
   const [tradeHoldingId, setTradeHoldingId] = useState(defaultTradeHolding?.id ?? "");
   const [tradeCashHoldingId, setTradeCashHoldingId] = useState(defaultCashHolding?.id ?? "");
   const [cashHoldingId, setCashHoldingId] = useState(defaultCashHolding?.id ?? "");
+  const [transferFromCashHoldingId, setTransferFromCashHoldingId] = useState(cashHoldings[0]?.id ?? "");
+  const [transferToCashHoldingId, setTransferToCashHoldingId] = useState(
+    cashHoldings.find((holding) =>
+      holding.id !== cashHoldings[0]?.id &&
+      holding.currency === cashHoldings[0]?.currency
+    )?.id ?? ""
+  );
   const [corporateHoldingId, setCorporateHoldingId] = useState(defaultTradeHolding?.id ?? "");
   const [shareRatio, setShareRatio] = useState(1);
   const [note, setNote] = useState("");
@@ -348,11 +362,20 @@ function ActivityForm({
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const external = isExternalActivityType(type);
+  const transfer = isCashTransferActivityType(type);
   const trade = isTradeActivityType(type);
   const corporate = type === "corporate_action";
   const selectedHolding = tradeHoldings.find((holding) => holding.id === tradeHoldingId) ?? null;
   const selectedTradeCash = cashHoldings.find((holding) => holding.id === tradeCashHoldingId) ?? null;
   const selectedCash = cashHoldings.find((holding) => holding.id === cashHoldingId) ?? null;
+  const selectedTransferFrom = cashHoldings.find((holding) => holding.id === transferFromCashHoldingId) ?? null;
+  const selectedTransferTo = cashHoldings.find((holding) => holding.id === transferToCashHoldingId) ?? null;
+  const compatibleTransferTargets = selectedTransferFrom
+    ? cashHoldings.filter((holding) =>
+        holding.id !== selectedTransferFrom.id &&
+        holding.currency === selectedTransferFrom.currency
+      )
+    : [];
   const selectedCorporateHolding = tradeHoldings.find((holding) => holding.id === corporateHoldingId) ?? null;
   const compatibleTradeCash = selectedHolding
     ? cashHoldings.filter((holding) => holding.currency === selectedHolding.currency)
@@ -362,6 +385,7 @@ function ActivityForm({
   const cashOnlyDebit = type === "withdrawal" || type === "fee";
   const tradeCashSufficient = type !== "buy" || (selectedTradeCash !== null && tradeNet <= selectedTradeCash.price + 1e-9);
   const cashOnlySufficient = !cashOnlyDebit || (selectedCash !== null && amount <= selectedCash.price + 1e-9);
+  const transferSufficient = selectedTransferFrom !== null && amount <= selectedTransferFrom.price + 1e-9;
   const currentPortfolioValueTwd = portfolioSummary(state.holdings, state.usdTwd).total;
   const effectiveFxRate = external && boundaryMode === "auto" && currency === "USD" ? state.usdTwd : fxRate;
   const boundaryValid = !external ||
@@ -383,13 +407,21 @@ function ActivityForm({
         tax >= 0 &&
         tradeCashSufficient &&
         (type !== "sell" || (selectedHolding !== null && quantity <= selectedHolding.quantity && tradeNet > 0))
-      : corporate
-        ? Boolean(selectedCorporateHolding) &&
+      : transfer
+        ? Boolean(selectedTransferFrom) &&
+          Boolean(selectedTransferTo) &&
+          selectedTransferFrom?.id !== selectedTransferTo?.id &&
+          selectedTransferFrom?.currency === selectedTransferTo?.currency &&
           date === today &&
-          Number.isFinite(shareRatio) &&
-          shareRatio > 0 &&
-          Math.abs(shareRatio - 1) > 1e-12
-        : Boolean(selectedCash) && amount > 0 && cashOnlySufficient);
+          amount > 0 &&
+          transferSufficient
+        : corporate
+          ? Boolean(selectedCorporateHolding) &&
+            date === today &&
+            Number.isFinite(shareRatio) &&
+            shareRatio > 0 &&
+            Math.abs(shareRatio - 1) > 1e-12
+          : Boolean(selectedCash) && amount > 0 && cashOnlySufficient);
 
   function changeType(nextType: ActivityType) {
     setType(nextType);
