@@ -449,3 +449,14 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Legacy local state and version-1 through version-4 backups migrate with an empty target set.
 - Drift is shown in percentage points as current allocation minus the user’s own target. The UI does not convert drift into buy, sell or rebalance instructions.
 - Targets for assets no longer held can remain visible at 0% current allocation, while currently held but untargeted assets appear with a 0% target so hidden exposure cannot disappear from the comparison.
+
+
+## V0.52 dividend center
+
+- Portfolio now includes a **股息** tab that summarizes only dividend activities already recorded by the user and dated no later than today.
+- The center shows current-year, trailing-12-month, current-month and lifetime recorded dividend income in TWD equivalent.
+- USD dividend records use each activity’s saved historical FX rate rather than the current USD/TWD rate.
+- A rolling 12-month chart, per-symbol totals and annual totals are derived from actual recorded cash receipts.
+- Future-dated dividend records are excluded from received-income totals and surfaced as excluded records instead of being treated as expected income.
+- Dividend records without a symbol remain included in total cash received but are grouped under **未指定** rather than guessed against a holding.
+- The center intentionally does not forecast future dividend dates, amounts or yields from historical patterns. Future forecast work will remain separate from actual received-income accounting.
