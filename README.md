@@ -345,3 +345,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Removed `@supabase/supabase-js` from runtime dependencies.
 - No user-facing behavior changed; PortfolioPilot continues to store personal portfolio state only in browser localStorage.
 - This keeps the current build aligned with the zero-cost, local-first architecture and avoids an unnecessary cloud SDK / supply-chain surface.
+
+
+## V0.44 holding market / currency integrity
+
+- JSON/local-state and holdings CSV imports now reject TW holdings marked as USD or US holdings marked as TWD, preventing accidental double conversion or missing conversion in portfolio totals.
+- TWSE / TPEx price provenance can only be attached to Taiwan securities and must include an official data date.
+- A price data date without a corresponding source fails closed instead of appearing trustworthy without provenance.
+- Cash cannot carry stale exchange price source/date metadata.
+- Regression tests cover market/currency mismatches, incomplete official provenance and stale cash provenance.
