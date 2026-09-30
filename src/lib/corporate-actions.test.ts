@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { localDateKey } from "./calc";
 import type { AppState, Holding } from "./types";
 import { applyShareAdjustment, revertCorporateAction } from "./corporate-actions";
 
@@ -35,10 +36,24 @@ function state(baseHolding = holding()): AppState {
 }
 
 describe("corporate share adjustments", () => {
+  it("rejects historical share adjustments before mutating current holdings", () => {
+    const base = state();
+    expect(() => applyShareAdjustment(base, {
+      id: "historical-split",
+      date: "2000-01-01",
+      holdingId: "h1",
+      ratio: 2,
+      note: ""
+    })).toThrow(/歷史 corporate action 不可重播/);
+
+    expect(base.holdings).toEqual([holding()]);
+    expect(base.activities).toEqual([]);
+  });
+
   it("applies a 2-for-1 split while preserving total cost basis", () => {
     const next = applyShareAdjustment(state(), {
       id: "split",
-      date: "2026-09-30",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 2,
       note: "1拆2"
@@ -65,7 +80,7 @@ describe("corporate share adjustments", () => {
   it("applies a reverse split and preserves total cost basis", () => {
     const next = applyShareAdjustment(state(), {
       id: "reverse",
-      date: "2026-09-30",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 0.2,
       note: "5併1"
@@ -79,7 +94,7 @@ describe("corporate share adjustments", () => {
   it("supports proportional stock-dividend style share increases", () => {
     const next = applyShareAdjustment(state(), {
       id: "stock-dividend",
-      date: "2026-09-30",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 1.1,
       note: "股數增加10%"
@@ -92,7 +107,7 @@ describe("corporate share adjustments", () => {
   it("rejects zero, negative and no-op ratios", () => {
     expect(() => applyShareAdjustment(state(), {
       id: "bad",
-      date: "2026-09-30",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 0,
       note: ""
@@ -100,7 +115,7 @@ describe("corporate share adjustments", () => {
 
     expect(() => applyShareAdjustment(state(), {
       id: "noop",
-      date: "2026-09-30",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 1,
       note: ""
@@ -110,7 +125,7 @@ describe("corporate share adjustments", () => {
   it("reverts the latest share adjustment exactly", () => {
     const adjusted = applyShareAdjustment(state(), {
       id: "split",
-      date: "2026-09-30",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 2,
       note: ""
@@ -124,7 +139,7 @@ describe("corporate share adjustments", () => {
   it("rejects rollback after later inventory-linked activity", () => {
     const adjusted = applyShareAdjustment(state(), {
       id: "a",
-      date: "2026-09-29",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 2,
       note: ""
@@ -136,7 +151,7 @@ describe("corporate share adjustments", () => {
         ...adjusted.activities,
         {
           id: "z",
-          date: "2026-09-30",
+          date: localDateKey(),
           type: "buy" as const,
           symbol: "2330",
           amount: 1000,
@@ -166,21 +181,21 @@ describe("corporate share adjustments", () => {
   it("uses recorded order instead of lexicographic IDs for same-day rollback safety", () => {
     const first = applyShareAdjustment(state(), {
       id: "activity-2026-09-30-9",
-      date: "2026-09-30",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 2,
       note: ""
     });
     const second = applyShareAdjustment(first, {
       id: "activity-2026-09-30-10",
-      date: "2026-09-30",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 2,
       note: ""
     });
     const third = applyShareAdjustment(second, {
       id: "activity-2026-09-30-11",
-      date: "2026-09-30",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 0.5,
       note: ""
@@ -196,7 +211,7 @@ describe("corporate share adjustments", () => {
   it("rejects rollback after manual holding drift", () => {
     const adjusted = applyShareAdjustment(state(), {
       id: "split",
-      date: "2026-09-30",
+      date: localDateKey(),
       holdingId: "h1",
       ratio: 2,
       note: ""
