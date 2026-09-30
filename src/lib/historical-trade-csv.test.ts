@@ -230,6 +230,29 @@ describe("historical trade CSV adapter", () => {
     });
   });
 
+  it("preserves only the source filename while keeping fingerprint and batch identity content-based", () => {
+    const csv = [
+      "日期,買賣,市場,代號,股數,成交價,手續費,交易稅,帳戶,成交序號",
+      "2020/01/02,買進,TW,2330,1,100,1,0,券商,A001"
+    ].join("\n");
+
+    const first = parseHistoricalTradeCsv(csv, "", null, "C:\\Users\\user\\Downloads\\broker-history.csv");
+    const renamed = parseHistoricalTradeCsv(csv, "", null, "renamed.csv");
+
+    expect(first[0]?.importFileName).toBe("broker-history.csv");
+    expect(renamed[0]?.importFileName).toBe("renamed.csv");
+    expect(first[0]?.importFingerprint).toBe(renamed[0]?.importFingerprint);
+    expect(first[0]?.importBatchId).toBe(renamed[0]?.importBatchId);
+
+    const preview = previewHistoricalTradeCsv(state(), csv, "", null, "/tmp/broker-history.csv");
+    expect(preview.sourceFileName).toBe("broker-history.csv");
+
+    const imported = importHistoricalTradeCsv(state(), csv, "", null, "broker-history.csv");
+    expect(imported.sourceFileName).toBe("broker-history.csv");
+    expect(imported.state.activities[0]?.historicalTrade?.importFileName).toBe("broker-history.csv");
+    expect(historicalTradeCsvBatches(imported.state)[0]?.sourceFileNames).toEqual(["broker-history.csv"]);
+  });
+
   it("uses the same duplicate guard during preview as the real import", () => {
     const csv = [
       "日期,買賣,市場,代號,股數,成交價,手續費,交易稅,帳戶,成交序號",
