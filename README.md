@@ -310,3 +310,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Impossible dates such as 2026-02-31 and malformed date strings fail closed instead of entering sorting, performance or trust displays.
 - ETF CSV date input keeps whitespace trimming compatibility before strict calendar validation.
 - Regression tests cover malformed activity dates, impossible snapshot dates and invalid official price as-of dates.
+
+
+## V0.40 imported activity integrity
+
+- Activity integrity rules now apply to JSON/local-state parsing as well as the interactive form.
+- Imported buy/sell rows without a security symbol fail closed.
+- Legacy deposits/withdrawals deterministically discard stale symbol, quantity and trade-price fields while preserving valid external-flow time/boundary data.
+- Imported dividends/fees keep an optional normalized symbol but discard stale trade quantity/price and non-applicable time fields.
+- Regression tests cover both safe legacy normalization and missing trade identity rejection.
