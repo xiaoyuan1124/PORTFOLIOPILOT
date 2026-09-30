@@ -553,3 +553,16 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Backup V11 validates transfer account IDs, currency consistency, normalized cash snapshots and exact before ± amount = after arithmetic; tampered transfer backups fail closed.
 - Legacy V1–V10 backups remain readable.
 
+## V0.60 currency exchange
+
+- The activity ledger now has a dedicated **TWD / USD 換匯** workflow for moving value between existing TWD and USD cash accounts without misclassifying the event as a deposit / withdrawal.
+- Exchange events are forward-only from today's current local balances. Historical exchange events are not replayed into current holdings.
+- Users record the actual execution rate as **TWD per USD** plus an optional fee charged in the source currency. PortfolioPilot calculates the target-currency credit deterministically from those values.
+- TWD → USD uses `target USD = source TWD / execution rate`; USD → TWD uses `target TWD = source USD × execution rate`. The source cash debit is `source amount + source-currency fee`.
+- Exchange events atomically update both persistent cash-account identities and preserve both sides' before / after snapshots. Exact source depletion to zero keeps the cash account instead of deleting it.
+- Currency exchange is an internal asset conversion: it does **not** change net external contributions and does **not** create Exact TWR external-flow boundaries.
+- The UI separately shows the estimated current-valuation impact using PortfolioPilot's saved USD/TWD valuation rate. That valuation movement is explicitly not labeled investment return; it can reflect execution-rate differences and fees.
+- Deleting the latest exchange restores both cash accounts only when neither side has later linked events or manual drift. Earlier cash / trade / transfer rollbacks also treat a later exchange as a dependency.
+- Backup V12 validates source / target cash IDs, opposite currencies, normalized cash snapshots, execution-rate math, source fee arithmetic and exact before / after balances. Tampered exchange backups fail closed.
+- Legacy V1–V11 backups remain readable.
+
