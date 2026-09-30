@@ -120,7 +120,6 @@ export function revertManagedTrade(state: AppState, activityId: string): AppStat
   const laterLinked = state.activities.some((item) =>
     item.id !== activity.id &&
     item.inventoryImpact?.holdingId === impact.holdingId &&
-    item.inventoryImpact.kind === "trade" &&
     (item.date > activity.date || (item.date === activity.date && item.id > activity.id))
   );
   if (laterLinked) {
