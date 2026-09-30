@@ -82,6 +82,17 @@ export const holdingSchema = z.object({
   }
 });
 
+export const inventoryImpactSchema = z.object({
+  kind: z.literal("trade"),
+  holdingId: z.string().min(1),
+  before: holdingSchema,
+  after: holdingSchema.nullable(),
+  fee: z.number().finite().nonnegative(),
+  tax: z.number().finite().nonnegative(),
+  realizedPnl: z.number().finite(),
+  method: z.literal("average_cost")
+});
+
 export const etfConstituentSchema = z.object({
   market: z.enum(["TW", "US"]),
   symbol: z.string().trim().min(1).max(32),
@@ -133,7 +144,8 @@ export const activitySchema = z.object({
   price: z.number().finite().nonnegative(),
   note: z.string(),
   account: z.string().trim().min(1).max(120).optional(),
-  preFlowValueTwd: z.number().finite().nonnegative().optional()
+  preFlowValueTwd: z.number().finite().nonnegative().optional(),
+  inventoryImpact: inventoryImpactSchema.optional()
 }).superRefine((activity, ctx) => {
   if (isTradeActivityType(activity.type) && !activity.symbol.trim()) {
     ctx.addIssue({
@@ -149,6 +161,43 @@ export const activitySchema = z.object({
       path: ["preFlowValueTwd"],
       message: "TWR 邊界估值只適用於入金或出金。"
     });
+  }
+
+  if (activity.inventoryImpact && !isTradeActivityType(activity.type)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["inventoryImpact"],
+      message: "持股連動資訊只能附在買進／賣出交易。"
+    });
+  }
+
+  if (activity.inventoryImpact) {
+    const impact = activity.inventoryImpact;
+    const expectedSymbol = impact.before.symbol.trim().toUpperCase();
+    const expectedAccount = (impact.before.account?.trim() || "預設帳戶").toLowerCase();
+    const activityAccount = (activity.account?.trim() || "預設帳戶").toLowerCase();
+
+    if (impact.before.id !== impact.holdingId || (impact.after && impact.after.id !== impact.holdingId)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["inventoryImpact", "holdingId"],
+        message: "持股連動快照的部位 ID 不一致。"
+      });
+    }
+    if (activity.symbol.trim().toUpperCase() !== expectedSymbol) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["symbol"],
+        message: "交易代號與持股連動快照不一致。"
+      });
+    }
+    if (activity.currency !== impact.before.currency || activityAccount !== expectedAccount) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["inventoryImpact"],
+        message: "交易幣別或帳戶與持股連動快照不一致。"
+      });
+    }
   }
 }).transform((activity) => {
   const normalized = {
@@ -290,7 +339,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),
