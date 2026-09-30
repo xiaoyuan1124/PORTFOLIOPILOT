@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownCircle, ArrowRightLeft, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
+import type { ActivityType, AppState, Currency, Market, PortfolioActivity } from "@/lib/types";
 import { isCashFxActivityType, isCashTransferActivityType, isExternalActivityType, isPositionTransferActivityType, isTradeActivityType } from "@/lib/activity-data";
 import { localDateKey, localTimeKey, portfolioSummary } from "@/lib/calc";
 import {
@@ -40,6 +40,10 @@ import {
   revertSecurityAccountTransfer,
   type SecurityAccountTransferInput
 } from "@/lib/security-transfer";
+import {
+  recordHistoricalTrade,
+  type HistoricalTradeInput
+} from "@/lib/historical-trade";
 import { activityAmountTwd } from "@/lib/performance";
 import {
   applyManagedTrade,
@@ -676,6 +680,154 @@ function SecurityTransferForm({
 
       <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
       <Button type="submit" disabled={!valid} className="w-full"><ArrowRightLeft size={16} />完成持股移轉</Button>
+      <Dialog.Close asChild>
+        <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
+      </Dialog.Close>
+    </form>
+  );
+}
+
+function HistoricalTradeForm({
+  state,
+  onSave
+}: {
+  state: AppState;
+  onSave: (input: HistoricalTradeInput) => boolean;
+}) {
+  const today = localDateKey();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const latestHistoricalDate = localDateKey(yesterday);
+  const accountSuggestions = useMemo(
+    () => [...new Set([
+      ...state.holdings.map((holding) => accountName(holding.account)),
+      ...state.activities.map((activity) => accountName(activity.account))
+    ])].sort((a, b) => a.localeCompare(b, "zh-Hant")),
+    [state.activities, state.holdings]
+  );
+
+  const [type, setType] = useState<"buy" | "sell">("buy");
+  const [date, setDate] = useState(latestHistoricalDate);
+  const [market, setMarket] = useState<Market>("TW");
+  const [symbol, setSymbol] = useState("");
+  const [account, setAccount] = useState("");
+  const [quantity, setQuantity] = useState(0);
+  const [price, setPrice] = useState(0);
+  const [fee, setFee] = useState(0);
+  const [tax, setTax] = useState(0);
+  const [fxRate, setFxRate] = useState(0);
+  const [note, setNote] = useState("");
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  const gross = quantity * price;
+  const amount = type === "buy" ? gross + fee + tax : gross - fee - tax;
+  const valid = Boolean(date) &&
+    date < today &&
+    Boolean(symbol.trim()) &&
+    quantity > 0 &&
+    price > 0 &&
+    fee >= 0 &&
+    tax >= 0 &&
+    Number.isFinite(quantity) &&
+    Number.isFinite(price) &&
+    Number.isFinite(fee) &&
+    Number.isFinite(tax) &&
+    amount > 0 &&
+    (market === "TW" || (Number.isFinite(fxRate) && fxRate > 0));
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!valid) return;
+    const saved = onSave({
+      id: nextActivityId(state.activities, date),
+      date,
+      type,
+      market,
+      symbol,
+      account,
+      quantity,
+      price,
+      fee,
+      tax,
+      fxRate: market === "TW" ? 1 : fxRate,
+      note
+    });
+    if (!saved) return;
+    closeRef.current?.click();
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3">
+      <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-xs leading-5 text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
+        <strong>Ledger-only 歷史補登：</strong>只補交易日誌，不修改今天的持股或現金，也不反推已實現損益。只有你明確輸入的 fee / tax 會進成本透明化統計。
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <select className="field" value={type} onChange={(event) => setType(event.target.value as "buy" | "sell")}>
+          <option value="buy">歷史買進</option>
+          <option value="sell">歷史賣出</option>
+        </select>
+        <input className="field" type="date" max={latestHistoricalDate} value={date} onChange={(event) => setDate(event.target.value)} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <select
+          className="field"
+          value={market}
+          onChange={(event) => {
+            const next = event.target.value as Market;
+            setMarket(next);
+            setFxRate(next === "TW" ? 1 : 0);
+          }}
+        >
+          <option value="TW">台股 · TWD</option>
+          <option value="US">美股 · USD</option>
+        </select>
+        <input className="field" placeholder="股票 / ETF 代號" value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase())} />
+      </div>
+
+      <div>
+        <input className="field" list="historical-trade-accounts" placeholder="交易帳戶（留白＝預設帳戶）" value={account} onChange={(event) => setAccount(event.target.value)} />
+        <datalist id="historical-trade-accounts">
+          {accountSuggestions.map((name) => <option key={name} value={name} />)}
+        </datalist>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <input className="field" type="number" min="0.000001" step="any" placeholder="成交數量" value={quantity || ""} onChange={(event) => setQuantity(Number(event.target.value))} />
+        <input className="field" type="number" min="0.000001" step="any" placeholder="成交價" value={price || ""} onChange={(event) => setPrice(Number(event.target.value))} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <input className="field" type="number" min="0" step="any" placeholder="手續費" value={fee || ""} onChange={(event) => setFee(Number(event.target.value))} />
+        <input className="field" type="number" min="0" step="any" placeholder="交易稅 / 其他成交稅" value={tax || ""} onChange={(event) => setTax(Number(event.target.value))} />
+      </div>
+
+      {market === "US" ? (
+        <div>
+          <input className="field" type="number" min="0.000001" step="any" placeholder="交易當日 USD/TWD 匯率" value={fxRate || ""} onChange={(event) => setFxRate(Number(event.target.value))} />
+          <p className="mt-2 px-1 text-[11px] leading-5 text-black/38 dark:text-white/38">
+            請輸入交易當時可確認的歷史匯率；系統不會用今天匯率補猜過去資料。
+          </p>
+        </div>
+      ) : null}
+
+      <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+        <div className="flex justify-between gap-3">
+          <span>成交總額</span>
+          <strong>{market === "TW" ? "TWD" : "USD"} {Number.isFinite(gross) ? gross.toLocaleString() : "—"}</strong>
+        </div>
+        <div className="mt-1 flex justify-between gap-3">
+          <span>{type === "buy" ? "歷史總成本" : "歷史淨收入"}</span>
+          <strong>{market === "TW" ? "TWD" : "USD"} {Number.isFinite(amount) ? amount.toLocaleString() : "—"}</strong>
+        </div>
+        <p className="mt-2 text-black/35 dark:text-white/35">
+          這筆紀錄不會推算 realized P/L，因為單筆補登沒有完整歷史成本基礎，PortfolioPilot 會保持資料不足而不是猜測。
+        </p>
+      </div>
+
+      <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
+      <Button type="submit" disabled={!valid} className="w-full"><Plus size={16} />補登歷史買賣</Button>
       <Dialog.Close asChild>
         <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
       </Dialog.Close>
