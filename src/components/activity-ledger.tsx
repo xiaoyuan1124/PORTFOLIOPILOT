@@ -5,7 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowDownCircle, ArrowRightLeft, ArrowUpCircle, Banknote, Layers3, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivityType, AppState, Currency, PortfolioActivity } from "@/lib/types";
-import { isCashFxActivityType, isCashTransferActivityType, isExternalActivityType, isTradeActivityType } from "@/lib/activity-data";
+import { isCashFxActivityType, isCashTransferActivityType, isExternalActivityType, isPositionTransferActivityType, isTradeActivityType } from "@/lib/activity-data";
 import { localDateKey, localTimeKey, portfolioSummary } from "@/lib/calc";
 import {
   buildHoldingLookupCatalog,
@@ -35,6 +35,11 @@ import {
   type CashFxConversionInput
 } from "@/lib/cash-fx";
 import { accountName } from "@/lib/local-data";
+import {
+  applySecurityAccountTransfer,
+  revertSecurityAccountTransfer,
+  type SecurityAccountTransferInput
+} from "@/lib/security-transfer";
 import { activityAmountTwd } from "@/lib/performance";
 import {
   applyManagedTrade,
@@ -56,6 +61,7 @@ const labels: Record<ActivityType, string> = {
   fee: "費用",
   transfer: "內部轉帳",
   fx_conversion: "內部換匯",
+  position_transfer: "持股移轉",
   corporate_action: "股數調整"
 };
 
@@ -68,6 +74,7 @@ const icons: Record<ActivityType, typeof Banknote> = {
   fee: ReceiptText,
   transfer: ArrowRightLeft,
   fx_conversion: ArrowRightLeft,
+  position_transfer: ArrowRightLeft,
   corporate_action: Layers3
 };
 
@@ -498,6 +505,184 @@ function FxConversionForm({
   );
 }
 
+function SecurityTransferForm({
+  state,
+  onSave
+}: {
+  state: AppState;
+  onSave: (input: SecurityAccountTransferInput) => boolean;
+}) {
+  const today = localDateKey();
+  const securities = useMemo(
+    () => state.holdings.filter((holding) => holding.type !== "cash"),
+    [state.holdings]
+  );
+  const accountSuggestions = useMemo(
+    () => [...new Set(state.holdings.map((holding) => accountName(holding.account)))],
+    [state.holdings]
+  );
+  const [sourceHoldingId, setSourceHoldingId] = useState("");
+  const [destinationAccount, setDestinationAccount] = useState("");
+  const [quantity, setQuantity] = useState(0);
+  const [note, setNote] = useState("");
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  const source =
+    securities.find((holding) => holding.id === sourceHoldingId) ??
+    securities[0] ??
+    null;
+  const targetAccount = destinationAccount.trim();
+  const existingDestination = source && targetAccount
+    ? securities.find((holding) =>
+        holding.id !== source.id &&
+        holding.market === source.market &&
+        holding.symbol.trim().toUpperCase() === source.symbol.trim().toUpperCase() &&
+        accountName(holding.account).toLowerCase() === targetAccount.toLowerCase()
+      ) ?? null
+    : null;
+
+  const sameAccount = Boolean(source) &&
+    Boolean(targetAccount) &&
+    accountName(source?.account).toLowerCase() === targetAccount.toLowerCase();
+  const compatibleDestination = !existingDestination || (
+    existingDestination.type === source?.type &&
+    existingDestination.currency === source?.currency &&
+    Math.abs(existingDestination.price - (source?.price ?? 0)) <= 1e-8 &&
+    existingDestination.priceSource === source?.priceSource &&
+    existingDestination.priceAsOf === source?.priceAsOf
+  );
+  const quantityValid = Boolean(source) &&
+    Number.isFinite(quantity) &&
+    quantity > 0 &&
+    quantity <= (source?.quantity ?? 0) + 1e-9;
+  const valid = Boolean(source) &&
+    Boolean(targetAccount) &&
+    !sameAccount &&
+    quantityValid &&
+    compatibleDestination;
+
+  const destinationQuantity = existingDestination
+    ? existingDestination.quantity + quantity
+    : quantity;
+  const destinationAverageCost =
+    source && quantity > 0 && destinationQuantity > 0
+      ? (
+          (existingDestination
+            ? existingDestination.quantity * existingDestination.averageCost
+            : 0) +
+          quantity * source.averageCost
+        ) / destinationQuantity
+      : null;
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!valid || !source) return;
+
+    const saved = onSave({
+      id: nextActivityId(state.activities, today),
+      date: today,
+      sourceHoldingId: source.id,
+      destinationAccount: targetAccount,
+      quantity,
+      note
+    });
+    if (!saved) return;
+    closeRef.current?.click();
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3">
+      <p className="text-sm leading-6 text-black/50 dark:text-white/50">
+        用於同一檔股票／ETF 在券商或帳戶間搬移。這不是賣出再買進，不會產生現金流或已實現損益；移轉股數會帶著原本的成本基礎一起移動。
+      </p>
+
+      <select
+        className="field"
+        value={source?.id ?? ""}
+        onChange={(event) => {
+          setSourceHoldingId(event.target.value);
+          setQuantity(0);
+          setDestinationAccount("");
+        }}
+      >
+        <option value="">選擇來源持股</option>
+        {securities.map((holding) => (
+          <option key={holding.id} value={holding.id}>
+            {holding.symbol} · {holding.name} · {accountName(holding.account)} · {holding.quantity.toLocaleString()}
+          </option>
+        ))}
+      </select>
+
+      <div>
+        <input
+          className="field"
+          list="security-transfer-accounts"
+          placeholder="目的帳戶名稱"
+          value={destinationAccount}
+          onChange={(event) => setDestinationAccount(event.target.value)}
+        />
+        <datalist id="security-transfer-accounts">
+          {accountSuggestions
+            .filter((name) => name.toLowerCase() !== accountName(source?.account).toLowerCase())
+            .map((name) => <option key={name} value={name} />)}
+        </datalist>
+      </div>
+
+      <input
+        className="field"
+        type="number"
+        min="0.000001"
+        step="any"
+        placeholder={source ? `移轉股數（最多 ${source.quantity.toLocaleString()}）` : "移轉股數"}
+        value={quantity || ""}
+        onChange={(event) => setQuantity(Number(event.target.value))}
+      />
+
+      {!securities.length ? (
+        <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">目前沒有股票／ETF 持股可移轉。</p>
+      ) : null}
+      {sameAccount ? (
+        <p className="px-1 text-xs text-[#8b6538] dark:text-[#e0bd8c]">目的帳戶不可與來源帳戶相同。</p>
+      ) : null}
+      {source && targetAccount && existingDestination && !compatibleDestination ? (
+        <p className="px-1 text-xs leading-5 text-[#8b6538] dark:text-[#e0bd8c]">
+          目的帳戶已持有同一標的，但目前價格或價格來源／資料日與來源帳戶不同。請先把兩邊價格校正到同一基準，避免帳戶搬移憑空改變總市值。
+        </p>
+      ) : null}
+
+      {source && targetAccount && quantity > 0 ? (
+        <div className="rounded-2xl border border-black/6 bg-black/[.018] p-3 text-xs leading-5 text-black/48 dark:border-white/8 dark:bg-white/[.025] dark:text-white/48">
+          <div className="flex justify-between gap-3">
+            <span>{accountName(source.account)} · 來源股數</span>
+            <strong>{source.quantity.toLocaleString()} → {Math.max(0, source.quantity - quantity).toLocaleString()}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>{targetAccount} · 目的股數</span>
+            <strong>{(existingDestination?.quantity ?? 0).toLocaleString()} → {destinationQuantity.toLocaleString()}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>移轉成本基礎</span>
+            <strong>{source.currency} {(quantity * source.averageCost).toLocaleString()}</strong>
+          </div>
+          <div className="mt-1 flex justify-between gap-3">
+            <span>目的帳戶移轉後平均成本</span>
+            <strong>{destinationAverageCost === null ? "—" : destinationAverageCost.toLocaleString()}</strong>
+          </div>
+          <p className="mt-2 text-black/35 dark:text-white/35">
+            目前價格、TWSE／TPEx 來源與資料日不會因帳戶移轉被改寫；若目的帳戶已有同標的，只有股數與加權平均成本會合併。
+          </p>
+        </div>
+      ) : null}
+
+      <textarea className="field resize-none" rows={3} placeholder="備註（選填）" value={note} onChange={(event) => setNote(event.target.value)} />
+      <Button type="submit" disabled={!valid} className="w-full"><ArrowRightLeft size={16} />完成持股移轉</Button>
+      <Dialog.Close asChild>
+        <button ref={closeRef} type="button" className="hidden" aria-hidden="true" tabIndex={-1} />
+      </Dialog.Close>
+    </form>
+  );
+}
+
 function ActivityForm({
   state,
   onSaveCash,
@@ -804,7 +989,7 @@ function ActivityForm({
     <form onSubmit={submit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <select className="field" value={type} onChange={(event) => changeType(event.target.value as ActivityType)}>
-          {Object.entries(labels).filter(([value]) => value !== "fx_conversion").map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          {Object.entries(labels).filter(([value]) => value !== "fx_conversion" && value !== "position_transfer").map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
         <input
           className="field"
