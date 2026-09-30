@@ -23,14 +23,22 @@ export const holdingSchema = z.object({
   name: z.string().min(1).max(160),
   market: z.enum(["TW", "US"]),
   type: z.enum(["stock", "etf", "cash"]),
-  quantity: z.number().finite().nonnegative(),
-  price: z.number().finite().nonnegative(),
+  quantity: z.number().finite().positive("持股數量必須大於 0。"),
+  price: z.number().finite().positive("目前價格／現金餘額必須大於 0。"),
   averageCost: z.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
   sector: z.string().min(1).max(120),
   account: z.string().trim().min(1).max(120).optional(),
   priceSource: z.enum(["manual", "TWSE", "TPEx"]).optional(),
   priceAsOf: dateKeySchema.optional()
+}).superRefine((holding, ctx) => {
+  if (holding.type !== "cash" && holding.averageCost <= 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["averageCost"],
+      message: "股票／ETF 平均成本必須大於 0。"
+    });
+  }
 });
 
 export const etfConstituentSchema = z.object({
@@ -226,8 +234,8 @@ export const holdingCsvRowSchema = z.object({
   name: z.string().trim().min(1).max(160),
   market: z.enum(["TW", "US"]),
   type: z.enum(["stock", "etf", "cash"]),
-  quantity: z.coerce.number().finite().nonnegative(),
-  price: z.coerce.number().finite().nonnegative(),
+  quantity: z.coerce.number().finite().positive("持股數量必須大於 0。"),
+  price: z.coerce.number().finite().positive("目前價格／現金餘額必須大於 0。"),
   averageCost: z.coerce.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
   sector: z.string().trim().min(1).max(120),
@@ -235,6 +243,14 @@ export const holdingCsvRowSchema = z.object({
     (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
     z.string().trim().min(1).max(120).optional()
   )
+}).superRefine((holding, ctx) => {
+  if (holding.type !== "cash" && holding.averageCost <= 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["averageCost"],
+      message: "股票／ETF 平均成本必須大於 0。"
+    });
+  }
 });
 
 export const etfCompositionCsvRowSchema = z.object({
