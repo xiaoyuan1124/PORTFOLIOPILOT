@@ -1,7 +1,7 @@
 export type Market = "TW" | "US";
 export type AssetType = "stock" | "etf" | "cash";
 export type Currency = "TWD" | "USD";
-export type ActivityType = "deposit" | "withdrawal" | "buy" | "sell" | "dividend" | "fee" | "transfer" | "fx_conversion" | "corporate_action";
+export type ActivityType = "deposit" | "withdrawal" | "buy" | "sell" | "dividend" | "fee" | "transfer" | "fx_conversion" | "position_transfer" | "corporate_action";
 export type PriceSource = "manual" | "TWSE" | "TPEx";
 export type EtfCompositionSourceType = "user_import" | "official_issuer" | "official_exchange";
 export type DataMode = "personal" | "demo";
@@ -115,6 +115,16 @@ export interface CashFxImpact {
   valuationTwdPerUsd: number;
 }
 
+export interface PositionTransferImpact {
+  sourceHoldingId: string;
+  destinationHoldingId: string;
+  sourceBefore: Holding;
+  sourceAfter: Holding | null;
+  destinationBefore: Holding | null;
+  destinationAfter: Holding;
+  quantity: number;
+}
+
 export interface PortfolioActivity {
   id: string;
   date: string;
@@ -134,6 +144,7 @@ export interface PortfolioActivity {
   cashImpact?: CashImpact;
   cashTransferImpact?: CashTransferImpact;
   cashFxImpact?: CashFxImpact;
+  positionTransferImpact?: PositionTransferImpact;
 }
 
 export interface NetWorthSnapshot {
