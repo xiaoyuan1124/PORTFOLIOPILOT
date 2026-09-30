@@ -49,7 +49,7 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -104,7 +104,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -174,7 +174,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -235,7 +235,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -270,7 +270,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -307,7 +307,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -345,8 +345,134 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("round-trips V17 historical CSV source filename provenance", () => {
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "historical-csv-v17",
+        date: "2020-01-02",
+        type: "buy",
+        symbol: "2330",
+        amount: 1010,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 2,
+        price: 500,
+        note: "",
+        account: "券商A",
+        historicalTrade: {
+          mode: "ledger_only",
+          market: "TW",
+          fee: 10,
+          tax: 0,
+          importSource: "csv",
+          importFingerprint: "csv-id-example",
+          importBatchId: "csv-batch-example",
+          importFileName: "broker-history.csv"
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(17);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("rejects V17 CSV source paths and filename provenance without a fingerprint", () => {
+    const base = {
+      version: 17,
+      exportedAt: "2026-10-01T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        snapshots: [],
+        allocationTargets: [],
+        activities: [{
+          id: "bad-source-file",
+          date: "2020-01-02",
+          type: "buy",
+          symbol: "2330",
+          amount: 1010,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 2,
+          price: 500,
+          note: "",
+          account: "券商A",
+          historicalTrade: {
+            mode: "ledger_only",
+            market: "TW",
+            fee: 10,
+            tax: 0,
+            importSource: "csv",
+            importFingerprint: "csv-id-example",
+            importBatchId: "csv-batch-example",
+            importFileName: "C:\\Users\\user\\broker.csv"
+          }
+        }]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(base))).toThrow(/不可包含本機路徑/);
+
+    const missingFingerprint = structuredClone(base);
+    missingFingerprint.state.activities[0].historicalTrade.importFileName = "broker.csv";
+    delete missingFingerprint.state.activities[0].historicalTrade.importFingerprint;
+
+    expect(() => parseBackup(JSON.stringify(missingFingerprint))).toThrow(/fingerprint/);
+  });
+
+  it("keeps valid V16 batch provenance readable without a source filename", () => {
+    const parsed = parseBackup(JSON.stringify({
+      version: 16,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        snapshots: [],
+        allocationTargets: [],
+        activities: [{
+          id: "legacy-v16-csv",
+          date: "2020-01-02",
+          type: "buy",
+          symbol: "2330",
+          amount: 1010,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 2,
+          price: 500,
+          note: "",
+          account: "券商A",
+          historicalTrade: {
+            mode: "ledger_only",
+            market: "TW",
+            fee: 10,
+            tax: 0,
+            importSource: "csv",
+            importFingerprint: "csv-id-legacy",
+            importBatchId: "csv-batch-legacy"
+          }
+        }]
+      }
+    }));
+
+    expect(parsed.activities[0]?.historicalTrade?.importFileName).toBeUndefined();
   });
 
   it("rejects V16 batch identity without a row fingerprint", () => {
@@ -847,7 +973,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -899,7 +1025,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -950,7 +1076,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -1075,7 +1201,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(16);
+    expect(JSON.parse(serialized).version).toBe(17);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
