@@ -3,8 +3,10 @@ import type { AppState } from "./types";
 import {
   historicalTradeCsvTemplate,
   importHistoricalTradeCsv,
+  latestHistoricalTradeCsvBatch,
   parseHistoricalTradeCsv,
-  previewHistoricalTradeCsv
+  previewHistoricalTradeCsv,
+  undoHistoricalTradeCsvBatch
 } from "./historical-trade-csv";
 
 function state(): AppState {
@@ -206,6 +208,7 @@ describe("historical trade CSV adapter", () => {
 
     expect(base.activities).toEqual([]);
     expect(base.holdings[0]?.quantity).toBe(10);
+    expect(preview.importBatchId).toMatch(/^csv-batch-/);
     expect(preview).toMatchObject({
       importedCount: 2,
       buyCount: 1,
@@ -234,6 +237,50 @@ describe("historical trade CSV adapter", () => {
     const imported = importHistoricalTradeCsv(state(), csv, "", null);
 
     expect(() => previewHistoricalTradeCsv(imported.state, csv, "", null)).toThrow(/已經匯入過/);
+  });
+
+  it("assigns one stable batch ID to every row and can undo only that batch", () => {
+    const firstCsv = [
+      "日期,買賣,市場,代號,股數,成交價,手續費,交易稅,帳戶,成交序號",
+      "2020/01/02,買進,TW,2330,1,100,1,0,台股券商,A001",
+      "2020/01/03,賣出,TW,2330,1,110,1,1,台股券商,A002"
+    ].join("\n");
+    const secondCsv = [
+      "日期,買賣,市場,代號,股數,成交價,手續費,交易稅,匯率,帳戶,成交序號",
+      "2020/02/02,買進,US,QQQM,1,200,2,0,30,美股券商,B001"
+    ].join("\n");
+
+    const firstRows = parseHistoricalTradeCsv(firstCsv, "", null);
+    expect(firstRows[0]?.importBatchId).toMatch(/^csv-batch-/);
+    expect(new Set(firstRows.map((row) => row.importBatchId)).size).toBe(1);
+    expect(parseHistoricalTradeCsv(firstCsv, "", null).map((row) => row.importBatchId))
+      .toEqual(firstRows.map((row) => row.importBatchId));
+
+    const base = state();
+    const first = importHistoricalTradeCsv(base, firstCsv, "", null);
+    const second = importHistoricalTradeCsv(first.state, secondCsv, "", null);
+    const latest = latestHistoricalTradeCsvBatch(second.state);
+
+    expect(second.state.holdings).toEqual(base.holdings);
+    expect(latest).toMatchObject({
+      importBatchId: second.importBatchId,
+      remainingCount: 1,
+      firstDate: "2020-02-02",
+      lastDate: "2020-02-02",
+      accounts: ["美股券商"]
+    });
+
+    const undoneSecond = undoHistoricalTradeCsvBatch(second.state, second.importBatchId);
+    expect(undoneSecond.activities).toHaveLength(2);
+    expect(undoneSecond.activities.every((activity) =>
+      activity.historicalTrade?.importBatchId === first.importBatchId
+    )).toBe(true);
+    expect(undoneSecond.holdings).toEqual(base.holdings);
+
+    const undoneFirst = undoHistoricalTradeCsvBatch(undoneSecond, first.importBatchId);
+    expect(undoneFirst.activities).toEqual([]);
+    expect(undoneFirst.holdings).toEqual(base.holdings);
+    expect(() => undoHistoricalTradeCsvBatch(undoneFirst, first.importBatchId)).toThrow(/已不存在/);
   });
 
   it("provides a template that parses as both TW and US history", () => {

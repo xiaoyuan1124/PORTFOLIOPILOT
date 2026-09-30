@@ -49,7 +49,7 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(15);
+    expect(JSON.parse(serialized).version).toBe(16);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -104,7 +104,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(15);
+    expect(JSON.parse(serialized).version).toBe(16);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -174,7 +174,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(15);
+    expect(JSON.parse(serialized).version).toBe(16);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -235,7 +235,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(15);
+    expect(JSON.parse(serialized).version).toBe(16);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -270,7 +270,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(15);
+    expect(JSON.parse(serialized).version).toBe(16);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -307,8 +307,124 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(15);
+    expect(JSON.parse(serialized).version).toBe(16);
     expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("round-trips V16 historical CSV batch identity", () => {
+    const state: AppState = {
+      dataMode: "personal",
+      usdTwd: 31.8,
+      holdings: [],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [],
+      allocationTargets: [],
+      activities: [{
+        id: "historical-csv-batch",
+        date: "2020-01-02",
+        type: "buy",
+        symbol: "2330",
+        amount: 1010,
+        currency: "TWD",
+        fxRate: 1,
+        quantity: 2,
+        price: 500,
+        note: "",
+        account: "券商A",
+        historicalTrade: {
+          mode: "ledger_only",
+          market: "TW",
+          fee: 10,
+          tax: 0,
+          importSource: "csv",
+          importFingerprint: "csv-id-example",
+          importBatchId: "csv-batch-example"
+        }
+      }]
+    };
+
+    const serialized = serializeBackup(state);
+    expect(JSON.parse(serialized).version).toBe(16);
+    expect(parseBackup(serialized)).toEqual(state);
+  });
+
+  it("rejects V16 batch identity without a row fingerprint", () => {
+    const backup = {
+      version: 16,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        snapshots: [],
+        allocationTargets: [],
+        activities: [{
+          id: "bad-csv-batch",
+          date: "2020-01-02",
+          type: "buy",
+          symbol: "2330",
+          amount: 1010,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 2,
+          price: 500,
+          note: "",
+          account: "券商A",
+          historicalTrade: {
+            mode: "ledger_only",
+            market: "TW",
+            fee: 10,
+            tax: 0,
+            importSource: "csv",
+            importBatchId: "csv-batch-example"
+          }
+        }]
+      }
+    };
+
+    expect(() => parseBackup(JSON.stringify(backup))).toThrow(/fingerprint|批次識別/);
+  });
+
+  it("keeps valid V15 CSV provenance readable without a batch ID", () => {
+    const parsed = parseBackup(JSON.stringify({
+      version: 15,
+      exportedAt: "2026-09-30T00:00:00.000Z",
+      state: {
+        dataMode: "personal",
+        usdTwd: 31.8,
+        holdings: [],
+        etfCompositions: [],
+        journal: [],
+        snapshots: [],
+        allocationTargets: [],
+        activities: [{
+          id: "legacy-v15-csv",
+          date: "2020-01-02",
+          type: "buy",
+          symbol: "2330",
+          amount: 1010,
+          currency: "TWD",
+          fxRate: 1,
+          quantity: 2,
+          price: 500,
+          note: "",
+          account: "券商A",
+          historicalTrade: {
+            mode: "ledger_only",
+            market: "TW",
+            fee: 10,
+            tax: 0,
+            importSource: "csv",
+            importFingerprint: "csv-id-legacy"
+          }
+        }]
+      }
+    }));
+
+    expect(parsed.activities[0]?.historicalTrade?.importBatchId).toBeUndefined();
   });
 
   it("rejects incomplete V15 historical CSV provenance", () => {
@@ -731,7 +847,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(15);
+    expect(JSON.parse(serialized).version).toBe(16);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -783,7 +899,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(15);
+    expect(JSON.parse(serialized).version).toBe(16);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -834,7 +950,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(15);
+    expect(JSON.parse(serialized).version).toBe(16);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -959,7 +1075,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(15);
+    expect(JSON.parse(serialized).version).toBe(16);
     expect(parseBackup(serialized)).toEqual(state);
   });
 

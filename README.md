@@ -653,3 +653,14 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Confirming the import re-parses and re-validates the original CSV against the **current** Portfolio state before committing. If the state changed after preview and now creates a duplicate or other conflict, the import fails closed.
 - The underlying import remains atomic and ledger-only: either the full batch is accepted, or no historical trade rows are added.
 - No backup schema change is required; Backup V15 remains current because V0.67 adds pre-commit UX rather than new persisted data.
+
+## V0.68 historical trade CSV batch undo
+
+- Every new historical-trade CSV import now receives one deterministic **import batch ID** shared by all rows in that batch, while each row keeps its existing V0.66 fingerprint.
+- Settings surfaces the most recently imported reversible batch with its remaining row count, historical date range and affected accounts.
+- The whole batch can be undone in one action. Because V0.65 historical trades are ledger-only, batch undo removes only those imported activity rows and never mutates current holdings, current cash or realized managed-trade P/L.
+- If individual rows from a batch were already deleted, batch undo removes only the remaining rows carrying that batch ID.
+- The newest reversible batch is resolved from activity insertion order rather than historical trade date, so an import containing older dates can still be identified as the latest import action.
+- V0.66/V0.67 CSV rows restored from older backups do not have a batch ID. PortfolioPilot keeps them readable but does not guess which historical rows belonged to one import batch.
+- Backup format is now V16 and validates that a batch ID can exist only on CSV-imported historical trades that also retain a row fingerprint. Valid V1–V15 backups remain readable.
+

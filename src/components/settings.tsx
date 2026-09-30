@@ -9,7 +9,9 @@ import { parseTaiwanBrokerInventoryCsv } from "@/lib/broker-inventory-csv";
 import {
   historicalTradeCsvTemplate,
   importHistoricalTradeCsv,
+  latestHistoricalTradeCsvBatch,
   previewHistoricalTradeCsv,
+  undoHistoricalTradeCsvBatch,
   type HistoricalTradeCsvPreview
 } from "@/lib/historical-trade-csv";
 import { buildHoldingLookupCatalog } from "@/lib/holding-autofill";
@@ -47,6 +49,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
   const [tradeMarket, setTradeMarket] = useState<"" | Market>("");
   const [pendingTradeCsv, setPendingTradeCsv] = useState<PendingHistoricalTradeCsv | null>(null);
   const [usdDraft, setUsdDraft] = useState<string | null>(null);
+  const latestTradeCsvBatch = latestHistoricalTradeCsvBatch(state);
 
   function exportRecoveryBackup() {
     const raw = getRecoveryBackupRaw();
@@ -246,6 +249,21 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
     }
   }
 
+  function undoLatestHistoricalTradeCsvImport() {
+    if (!latestTradeCsvBatch) return;
+    if (!window.confirm(
+      `確定撤銷最近這批 ${latestTradeCsvBatch.remainingCount} 筆歷史成交 CSV 嗎？只會刪除這批 Ledger-only 交易日誌，不會修改目前持股或現金。`
+    )) return;
+
+    try {
+      const next = undoHistoricalTradeCsvBatch(state, latestTradeCsvBatch.importBatchId);
+      if (!onChange(next)) return;
+      toast.success(`已撤銷 ${latestTradeCsvBatch.remainingCount} 筆歷史成交 CSV，持股與現金未變動`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全撤銷歷史成交 CSV 批次");
+    }
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {hasRecoveryBackup || storageWriteBlocked ? (
@@ -393,6 +411,26 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
           <p className="mt-3 text-xs leading-5 text-black/35 dark:text-white/35">
             若券商檔有成交序號，系統會用「市場＋帳戶＋成交序號」建立穩定 fingerprint；沒有成交序號時則用完整成交內容與同內容出現次序建立 fingerprint。再次匯入同一批資料會 fail closed，避免重複計入。
           </p>
+          {latestTradeCsvBatch ? (
+            <div className="mt-5 rounded-2xl border border-black/6 bg-black/[.018] p-4 dark:border-white/8 dark:bg-white/[.025]">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold">最近一次 CSV 匯入可整批撤銷</p>
+                  <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">
+                    {latestTradeCsvBatch.remainingCount} 筆 · {latestTradeCsvBatch.firstDate} → {latestTradeCsvBatch.lastDate}
+                    {" · "}{latestTradeCsvBatch.accounts.join("、")}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-5 text-black/35 dark:text-white/35">
+                    僅 V0.68 之後帶 batch ID 的新匯入支援；撤銷只刪 Ledger-only 歷史交易，不碰今天的持股、現金或已實現損益。
+                  </p>
+                </div>
+                <GhostButton onClick={undoLatestHistoricalTradeCsvImport}>
+                  <RotateCcw size={16} />撤銷這批匯入
+                </GhostButton>
+              </div>
+            </div>
+          ) : null}
+
           {pendingTradeCsv ? (
             <div className="mt-5 rounded-2xl border border-[#6c8c79]/25 bg-[#edf2ee] p-4 dark:border-[#6c8c79]/20 dark:bg-[#17201b]">
               <div className="flex flex-wrap items-start justify-between gap-3">
