@@ -789,13 +789,19 @@ describe("local data import/export", () => {
     expect(() => parseHoldingsCsv(csv)).toThrow(/必須大於 0/);
   });
 
-  it("rejects a zero cash balance in imported holdings", () => {
+  it("allows a persistent zero cash balance in imported holdings", () => {
     const csv = [
       "symbol,name,market,type,quantity,price,averageCost,currency,sector",
       "CASH-TWD,TWD 現金,TW,cash,1,0,0,TWD,現金"
     ].join("\n");
 
-    expect(() => parseHoldingsCsv(csv)).toThrow(/必須大於 0/);
+    const rows = parseHoldingsCsv(csv);
+    expect(rows[0]).toMatchObject({
+      type: "cash",
+      quantity: 1,
+      price: 0,
+      averageCost: 0
+    });
   });
 
   it("rejects market/currency mismatches that would corrupt TWD valuation", () => {
@@ -956,6 +962,38 @@ describe("local data import/export", () => {
       price: 42000,
       averageCost: 42000
     });
+  });
+
+  it("allows quick reconciliation to set cash balance to zero without deleting identity", () => {
+    const existing = [{
+      id: "cash",
+      symbol: "CASH-TWD",
+      name: "TWD 現金",
+      market: "TW" as const,
+      type: "cash" as const,
+      quantity: 1,
+      price: 1000,
+      averageCost: 1000,
+      currency: "TWD" as const,
+      sector: "現金",
+      account: "券商A"
+    }];
+
+    const corrected = applyHoldingCorrections(existing, [{
+      id: "cash",
+      quantity: 99,
+      price: 0,
+      averageCost: 999
+    }]);
+
+    expect(corrected).toEqual([{
+      ...existing[0],
+      quantity: 1,
+      price: 0,
+      averageCost: 0,
+      priceSource: undefined,
+      priceAsOf: undefined
+    }]);
   });
 
   it("marks a manually corrected current price as manual and clears stale official date", () => {
