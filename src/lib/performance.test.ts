@@ -97,6 +97,40 @@ describe("performance math", () => {
     expect(twr.value).toBeCloseTo(0.1, 10);
   });
 
+  it("does not treat internal FX conversion as contributions, income or TWR boundaries", () => {
+    const conversion = {
+      id: "fx",
+      date: "2026-02-05",
+      type: "fx_conversion" as const,
+      symbol: "",
+      amount: 3200,
+      currency: "TWD" as const,
+      fxRate: 32,
+      quantity: 0,
+      price: 0,
+      note: ""
+    };
+
+    expect(netExternalContributions([conversion])).toBe(0);
+    expect(incomeAfterFees([conversion])).toBe(0);
+
+    const state: AppState = {
+      usdTwd: 32,
+      holdings: [
+        { id: "cash", symbol: "CASH-TWD", name: "Cash", market: "TW", type: "cash", quantity: 1, price: 1100, averageCost: 1100, currency: "TWD", sector: "現金" }
+      ],
+      etfCompositions: [],
+      journal: [],
+      snapshots: [{ date: "2026-01-01", total: 1000, cost: 1000, gain: 0, usdTwd: 32 }],
+      activities: [conversion]
+    };
+
+    const twr = exactTimeWeightedReturn(state, "2026-02-10");
+    expect(twr.externalFlowCount).toBe(0);
+    expect(twr.status).toBe("exact");
+    expect(twr.value).toBeCloseTo(0.1, 10);
+  });
+
   it("excludes future external cash flows from current contribution totals", () => {
     const activities = [
       { id: "past", date: "2026-09-29", type: "deposit" as const, symbol: "", amount: 1000, currency: "TWD" as const, fxRate: 1, quantity: 0, price: 0, note: "" },

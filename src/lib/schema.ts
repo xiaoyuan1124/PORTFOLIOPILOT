@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isExternalActivityType, isTradeActivityType, normalizeActivitySecurityFields } from "./activity-data";
+import { isCashFxActivityType, isExternalActivityType, isTradeActivityType, normalizeActivitySecurityFields } from "./activity-data";
 
 export const ETF_WEIGHT_EPSILON = 1e-6;
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -129,6 +129,19 @@ export const cashTransferImpactSchema = z.object({
   amount: z.number().finite().positive()
 });
 
+export const cashFxImpactSchema = z.object({
+  fromCashHoldingId: z.string().min(1),
+  toCashHoldingId: z.string().min(1),
+  fromBefore: holdingSchema,
+  fromAfter: holdingSchema,
+  toBefore: holdingSchema,
+  toAfter: holdingSchema,
+  fromAmount: z.number().finite().positive(),
+  toAmount: z.number().finite().positive(),
+  executionTwdPerUsd: z.number().finite().positive(),
+  valuationTwdPerUsd: z.number().finite().positive()
+});
+
 export const etfConstituentSchema = z.object({
   market: z.enum(["TW", "US"]),
   symbol: z.string().trim().min(1).max(32),
@@ -171,7 +184,7 @@ export const activitySchema = z.object({
   id: z.string().min(1),
   date: dateKeySchema,
   time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/).optional(),
-  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee", "transfer", "corporate_action"]),
+  type: z.enum(["deposit", "withdrawal", "buy", "sell", "dividend", "fee", "transfer", "fx_conversion", "corporate_action"]),
   symbol: z.string(),
   amount: z.number().finite().nonnegative(),
   currency: z.enum(["TWD", "USD"]),
@@ -184,7 +197,8 @@ export const activitySchema = z.object({
   preFlowValueSource: z.enum(["system_current_state", "manual"]).optional(),
   inventoryImpact: inventoryImpactSchema.optional(),
   cashImpact: cashImpactSchema.optional(),
-  cashTransferImpact: cashTransferImpactSchema.optional()
+  cashTransferImpact: cashTransferImpactSchema.optional(),
+  cashFxImpact: cashFxImpactSchema.optional()
 }).superRefine((activity, ctx) => {
   if (activity.type !== "corporate_action" && activity.amount <= 0) {
     ctx.addIssue({
@@ -553,10 +567,152 @@ export const activitySchema = z.object({
       });
     }
   }
+
+  if (activity.type === "fx_conversion" && !activity.cashFxImpact) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashFxImpact"],
+      message: "內部換匯必須保留兩個現金帳戶的前後快照與成交匯率。"
+    });
+  }
+
+  if (activity.type !== "fx_conversion" && activity.cashFxImpact) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashFxImpact"],
+      message: "只有內部換匯可以附帶跨幣別現金快照。"
+    });
+  }
+
+  if (
+    activity.type === "fx_conversion" &&
+    (activity.cashImpact || activity.cashTransferImpact || activity.inventoryImpact)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cashFxImpact"],
+      message: "內部換匯不可同時附帶其他現金轉帳或證券持股連動。"
+    });
+  }
+
+  if (activity.cashFxImpact) {
+    const fx = activity.cashFxImpact;
+    const snapshots = [fx.fromBefore, fx.fromAfter, fx.toBefore, fx.toAfter];
+    const normalized = snapshots.every((cash) =>
+      cash.type === "cash" &&
+      Math.abs(cash.quantity - 1) <= 1e-9 &&
+      Math.abs(cash.averageCost - cash.price) <= 1e-8
+    );
+
+    if (fx.fromCashHoldingId === fx.toCashHoldingId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashFxImpact"],
+        message: "內部換匯的轉出與轉入現金帳戶不可相同。"
+      });
+    }
+    if (
+      fx.fromBefore.id !== fx.fromCashHoldingId ||
+      fx.fromAfter.id !== fx.fromCashHoldingId ||
+      fx.toBefore.id !== fx.toCashHoldingId ||
+      fx.toAfter.id !== fx.toCashHoldingId
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashFxImpact"],
+        message: "內部換匯快照的現金帳戶 ID 不一致。"
+      });
+    }
+    if (!normalized) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashFxImpact"],
+        message: "內部換匯現金快照必須使用 1 × 餘額的標準格式。"
+      });
+    }
+    if (fx.fromBefore.currency === fx.toBefore.currency) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashFxImpact"],
+        message: "內部換匯必須在 TWD 與 USD 不同幣別帳戶之間進行。"
+      });
+    }
+    if (
+      fx.fromAfter.currency !== fx.fromBefore.currency ||
+      fx.toAfter.currency !== fx.toBefore.currency ||
+      activity.currency !== fx.fromBefore.currency
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashFxImpact"],
+        message: "內部換匯活動幣別或前後快照幣別不一致。"
+      });
+    }
+    if (Math.abs(activity.amount - fx.fromAmount) > 1e-8) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["amount"],
+        message: "內部換匯活動金額必須等於實際轉出金額。"
+      });
+    }
+
+    const expectedFrom = fx.fromBefore.price - fx.fromAmount;
+    const expectedTo = fx.toBefore.price + fx.toAmount;
+    if (
+      expectedFrom < -1e-8 ||
+      Math.abs(fx.fromAfter.price - Math.max(0, expectedFrom)) > 1e-8 ||
+      Math.abs(fx.fromAfter.averageCost - Math.max(0, expectedFrom)) > 1e-8
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashFxImpact", "fromAfter"],
+        message: "內部換匯的轉出 after 快照與 before－fromAmount 不一致。"
+      });
+    }
+    if (
+      Math.abs(fx.toAfter.price - expectedTo) > 1e-8 ||
+      Math.abs(fx.toAfter.averageCost - expectedTo) > 1e-8
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashFxImpact", "toAfter"],
+        message: "內部換匯的轉入 after 快照與 before＋toAmount 不一致。"
+      });
+    }
+
+    const expectedExecutionRate = fx.fromBefore.currency === "TWD"
+      ? fx.fromAmount / fx.toAmount
+      : fx.toAmount / fx.fromAmount;
+    if (
+      !Number.isFinite(expectedExecutionRate) ||
+      Math.abs(fx.executionTwdPerUsd - expectedExecutionRate) > 1e-8 ||
+      Math.abs(activity.fxRate - expectedExecutionRate) > 1e-8
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["cashFxImpact", "executionTwdPerUsd"],
+        message: "內部換匯成交匯率必須由實際轉出與實收金額一致推導。"
+      });
+    }
+
+    const activityAccount = (activity.account?.trim() || "預設帳戶").toLowerCase();
+    const fromAccount = (fx.fromBefore.account?.trim() || "預設帳戶").toLowerCase();
+    if (activityAccount !== fromAccount) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["account"],
+        message: "內部換匯活動帳戶必須對應轉出現金帳戶。"
+      });
+    }
+  }
 }).transform((activity) => {
   const normalized = {
     ...activity,
-    fxRate: activity.currency === "TWD" ? 1 : activity.fxRate,
+    fxRate: isCashFxActivityType(activity.type)
+      ? activity.fxRate
+      : activity.currency === "TWD"
+        ? 1
+        : activity.fxRate,
     ...normalizeActivitySecurityFields(activity.type, activity.symbol, activity.quantity, activity.price)
   };
 
@@ -694,7 +850,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),

@@ -89,7 +89,9 @@ function signedDelta(type: CashLinkedActivityInput["type"], amount: number) {
 export function activityTouchesCashHolding(activity: PortfolioActivity, cashHoldingId: string) {
   return activity.cashImpact?.cashHoldingId === cashHoldingId ||
     activity.cashTransferImpact?.fromCashHoldingId === cashHoldingId ||
-    activity.cashTransferImpact?.toCashHoldingId === cashHoldingId;
+    activity.cashTransferImpact?.toCashHoldingId === cashHoldingId ||
+    activity.cashFxImpact?.fromCashHoldingId === cashHoldingId ||
+    activity.cashFxImpact?.toCashHoldingId === cashHoldingId;
 }
 
 export function applyCashTransfer(state: AppState, input: CashTransferInput): AppState {

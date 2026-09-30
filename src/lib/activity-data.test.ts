@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isCashFxActivityType,
   isCashTransferActivityType,
   isExternalActivityType,
   isTradeActivityType,
@@ -16,6 +17,8 @@ describe("activity type integrity", () => {
     expect(isTradeActivityType("dividend")).toBe(false);
     expect(isCashTransferActivityType("transfer")).toBe(true);
     expect(isExternalActivityType("transfer")).toBe(false);
+    expect(isCashFxActivityType("fx_conversion")).toBe(true);
+    expect(isExternalActivityType("fx_conversion")).toBe(false);
   });
 
   it("removes stale security fields from external cash flows", () => {
@@ -28,6 +31,14 @@ describe("activity type integrity", () => {
 
   it("removes stale security fields from internal cash transfers", () => {
     expect(normalizeActivitySecurityFields("transfer", "2330", 3, 1000)).toEqual({
+      symbol: "",
+      quantity: 0,
+      price: 0
+    });
+  });
+
+  it("removes stale security fields from internal FX conversions", () => {
+    expect(normalizeActivitySecurityFields("fx_conversion", "QQQM", 2, 250)).toEqual({
       symbol: "",
       quantity: 0,
       price: 0

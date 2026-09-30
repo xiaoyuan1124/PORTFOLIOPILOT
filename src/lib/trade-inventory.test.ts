@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AppState, Holding } from "./types";
 import { localDateKey } from "./calc";
 import { applyCashTransfer } from "./cash-account";
+import { applyCashFxConversion } from "./cash-fx";
 import {
   applyManagedTrade,
   applyOpeningBuy,
@@ -501,6 +502,48 @@ describe("managed trade inventory", () => {
     });
 
     expect(() => revertManagedTrade(transferred, "activity-1")).toThrow(/現金帳戶後面已有/);
+  });
+
+  it("rejects trade rollback after a later FX conversion touched its cash account", () => {
+    const base = state();
+    base.holdings.push({
+      id: "usd-cash",
+      symbol: "CASH-USD",
+      name: "USD 現金",
+      market: "US",
+      type: "cash",
+      quantity: 1,
+      price: 100,
+      averageCost: 100,
+      currency: "USD",
+      sector: "現金",
+      account: "美元帳戶"
+    });
+
+    const bought = applyManagedTrade(base, {
+      id: "activity-1",
+      date: localDateKey(),
+      type: "buy",
+      holdingId: "h1",
+      cashHoldingId: "cash",
+      quantity: 1,
+      price: 900,
+      fee: 0,
+      tax: 0,
+      fxRate: 1,
+      note: ""
+    });
+    const converted = applyCashFxConversion(bought, {
+      id: "activity-2",
+      date: localDateKey(),
+      fromCashHoldingId: "cash",
+      toCashHoldingId: "usd-cash",
+      fromAmount: 3200,
+      toAmount: 100,
+      note: ""
+    });
+
+    expect(() => revertManagedTrade(converted, "activity-1")).toThrow(/現金帳戶後面已有/);
   });
 
   it("converts realized USD P&L using the saved historical FX rate", () => {
