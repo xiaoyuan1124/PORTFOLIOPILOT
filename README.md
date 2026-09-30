@@ -653,4 +653,3 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Confirming the import re-parses and re-validates the original CSV against the **current** Portfolio state before committing. If the state changed after preview and now creates a duplicate or other conflict, the import fails closed.
 - The underlying import remains atomic and ledger-only: either the full batch is accepted, or no historical trade rows are added.
 - No backup schema change is required; Backup V15 remains current because V0.67 adds pre-commit UX rather than new persisted data.
-\n
