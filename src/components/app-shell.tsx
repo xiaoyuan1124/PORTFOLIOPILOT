@@ -200,11 +200,11 @@ export function AppShell() {
           {section === "home" ? <Overview state={state} onNavigate={(target, key) => navigate(target, key)} /> : null}
           {section === "portfolio" ? (
             <Portfolio
+              key={portfolioRequestId}
               state={state}
               onChange={updateState}
               onResearch={(key) => navigate("research", key)}
               requestedTab={portfolioRequestedTab}
-              requestId={portfolioRequestId}
             />
           ) : null}
           {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} /> : null}
