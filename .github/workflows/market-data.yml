@@ -7,6 +7,7 @@ on:
       - "scripts/update-market-data.mjs"
       - "scripts/update-etf-compositions.mjs"
       - "scripts/lib/etf-composition-data.mjs"
+      - "scripts/lib/etf-composition-history.mjs"
       - "scripts/update-material-events.mjs"
       - "scripts/lib/material-events.mjs"
       - "scripts/lib/valuation-data.mjs"
