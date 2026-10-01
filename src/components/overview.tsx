@@ -122,7 +122,19 @@ export function Overview({
                     </defs>
                     <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#78817b" }} minTickGap={24} />
                     <YAxis hide domain={["dataMin", "dataMax"]} />
-                    <Tooltip labelFormatter={(_, payload) => payload?.[0]?.payload?.date ?? ""} formatter={(value) => money(Number(value))} contentStyle={{ borderRadius: 14, border: "1px solid rgba(0,0,0,.08)", fontSize: 12 }} />
+                    <Tooltip
+                      labelFormatter={(_, payload) => payload?.[0]?.payload?.date ?? ""}
+                      formatter={(value) => money(Number(value))}
+                      contentStyle={{
+                        borderRadius: 14,
+                        border: "1px solid rgba(0,0,0,.08)",
+                        background: "#ffffff",
+                        color: "#1b241f",
+                        fontSize: 12
+                      }}
+                      labelStyle={{ color: "#78817b", fontWeight: 500 }}
+                      itemStyle={{ color: "#456b58" }}
+                    />
                     <Area type="monotone" dataKey="value" stroke="#456b58" strokeWidth={2.5} fill="url(#networth)" />
                   </AreaChart>
                 </ResponsiveContainer>

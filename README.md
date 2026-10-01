@@ -733,3 +733,24 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Desktop sidebar padding also respects safe-area insets for standalone/tablet layouts.
 - This is layout-only: no portfolio data, storage schema, calculations or Backup V17 payloads are changed.
 
+## V0.76 ETF research and constituent attribution
+
+- Fixes the net-worth chart tooltip in dark mode by pinning the white tooltip's date/value text to the same readable daytime palette instead of inheriting dark-mode text colors.
+- Research Center now has a dedicated **ETF 分析** tab rather than forcing ETFs through company-only research blocks.
+- ETF analysis uses saved source-dated composition data and calculates:
+  - composition coverage
+  - Top 1 / Top 5 / Top 10 concentration
+  - HHI and an approximate effective holding count
+  - sector weights and the largest sector
+  - overlap between ETF constituents and the user's directly held stocks
+- Daily constituent attribution joins ETF composition weights with the bundled official Taiwan close/change cache:
+  - contribution percentage points = constituent weight × daily constituent return
+  - rows are ranked by absolute contribution
+  - positive contributors and negative drags are shown separately
+  - if the ETF itself is held, the contribution is also translated into an approximate TWD impact on the user's ETF position
+- Attribution only uses uniquely matched Taiwan constituents from one latest trading date. US constituents, ambiguous codes, missing quotes and different-date rows are excluded and their unresolved imported weight is disclosed.
+- Clicking a matched attribution row opens that constituent in Company Snapshot research.
+- The page includes a 10-part ETF selection framework covering strategy transparency, cost, liquidity, tracking, composition coverage, single-name concentration, Top-10/HHI concentration, sector concentration, portfolio overlap, and constituent fundamentals/rebalancing.
+- The displayed thresholds are research warning lines rather than buy/sell scores. Thematic ETFs may intentionally exceed broad-market concentration thresholds.
+- No persisted schema changes are required; Backup V17 remains current.
+
