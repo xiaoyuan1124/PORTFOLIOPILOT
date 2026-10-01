@@ -21,4 +21,6 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Temporary V0.78 official ETF source integration check
+        run: node scripts/update-etf-compositions.mjs
       - run: npm run build
