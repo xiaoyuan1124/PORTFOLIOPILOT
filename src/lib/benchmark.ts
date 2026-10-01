@@ -11,7 +11,7 @@ const benchmarkSeriesSchema = z.object({
   name: z.string().min(1),
   market: z.literal("TW"),
   currency: z.literal("TWD"),
-  returnType: z.literal("total_return"),
+  returnType: z.enum(["total_return", "price_return"]),
   provider: z.literal("TWSE"),
   sourceName: z.string().min(1),
   sourceUrl: z.string().url(),
