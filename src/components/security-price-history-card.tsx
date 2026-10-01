@@ -19,30 +19,35 @@ export function SecurityPriceHistoryCard({
   market: "TWSE" | "TPEx";
   symbol: string;
 }) {
-  const [history, setHistory] = useState<TwPriceHistorySeries | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const requestKey = `${market}:${symbol.trim().toUpperCase()}`;
+  const [loadState, setLoadState] = useState<{
+    key: string;
+    history: TwPriceHistorySeries | null;
+    error: string;
+  }>({ key: "", history: null, error: "" });
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError("");
     void loadTwPriceHistory(market, symbol)
       .then((value) => {
         if (!active) return;
-        setHistory(value);
+        setLoadState({ key: requestKey, history: value, error: "" });
       })
       .catch((cause) => {
         if (!active) return;
-        setHistory(null);
-        setError(cause instanceof Error ? cause.message : "歷史行情暫時不可用。");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+        setLoadState({
+          key: requestKey,
+          history: null,
+          error: cause instanceof Error ? cause.message : "歷史行情暫時不可用。"
+        });
       });
     return () => { active = false; };
-  }, [market, symbol]);
+  }, [market, requestKey, symbol]);
 
+  const current = loadState.key === requestKey ? loadState : null;
+  const history = current?.history ?? null;
+  const loading = !current;
+  const error = current?.error ?? "";
   const metrics = useMemo(
     () => history ? priceHistoryMetrics(history.points) : null,
     [history]
