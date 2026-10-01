@@ -127,6 +127,15 @@ export function historyBucketStats(bucket) {
   };
 }
 
+
+export function toRocDate(date) {
+  const match = String(date).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) throw new Error(`Invalid ISO date: ${date}`);
+  const year = Number(match[1]) - 1911;
+  if (year <= 0) throw new Error(`Date predates ROC calendar support: ${date}`);
+  return `${year}/${match[2]}/${match[3]}`;
+}
+
 export function calendarDateAdd(date, days) {
   const match = String(date).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) throw new Error(`Invalid ISO date: ${date}`);
