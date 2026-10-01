@@ -765,10 +765,13 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
         nextCompositions = result.compositions;
         if (result.heldTwEtfCount > 0) {
           compositionSummary = result.matched > 0
-            ? `ETF 成份 ${result.updated} 更新、${result.unchanged} 已最新`
-            : "持有 ETF 尚無支援的官方自動成份來源";
-          if (result.unsupported > 0 || result.preservedNewer > 0) {
+            ? `ETF 成份 ${result.updated} 更新、${result.unchanged} 未變更`
+            : result.supported > 0
+              ? "ETF 成份本次沒有可安全套用的更新"
+              : "持有 ETF 尚無支援的官方自動成份來源";
+          if (result.unsupported > 0 || result.preservedNewer > 0 || result.sourceIssues > 0) {
             compositionWarning = [
+              result.sourceIssues > 0 ? `${result.sourceIssues} 檔官方來源本次抓取異常，已保留可用舊資料` : "",
               result.unsupported > 0 ? `${result.unsupported} 檔持有台灣 ETF 尚未支援自動成份` : "",
               result.preservedNewer > 0 ? `${result.preservedNewer} 檔本機資料較新，已保留` : ""
             ].filter(Boolean).join("；");
