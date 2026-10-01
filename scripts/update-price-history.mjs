@@ -21,7 +21,10 @@ const TWSE_MIN_ROWS = 500;
 const TPEX_MIN_ROWS = 300;
 const FETCH_TIMEOUT_MS = 12_000;
 const FETCH_ATTEMPTS = 3;
-const DATE_CONCURRENCY = 3;
+const TWSE_DATE_CONCURRENCY = 1;
+const TPEX_DATE_CONCURRENCY = 3;
+const TWSE_PACING_MS = 900;
+const TPEX_PACING_MS = 100;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -144,67 +147,97 @@ async function main() {
       : []
   );
 
-  console.log(`Taiwan price history: ${hasExistingHistory ? "incremental" : "initial"} run, ${dates.length} weekday dates, ${cutoffDate} → ${targetEndDate}, concurrency ${DATE_CONCURRENCY}, timeout ${FETCH_TIMEOUT_MS}ms × ${FETCH_ATTEMPTS}`);
+  console.log(
+    `Taiwan price history: ${hasExistingHistory ? "incremental" : "initial"} run, ${dates.length} weekday dates, ${cutoffDate} → ${targetEndDate}; ` +
+    `TWSE concurrency ${TWSE_DATE_CONCURRENCY} + ${TWSE_PACING_MS}ms pacing; TPEx concurrency ${TPEX_DATE_CONCURRENCY}; timeout ${FETCH_TIMEOUT_MS}ms × ${FETCH_ATTEMPTS}`
+  );
 
-  let processedDates = 0;
+  const fetchedCount = { TWSE: 0, TPEx: 0 };
 
-  async function processDate(date) {
-    const [twseResult, tpexResult] = await Promise.allSettled([
-      fetchMarketDay(date, "TWSE"),
-      fetchMarketDay(date, "TPEx")
-    ]);
+  async function fetchSettled(date, market, pacingMs) {
+    let result;
+    try {
+      result = { status: "fulfilled", value: await fetchMarketDay(date, market) };
+    } catch (reason) {
+      result = { status: "rejected", reason };
+    }
 
-    const twseRows = twseResult.status === "fulfilled" ? twseResult.value : null;
-    const tpexRows = tpexResult.status === "fulfilled" ? tpexResult.value : null;
+    fetchedCount[market] += 1;
+    if (fetchedCount[market] % 25 === 0 || fetchedCount[market] === dates.length) {
+      console.log(`fetch progress ${market}: ${fetchedCount[market]}/${dates.length}`);
+    }
+
+    if (pacingMs > 0) await sleep(pacingMs);
+    return result;
+  }
+
+  const [twseResults, tpexResults] = await Promise.all([
+    mapWithConcurrency(
+      dates,
+      TWSE_DATE_CONCURRENCY,
+      (date) => fetchSettled(date, "TWSE", TWSE_PACING_MS)
+    ),
+    mapWithConcurrency(
+      dates,
+      TPEX_DATE_CONCURRENCY,
+      (date) => fetchSettled(date, "TPEx", TPEX_PACING_MS)
+    )
+  ]);
+
+  for (let index = 0; index < dates.length; index += 1) {
+    const date = dates[index];
+    const twseResult = twseResults[index];
+    const tpexResult = tpexResults[index];
+
+    const twseRows = twseResult?.status === "fulfilled" ? twseResult.value : null;
+    const tpexRows = tpexResult?.status === "fulfilled" ? tpexResult.value : null;
 
     const twseCount = twseRows?.length ?? -1;
     const tpexCount = tpexRows?.length ?? -1;
-    const bothClosed = twseResult.status === "fulfilled" && tpexResult.status === "fulfilled" && twseCount === 0 && tpexCount === 0;
+    const bothClosed =
+      twseResult?.status === "fulfilled" &&
+      tpexResult?.status === "fulfilled" &&
+      twseCount === 0 &&
+      tpexCount === 0;
 
     if (bothClosed) {
       failed.delete(failureKey("TWSE", date));
       failed.delete(failureKey("TPEx", date));
+      continue;
+    }
+
+    if (twseResult?.status === "fulfilled" && twseCount >= TWSE_MIN_ROWS) {
+      incoming.push(...filterUniverse(twseRows, allowed));
+      acceptedDates.TWSE.add(date);
+      failed.delete(failureKey("TWSE", date));
     } else {
-      if (twseResult.status === "fulfilled" && twseCount >= TWSE_MIN_ROWS) {
-        incoming.push(...filterUniverse(twseRows, allowed));
-        acceptedDates.TWSE.add(date);
-        failed.delete(failureKey("TWSE", date));
-      } else {
-        failed.set(failureKey("TWSE", date), {
-          market: "TWSE",
-          date,
-          message: twseResult.status === "rejected"
-            ? String(twseResult.reason?.message ?? twseResult.reason)
-            : `incomplete row count: ${twseCount}`
-        });
-      }
-
-      if (tpexResult.status === "fulfilled" && tpexCount >= TPEX_MIN_ROWS) {
-        incoming.push(...filterUniverse(tpexRows, allowed));
-        acceptedDates.TPEx.add(date);
-        failed.delete(failureKey("TPEx", date));
-      } else {
-        failed.set(failureKey("TPEx", date), {
-          market: "TPEx",
-          date,
-          message: tpexResult.status === "rejected"
-            ? String(tpexResult.reason?.message ?? tpexResult.reason)
-            : `incomplete row count: ${tpexCount}`
-        });
-      }
+      failed.set(failureKey("TWSE", date), {
+        market: "TWSE",
+        date,
+        message: twseResult?.status === "rejected"
+          ? String(twseResult.reason?.message ?? twseResult.reason)
+          : `incomplete row count: ${twseCount}`
+      });
     }
 
-    processedDates += 1;
-    if (processedDates % 25 === 0 || processedDates === dates.length) {
-      console.log(
-        `progress ${processedDates}/${dates.length}: accepted TWSE ${acceptedDates.TWSE.size}, TPEx ${acceptedDates.TPEx.size}, unresolved ${failed.size}`
-      );
+    if (tpexResult?.status === "fulfilled" && tpexCount >= TPEX_MIN_ROWS) {
+      incoming.push(...filterUniverse(tpexRows, allowed));
+      acceptedDates.TPEx.add(date);
+      failed.delete(failureKey("TPEx", date));
+    } else {
+      failed.set(failureKey("TPEx", date), {
+        market: "TPEx",
+        date,
+        message: tpexResult?.status === "rejected"
+          ? String(tpexResult.reason?.message ?? tpexResult.reason)
+          : `incomplete row count: ${tpexCount}`
+      });
     }
-
-    await sleep(150);
   }
 
-  await mapWithConcurrency(dates, DATE_CONCURRENCY, processDate);
+  console.log(
+    `validated history dates: TWSE ${acceptedDates.TWSE.size}, TPEx ${acceptedDates.TPEx.size}, unresolved ${failed.size}`
+  );
 
   // Always merge the already validated latest official quote cache so the
   // newest day remains available even if one historical endpoint is flaky.
@@ -223,6 +256,8 @@ async function main() {
 
   if (!hasExistingHistory) {
     if (acceptedDates.TWSE.size < 220) {
+      const sample = [...failed.values()].filter((item) => item.market === "TWSE").slice(0, 8);
+      console.warn("TWSE unresolved sample:", sample);
       throw new Error(`Refusing initial history seed with only ${acceptedDates.TWSE.size} valid TWSE trading dates.`);
     }
     if (acceptedDates.TPEx.size < 220) {
