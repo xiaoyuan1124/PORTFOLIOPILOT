@@ -53,7 +53,7 @@ export function Portfolio({
 }: {
   state: AppState;
   onChange: (state: AppState) => boolean;
-  onResearch?: (researchKey: string) => void;
+  onResearch?: (researchKey: string, researchType: "stock" | "etf") => void;
   requestedTab?: PortfolioTab;
 }) {
   const [tab, setTab] = useState<PortfolioTab>(requestedTab ?? "holdings");
