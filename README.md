@@ -909,3 +909,13 @@ The V0.81.1 seed completed quickly enough but the official TWSE endpoint throttl
 - **Safety threshold unchanged:** initial publication still requires at least 220 valid trading dates from both markets.
 - **Failure diagnostics:** if TWSE still misses the seed gate, the workflow prints a sample of unresolved date/reason pairs for the next debug loop.
 - **Zero-cost architecture unchanged:** no paid API, backend, database or additional dependency is added.
+
+
+## V0.81.3 Initial history seed commit fix
+
+The V0.81.2 backfill generated a complete cache (TWSE 266 valid trading dates, TPEx 266, unresolved 0) and deployed it inside the workflow artifact, but the initial seed directory contained only new untracked files. The workflow used `git diff --quiet`, which does not detect untracked files, so it incorrectly printed “No price-history changes.”
+
+- **Seed commit fix:** the workflow stages `public/data/tw-price-history` first, then checks `git diff --cached --quiet`.
+- **Initial and incremental safe:** first-time untracked cache files and later tracked updates are both detected correctly.
+- **No data-model change:** history JSON format, safety thresholds, sources and front-end loaders are unchanged.
+- **Zero-cost architecture unchanged:** no paid API, backend, database or dependency is introduced.
