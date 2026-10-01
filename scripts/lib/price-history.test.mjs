@@ -7,6 +7,7 @@ import {
   mergeHistoryBucket,
   mergeSeriesPoints,
   mapWithConcurrency,
+  needsPriceHistoryRefresh,
   parseTpexDailyQuotesPayload,
   toRocDate,
   weekdayDates
@@ -79,6 +80,19 @@ describe("Taiwan price-history cache helpers", () => {
     expect(results).toEqual([2, 4, 6, 8, 10, 12]);
     expect(maxActive).toBeLessThanOrEqual(3);
     expect(maxActive).toBeGreaterThan(1);
+  });
+
+  it("skips an already-current clean cache but refreshes stale or unresolved history", () => {
+    const current = {
+      endDate: "2026-10-01",
+      targetEndDate: "2026-10-01",
+      failed: []
+    };
+
+    expect(needsPriceHistoryRefresh(current, "2026-10-01", true)).toBe(false);
+    expect(needsPriceHistoryRefresh({ ...current, endDate: "2026-09-30" }, "2026-10-01", true)).toBe(true);
+    expect(needsPriceHistoryRefresh({ ...current, failed: [{ market: "TPEx", date: "2026-10-01" }] }, "2026-10-01", true)).toBe(true);
+    expect(needsPriceHistoryRefresh(current, "2026-10-01", false)).toBe(true);
   });
 
   it("converts ISO dates to TPEx ROC history dates", () => {

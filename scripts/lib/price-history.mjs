@@ -3,6 +3,15 @@ import { cleanQuoteNumber } from "./quote-data.mjs";
 export const PRICE_HISTORY_VERSION = 1;
 export const DEFAULT_HISTORY_CALENDAR_DAYS = 400;
 
+export function needsPriceHistoryRefresh(previousIndex, targetEndDate, hasExistingHistory = true) {
+  if (!hasExistingHistory) return true;
+  if (!previousIndex || typeof previousIndex !== "object") return true;
+  if (typeof targetEndDate !== "string" || !targetEndDate) return true;
+  if (previousIndex.endDate !== targetEndDate || previousIndex.targetEndDate !== targetEndDate) return true;
+  const failed = Array.isArray(previousIndex.failed) ? previousIndex.failed : [];
+  return failed.length > 0;
+}
+
 function plainCell(value) {
   return String(value ?? "")
     .replace(/<[^>]+>/g, "")

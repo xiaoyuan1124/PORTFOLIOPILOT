@@ -9,6 +9,7 @@ import {
   historyBucketStats,
   mapWithConcurrency,
   mergeHistoryBucket,
+  needsPriceHistoryRefresh,
   parseTpexDailyQuotesPayload,
   toRocDate,
   weekdayDates
@@ -48,7 +49,7 @@ async function fetchObject(url, label) {
   return withRetry(label, async () => {
     const response = await fetch(url, {
       headers: {
-        "user-agent": "Mozilla/5.0 PortfolioPilot/0.81 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
+        "user-agent": "Mozilla/5.0 PortfolioPilot/0.82.1 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
         accept: "application/json,text/javascript,*/*"
       },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
@@ -123,6 +124,11 @@ async function main() {
   const previousIndex = await readJson(INDEX_PATH, null);
   const existingFiles = (await readdir(OUTPUT_DIR)).filter((name) => /^(twse|tpex)-[A-Z0-9_]{2}\.json$/i.test(name));
   const hasExistingHistory = existingFiles.length > 0;
+
+  if (!needsPriceHistoryRefresh(previousIndex, targetEndDate, hasExistingHistory)) {
+    console.log(`Taiwan price history already current through ${targetEndDate}; skipping fetch and cache rewrite.`);
+    return;
+  }
 
   const latestExistingDate = typeof previousIndex?.endDate === "string" ? previousIndex.endDate : null;
   const incrementalStart = latestExistingDate
