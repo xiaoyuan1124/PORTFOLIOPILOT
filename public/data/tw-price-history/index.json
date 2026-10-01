@@ -1,6 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-01T14:55:17.632Z",
+  "universeVersion": 2,
+  "generatedAt": "2026-10-01T19:25:49.953Z",
   "calendarDays": 400,
   "startDate": "2025-08-27",
   "endDate": "2026-10-01",
@@ -24,9 +25,9 @@
       "buckets": 67
     },
     "TPEx": {
-      "symbols": 7673,
-      "points": 264613,
-      "buckets": 63
+      "symbols": 1007,
+      "points": 253579,
+      "buckets": 59
     }
   },
   "failed": []
