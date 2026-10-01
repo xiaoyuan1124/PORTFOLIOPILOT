@@ -789,3 +789,21 @@ V0.78 removes the daily manual-import requirement for supported held Taiwan ETFs
 - **No backend / paid API / broker credentials:** public issuer pages are fetched by the existing GitHub Actions market-data pipeline, then published as `public/data/tw-etf-compositions.json`.
 
 The app still keeps a single latest composition per ETF in Backup V17. Historical composition snapshots are not introduced in V0.78; that is intentionally separated from the daily automatic-refresh requirement.
+
+
+## V0.79 ETF composition history and change detection
+
+V0.79 turns the V0.78 latest-only issuer cache into a bounded historical series without adding a backend or paid market-data service.
+
+- **Historical snapshots:** every successful official issuer refresh is retained by ETF + composition `asOf` date. Same-date refreshes replace that date instead of duplicating it.
+- **Bounded zero-cost storage:** the public cache keeps up to **120 snapshots per ETF** so Git history and GitHub Pages payload size stay controlled as more issuers are added.
+- **Backward compatible:** existing V0.78 caches without a `history` field still load; the first V0.79 market-data run seeds history from the currently committed latest compositions.
+- **Failure safe:** issuer fetch failures keep the previous latest composition and existing history. A failed fetch never creates a fake new snapshot or turns missing constituents into zero.
+- **Change detection:** Research compares the current composition with the immediately preceding dated snapshot and classifies each constituent as added, removed, increased, decreased, or unchanged.
+- **Added / removed:** a constituent moving from 0% to a positive weight is shown as added; a previously positive weight disappearing from the next snapshot is shown as removed.
+- **Weight changes:** continuing constituents show previous weight, current weight, and percentage-point change. The UI exposes the largest movements and an expandable full change list.
+- **Interpretation boundary:** weight increases/decreases are composition-weight changes, not proof of issuer trading. Relative price moves can change weights even without a fund trade. Added/removed means the published constituent sets differ between the two snapshots.
+- **Local-first remains intact:** personal holdings stay in browser storage. Public ETF history contains only issuer-published fund composition data and does not reveal which ETFs a user owns.
+- **Cost:** no Supabase, paid API, broker connection, AI API, or server is added. The feature continues to use the existing public-repo GitHub Actions + GitHub Pages pipeline.
+
+Backup V17 remains unchanged because ETF history is public bundled research data, not new personal persisted state.
