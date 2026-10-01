@@ -9,17 +9,27 @@ import { ValuationResearch } from "./valuation-research";
 import { Scanner } from "./scanner";
 import { SectorPulseResearch } from "./sector-pulse-research";
 import { Journal } from "./journal";
+import { EtfResearch } from "./etf-research";
 
-type ResearchTab = "snapshot" | "materialEvents" | "sectorPulse" | "revenue" | "valuation" | "scanner" | "journal";
+type ResearchTab = "snapshot" | "etf" | "materialEvents" | "sectorPulse" | "revenue" | "valuation" | "scanner" | "journal";
 
 export function Research({ state, onChange, researchKey }: { state: AppState; onChange: (state: AppState) => boolean; researchKey?: string }) {
   const [tab, setTab] = useState<ResearchTab>("snapshot");
+  const [snapshotKey, setSnapshotKey] = useState(researchKey);
+  const [snapshotRequestId, setSnapshotRequestId] = useState(0);
+
+  function openStockFromEtf(key: string) {
+    setSnapshotKey(key);
+    setSnapshotRequestId((value) => value + 1);
+    setTab("snapshot");
+  }
 
   return (
     <div className="space-y-4">
       <div className="inline-flex max-w-full overflow-x-auto rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
         {[
           ["snapshot", "個股總覽"],
+          ["etf", "ETF 分析"],
           ["materialEvents", "持股重訊"],
           ["sectorPulse", "族群脈動"],
           ["revenue", "官方營收"],
@@ -37,7 +47,8 @@ export function Research({ state, onChange, researchKey }: { state: AppState; on
         ))}
       </div>
 
-      {tab === "snapshot" ? <CompanySnapshotResearch state={state} requestedKey={researchKey} /> : null}
+      {tab === "snapshot" ? <CompanySnapshotResearch key={snapshotRequestId} state={state} requestedKey={snapshotKey} /> : null}
+      {tab === "etf" ? <EtfResearch state={state} onOpenStock={openStockFromEtf} /> : null}
       {tab === "materialEvents" ? <MaterialEventsResearch state={state} /> : null}
       {tab === "sectorPulse" ? <SectorPulseResearch state={state} /> : null}
       {tab === "revenue" ? <RevenueResearch state={state} /> : null}
