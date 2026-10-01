@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +32,29 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
 
 export function Metric({ label, value, helper }: { label: string; value: string; helper?: string }) {
   return <div><p className="text-xs font-medium tracking-wide text-black/45 dark:text-white/45">{label}</p><p className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">{value}</p>{helper ? <p className="mt-1 text-xs text-black/45 dark:text-white/45">{helper}</p> : null}</div>;
+}
+
+
+export function InfoDisclosure({
+  summary,
+  children,
+  className
+}: {
+  summary: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <details className={cn("group rounded-xl border border-black/6 bg-black/[.018] dark:border-white/7 dark:bg-white/[.025]", className)}>
+      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 px-3 text-xs font-semibold text-black/55 marker:hidden dark:text-white/55">
+        <span>{summary}</span>
+        <ChevronDown size={15} className="shrink-0 transition group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-black/5 px-3 py-3 text-xs leading-5 text-black/48 dark:border-white/6 dark:text-white/48">
+        {children}
+      </div>
+    </details>
+  );
 }
 
 export function Modal({ trigger, title, children }: { trigger: ReactNode; title: string; children: ReactNode }) {
