@@ -692,3 +692,14 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Audit CSV files are intentionally non-importable. The historical-trade importer detects the PortfolioPilot audit marker and rejects the file with a clear message, preventing an audit artifact from being mistaken for a fresh broker execution file.
 - Settings generates a safe local audit filename from the saved source basename when available, with the batch ID as fallback.
 - No new persisted field is required; Backup V17 remains current and V1–V16 compatibility is unchanged.
+
+## V0.72 portfolio data integrity center
+
+- Settings now includes a read-only **資料可信度中心** that consolidates data-quality risks that were previously scattered across holdings, performance and import workflows.
+- The center intentionally does **not** assign a health score. It reports only conditions PortfolioPilot can verify from local state.
+- Warning checks currently cover future-dated activities, future-dated snapshots, Taiwan holdings without a dated TWSE / TPEx price provenance, future-dated Taiwan price provenance, missing Exact TWR pre-flow boundaries, ambiguous same-day external-flow ordering, and a missing current-day net-worth snapshot while holdings exist.
+- Informational checks surface legacy CSV historical trades that predate V0.68 batch IDs, legacy CSV rows without V0.70 source filenames, and the current zero-cost limitation that US security prices are manually maintained.
+- Exact TWR boundary completeness and same-day ordering are evaluated independently so one failure mode cannot hide another.
+- The diagnostics are pure/read-only and never mutate holdings, cash, activities, snapshots or provenance.
+- No new persisted field is required; Backup V17 remains current and V1–V16 compatibility is unchanged.
+

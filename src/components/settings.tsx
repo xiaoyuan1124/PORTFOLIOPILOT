@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AlertTriangle, DatabaseBackup, Download, FileSpreadsheet, RotateCcw, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, CircleAlert, DatabaseBackup, Download, FileSpreadsheet, Info, RotateCcw, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { demoState, emptyState } from "@/lib/demo-data";
 import { localDateKey } from "@/lib/calc";
+import { portfolioDataIntegrity } from "@/lib/data-integrity";
 import { parseTaiwanBrokerInventoryCsv } from "@/lib/broker-inventory-csv";
 import {
   historicalTradeCsvBatches,
@@ -54,6 +55,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
   const [usdDraft, setUsdDraft] = useState<string | null>(null);
   const tradeCsvBatches = historicalTradeCsvBatches(state);
   const visibleTradeCsvBatches = showAllTradeCsvBatches ? tradeCsvBatches : tradeCsvBatches.slice(0, 3);
+  const integrity = portfolioDataIntegrity(state, localDateKey());
 
   function exportRecoveryBackup() {
     const raw = getRecoveryBackupRaw();
@@ -316,6 +318,71 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
           </CardContent>
         </Card>
       ) : null}
+      <Card className="lg:col-span-2">
+        <CardContent>
+          <div className="flex items-start gap-3">
+            <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${
+              integrity.warningCount
+                ? "bg-[#f5ece1] text-[#7d5729] dark:bg-[#382817] dark:text-[#e5bd86]"
+                : "bg-[#e6f1e9] text-[#27563b] dark:bg-[#173426] dark:text-[#a8dab8]"
+            }`}>
+              {integrity.warningCount ? <CircleAlert size={19} /> : <ShieldCheck size={19} />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold">資料可信度中心</h3>
+                {integrity.warningCount ? (
+                  <span className="rounded-full bg-[#f5ece1] px-2.5 py-1 text-xs font-semibold text-[#7d5729] dark:bg-[#382817] dark:text-[#e5bd86]">
+                    {integrity.warningCount} 類需要檢查
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-[#e6f1e9] px-2.5 py-1 text-xs font-semibold text-[#27563b] dark:bg-[#173426] dark:text-[#a8dab8]">
+                    無立即警告
+                  </span>
+                )}
+                {integrity.infoCount ? (
+                  <span className="rounded-full bg-black/5 px-2.5 py-1 text-xs font-semibold text-black/50 dark:bg-white/8 dark:text-white/50">
+                    {integrity.infoCount} 類已知限制
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-black/50 dark:text-white/50">
+                只檢查 PortfolioPilot 自己能驗證的資料品質，不評估投資好壞，也不把缺資料猜成正常值。
+              </p>
+
+              {integrity.items.length ? (
+                <div className="mt-4 grid gap-2 md:grid-cols-2">
+                  {integrity.items.map((item) => (
+                    <div key={item.id} className="rounded-2xl border border-black/6 bg-black/[.018] p-3.5 dark:border-white/8 dark:bg-white/[.025]">
+                      <div className="flex items-start gap-2.5">
+                        <div className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full ${
+                          item.severity === "warning"
+                            ? "bg-[#f5ece1] text-[#7d5729] dark:bg-[#382817] dark:text-[#e5bd86]"
+                            : "bg-black/5 text-black/45 dark:bg-white/8 dark:text-white/45"
+                        }`}>
+                          {item.severity === "warning" ? <CircleAlert size={14} /> : <Info size={14} />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold">{item.title}</p>
+                          <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">{item.detail}</p>
+                          <p className="mt-1 text-[11px] font-semibold text-black/35 dark:text-white/35">
+                            影響 {item.count.toLocaleString()} 筆
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-2xl border border-[#6c8c79]/20 bg-[#edf2ee] px-4 py-3 text-sm leading-6 text-[#335b46] dark:border-[#6c8c79]/18 dark:bg-[#17201b] dark:text-[#a8dab8]">
+                  目前沒有偵測到未來日期、台股價格來源、Exact TWR 邊界、CSV provenance 或淨值快照方面的資料完整性問題。
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="lg:col-span-2">
         <CardContent>
           <div className="flex items-start gap-3">
