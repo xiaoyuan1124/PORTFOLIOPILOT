@@ -1,6 +1,6 @@
 {
   "name": "portfoliopilot",
-  "version": "0.82.3",
+  "version": "0.82.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
