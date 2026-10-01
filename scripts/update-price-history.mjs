@@ -1,8 +1,9 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { parseTwseMiIndexPayload } from "./lib/quote-data.mjs";
+import { isTpexWarrantCode, parseTwseMiIndexPayload } from "./lib/quote-data.mjs";
 import {
   DEFAULT_HISTORY_CALENDAR_DAYS,
+  PRICE_HISTORY_UNIVERSE_VERSION,
   bucketFileName,
   bucketPrefix,
   calendarDateAdd,
@@ -49,7 +50,7 @@ async function fetchObject(url, label) {
   return withRetry(label, async () => {
     const response = await fetch(url, {
       headers: {
-        "user-agent": "Mozilla/5.0 PortfolioPilot/0.82.1 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
+        "user-agent": "Mozilla/5.0 PortfolioPilot/0.82.2 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
         accept: "application/json,text/javascript,*/*"
       },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
@@ -95,7 +96,7 @@ async function readJson(path, fallback) {
 function allowedUniverse(quotes) {
   return {
     TWSE: new Set(quotes.filter((row) => row.market === "TWSE").map((row) => String(row.code).toUpperCase())),
-    TPEx: new Set(quotes.filter((row) => row.market === "TPEx").map((row) => String(row.code).toUpperCase()))
+    TPEx: new Set(quotes.filter((row) => row.market === "TPEx" && !isTpexWarrantCode(row.code)).map((row) => String(row.code).toUpperCase()))
   };
 }
 
@@ -251,6 +252,7 @@ async function main() {
     const close = Number(row.close);
     const market = row.market === "TWSE" || row.market === "TPEx" ? row.market : null;
     if (!market || !Number.isFinite(close) || close <= 0) return [];
+    if (market === "TPEx" && isTpexWarrantCode(row.code)) return [];
     return [{
       code: String(row.code).toUpperCase(),
       name: String(row.name ?? row.code),
@@ -298,7 +300,10 @@ async function main() {
     const existing = await readJson(path, null);
     const bucket = mergeHistoryBucket(existing, market, prefix, grouped.get(file) ?? [], cutoffDate, generatedAt);
     const bucketStats = historyBucketStats(bucket);
-    if (!bucketStats.points) continue;
+    if (!bucketStats.points) {
+      if (existing) await rm(path, { force: true });
+      continue;
+    }
 
     await writeFile(path, JSON.stringify(bucket), "utf8");
     stats[market].symbols += bucketStats.symbols;
@@ -315,6 +320,7 @@ async function main() {
 
   const index = {
     version: 1,
+    universeVersion: PRICE_HISTORY_UNIVERSE_VERSION,
     generatedAt,
     calendarDays: HISTORY_DAYS,
     startDate: globalStart,

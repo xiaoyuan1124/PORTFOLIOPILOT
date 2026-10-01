@@ -22,6 +22,11 @@ export function normalizeQuoteDate(value) {
   return raw;
 }
 
+export function isTpexWarrantCode(value) {
+  const code = String(value ?? "").trim().toUpperCase();
+  return /^7[0-3]\d{4}$/.test(code) || /^7[0-3]\d{3}[PUTFQCBXY]$/.test(code);
+}
+
 export function quoteChangeMetrics(close, rawChange) {
   const raw = String(rawChange ?? "").trim();
   if (!raw || raw === "--" || raw === "---" || /^X/i.test(raw)) {
@@ -123,7 +128,7 @@ export function parseTpexQuoteRows(rows) {
     const name = String(row.CompanyName ?? "").trim();
     const date = normalizeQuoteDate(row.Date);
 
-    if (!code || !name || !date || close === null || close < 0) return [];
+    if (!code || !name || !date || close === null || close < 0 || isTpexWarrantCode(code)) return [];
     const metrics = quoteChangeMetrics(close, row.Change);
     return [{ code, name, market: "TPEx", close, date, ...metrics }];
   });

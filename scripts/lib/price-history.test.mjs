@@ -8,6 +8,7 @@ import {
   mergeSeriesPoints,
   mapWithConcurrency,
   needsPriceHistoryRefresh,
+  PRICE_HISTORY_UNIVERSE_VERSION,
   parseTpexDailyQuotesPayload,
   toRocDate,
   weekdayDates
@@ -20,7 +21,8 @@ describe("Taiwan price-history cache helpers", () => {
         fields: ["代號", "名稱", "收盤", "漲跌"],
         data: [
           ["6488", "環球晶", "445.00", "-5.00"],
-          ["00961", "ETF", "12.34", "+0.10"]
+          ["00961", "ETF", "12.34", "+0.10"],
+          ["700000", "測試認購權證", "1.23", "+0.01"]
         ]
       }]
     }, "2026-09-30");
@@ -67,6 +69,18 @@ describe("Taiwan price-history cache helpers", () => {
     expect(historyBucketStats(bucket)).toEqual({ symbols: 2, points: 3 });
   });
 
+  it("prunes TPEx warrants from existing history buckets", () => {
+    const bucket = mergeHistoryBucket({
+      securities: {
+        "6488": { name: "環球晶", points: [["2026-09-30", 445]] },
+        "700000": { name: "測試認購權證", points: [["2026-09-30", 1.23]] }
+      }
+    }, "TPEx", "64", [], "2026-01-01", "2026-10-01T00:00:00.000Z");
+
+    expect(bucket.securities["6488"]).toBeDefined();
+    expect(bucket.securities["700000"]).toBeUndefined();
+  });
+
   it("limits concurrent workers while preserving output order", async () => {
     let active = 0;
     let maxActive = 0;
@@ -86,11 +100,13 @@ describe("Taiwan price-history cache helpers", () => {
     const current = {
       endDate: "2026-10-01",
       targetEndDate: "2026-10-01",
+      universeVersion: PRICE_HISTORY_UNIVERSE_VERSION,
       failed: []
     };
 
     expect(needsPriceHistoryRefresh(current, "2026-10-01", true)).toBe(false);
     expect(needsPriceHistoryRefresh({ ...current, endDate: "2026-09-30" }, "2026-10-01", true)).toBe(true);
+    expect(needsPriceHistoryRefresh({ ...current, universeVersion: 1 }, "2026-10-01", true)).toBe(true);
     expect(needsPriceHistoryRefresh({ ...current, failed: [{ market: "TPEx", date: "2026-10-01" }] }, "2026-10-01", true)).toBe(true);
     expect(needsPriceHistoryRefresh(current, "2026-10-01", false)).toBe(true);
   });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   combineQuoteMarkets,
   latestQuoteDate,
+  isTpexWarrantCode,
   normalizeQuoteDate,
   parseTpexQuoteRows,
   parseTwseMiIndexPayload,
@@ -49,12 +50,22 @@ describe("Taiwan quote refresh helpers", () => {
     expect(parseTwseMiIndexPayload(payload, "2026-09-29")[0]?.close).toBe(1251);
   });
 
+  it("recognizes official TPEx warrant code ranges without matching ETFs or stocks", () => {
+    expect(isTpexWarrantCode("700000")).toBe(true);
+    expect(isTpexWarrantCode("70000P")).toBe(true);
+    expect(isTpexWarrantCode("73999Y")).toBe(true);
+    expect(isTpexWarrantCode("6488")).toBe(false);
+    expect(isTpexWarrantCode("00937B")).toBe(false);
+    expect(isTpexWarrantCode("00411A")).toBe(false);
+  });
+
   it("parses TWSE OpenAPI fallback and TPEx closing-price payloads", () => {
     const twse = parseTwseQuoteRows([
       { Date: "1150929", Code: "2330", Name: "台積電", ClosingPrice: "1,250.00", Change: "50.00" }
     ]);
     const tpex = parseTpexQuoteRows([
-      { Date: "1150929", SecuritiesCompanyCode: "6488", CompanyName: "環球晶", Close: "445.00", Change: "-5.00" }
+      { Date: "1150929", SecuritiesCompanyCode: "6488", CompanyName: "環球晶", Close: "445.00", Change: "-5.00" },
+      { Date: "1150929", SecuritiesCompanyCode: "700000", CompanyName: "測試認購權證", Close: "1.23", Change: "0.01" }
     ]);
 
     expect(twse[0]).toEqual({
@@ -66,6 +77,7 @@ describe("Taiwan quote refresh helpers", () => {
       change: 50,
       changePct: 4.166666666666666
     });
+    expect(tpex).toHaveLength(1);
     expect(tpex[0]).toEqual({
       code: "6488",
       name: "環球晶",

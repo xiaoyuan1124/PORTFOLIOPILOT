@@ -1,12 +1,14 @@
-import { cleanQuoteNumber } from "./quote-data.mjs";
+import { cleanQuoteNumber, isTpexWarrantCode } from "./quote-data.mjs";
 
 export const PRICE_HISTORY_VERSION = 1;
+export const PRICE_HISTORY_UNIVERSE_VERSION = 2;
 export const DEFAULT_HISTORY_CALENDAR_DAYS = 400;
 
 export function needsPriceHistoryRefresh(previousIndex, targetEndDate, hasExistingHistory = true) {
   if (!hasExistingHistory) return true;
   if (!previousIndex || typeof previousIndex !== "object") return true;
   if (typeof targetEndDate !== "string" || !targetEndDate) return true;
+  if (previousIndex.universeVersion !== PRICE_HISTORY_UNIVERSE_VERSION) return true;
   if (previousIndex.endDate !== targetEndDate || previousIndex.targetEndDate !== targetEndDate) return true;
   const failed = Array.isArray(previousIndex.failed) ? previousIndex.failed : [];
   return failed.length > 0;
@@ -47,7 +49,7 @@ export function parseTpexDailyQuotesPayload(payload, date) {
     const code = plainCell(row[codeIndex]).toUpperCase();
     const name = plainCell(row[nameIndex]);
     const close = cleanQuoteNumber(plainCell(row[closeIndex]));
-    if (!code || !name || close === null || close <= 0) return [];
+    if (!code || !name || close === null || close <= 0 || isTpexWarrantCode(code)) return [];
     return [{ code, name, market: "TPEx", date, close }];
   });
 }
@@ -90,6 +92,7 @@ export function mergeHistoryBucket(existing, market, prefix, rows, cutoffDate, g
     : {};
 
   for (const [code, item] of Object.entries(previous)) {
+    if (market === "TPEx" && isTpexWarrantCode(code)) continue;
     const points = mergeSeriesPoints(item?.points ?? [], [], cutoffDate);
     if (!points.length) continue;
     securities[code] = {
@@ -101,6 +104,7 @@ export function mergeHistoryBucket(existing, market, prefix, rows, cutoffDate, g
   const grouped = new Map();
   for (const row of rows) {
     if (row.market !== market || bucketPrefix(row.code) !== prefix) continue;
+    if (market === "TPEx" && isTpexWarrantCode(row.code)) continue;
     const current = grouped.get(row.code) ?? { name: row.name, points: [] };
     current.name = row.name || current.name;
     current.points.push([row.date, row.close]);
