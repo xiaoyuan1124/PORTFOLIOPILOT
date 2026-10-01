@@ -773,3 +773,19 @@ V0.77 extends the V0.76 ETF attribution work without changing the Local-first st
 - **10. Structure / tracking quality:** composition source/as-of are shown. Fee ratio, AUM, liquidity/spread, premium-discount, tracking error, index rules, rebalance frequency and distribution/accumulation stay unavailable until a stable free public source is integrated.
 
 All thresholds above are **PortfolioPilot product analysis rules**, not investment advice, buy/sell recommendations, or rankings.
+
+
+## V0.78 Held ETF automatic composition refresh
+
+V0.78 removes the daily manual-import requirement for supported held Taiwan ETFs while preserving PortfolioPilot's Local-first boundary.
+
+- **One action:** the portfolio button is now **更新市場資料**. It refreshes bundled Taiwan closing quotes and, independently, the latest bundled official ETF composition cache.
+- **Held ETFs only:** the browser applies bundled composition data only for Taiwan ETFs that actually exist in local holdings. Public cache availability does not upload or reveal the user's portfolio.
+- **Official-source provenance:** automatic compositions are stored with `sourceType: official_issuer`, source URL, and composition `asOf` date.
+- **Failure isolation:** quote refresh can succeed when ETF composition refresh fails, and ETF composition refresh can succeed when quotes are stale or unavailable. A failed issuer fetch preserves the prior composition cache instead of converting missing data to zero.
+- **No rollback:** if local ETF composition data is newer than the bundled official cache, the newer local record is kept.
+- **Manual fallback remains:** CSV import/export is retained for unsupported Taiwan ETFs and US ETFs.
+- **Initial issuer adapters:** 00935 野村臺灣新科技50 and 009816 凱基台灣TOP50. The registry is deliberately explicit so future issuers can be added without pretending different fund-company pages share one stable API.
+- **No backend / paid API / broker credentials:** public issuer pages are fetched by the existing GitHub Actions market-data pipeline, then published as `public/data/tw-etf-compositions.json`.
+
+The app still keeps a single latest composition per ETF in Backup V17. Historical composition snapshots are not introduced in V0.78; that is intentionally separated from the daily automatic-refresh requirement.

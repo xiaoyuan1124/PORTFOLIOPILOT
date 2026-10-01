@@ -9,6 +9,7 @@ import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
 import { applyHoldingCorrections, accountName, holdingIdentityKey, type HoldingCorrection } from "@/lib/local-data";
 import { money, percent } from "@/lib/utils";
 import { applyTwQuotes, cacheFreshnessLabel, cacheMarketFreshness, loadBundledTwQuotes, shouldRejectStaleClosingCache } from "@/lib/market-data";
+import { applyHeldEtfCompositions, loadBundledEtfCompositions } from "@/lib/etf-composition-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
 import { buildHoldingLookupCatalog, findExactHoldingLookupCandidate, searchHoldingLookupCatalog, type HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { Badge, Button, Card, CardContent, GhostButton, Modal } from "./ui";
@@ -721,36 +722,88 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
   async function refreshTaiwanPrices() {
     setRefreshing(true);
     try {
-      const cache = await loadBundledTwQuotes();
-      const asOf = cacheFreshnessLabel(cache);
-      if (shouldRejectStaleClosingCache(cache)) {
-        toast.warning(`官方收盤價快取目前只到 ${asOf}，可能休市或尚未發布今天資料；為避免錯價，本次未覆寫持股。`);
-        return;
-      }
+      const [quoteLoad, compositionLoad] = await Promise.allSettled([
+        loadBundledTwQuotes(),
+        loadBundledEtfCompositions()
+      ]);
 
-      const result = applyTwQuotes(state.holdings, cache);
-      const freshness = cacheMarketFreshness(cache);
-      const dateLabel = [
-        freshness.TWSE ? `TWSE ${freshness.TWSE}` : null,
-        freshness.TPEx ? `TPEx ${freshness.TPEx}` : null
-      ].filter(Boolean).join(" · ");
+      let nextHoldings = state.holdings;
+      let nextCompositions = state.etfCompositions;
+      let quoteSummary = "";
+      let quoteWarning = "";
+      let compositionSummary = "";
+      let compositionWarning = "";
 
-      if (!result.updated) {
-        const skipped = result.skippedStale + result.skippedAmbiguous;
-        if (result.matched > 0) {
-          toast.success(`台股收盤價已是最新 · ${dateLabel || asOf}`);
+      if (quoteLoad.status === "fulfilled") {
+        const cache = quoteLoad.value;
+        const asOf = cacheFreshnessLabel(cache);
+        if (shouldRejectStaleClosingCache(cache)) {
+          quoteWarning = `官方收盤價快取目前只到 ${asOf}，可能休市或尚未發布今天資料；本次沒有覆寫持股價格。`;
         } else {
-          toast.info(`目前持股沒有可套用的 TWSE／TPEx 報價 · ${dateLabel || `官方資料日 ${asOf}`}${skipped ? ` · 已保護略過 ${skipped} 筆` : ""}`);
+          const result = applyTwQuotes(state.holdings, cache);
+          nextHoldings = result.holdings;
+          const freshness = cacheMarketFreshness(cache);
+          const dateLabel = [
+            freshness.TWSE ? `TWSE ${freshness.TWSE}` : null,
+            freshness.TPEx ? `TPEx ${freshness.TPEx}` : null
+          ].filter(Boolean).join(" · ");
+          quoteSummary = result.updated
+            ? `台股價格 ${result.updated}/${result.matched} · ${dateLabel || asOf}`
+            : result.matched > 0
+              ? `台股價格已最新 · ${dateLabel || asOf}`
+              : `台股無可套用報價 · ${dateLabel || asOf}`;
+          if (result.skippedStale || result.skippedAmbiguous) {
+            quoteWarning = `另有 ${result.skippedStale + result.skippedAmbiguous} 筆價格因舊日期或市場不明而保留原值。`;
+          }
         }
-        return;
+      } else {
+        quoteWarning = quoteLoad.reason instanceof Error ? quoteLoad.reason.message : "無法載入官方台股收盤資料。";
       }
-      if (!onChange({ ...state, holdings: result.holdings })) return;
-      toast.success(`實際更新 ${result.updated}/${result.matched} 個台股部位 · ${dateLabel || `官方資料日 ${asOf}`}`);
-      if (result.skippedStale || result.skippedAmbiguous) {
-        toast.info(`另有 ${result.skippedStale + result.skippedAmbiguous} 筆因舊日期或市場不明而保留原價`);
+
+      if (compositionLoad.status === "fulfilled") {
+        const result = applyHeldEtfCompositions(state.etfCompositions, state.holdings, compositionLoad.value);
+        nextCompositions = result.compositions;
+        if (result.heldTwEtfCount > 0) {
+          compositionSummary = result.matched > 0
+            ? `ETF 成份 ${result.updated} 更新、${result.unchanged} 未變更`
+            : result.supported > 0
+              ? "ETF 成份本次沒有可安全套用的更新"
+              : "持有 ETF 尚無支援的官方自動成份來源";
+          if (result.unsupported > 0 || result.preservedNewer > 0 || result.sourceIssues > 0) {
+            compositionWarning = [
+              result.sourceIssues > 0 ? `${result.sourceIssues} 檔官方來源本次抓取異常，已保留可用舊資料` : "",
+              result.unsupported > 0 ? `${result.unsupported} 檔持有台灣 ETF 尚未支援自動成份` : "",
+              result.preservedNewer > 0 ? `${result.preservedNewer} 檔本機資料較新，已保留` : ""
+            ].filter(Boolean).join("；");
+          }
+        }
+      } else {
+        compositionWarning = compositionLoad.reason instanceof Error
+          ? compositionLoad.reason.message
+          : "無法載入官方 ETF 成份快取。";
+      }
+
+      const changed =
+        nextHoldings.some((holding, index) => holding !== state.holdings[index]) ||
+        nextCompositions.length !== state.etfCompositions.length ||
+        nextCompositions.some((composition, index) => composition !== state.etfCompositions[index]);
+
+      if (changed && !onChange({
+        ...state,
+        holdings: nextHoldings,
+        etfCompositions: nextCompositions
+      })) return;
+
+      const successes = [quoteSummary, compositionSummary].filter(Boolean);
+      if (successes.length) toast.success(`市場資料更新完成 · ${successes.join(" · ")}`);
+      if (!successes.length && (quoteWarning || compositionWarning)) {
+        toast.warning("市場資料本次沒有可安全套用的更新。");
+      }
+      for (const warning of [quoteWarning, compositionWarning].filter(Boolean)) {
+        toast.info(warning);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "無法載入官方台股資料");
+      toast.error(error instanceof Error ? error.message : "市場資料更新失敗");
     } finally {
       setRefreshing(false);
     }
@@ -767,7 +820,7 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
         <div className="flex flex-wrap gap-2">
           <GhostButton type="button" disabled={refreshing} onClick={refreshTaiwanPrices}>
             <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-            {refreshing ? "更新中" : "更新台股收盤價"}
+            {refreshing ? "更新中" : "更新市場資料"}
           </GhostButton>
           {state.holdings.length ? (
             <Modal

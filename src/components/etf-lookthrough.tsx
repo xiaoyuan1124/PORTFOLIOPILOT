@@ -67,7 +67,7 @@ export function EtfLookThrough({ state, onChange }: { state: AppState; onChange:
               <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">ETF Look-through · Local-first</p>
               <h3 className="mt-1 text-xl font-semibold">直接持股＋ETF 隱含曝險</h3>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-black/50 dark:text-white/50">
-                只使用你已匯入、且帶有來源網址與資料日期的成分權重。沒有成分資料的 ETF 會標示「資料不足」；權重不足 100% 的部分保留為未解析，不做推估或自動放大。
+                支援的持有台灣 ETF 會在「更新市場資料」時自動套用可追溯的官方發行人成份；CSV 保留作為尚未支援 ETF 的手動補充。沒有成份資料的 ETF 仍會標示「資料不足」，缺失權重不會被自動放大。
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -182,7 +182,7 @@ export function EtfLookThrough({ state, onChange }: { state: AppState; onChange:
                     </div>
                   ) : (
                     <p className="mt-3 text-xs leading-5 text-black/45 dark:text-white/45">
-                      尚未匯入可追溯的成分資料，因此不推估此 ETF 的底層公司曝險。
+                      目前沒有可追溯的成份資料。先按「更新市場資料」嘗試官方自動同步；若此 ETF 尚未支援，可再用 CSV 手動補充。
                     </p>
                   )}
                 </div>
@@ -197,7 +197,7 @@ export function EtfLookThrough({ state, onChange }: { state: AppState; onChange:
         <CardContent>
           <p className="text-sm font-semibold">目前計算邊界</p>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
-            此版只做一層 ETF 穿透，不遞迴拆解「ETF 裡的 ETF」。權重直接使用來源數值，不做補足或重估；CSV 匯入代表「你提供並保存在本機的來源資料」，PortfolioPilot 不會把它自動宣稱為官方。
+            此版只做一層 ETF 穿透，不遞迴拆解「ETF 裡的 ETF」。權重直接使用來源數值，不做補足或重估。官方自動同步與 CSV 手動匯入都會保留來源與資料日；抓取失敗時保留既有資料，不會把缺值當成 0。
           </p>
         </CardContent>
       </Card>
