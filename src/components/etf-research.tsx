@@ -64,8 +64,12 @@ function compositionKey(composition: EtfComposition) {
   return `${composition.etfMarket}:${composition.etfSymbol.trim().toUpperCase()}`;
 }
 
-function fmt(value: number, digits = 2) {
+function fmtPct(value: number, digits = 2) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(digits)}%`;
+}
+
+function fmtPoint(value: number, digits = 3) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(digits)}pt`;
 }
 
 function metricTone(value: number, goodMax: number, warnMax: number) {
@@ -227,7 +231,7 @@ export function EtfResearch({
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-semibold tabular-nums">{result.attributionDate ? fmt(result.estimatedEtfReturnPct) : "—"}</p>
+                  <p className="text-2xl font-semibold tabular-nums">{result.attributionDate ? fmtPct(result.estimatedEtfReturnPct) : "—"}</p>
                   <p className="mt-1 text-[11px] text-black/38 dark:text-white/38">
                     {result.attributionDate
                       ? `${result.attributionDate} · 已涵蓋權重 ${result.attributionCoveredWeightPct.toFixed(1)}%`
@@ -255,10 +259,10 @@ export function EtfResearch({
                       >
                         <span className="min-w-0">
                           <strong className="block truncate text-sm">{row.symbol} · {row.name}</strong>
-                          <span className="text-[11px] text-black/38 dark:text-white/38">權重 {row.weightPct.toFixed(2)}% · 當日 {fmt(row.changePct)}</span>
+                          <span className="text-[11px] text-black/38 dark:text-white/38">權重 {row.weightPct.toFixed(2)}% · 當日 {fmtPct(row.changePct)}</span>
                         </span>
                         <span className="shrink-0 text-right">
-                          <strong className="block text-sm tabular-nums">{fmt(row.contributionPctPoints, 3)}pt</strong>
+                          <strong className="block text-sm tabular-nums">{fmtPoint(row.contributionPctPoints)}</strong>
                           {result.heldEtfValueTwd > 0 ? <span className="text-[10px] text-black/35 dark:text-white/35">約 NT$ {Math.round(row.estimatedHoldingImpactTwd).toLocaleString()}</span> : null}
                         </span>
                       </button>
@@ -278,10 +282,10 @@ export function EtfResearch({
                       >
                         <span className="min-w-0">
                           <strong className="block truncate text-sm">{row.symbol} · {row.name}</strong>
-                          <span className="text-[11px] text-black/38 dark:text-white/38">權重 {row.weightPct.toFixed(2)}% · 當日 {fmt(row.changePct)}</span>
+                          <span className="text-[11px] text-black/38 dark:text-white/38">權重 {row.weightPct.toFixed(2)}% · 當日 {fmtPct(row.changePct)}</span>
                         </span>
                         <span className="shrink-0 text-right">
-                          <strong className="block text-sm tabular-nums">{fmt(row.contributionPctPoints, 3)}pt</strong>
+                          <strong className="block text-sm tabular-nums">{fmtPoint(row.contributionPctPoints)}</strong>
                           {result.heldEtfValueTwd > 0 ? <span className="text-[10px] text-black/35 dark:text-white/35">約 NT$ {Math.round(row.estimatedHoldingImpactTwd).toLocaleString()}</span> : null}
                         </span>
                       </button>
