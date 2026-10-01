@@ -146,7 +146,7 @@ export function AppShell() {
       <Toaster theme={dark ? "dark" : "light"} position="top-center" richColors closeButton />
       <QuickSearch state={state} open={searchOpen} onOpenChange={setSearchOpen} onNavigate={navigate} />
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] border-r border-black/6 bg-[#efeee9]/85 px-4 py-5 backdrop-blur-xl dark:border-white/7 dark:bg-[#0d1210]/90 md:flex md:flex-col">
+      <aside className="app-desktop-sidebar fixed inset-y-0 left-0 z-30 hidden w-[248px] border-r border-black/6 bg-[#efeee9]/85 px-4 backdrop-blur-xl dark:border-white/7 dark:bg-[#0d1210]/90 md:flex md:flex-col">
         <div className="flex items-center gap-3 px-2">
           <div className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]"><BarChart3 size={20} /></div>
           <div><p className="font-semibold tracking-tight">PortfolioPilot</p><p className="text-[11px] text-black/40 dark:text-white/40">Local investment cockpit</p></div>
@@ -168,8 +168,8 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="min-h-dvh pb-28 md:ml-[248px] md:pb-10">
-        <header className="sticky top-0 z-20 border-b border-black/5 bg-[#f4f2ed]/82 px-4 py-3 backdrop-blur-xl dark:border-white/6 dark:bg-[#101412]/82 md:px-8 md:py-4">
+      <main className="app-mobile-main min-h-dvh md:ml-[248px]">
+        <header className="app-topbar sticky top-0 z-20 border-b border-black/5 bg-[#f4f2ed]/82 backdrop-blur-xl dark:border-white/6 dark:bg-[#101412]/82">
           <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-black/35 dark:text-white/35">{title.eyebrow}</p>
@@ -221,7 +221,7 @@ export function AppShell() {
         </div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-black/7 bg-[#f7f5f0]/94 px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl dark:border-white/8 dark:bg-[#0f1412]/94 md:hidden">
+      <nav className="app-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-black/7 bg-[#f7f5f0]/94 pt-2 backdrop-blur-xl dark:border-white/8 dark:bg-[#0f1412]/94 md:hidden">
         <div className="grid grid-cols-4">
           {nav.map((item) => {
             const Icon = item.icon;
