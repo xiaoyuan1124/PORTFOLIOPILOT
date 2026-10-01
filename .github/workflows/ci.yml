@@ -23,4 +23,19 @@ jobs:
       - run: npm test
       - name: Temporary V0.78 official ETF source integration check
         run: node scripts/update-etf-compositions.mjs
+      - name: Temporary V0.78 Nomura source diagnostic
+        run: |
+          node --input-type=module <<'NODE'
+          const url = "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00935&tab=basic";
+          const response = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 PortfolioPilot/0.78", accept: "text/html" } });
+          const html = await response.text();
+          console.log("status", response.status, "bytes", html.length);
+          console.log("contains 00935", html.includes("00935"), "contains 股票代號", html.includes("股票代號"));
+          const scripts = [...html.matchAll(/<script\\b[^>]*src=["']([^"']+)["']/gi)].map((match) => match[1]);
+          console.log("scripts", JSON.stringify(scripts));
+          const apiHints = [...html.matchAll(/.{0,100}(?:api|ajax|fundNo|product-description|Shareholding|pcf).{0,180}/gi)]
+            .map((match) => match[0].replace(/\\s+/g, " "))
+            .slice(0, 30);
+          console.log("hints", JSON.stringify(apiHints));
+          NODE
       - run: npm run build
