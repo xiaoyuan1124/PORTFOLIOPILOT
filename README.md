@@ -878,6 +878,7 @@ V0.81 adds a bounded, zero-cost Taiwan daily closing-price history layer for lis
 - **Partitioned mobile cache:** history is split by market and the first two characters of the security code. A phone researching one symbol downloads only its small bucket instead of the full Taiwan market history.
 - **Bounded storage:** old points outside the rolling history window are trimmed so repository and Pages size remain controlled.
 - **Retry / failure behavior:** failed market/date requests are retained in the history index for later retries. A failed date never becomes a fabricated zero-price observation.
+- **Backfill performance:** initial history seeding uses bounded 3-date concurrency with shorter per-request timeouts/retries so intermittent TPEx stalls cannot consume the entire 30-minute workflow window.
 - **Latest-day safety:** the already validated bundled latest quote cache is merged into history so a flaky historical endpoint cannot regress the newest official close.
 - **Research metrics:** Taiwan stocks and ETFs can show 1M / 3M / 6M / 1Y raw price return, max drawdown, annualized daily-close volatility and a historical close chart when the corresponding bucket is available.
 - **ETF analysis:** the former unavailable momentum block now uses official history for price-performance metrics. Relative strength remains unavailable until a same-period benchmark series is joined.
