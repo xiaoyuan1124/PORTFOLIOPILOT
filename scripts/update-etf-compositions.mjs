@@ -1,21 +1,19 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { applySectorMap, parseIssuerComposition } from "./lib/etf-composition-data.mjs";
+import { applySectorMap, normalizeDate, parseIssuerComposition, parseNomuraFundAssetsPayload } from "./lib/etf-composition-data.mjs";
 
 const OUTPUT = "public/data/tw-etf-compositions.json";
 const REVENUE = "public/data/tw-revenue.json";
 
 const SOURCES = [
   {
+    adapter: "nomura_fund_assets",
     etfSymbol: "00935",
     etfName: "野村臺灣新科技50",
-    sourceName: "野村投信",
-    sourceUrl: "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00935&tab=basic",
-    datePatterns: [
-      /最新淨值\s*\(日期\)[\s\S]{0,120}?(20\d{2}[\/-]\d{2}[\/-]\d{2})/,
-      /最新淨值[\s\S]{0,120}?(20\d{2}[\/-]\d{2}[\/-]\d{2})/
-    ]
+    sourceName: "野村投信官方持股比重",
+    sourceUrl: "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00935&tab=Shareholding"
   },
   {
+    adapter: "issuer_html",
     etfSymbol: "009816",
     etfName: "凱基台灣TOP50",
     sourceName: "凱基投信",
@@ -57,6 +55,83 @@ async function fetchHtml(source) {
   });
 }
 
+const NOMURA_API = "https://www.nomurafunds.com.tw/API/ETFAPI/api/";
+
+function taipeiDateKey() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const byType = new Map(parts.map((part) => [part.type, part.value]));
+  return `${byType.get("year")}-${byType.get("month")}-${byType.get("day")}`;
+}
+
+async function postNomura(path, body) {
+  return withRetry(`Nomura ${path}`, async () => {
+    const response = await fetch(NOMURA_API + path, {
+      method: "POST",
+      headers: {
+        "user-agent": "Mozilla/5.0 PortfolioPilot/0.78 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
+        "content-type": "application/json",
+        accept: "application/json, text/plain, */*",
+        origin: "https://www.nomurafunds.com.tw",
+        referer: "https://www.nomurafunds.com.tw/ETFWEB/"
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000)
+    });
+    if (!response.ok) {
+      throw new Error(`野村官方 API ${path} HTTP ${response.status}`);
+    }
+    return response.json();
+  });
+}
+
+async function fetchNomuraComposition(source) {
+  const datePayload = await postNomura("Fund/GetFundTradeInfoDate", {
+    Type: 1,
+    Keyword: "",
+    FundNo: source.etfSymbol,
+    Date: taipeiDateKey()
+  });
+
+  if (datePayload?.StatusCode !== 0) {
+    throw new Error(`${source.etfSymbol} 無法取得野村官方可用資料日。`);
+  }
+
+  const rawDates = [
+    datePayload.Entries?.LatestDate,
+    ...((datePayload.Entries?.AllDate ?? []).slice().reverse())
+  ];
+  const candidates = [...new Set(rawDates.map(normalizeDate).filter(Boolean))].slice(0, 7);
+  if (!candidates.length) {
+    throw new Error(`${source.etfSymbol} 野村官方 API 沒有可用資料日。`);
+  }
+
+  const failures = [];
+  for (const date of candidates) {
+    try {
+      const payload = await postNomura("Fund/GetFundAssets", {
+        FundID: source.etfSymbol,
+        SearchDate: date
+      });
+      return parseNomuraFundAssetsPayload({
+        payload,
+        etfSymbol: source.etfSymbol,
+        etfName: source.etfName,
+        sourceName: source.sourceName,
+        sourceUrl: source.sourceUrl
+      });
+    } catch (error) {
+      failures.push(`${date}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  throw new Error(`${source.etfSymbol} 最近 ${candidates.length} 個官方資料日都沒有可用持股：${failures.join(" | ")}`);
+}
+
 async function loadPrevious() {
   try {
     return JSON.parse(await readFile(OUTPUT, "utf8"));
@@ -89,8 +164,10 @@ const sources = [];
 for (const source of SOURCES) {
   const fetchedAt = new Date().toISOString();
   try {
-    const html = await fetchHtml(source);
-    const parsed = applySectorMap(parseIssuerComposition({ html, ...source }), sectors);
+    const rawComposition = source.adapter === "nomura_fund_assets"
+      ? await fetchNomuraComposition(source)
+      : parseIssuerComposition({ html: await fetchHtml(source), ...source });
+    const parsed = applySectorMap(rawComposition, sectors);
     compositions.push(parsed);
     sources.push({
       symbol: source.etfSymbol,
