@@ -6,59 +6,9 @@ import type { AppState, EtfComposition } from "@/lib/types";
 import { analyzeEtf } from "@/lib/etf-research";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
+import { EtfDeepAnalysis } from "./etf-deep-analysis";
 
-const framework = [
-  {
-    title: "1. 指數／策略規則",
-    standard: "規則公開、可重現、知道何時納入／剔除／再平衡；規則不透明就先視為資料不足。",
-    auto: false
-  },
-  {
-    title: "2. 總成本",
-    standard: "同類 ETF 比總費用率、交易成本與稅負；廣泛市值型若年成本明顯高於同類，需要能解釋差異。",
-    auto: false
-  },
-  {
-    title: "3. 流動性與買賣價差",
-    standard: "常態價差 ≤0.2% 可視為流動性佳；0.2–0.5% 需注意；>0.5% 下單成本可能明顯。",
-    auto: false
-  },
-  {
-    title: "4. 追蹤品質",
-    standard: "看 tracking difference 與 tracking error；廣泛指數 ETF 若長期偏離指數 >0.5% 或波動式偏離，需查原因。",
-    auto: false
-  },
-  {
-    title: "5. 成份資料完整度",
-    standard: "權重覆蓋 ≥95% 才適合做穿透分析；80–95% 僅部分可信；<80% 不應用來下完整曝險結論。",
-    auto: true
-  },
-  {
-    title: "6. 單一成份股集中度",
-    standard: "一般廣泛型可先看 Top 1 <10%；單一成份 >20% 代表 ETF 行為可能高度受單一公司左右。",
-    auto: true
-  },
-  {
-    title: "7. Top 10／HHI 集中度",
-    standard: "廣泛型 Top 10 <50% 較分散；>60% 已屬高集中。HHI 越高，代表有效持股數越少。",
-    auto: true
-  },
-  {
-    title: "8. 產業集中度",
-    standard: "最大產業 <30% 較分散；30–50% 明顯偏重；>50% 幾乎可視為產業／主題型曝險。",
-    auto: true
-  },
-  {
-    title: "9. 與自己持股的重疊",
-    standard: "ETF 成份與直接持股重疊 <20% 較低；20–40% 中度；>40% 要確認是不是重複押同一批公司。",
-    auto: true
-  },
-  {
-    title: "10. 成份股基本面與再平衡",
-    standard: "不要只看 ETF 名稱；逐一看主要成份股營收、獲利、估值、財務品質與再平衡後是否出現風格漂移。",
-    auto: false
-  }
-] as const;
+
 
 function compositionKey(composition: EtfComposition) {
   return `${composition.etfMarket}:${composition.etfSymbol.trim().toUpperCase()}`;
@@ -70,12 +20,6 @@ function fmtPct(value: number, digits = 2) {
 
 function fmtPoint(value: number, digits = 3) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(digits)}pt`;
-}
-
-function metricTone(value: number, goodMax: number, warnMax: number) {
-  if (value <= goodMax) return "good" as const;
-  if (value <= warnMax) return "warn" as const;
-  return "neutral" as const;
 }
 
 export function EtfResearch({
@@ -211,7 +155,7 @@ export function EtfResearch({
         </Card>
       ) : null}
 
-      {selected && result ? (
+      {selected && result && quotes ? (
         <>
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">成份權重覆蓋</p><p className="mt-2 text-xl font-semibold">{result.compositionCoveragePct.toFixed(1)}%</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">{result.constituentCount} 檔已匯入成份</p></CardContent></Card>
@@ -303,7 +247,7 @@ export function EtfResearch({
                 <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Constituents</p>
                 <h3 className="mt-1 font-semibold">成份股與 ETF 的關聯</h3>
                 <div className="mt-4 space-y-2">
-                  {sortedConstituents.slice(0, 30).map((item, index) => (
+                  {sortedConstituents.map((item, index) => (
                     <div key={`${item.market}:${item.symbol}:${index}`} className="flex items-center gap-3 rounded-xl border border-black/5 px-3 py-2 dark:border-white/6">
                       <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-black/[.04] text-[11px] font-semibold dark:bg-white/[.06]">{index + 1}</span>
                       <span className="min-w-0 flex-1">
@@ -333,33 +277,7 @@ export function EtfResearch({
             </Card>
           </section>
 
-          <Card>
-            <CardContent>
-              <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">ETF selection framework</p>
-              <h3 className="mt-1 text-lg font-semibold">10 個挑 ETF 時應該看的面向</h3>
-              <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
-                門檻是研究用的初步警示線，不是買賣評分；主題型 ETF 本來就可能高度集中，重點是你是否清楚自己承擔什麼曝險。
-              </p>
-              <div className="mt-4 grid gap-2 md:grid-cols-2">
-                {framework.map((item) => (
-                  <div key={item.title} className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold">{item.title}</p>
-                      <Badge tone={item.auto ? "good" : "neutral"}>{item.auto ? "目前可自動看" : "需補資料"}</Badge>
-                    </div>
-                    <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">{item.standard}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="mini-metric"><span>Top 1</span><strong>{result.top1WeightPct.toFixed(1)}%</strong><div className="mt-2"><Badge tone={metricTone(result.top1WeightPct, 10, 20)}>{result.top1WeightPct <= 10 ? "較分散" : result.top1WeightPct <= 20 ? "中度集中" : "高度集中"}</Badge></div></div>
-                <div className="mini-metric"><span>Top 10</span><strong>{result.top10WeightPct.toFixed(1)}%</strong><div className="mt-2"><Badge tone={metricTone(result.top10WeightPct, 50, 60)}>{result.top10WeightPct <= 50 ? "較分散" : result.top10WeightPct <= 60 ? "中度集中" : "高度集中"}</Badge></div></div>
-                <div className="mini-metric"><span>最大產業</span><strong>{result.topSector ? `${result.topSector.weightPct.toFixed(1)}%` : "—"}</strong><div className="mt-2"><Badge tone={metricTone(result.topSector?.weightPct ?? 0, 30, 50)}>{(result.topSector?.weightPct ?? 0) <= 30 ? "較分散" : (result.topSector?.weightPct ?? 0) <= 50 ? "偏重" : "高度集中"}</Badge></div></div>
-                <div className="mini-metric"><span>直接持股重疊</span><strong>{result.directPortfolioOverlapWeightPct.toFixed(1)}%</strong><div className="mt-2"><Badge tone={metricTone(result.directPortfolioOverlapWeightPct, 20, 40)}>{result.directPortfolioOverlapWeightPct <= 20 ? "較低" : result.directPortfolioOverlapWeightPct <= 40 ? "中度" : "高度重疊"}</Badge></div></div>
-              </div>
-            </CardContent>
-          </Card>
+          <EtfDeepAnalysis composition={selected} compositions={compositions} quotes={quotes} />
 
           <Card>
             <CardContent>

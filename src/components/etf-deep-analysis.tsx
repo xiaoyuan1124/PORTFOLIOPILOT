@@ -1,0 +1,329 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, ExternalLink, Info } from "lucide-react";
+import {
+  analyzeEtfAdvanced,
+  overlapProductBand,
+  sectorProductBand,
+  singleHoldingProductBand,
+  top10ProductBand,
+  type EtfAttributionExclusionReason,
+  type EtfProductBand
+} from "@/lib/etf-advanced-analysis";
+import type { TwQuoteCache } from "@/lib/market-data";
+import { loadBundledQuarterlyMargins, type QuarterlyMarginCache } from "@/lib/quarterly-financials";
+import { loadBundledRevenueHistory, type RevenueHistoryCache } from "@/lib/revenue-history";
+import type { EtfComposition } from "@/lib/types";
+import { loadBundledValuations, type ValuationCache } from "@/lib/valuation-data";
+import { Badge, Card, CardContent } from "./ui";
+
+type Props = {
+  composition: EtfComposition;
+  compositions: EtfComposition[];
+  quotes: TwQuoteCache;
+};
+
+type SourceData = {
+  valuations: ValuationCache | null;
+  revenueHistory: RevenueHistoryCache | null;
+  quarterlyMargins: QuarterlyMarginCache | null;
+};
+
+const exclusionLabels: Record<EtfAttributionExclusionReason, string> = {
+  unsupported_market: "目前未接此市場免費日行情",
+  quote_cache_unavailable: "官方行情快取 unavailable",
+  missing_quote: "找不到行情",
+  ambiguous_quote: "代號對應不唯一",
+  invalid_quote: "行情缺少有效收盤／漲跌",
+  different_trading_date: "行情交易日與本次歸因日不同"
+};
+
+function pct(value: number | null, digits = 2) {
+  if (value === null || !Number.isFinite(value)) return "unavailable";
+  return (value >= 0 ? "+" : "") + value.toFixed(digits) + "%";
+}
+
+function plain(value: number | null, digits = 2) {
+  if (value === null || !Number.isFinite(value)) return "unavailable";
+  return value.toFixed(digits);
+}
+
+function point(value: number | null, digits = 3) {
+  if (value === null || !Number.isFinite(value)) return "unavailable";
+  return (value >= 0 ? "+" : "") + value.toFixed(digits) + "pt";
+}
+
+function bandLabel(band: EtfProductBand, kind: "single" | "top10" | "sector" | "overlap") {
+  if (kind === "single") {
+    if (band === "low") return "低";
+    if (band === "medium") return "中";
+    if (band === "high") return "高";
+    return "非常集中";
+  }
+  if (kind === "top10") return band === "low" ? "較分散" : band === "medium" ? "中度集中" : "高集中";
+  if (kind === "sector") return band === "low" ? "較分散" : band === "medium" ? "產業偏重" : "高產業集中";
+  return band === "low" ? "較低重疊" : band === "medium" ? "中度重疊" : "高度重複曝險";
+}
+
+function ruleTone(band: EtfProductBand) {
+  return band === "low" ? "good" as const : band === "medium" ? "neutral" as const : "warn" as const;
+}
+
+function coverageLabel(value: number) {
+  if (value >= 95) return "高覆蓋";
+  if (value >= 80) return "部分覆蓋";
+  return "資料不足";
+}
+
+function NumberCard({ label, value, helper }: { label: string; value: string; helper: string }) {
+  return (
+    <div className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
+      <p className="text-xs text-black/42 dark:text-white/42">{label}</p>
+      <p className="mt-1 text-lg font-semibold tabular-nums">{value}</p>
+      <p className="mt-1 text-[11px] leading-5 text-black/38 dark:text-white/38">{helper}</p>
+    </div>
+  );
+}
+
+function SectionTitle({ number, title, status }: { number: number; title: string; status: "available" | "partial" | "unavailable" }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h4 className="font-semibold">{number}. {title}</h4>
+      <Badge tone={status === "available" ? "good" : status === "partial" ? "neutral" : "warn"}>
+        {status === "available" ? "可分析" : status === "partial" ? "部分資料" : "unavailable"}
+      </Badge>
+    </div>
+  );
+}
+
+export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
+  const [sourceData, setSourceData] = useState<SourceData>({
+    valuations: null,
+    revenueHistory: null,
+    quarterlyMargins: null
+  });
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    Promise.allSettled([
+      loadBundledValuations(),
+      loadBundledRevenueHistory(),
+      loadBundledQuarterlyMargins()
+    ]).then((results) => {
+      if (!active) return;
+      setSourceData({
+        valuations: results[0]?.status === "fulfilled" ? results[0].value : null,
+        revenueHistory: results[1]?.status === "fulfilled" ? results[1].value : null,
+        quarterlyMargins: results[2]?.status === "fulfilled" ? results[2].value : null
+      });
+      setLoaded(true);
+    });
+    return () => { active = false; };
+  }, []);
+
+  const analysis = useMemo(
+    () => analyzeEtfAdvanced(composition, compositions, { quotes, ...sourceData }),
+    [composition, compositions, quotes, sourceData]
+  );
+
+  const top10Band = top10ProductBand(analysis.top10WeightPct);
+  const singleBand = singleHoldingProductBand(analysis.top1WeightPct);
+  const topSector = analysis.sectorWeights[0] ?? null;
+  const sectorBand = sectorProductBand(topSector?.weightPct ?? 0);
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent>
+          <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">ETF Analysis V0.77</p>
+          <h3 className="mt-1 text-lg font-semibold">10 種 ETF 穿透分析</h3>
+          <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
+            以下門檻是 PortfolioPilot 的產品分析規則，用來描述結構與資料完整度，不是買賣建議、推薦或投資評級。所有加權數據都同時顯示覆蓋率；缺資料維持 unavailable，不以 0 補值。
+          </p>
+        </CardContent>
+      </Card>
+
+      <section className="grid gap-4 xl:grid-cols-2">
+        <Card>
+          <CardContent>
+            <SectionTitle number={1} title="成份股結構" status="available" />
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <NumberCard label="成份股數" value={String(analysis.constituentCount)} helper={"匯入權重 " + analysis.compositionCoveragePct.toFixed(1) + "%"} />
+              <NumberCard label="Top 1" value={analysis.top1WeightPct.toFixed(1) + "%"} helper="最大單一成份" />
+              <NumberCard label="Top 5" value={analysis.top5WeightPct.toFixed(1) + "%"} helper="前五大合計" />
+              <NumberCard label="Top 10" value={analysis.top10WeightPct.toFixed(1) + "%"} helper="前十大合計" />
+            </div>
+            <p className="mt-3 text-xs text-black/42 dark:text-white/42">成份權重資料日：{composition.asOf} · {composition.sourceName}</p>
+            {analysis.previousCompositionAsOf ? (
+              <div className="mt-3 rounded-2xl bg-black/[.025] p-3 dark:bg-white/[.035]">
+                <p className="text-xs font-semibold">權重變化：對比 {analysis.previousCompositionAsOf}</p>
+                <div className="mt-2 space-y-1">
+                  {analysis.weightChanges.slice(0, 6).map((row) => (
+                    <div key={row.market + ":" + row.symbol} className="flex justify-between gap-3 text-xs">
+                      <span className="truncate">{row.symbol} · {row.name}</span>
+                      <span className="shrink-0 tabular-nums">{point(row.changePctPoints)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-black/38 dark:text-white/38">權重變化 unavailable：目前沒有同一 ETF 更早的 composition snapshot。</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <SectionTitle number={2} title="集中度" status="available" />
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <NumberCard label="HHI" value={analysis.hhi.toFixed(0)} helper="權重平方和，越高越集中" />
+              <NumberCard label="有效持股數" value={analysis.effectiveHoldingCount.toFixed(1)} helper="10000 / HHI" />
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <Badge tone={ruleTone(top10Band)}>{bandLabel(top10Band, "top10")}</Badge>
+              <span className="text-black/45 dark:text-white/45">產品規則：Top 10 &lt;40% 較分散；40–60% 中度；&gt;60% 高集中。</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <SectionTitle number={3} title="產業曝險" status="available" />
+            <div className="mt-4 space-y-3">
+              {analysis.sectorWeights.slice(0, 8).map((row) => (
+                <div key={row.sector}>
+                  <div className="mb-1 flex justify-between gap-3 text-xs"><span>{row.sector}</span><strong>{row.weightPct.toFixed(1)}%</strong></div>
+                  <div className="h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/8"><div className="h-full rounded-full bg-[#456b58]" style={{ width: Math.min(100, row.weightPct) + "%" }} /></div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <Badge tone={ruleTone(sectorBand)}>{bandLabel(sectorBand, "sector")}</Badge>
+              <span className="text-black/45 dark:text-white/45">單一產業 &gt;50% 視為高產業集中。</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <SectionTitle number={4} title="單一公司風險" status="available" />
+            <p className="mt-4 text-xl font-semibold">{analysis.topHolding ? analysis.topHolding.symbol + " · " + analysis.topHolding.name : "—"}</p>
+            <p className="mt-1 text-sm">{analysis.top1WeightPct.toFixed(1)}% 權重</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <Badge tone={ruleTone(singleBand)}>{bandLabel(singleBand, "single")}</Badge>
+              <span className="text-black/45 dark:text-white/45">&lt;10% 低；10–20% 中；20–30% 高；&gt;30% 非常集中。</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <SectionTitle number={5} title="成份股品質" status="partial" />
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <NumberCard label="加權營收 YoY" value={pct(analysis.revenueYoY.value)} helper={"覆蓋 " + analysis.revenueYoY.coveredWeightPct.toFixed(1) + "% · " + (analysis.revenueYoY.asOf ?? "unavailable")} />
+              <NumberCard label="加權毛利率" value={pct(analysis.grossMargin.value)} helper={"覆蓋 " + analysis.grossMargin.coveredWeightPct.toFixed(1) + "% · " + (analysis.grossMargin.asOf ?? "unavailable")} />
+              <NumberCard label="毛利率改善占比" value={pct(analysis.grossMarginImprovingSharePct)} helper={"可比較權重 " + analysis.grossMarginTrendCoveredWeightPct.toFixed(1) + "%"} />
+              <NumberCard label="資料邊界" value={loaded ? "partial" : "loading"} helper="EPS / ROE / 自由現金流 / 負債：目前 bundled 官方資料不足" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <SectionTitle number={6} title="估值" status="partial" />
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <NumberCard label="加權 P/E" value={plain(analysis.weightedPe.value)} helper={"覆蓋 " + analysis.weightedPe.coveredWeightPct.toFixed(1) + "%"} />
+              <NumberCard label="加權 P/B" value={plain(analysis.weightedPb.value)} helper={"覆蓋 " + analysis.weightedPb.coveredWeightPct.toFixed(1) + "%"} />
+              <NumberCard label="盈餘殖利率" value={pct(analysis.earningsYieldPct.value)} helper={"覆蓋 " + analysis.earningsYieldPct.coveredWeightPct.toFixed(1) + "%"} />
+              <NumberCard label="股利殖利率" value={pct(analysis.dividendYieldPct.value)} helper={"覆蓋 " + analysis.dividendYieldPct.coveredWeightPct.toFixed(1) + "%"} />
+            </div>
+            <p className="mt-3 text-xs text-black/38 dark:text-white/38">只聚合可唯一匹配的官方台股估值資料；沒有資料的成份不進分母。</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <SectionTitle number={7} title="ETF 動能" status="unavailable" />
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs sm:grid-cols-6">
+              {["1M", "3M", "6M", "1Y", "RS", "Max DD"].map((label) => (
+                <div key={label} className="rounded-xl border border-black/6 p-3 dark:border-white/8"><strong>{label}</strong><span className="mt-1 block text-black/35 dark:text-white/35">—</span></div>
+              ))}
+            </div>
+            <p className="mt-3 flex gap-2 text-xs leading-5 text-black/45 dark:text-white/45"><Info size={15} className="mt-0.5 shrink-0" />{analysis.momentumUnavailableReason}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <SectionTitle number={8} title="ETF ↔ 成份股今日漲跌貢獻" status="available" />
+            <p className="mt-3 text-xs leading-5 text-black/45 dark:text-white/45">
+              依 {composition.asOf} 成份權重估算；Contribution ≈ weight × constituent daily return。不是基金公司正式 attribution。
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <NumberCard label="官方 ETF 今日報酬" value={pct(analysis.officialEtfDailyReturnPct)} helper={analysis.officialEtfQuoteDate ?? "unavailable"} />
+              <NumberCard label="已涵蓋成份估算" value={pct(analysis.estimatedCoveredReturnPct)} helper={"行情日 " + (analysis.attributionDate ?? "unavailable")} />
+              <NumberCard label="歸因 coverage" value={analysis.attributionCoveredWeightPct.toFixed(1) + "%"} helper={coverageLabel(analysis.attributionCoveredWeightPct)} />
+              <NumberCard label="官方－估算 residual" value={point(analysis.attributionResidualPctPoints)} helper="可能含未覆蓋成份、現金、期貨、費用、匯率與基金結構差異" />
+            </div>
+            {analysis.attributionUnimportedWeightPct > 0 ? <p className="mt-3 text-xs text-[#8b6538] dark:text-[#d4ad7c]">尚未匯入成份權重約 {analysis.attributionUnimportedWeightPct.toFixed(1)}%。</p> : null}
+            {analysis.attributionExclusions.length ? (
+              <div className="mt-3 rounded-2xl border border-[#b98b57]/20 p-3">
+                <p className="flex items-center gap-2 text-xs font-semibold"><AlertTriangle size={14} />未納入本次歸因的已匯入成份</p>
+                <div className="mt-2 space-y-1">
+                  {analysis.attributionExclusions.slice(0, 12).map((row) => (
+                    <div key={row.market + ":" + row.symbol} className="flex justify-between gap-3 text-[11px] leading-5">
+                      <span className="min-w-0 truncate">{row.symbol} · {row.name} · {exclusionLabels[row.reason]}{row.quoteDate ? " (" + row.quoteDate + ")" : ""}</span>
+                      <strong className="shrink-0">{row.weightPct.toFixed(2)}%</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <SectionTitle number={9} title="成份股相關性／ETF 重疊" status={analysis.overlapComparisons.length ? "available" : "unavailable"} />
+            {analysis.overlapComparisons.length ? (
+              <div className="mt-4 space-y-3">
+                {analysis.overlapComparisons.slice(0, 6).map((row) => {
+                  const band = overlapProductBand(row.overlapWeightPct);
+                  return (
+                    <div key={row.etfMarket + ":" + row.etfSymbol} className="rounded-2xl border border-black/6 p-3 dark:border-white/8">
+                      <div className="flex items-start justify-between gap-3">
+                        <span><strong className="block text-sm">{row.etfSymbol} · {row.etfName}</strong><span className="text-[11px] text-black/38 dark:text-white/38">成份日 {row.asOf} · 共同 {row.sharedCount} 檔</span></span>
+                        <span className="text-right"><strong className="block">{row.overlapWeightPct.toFixed(1)}%</strong><Badge tone={ruleTone(band)}>{bandLabel(band, "overlap")}</Badge></span>
+                      </div>
+                      {row.topShared.length ? <p className="mt-2 text-[11px] text-black/40 dark:text-white/40">主要重疊：{row.topShared.slice(0, 5).map((item) => item.symbol + " " + item.overlapWeightPct.toFixed(1) + "%").join(" · ")}</p> : null}
+                    </div>
+                  );
+                })}
+                <p className="text-xs text-black/42 dark:text-white/42">產品規則：overlap &gt;70% = 高度重複曝險；這描述持股重疊，不代表績效相關係數。</p>
+              </div>
+            ) : (
+              <p className="mt-4 text-xs text-black/42 dark:text-white/42">unavailable：至少需要另一檔 ETF 的 composition 才能比較。</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <SectionTitle number={10} title="ETF 結構與追蹤品質" status="partial" />
+            <div className="mt-4 space-y-2 text-xs">
+              <div className="flex justify-between gap-3"><span>Composition as-of</span><strong>{composition.asOf}</strong></div>
+              <div className="flex justify-between gap-3"><span>成份來源類型</span><strong>{composition.sourceType}</strong></div>
+              <div className="flex items-center justify-between gap-3"><span>來源</span><a className="inline-flex items-center gap-1 font-semibold underline underline-offset-2" href={composition.sourceUrl} target="_blank" rel="noreferrer">{composition.sourceName}<ExternalLink size={12} /></a></div>
+              {["費用率", "基金規模 AUM", "成交量／買賣價差", "折溢價", "追蹤誤差", "指數規則", "換股頻率", "配息／累積型態"].map((label) => (
+                <div key={label} className="flex justify-between gap-3 border-t border-black/5 pt-2 dark:border-white/6"><span>{label}</span><strong className="text-black/35 dark:text-white/35">unavailable</strong></div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs leading-5 text-black/42 dark:text-white/42">目前 repo 沒有可追溯且穩定更新的免費官方欄位，因此不猜數字；之後只有找到可驗證公開來源才接入。</p>
+          </CardContent>
+        </Card>
+      </section>
+    </div>
+  );
+}
