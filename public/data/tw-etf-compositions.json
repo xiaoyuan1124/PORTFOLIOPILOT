@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-01T17:08:12.648Z",
+  "generatedAt": "2026-10-01T19:40:09.862Z",
   "sources": [
     {
       "symbol": "00935",
       "name": "野村臺灣新科技50",
       "sourceName": "野村投信官方持股比重",
       "sourceUrl": "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00935&tab=Shareholding",
-      "fetchedAt": "2026-10-01T17:08:04.866Z",
+      "fetchedAt": "2026-10-01T19:40:04.992Z",
       "status": "ok"
     },
     {
@@ -14,7 +14,7 @@
       "name": "凱基台灣TOP50",
       "sourceName": "凱基投信",
       "sourceUrl": "https://www.kgifund.com.tw/Fund/Detail?fundID=J023",
-      "fetchedAt": "2026-10-01T17:08:09.379Z",
+      "fetchedAt": "2026-10-01T19:40:09.171Z",
       "status": "ok"
     }
   ],
