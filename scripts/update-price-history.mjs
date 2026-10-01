@@ -7,8 +7,10 @@ import {
   bucketPrefix,
   calendarDateAdd,
   historyBucketStats,
+  mapWithConcurrency,
   mergeHistoryBucket,
   parseTpexDailyQuotesPayload,
+  toRocDate,
   weekdayDates
 } from "./lib/price-history.mjs";
 
@@ -17,6 +19,9 @@ const INDEX_PATH = join(OUTPUT_DIR, "index.json");
 const HISTORY_DAYS = Number(process.env.PRICE_HISTORY_CALENDAR_DAYS || DEFAULT_HISTORY_CALENDAR_DAYS);
 const TWSE_MIN_ROWS = 500;
 const TPEX_MIN_ROWS = 300;
+const FETCH_TIMEOUT_MS = 12_000;
+const FETCH_ATTEMPTS = 3;
+const DATE_CONCURRENCY = 3;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -43,13 +48,13 @@ async function fetchObject(url, label) {
         "user-agent": "Mozilla/5.0 PortfolioPilot/0.81 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
         accept: "application/json,text/javascript,*/*"
       },
-      signal: AbortSignal.timeout(30_000)
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
     });
     if (!response.ok) throw new Error(`${label} request failed: ${response.status}`);
     const payload = await response.json();
     if (!payload || typeof payload !== "object") throw new Error(`${label} returned invalid JSON`);
     return payload;
-  });
+  }, FETCH_ATTEMPTS);
 }
 
 function twseUrl(date) {
@@ -57,7 +62,7 @@ function twseUrl(date) {
 }
 
 function tpexUrl(date) {
-  return `https://www.tpex.org.tw/www/zh-tw/afterTrading/dailyQuotes?date=${encodeURIComponent(date.replaceAll("-", "/"))}&type=AL&response=json`;
+  return `https://www.tpex.org.tw/web/stock/aftertrading/otc_quotes_no1430/stk_wn1430_result.php?l=zh-tw&d=${encodeURIComponent(toRocDate(date))}&se=EW&o=json`;
 }
 
 async function fetchMarketDay(date, market) {
@@ -139,9 +144,11 @@ async function main() {
       : []
   );
 
-  console.log(`Taiwan price history: ${hasExistingHistory ? "incremental" : "initial"} run, ${dates.length} weekday dates, ${cutoffDate} → ${targetEndDate}`);
+  console.log(`Taiwan price history: ${hasExistingHistory ? "incremental" : "initial"} run, ${dates.length} weekday dates, ${cutoffDate} → ${targetEndDate}, concurrency ${DATE_CONCURRENCY}, timeout ${FETCH_TIMEOUT_MS}ms × ${FETCH_ATTEMPTS}`);
 
-  for (const date of dates) {
+  let processedDates = 0;
+
+  async function processDate(date) {
     const [twseResult, tpexResult] = await Promise.allSettled([
       fetchMarketDay(date, "TWSE"),
       fetchMarketDay(date, "TPEx")
@@ -157,42 +164,47 @@ async function main() {
     if (bothClosed) {
       failed.delete(failureKey("TWSE", date));
       failed.delete(failureKey("TPEx", date));
-      continue;
-    }
-
-    if (twseResult.status === "fulfilled" && twseCount >= TWSE_MIN_ROWS) {
-      incoming.push(...filterUniverse(twseRows, allowed));
-      acceptedDates.TWSE.add(date);
-      failed.delete(failureKey("TWSE", date));
     } else {
-      failed.set(failureKey("TWSE", date), {
-        market: "TWSE",
-        date,
-        message: twseResult.status === "rejected"
-          ? String(twseResult.reason?.message ?? twseResult.reason)
-          : `incomplete row count: ${twseCount}`
-      });
+      if (twseResult.status === "fulfilled" && twseCount >= TWSE_MIN_ROWS) {
+        incoming.push(...filterUniverse(twseRows, allowed));
+        acceptedDates.TWSE.add(date);
+        failed.delete(failureKey("TWSE", date));
+      } else {
+        failed.set(failureKey("TWSE", date), {
+          market: "TWSE",
+          date,
+          message: twseResult.status === "rejected"
+            ? String(twseResult.reason?.message ?? twseResult.reason)
+            : `incomplete row count: ${twseCount}`
+        });
+      }
+
+      if (tpexResult.status === "fulfilled" && tpexCount >= TPEX_MIN_ROWS) {
+        incoming.push(...filterUniverse(tpexRows, allowed));
+        acceptedDates.TPEx.add(date);
+        failed.delete(failureKey("TPEx", date));
+      } else {
+        failed.set(failureKey("TPEx", date), {
+          market: "TPEx",
+          date,
+          message: tpexResult.status === "rejected"
+            ? String(tpexResult.reason?.message ?? tpexResult.reason)
+            : `incomplete row count: ${tpexCount}`
+        });
+      }
     }
 
-    if (tpexResult.status === "fulfilled" && tpexCount >= TPEX_MIN_ROWS) {
-      incoming.push(...filterUniverse(tpexRows, allowed));
-      acceptedDates.TPEx.add(date);
-      failed.delete(failureKey("TPEx", date));
-    } else {
-      failed.set(failureKey("TPEx", date), {
-        market: "TPEx",
-        date,
-        message: tpexResult.status === "rejected"
-          ? String(tpexResult.reason?.message ?? tpexResult.reason)
-          : `incomplete row count: ${tpexCount}`
-      });
+    processedDates += 1;
+    if (processedDates % 25 === 0 || processedDates === dates.length) {
+      console.log(
+        `progress ${processedDates}/${dates.length}: accepted TWSE ${acceptedDates.TWSE.size}, TPEx ${acceptedDates.TPEx.size}, unresolved ${failed.size}`
+      );
     }
 
-    if ((acceptedDates.TWSE.size + acceptedDates.TPEx.size) % 20 === 0) {
-      console.log(`progress ${date}: TWSE ${twseCount}, TPEx ${tpexCount}`);
-    }
-    await sleep(250);
+    await sleep(150);
   }
+
+  await mapWithConcurrency(dates, DATE_CONCURRENCY, processDate);
 
   // Always merge the already validated latest official quote cache so the
   // newest day remains available even if one historical endpoint is flaky.
@@ -275,8 +287,8 @@ async function main() {
       },
       {
         market: "TPEx",
-        name: "TPEx dailyQuotes",
-        urlTemplate: "https://www.tpex.org.tw/www/zh-tw/afterTrading/dailyQuotes?date=YYYY/MM/DD&type=AL&response=json"
+        name: "TPEx historical daily close",
+        urlTemplate: "https://www.tpex.org.tw/web/stock/aftertrading/otc_quotes_no1430/stk_wn1430_result.php?l=zh-tw&d=ROC/MM/DD&se=EW&o=json"
       }
     ],
     markets: stats,

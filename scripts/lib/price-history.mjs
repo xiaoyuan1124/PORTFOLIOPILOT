@@ -127,6 +127,15 @@ export function historyBucketStats(bucket) {
   };
 }
 
+
+export function toRocDate(date) {
+  const match = String(date).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) throw new Error(`Invalid ISO date: ${date}`);
+  const year = Number(match[1]) - 1911;
+  if (year <= 0) throw new Error(`Date predates ROC calendar support: ${date}`);
+  return `${year}/${match[2]}/${match[3]}`;
+}
+
 export function calendarDateAdd(date, days) {
   const match = String(date).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) throw new Error(`Invalid ISO date: ${date}`);
@@ -142,4 +151,27 @@ export function weekdayDates(startDate, endDate) {
     if (weekday !== 0 && weekday !== 6) dates.push(cursor);
   }
   return dates;
+}
+
+
+export async function mapWithConcurrency(items, limit, worker) {
+  if (!Number.isInteger(limit) || limit < 1) {
+    throw new Error(`Concurrency limit must be a positive integer; got ${limit}`);
+  }
+  const values = Array.from(items);
+  let cursor = 0;
+  const results = new Array(values.length);
+
+  async function runWorker() {
+    while (true) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= values.length) return;
+      results[index] = await worker(values[index], index);
+    }
+  }
+
+  const workerCount = Math.min(limit, values.length);
+  await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+  return results;
 }

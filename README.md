@@ -873,11 +873,12 @@ The calculation remains an estimate of current-held-position daily impact, not b
 
 V0.81 adds a bounded, zero-cost Taiwan daily closing-price history layer for listed and TPEx securities.
 
-- **Official sources:** TWSE `MI_INDEX` and TPEx `afterTrading/dailyQuotes` are queried by trading date. One request per market/date retrieves the full market instead of making one API call per security.
+- **Official sources:** TWSE `MI_INDEX` and TPEx historical after-trading full-market quotes are queried by trading date. TPEx historical dates use the ROC calendar format expected by the official historical endpoint. One request per market/date retrieves the full market instead of making one API call per security.
 - **Initial backfill:** the first production run targets roughly 400 calendar days and refuses to publish an initial cache unless both TWSE and TPEx contain at least 220 valid trading dates.
 - **Partitioned mobile cache:** history is split by market and the first two characters of the security code. A phone researching one symbol downloads only its small bucket instead of the full Taiwan market history.
 - **Bounded storage:** old points outside the rolling history window are trimmed so repository and Pages size remain controlled.
 - **Retry / failure behavior:** failed market/date requests are retained in the history index for later retries. A failed date never becomes a fabricated zero-price observation.
+- **Backfill performance:** initial history seeding uses bounded 3-date concurrency with shorter per-request timeouts/retries so intermittent TPEx stalls cannot consume the entire 30-minute workflow window.
 - **Latest-day safety:** the already validated bundled latest quote cache is merged into history so a flaky historical endpoint cannot regress the newest official close.
 - **Research metrics:** Taiwan stocks and ETFs can show 1M / 3M / 6M / 1Y raw price return, max drawdown, annualized daily-close volatility and a historical close chart when the corresponding bucket is available.
 - **ETF analysis:** the former unavailable momentum block now uses official history for price-performance metrics. Relative strength remains unavailable until a same-period benchmark series is joined.
@@ -885,3 +886,14 @@ V0.81 adds a bounded, zero-cost Taiwan daily closing-price history layer for lis
 - **Zero cost:** no paid API, backend, database, AI service or additional dependency is introduced. GitHub Actions and GitHub Pages continue to publish the public cache.
 
 Personal holdings remain Local-first and are never uploaded to the history workflow.
+
+
+## V0.81.1 History backfill hardening
+
+The first V0.81 production seed exceeded the 30-minute workflow window before any partial cache could be committed. V0.81.1 fixes the backfill path without changing the public history schema.
+
+- **Bounded concurrency:** up to 3 trading dates are processed concurrently instead of fully serial date-by-date requests.
+- **Shorter failure bounds:** each market request uses a 12-second timeout and up to 3 attempts, while failed dates remain retryable rather than becoming zero observations.
+- **TPEx historical endpoint:** historical TPEx full-market closes use the official ROC-date after-trading endpoint instead of the latest-oriented dailyQuotes route.
+- **Safety unchanged:** the initial seed still refuses publication unless both TWSE and TPEx reach at least 220 valid trading dates.
+- **Zero-cost architecture unchanged:** no paid API, backend, database or new dependency is introduced.
