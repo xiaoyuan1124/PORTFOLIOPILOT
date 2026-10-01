@@ -6,7 +6,6 @@ import { AlertTriangle, ArrowRight, ArrowUpRight, Landmark, Layers3, Search, Wal
 import type { AppState } from "@/lib/types";
 import {
   allocationByAccount,
-  allocationBySector,
   dailySnapshotDelta,
   localDateKey,
   officialPriceCoverage,
@@ -19,6 +18,7 @@ import {
   type SnapshotRange
 } from "@/lib/calc";
 import { money, percent } from "@/lib/utils";
+import { calculatePortfolioRisk } from "@/lib/portfolio-risk";
 import { Badge, Card, CardContent, CardHeader, GhostButton, Metric } from "./ui";
 import { DailyPortfolioDrivers } from "./daily-portfolio-drivers";
 
@@ -35,12 +35,13 @@ export function Overview({
   onNavigate
 }: {
   state: AppState;
-  onNavigate?: (section: "portfolio" | "research", researchKey?: string) => void;
+  onNavigate?: (section: "portfolio" | "research", researchKey?: string, researchType?: "stock" | "etf") => void;
 }) {
   const [range, setRange] = useState<SnapshotRange>("3M");
   const summary = portfolioSummary(state.holdings, state.usdTwd);
   const cash = portfolioCashSummary(state.holdings, state.usdTwd);
-  const sectors = allocationBySector(state.holdings, state.usdTwd).filter((item) => item.name !== "現金");
+  const risk = calculatePortfolioRisk(state.holdings, state.etfCompositions, state.usdTwd);
+  const sectors = risk.sectorExposures;
   const accounts = allocationByAccount(state.holdings, state.usdTwd);
   const topPositions = topHoldings(state.holdings, state.usdTwd, 5);
   const today = localDateKey();
@@ -202,13 +203,14 @@ export function Overview({
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div><p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Allocation</p><h2 className="mt-1 text-lg font-semibold">產業配置</h2></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Look-through allocation</p><h2 className="mt-1 text-lg font-semibold">真實產業曝險</h2></div>
               <Layers3 size={19} className="text-black/35 dark:text-white/35" />
             </div>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
-            {sectors.slice(0, 6).map((item) => <div key={item.name}><div className="mb-2 flex items-center justify-between text-sm"><span className="font-medium">{item.name}</span><span className="tabular-nums text-black/50 dark:text-white/50">{item.pct.toFixed(1)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/8"><div className="h-full rounded-full bg-[#456b58]" style={{ width: `${Math.max(item.pct, 2)}%` }} /></div></div>)}
-            {!sectors.length ? <p className="py-6 text-center text-sm text-black/40 dark:text-white/40">新增投資資產後顯示配置。</p> : null}
+            {sectors.slice(0, 6).map((item) => <div key={item.key}><div className="mb-2 flex items-center justify-between gap-3 text-sm"><span className="truncate font-medium">{item.label}</span><span className="shrink-0 tabular-nums text-black/50 dark:text-white/50">{item.portfolioPct.toFixed(1)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/8"><div className="h-full rounded-full bg-[#456b58]" style={{ width: `${Math.max(item.portfolioPct, 2)}%` }} /></div></div>)}
+            {!sectors.length ? <p className="py-6 text-center text-sm text-black/40 dark:text-white/40">新增投資資產後顯示穿透配置。</p> : null}
+            {sectors.length ? <p className="text-[11px] leading-5 text-black/35 dark:text-white/35">已合併直接持股與 ETF 已知成份 · 證券曝險覆蓋 {risk.riskCoveragePct.toFixed(1)}%</p> : null}
           </CardContent>
         </Card>
 
@@ -223,7 +225,7 @@ export function Overview({
             {topPositions.map((item, index) => {
               const sourceMarket = item.holding.priceSource === "TWSE" || item.holding.priceSource === "TPEx" ? item.holding.priceSource : undefined;
               const researchKey = item.holding.market === "TW" && sourceMarket ? `${sourceMarket}:${item.holding.symbol}` : undefined;
-              return <button key={item.holding.id} onClick={() => onNavigate?.(item.holding.market === "TW" ? "research" : "portfolio", researchKey)} className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-black/[.03] dark:hover:bg-white/[.04]"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-black/[.04] text-xs font-semibold dark:bg-white/[.06]">{index + 1}</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{item.holding.symbol} · {item.holding.name}</strong><span className="text-xs text-black/38 dark:text-white/38">{money(item.value)}</span></span><span className="text-sm font-semibold tabular-nums">{item.pct.toFixed(1)}%</span></button>;
+              return <button key={item.holding.id} onClick={() => onNavigate?.(item.holding.market === "TW" ? "research" : "portfolio", researchKey, item.holding.type === "etf" ? "etf" : "stock")} className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-black/[.03] dark:hover:bg-white/[.04]"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-black/[.04] text-xs font-semibold dark:bg-white/[.06]">{index + 1}</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{item.holding.symbol} · {item.holding.name}</strong><span className="text-xs text-black/38 dark:text-white/38">{money(item.value)}</span></span><span className="text-sm font-semibold tabular-nums">{item.pct.toFixed(1)}%</span></button>;
             })}
             {!topPositions.length ? <p className="py-6 text-center text-sm text-black/40 dark:text-white/40">尚無投資標的。</p> : null}
           </CardContent>
@@ -235,8 +237,12 @@ export function Overview({
           <CardHeader><p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Decision cockpit</p><h2 className="mt-1 text-lg font-semibold">今天先看這些</h2></CardHeader>
           <CardContent className="grid gap-3 pt-4 sm:grid-cols-2">
             <div className="rounded-2xl bg-[#edf2ee] p-4 dark:bg-[#17201b]">
-              <p className="text-sm font-semibold">最大產業曝險：{topSector?.name ?? "—"}</p>
-              <p className="mt-1 text-sm leading-6 text-black/55 dark:text-white/55">{topSector ? `目前約占總資產 ${topSector.pct.toFixed(1)}%。進一步風險集中度可到投資組合查看。` : "新增持股後會顯示集中度。"}</p>
+              <p className="text-sm font-semibold">最大公司曝險：{risk.largestCompany?.name ?? "—"}</p>
+              <p className="mt-1 text-sm leading-6 text-black/55 dark:text-white/55">
+                {risk.largestCompany
+                  ? `穿透後占總資產 ${risk.largestCompany.portfolioPct.toFixed(1)}% · 直接 ${money(risk.largestCompany.directValueTwd)} / ETF ${money(risk.largestCompany.implicitValueTwd)}`
+                  : "新增持股後會顯示公司層級真實曝險。"}
+              </p>
             </div>
             <div className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
               <p className="text-sm font-semibold">官方台股資料</p>

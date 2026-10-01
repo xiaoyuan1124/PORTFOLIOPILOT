@@ -837,3 +837,18 @@ Phase 2 reduces default information density and makes high-value ETF and perform
 - **No new dependency:** all charts reuse Recharts already in PortfolioPilot. No backend, paid API, AI service, or new hosted infrastructure is added.
 
 The information model remains: **先看結論 → 再看主要原因 → 最後展開完整資料**.
+
+
+## V0.80.2 UX / Information Architecture — Phase 3
+
+Phase 3 makes portfolio look-through the default interpretation layer instead of treating ETFs as opaque positions.
+
+- **True company exposure:** ETF Look-through visualizes the largest company exposures as stacked direct-holding + ETF-implied exposure.
+- **Risk visualization:** Portfolio Risk shows the same direct / ETF split in percentage-of-portfolio terms for the largest resolved companies.
+- **Progressive disclosure:** company details, remaining exposures, CSV composition management, HHI methodology and look-through caveats are collapsed until requested.
+- **Overview look-through:** the home allocation card now uses ETF-through sector exposures rather than only the top-level holding labels.
+- **Decision cockpit:** the home screen surfaces the largest resolved company exposure after ETF look-through, including direct and ETF-implied value.
+- **ETF routing fix:** selecting an ETF from the home top-positions list carries the ETF type into Research and opens ETF analysis directly.
+- **No new dependency or paid service:** charts reuse Recharts and calculations reuse existing Local-first PortfolioPilot data.
+
+Interpretation remains conservative: unresolved ETF value stays unresolved and is never redistributed across known constituents.

@@ -1,10 +1,11 @@
 "use client";
 
-import { BarChart3, CircleHelp, Layers3, ShieldCheck } from "lucide-react";
+import { Layers3, ShieldCheck } from "lucide-react";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { AppState } from "@/lib/types";
 import { calculatePortfolioRisk, type RiskSlice } from "@/lib/portfolio-risk";
 import { money } from "@/lib/utils";
-import { Badge, Card, CardContent } from "./ui";
+import { Badge, Card, CardContent, InfoDisclosure } from "./ui";
 
 function pct(value: number) {
   return `${value.toFixed(2)}%`;
@@ -47,6 +48,39 @@ function SliceList({ rows, empty }: { rows: RiskSlice[]; empty: string }) {
   );
 }
 
+function CompanyExposureChart({
+  rows,
+  portfolioValueTwd
+}: {
+  rows: ReturnType<typeof calculatePortfolioRisk>["companyExposures"];
+  portfolioValueTwd: number;
+}) {
+  const data = rows.slice(0, 8).map((row) => ({
+    label: row.symbol,
+    directPct: portfolioValueTwd > 0 ? row.directValueTwd / portfolioValueTwd * 100 : 0,
+    implicitPct: portfolioValueTwd > 0 ? row.implicitValueTwd / portfolioValueTwd * 100 : 0
+  }));
+
+  if (!data.length) return null;
+
+  return (
+    <div className="mt-4 h-[250px] w-full" aria-label="前八大公司真實曝險百分比圖">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: 0 }}>
+          <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(value) => Number(value).toFixed(0) + "%"} />
+          <YAxis dataKey="label" type="category" width={54} axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+          <Tooltip
+            cursor={{ fill: "rgba(69,107,88,.07)" }}
+            formatter={(value, name) => [Number(value).toFixed(2) + "%", name === "directPct" ? "直接持股" : "ETF 隱含"]}
+          />
+          <Bar dataKey="directPct" stackId="company" fill="#456b58" radius={[5, 0, 0, 5]} />
+          <Bar dataKey="implicitPct" stackId="company" fill="#9b8063" radius={[0, 5, 5, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 export function PortfolioRisk({ state }: { state: AppState }) {
   const risk = calculatePortfolioRisk(state.holdings, state.etfCompositions, state.usdTwd);
 
@@ -63,7 +97,7 @@ export function PortfolioRisk({ state }: { state: AppState }) {
                 <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Portfolio Risk · Local-first</p>
                 <h3 className="mt-1 text-xl font-semibold">曝險與集中度</h3>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-black/50 dark:text-white/50">
-                  直接持股與 ETF 已知成分合併計算。未解析 ETF 不會被猜成任何公司、產業或市場；集中度百分比一律以完整投資組合（含現金）為分母。
+                  先看穿透後真正集中在哪些公司與產業；未解析 ETF 保留為未知，不硬猜。
                 </p>
               </div>
             </div>
@@ -89,18 +123,41 @@ export function PortfolioRisk({ state }: { state: AppState }) {
               </div>
               <Layers3 size={18} className="text-black/30 dark:text-white/30" />
             </div>
-            <div className="mt-4 space-y-2.5">
-              {risk.companyExposures.slice(0, 15).map((exposure) => (
-                <ExposureRow
-                  key={`${exposure.market}:${exposure.symbol}`}
-                  label={exposure.name}
-                  valueTwd={exposure.totalValueTwd}
-                  portfolioPct={exposure.portfolioPct}
-                  helper={`${exposure.symbol} · ${exposure.market} · 直接 ${money(exposure.directValueTwd)} / ETF ${money(exposure.implicitValueTwd)}`}
-                />
-              ))}
-              {!risk.companyExposures.length ? <p className="py-8 text-center text-sm text-black/40 dark:text-white/40">目前沒有已解析的公司曝險。</p> : null}
-            </div>
+            {risk.companyExposures.length ? (
+              <>
+                <CompanyExposureChart rows={risk.companyExposures} portfolioValueTwd={risk.portfolioValueTwd} />
+                <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-black/42 dark:text-white/42">
+                  <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#456b58]" />直接持股</span>
+                  <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#9b8063]" />ETF 隱含</span>
+                </div>
+                <div className="mt-4 space-y-2.5">
+                  {risk.companyExposures.slice(0, 8).map((exposure) => (
+                    <ExposureRow
+                      key={`${exposure.market}:${exposure.symbol}`}
+                      label={exposure.name}
+                      valueTwd={exposure.totalValueTwd}
+                      portfolioPct={exposure.portfolioPct}
+                      helper={`${exposure.symbol} · 直接 ${money(exposure.directValueTwd)} / ETF ${money(exposure.implicitValueTwd)}`}
+                    />
+                  ))}
+                </div>
+                {risk.companyExposures.length > 8 ? (
+                  <InfoDisclosure summary={`查看其餘 ${risk.companyExposures.length - 8} 個公司曝險`} className="mt-3">
+                    <div className="space-y-2.5">
+                      {risk.companyExposures.slice(8).map((exposure) => (
+                        <ExposureRow
+                          key={`${exposure.market}:${exposure.symbol}:more`}
+                          label={exposure.name}
+                          valueTwd={exposure.totalValueTwd}
+                          portfolioPct={exposure.portfolioPct}
+                          helper={`${exposure.symbol} · 直接 ${money(exposure.directValueTwd)} / ETF ${money(exposure.implicitValueTwd)}`}
+                        />
+                      ))}
+                    </div>
+                  </InfoDisclosure>
+                ) : null}
+              </>
+            ) : <p className="py-8 text-center text-sm text-black/40 dark:text-white/40">目前沒有已解析的公司曝險。</p>}
           </CardContent>
         </Card>
 
@@ -125,24 +182,16 @@ export function PortfolioRisk({ state }: { state: AppState }) {
 
       <Card>
         <CardContent>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2"><BarChart3 size={18} /><h3 className="font-semibold">集中度數學</h3></div>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-black/50 dark:text-white/50">
-                HHI 只對「已解析的公司曝險」計算，範圍 0–10,000，數字越高代表已解析部位越集中。它不是投資建議或風險評級；未解析 ETF 與現金不會被硬塞進公司 HHI。
-              </p>
-            </div>
-            <CircleHelp size={18} className="text-black/30 dark:text-white/30" />
-          </div>
+          <h3 className="font-semibold">集中度摘要</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="mini-metric"><span>Resolved company HHI</span><strong>{risk.resolvedCompanyHhi === null ? "—" : risk.resolvedCompanyHhi.toFixed(0)}</strong></div>
             <div className="mini-metric"><span>等效公司數</span><strong>{risk.effectiveCompanyCount === null ? "—" : risk.effectiveCompanyCount.toFixed(2)}</strong></div>
             <div className="mini-metric"><span>Top 3 產業</span><strong>{pct(risk.top3SectorPct)}</strong></div>
             <div className="mini-metric"><span>現金</span><strong>{pct(risk.cashPct)}</strong></div>
           </div>
-          <div className="mt-4 rounded-2xl border border-black/6 p-4 text-xs leading-6 text-black/45 dark:border-white/8 dark:text-white/45">
-            已解析公司曝險 {money(risk.resolvedCompanyValueTwd)}（占總資產 {pct(risk.resolvedCompanyPct)}）；證券投資部位 {money(risk.investedValueTwd)}；未解析 ETF {money(risk.unresolvedEtfValueTwd)}。若 ETF 成分資料不完整，先補資料再解讀 HHI 與產業／市場分布。
-          </div>
+          <InfoDisclosure summary="HHI 與覆蓋率怎麼解讀" className="mt-4">
+            HHI 只對已解析的公司曝險計算，範圍 0–10,000，數字越高代表已解析部位越集中；它不是投資建議或風險評級。已解析公司曝險 {money(risk.resolvedCompanyValueTwd)}（占總資產 {pct(risk.resolvedCompanyPct)}），證券投資部位 {money(risk.investedValueTwd)}，未解析 ETF {money(risk.unresolvedEtfValueTwd)}。未解析 ETF 與現金不會被硬塞進公司 HHI。
+          </InfoDisclosure>
         </CardContent>
       </Card>
     </div>
