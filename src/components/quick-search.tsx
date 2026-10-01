@@ -21,7 +21,7 @@ export function QuickSearch({
   state: AppState;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onNavigate: (section: AppSection, researchKey?: string) => void;
+  onNavigate: (section: AppSection, researchKey?: string, researchType?: "stock" | "etf") => void;
 }) {
   const [query, setQuery] = useState("");
   const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
@@ -76,10 +76,10 @@ export function QuickSearch({
     onOpenChange(next);
   }
 
-  function go(section: AppSection, researchKey?: string) {
+  function go(section: AppSection, researchKey?: string, researchType?: "stock" | "etf") {
     setQuery("");
     onOpenChange(false);
-    onNavigate(section, researchKey);
+    onNavigate(section, researchKey, researchType);
   }
 
   function retryCatalog() {
@@ -145,7 +145,7 @@ export function QuickSearch({
                         : matches.length === 1
                           ? matches[0]
                           : undefined;
-                    if (match) return go("research", `${match.venue}:${match.code}`);
+                    if (match) return go("research", `${match.venue}:${match.code}`, match.type);
                   }
                   go("portfolio");
                 }} className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-black/[.04] dark:hover:bg-white/[.05]"><span className="min-w-0"><strong className="block truncate text-sm">{holding.symbol} · {holding.name}</strong><span className="mt-0.5 block truncate text-xs text-black/40 dark:text-white/40">{holding.sector} · {accountName(holding.account)}</span></span><Badge>持有</Badge></button>)}
@@ -155,7 +155,7 @@ export function QuickSearch({
             {visibleSecurityResults.length ? (
               <div>
                 <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[.14em] text-black/35 dark:text-white/35">官方台股／ETF 研究</p>
-                {visibleSecurityResults.map((row) => <button key={`${row.venue}:${row.code}`} onClick={() => go("research", `${row.venue}:${row.code}`)} className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-black/[.04] dark:hover:bg-white/[.05]"><span className="min-w-0"><strong className="block truncate text-sm">{row.code} · {row.name}</strong><span className="mt-0.5 block truncate text-xs text-black/40 dark:text-white/40">{row.industry} · {row.type === "etf" ? "ETF" : "個股"} · 收盤 {row.close.toLocaleString()}</span></span><span className="shrink-0 text-right text-xs text-black/35 dark:text-white/35">{row.venue}<span className="mt-0.5 block text-[10px]">{row.date}</span></span></button>)}
+                {visibleSecurityResults.map((row) => <button key={`${row.venue}:${row.code}`} onClick={() => go("research", `${row.venue}:${row.code}`, row.type)} className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-black/[.04] dark:hover:bg-white/[.05]"><span className="min-w-0"><strong className="block truncate text-sm">{row.code} · {row.name}</strong><span className="mt-0.5 block truncate text-xs text-black/40 dark:text-white/40">{row.industry} · {row.type === "etf" ? "ETF" : "個股"} · 收盤 {row.close.toLocaleString()}</span></span><span className="shrink-0 text-right text-xs text-black/35 dark:text-white/35">{row.venue}<span className="mt-0.5 block text-[10px]">{row.date}</span></span></button>)}
               </div>
             ) : null}
 
