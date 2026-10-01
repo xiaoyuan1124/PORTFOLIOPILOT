@@ -162,9 +162,11 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
     quarterlyMargins: null
   });
   const [loaded, setLoaded] = useState(false);
-  const [priceHistory, setPriceHistory] = useState<TwPriceHistorySeries | null>(null);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [historyError, setHistoryError] = useState("");
+  const [historyState, setHistoryState] = useState<{
+    key: string;
+    history: TwPriceHistorySeries | null;
+    error: string;
+  }>({ key: "", history: null, error: "" });
 
   useEffect(() => {
     let active = true;
@@ -184,37 +186,43 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
     return () => { active = false; };
   }, []);
 
-  useEffect(() => {
-    let active = true;
+  const historyVenue = useMemo(() => {
+    if (composition.etfMarket !== "TW") return null;
     const candidates = quotes.quotes.filter((quote) =>
       quote.code.trim().toUpperCase() === composition.etfSymbol.trim().toUpperCase()
     );
-    const venue = candidates.length === 1 ? candidates[0]?.market : undefined;
+    return candidates.length === 1 ? candidates[0]?.market ?? null : null;
+  }, [composition.etfMarket, composition.etfSymbol, quotes]);
 
-    if (composition.etfMarket !== "TW" || !venue) {
-      setPriceHistory(null);
-      setHistoryError(composition.etfMarket === "TW" ? "無法唯一判定此 ETF 的上市／上櫃市場。" : "目前歷史行情先支援台灣市場。");
-      return () => { active = false; };
-    }
+  const historyKey = historyVenue
+    ? `${historyVenue}:${composition.etfSymbol.trim().toUpperCase()}`
+    : "";
 
-    setHistoryLoading(true);
-    setHistoryError("");
-    void loadTwPriceHistory(venue, composition.etfSymbol)
+  useEffect(() => {
+    if (!historyVenue) return;
+    let active = true;
+    void loadTwPriceHistory(historyVenue, composition.etfSymbol)
       .then((history) => {
         if (!active) return;
-        setPriceHistory(history);
+        setHistoryState({ key: historyKey, history, error: "" });
       })
       .catch((cause) => {
         if (!active) return;
-        setPriceHistory(null);
-        setHistoryError(cause instanceof Error ? cause.message : "歷史行情暫時不可用。");
-      })
-      .finally(() => {
-        if (active) setHistoryLoading(false);
+        setHistoryState({
+          key: historyKey,
+          history: null,
+          error: cause instanceof Error ? cause.message : "歷史行情暫時不可用。"
+        });
       });
-
     return () => { active = false; };
-  }, [composition.etfMarket, composition.etfSymbol, quotes]);
+  }, [composition.etfSymbol, historyKey, historyVenue]);
+
+  const currentHistoryState = historyKey && historyState.key === historyKey ? historyState : null;
+  const priceHistory = currentHistoryState?.history ?? null;
+  const historyLoading = Boolean(historyVenue) && !currentHistoryState;
+  const historyError = !historyVenue
+    ? (composition.etfMarket === "TW" ? "無法唯一判定此 ETF 的上市／上櫃市場。" : "目前歷史行情先支援台灣市場。")
+    : currentHistoryState?.error ?? "";
 
   const analysis = useMemo(
     () => analyzeEtfAdvanced(composition, compositions, { quotes, ...sourceData }),
