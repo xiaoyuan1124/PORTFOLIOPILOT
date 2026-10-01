@@ -4,6 +4,8 @@ import {
   bucketPrefix,
   calendarDateAdd,
   historyBucketStats,
+  historicalPayloadDate,
+  assertHistoricalPayloadDate,
   mergeHistoryBucket,
   mergeSeriesPoints,
   parseTpexDailyQuotesPayload,
@@ -11,6 +13,16 @@ import {
 } from "./price-history.mjs";
 
 describe("Taiwan price-history cache helpers", () => {
+
+  it("validates official payload date evidence before accepting history", () => {
+    expect(historicalPayloadDate({ date: "20260930" })).toBe("2026-09-30");
+    expect(historicalPayloadDate({ tables: [{ date: "115/09/30" }] })).toBe("2026-09-30");
+    expect(historicalPayloadDate({ tables: [{ title: "民國115年9月30日每日行情" }] })).toBe("2026-09-30");
+    expect(assertHistoricalPayloadDate({ date: "20260930" }, "2026-09-30", "TWSE")).toBe("2026-09-30");
+    expect(() => assertHistoricalPayloadDate({ date: "20260929" }, "2026-09-30", "TWSE")).toThrow(/mismatch/);
+    expect(() => assertHistoricalPayloadDate({}, "2026-09-30", "TPEx")).toThrow(/evidence missing/);
+  });
+
   it("parses TPEx dailyQuotes table payload", () => {
     const rows = parseTpexDailyQuotesPayload({
       tables: [{
