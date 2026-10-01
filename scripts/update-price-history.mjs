@@ -10,6 +10,7 @@ import {
   mapWithConcurrency,
   mergeHistoryBucket,
   parseTpexDailyQuotesPayload,
+  toRocDate,
   weekdayDates
 } from "./lib/price-history.mjs";
 
@@ -61,7 +62,7 @@ function twseUrl(date) {
 }
 
 function tpexUrl(date) {
-  return `https://www.tpex.org.tw/www/zh-tw/afterTrading/dailyQuotes?date=${encodeURIComponent(date.replaceAll("-", "/"))}&type=AL&response=json`;
+  return `https://www.tpex.org.tw/web/stock/aftertrading/otc_quotes_no1430/stk_wn1430_result.php?l=zh-tw&d=${encodeURIComponent(toRocDate(date))}&se=EW&o=json`;
 }
 
 async function fetchMarketDay(date, market) {
@@ -286,8 +287,8 @@ async function main() {
       },
       {
         market: "TPEx",
-        name: "TPEx dailyQuotes",
-        urlTemplate: "https://www.tpex.org.tw/www/zh-tw/afterTrading/dailyQuotes?date=YYYY/MM/DD&type=AL&response=json"
+        name: "TPEx historical daily close",
+        urlTemplate: "https://www.tpex.org.tw/web/stock/aftertrading/otc_quotes_no1430/stk_wn1430_result.php?l=zh-tw&d=ROC/MM/DD&se=EW&o=json"
       }
     ],
     markets: stats,
