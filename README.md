@@ -909,3 +909,10 @@ The V0.81.1 seed completed quickly enough but the official TWSE endpoint throttl
 - **Safety threshold unchanged:** initial publication still requires at least 220 valid trading dates from both markets.
 - **Failure diagnostics:** if TWSE still misses the seed gate, the workflow prints a sample of unresolved date/reason pairs for the next debug loop.
 - **Zero-cost architecture unchanged:** no paid API, backend, database or additional dependency is added.
+
+
+## V0.81.3 History cache publication fix
+
+The first successful V0.81.2 backfill exposed a Git staging edge case: newly generated history files were untracked, so a pre-add `git diff --quiet` check incorrectly reported no changes. V0.81.3 stages the history directory first, then checks the staged diff before committing.
+
+This changes only publication behavior. The history schema, source validation, 220-trading-day safety gate, and zero-cost architecture remain unchanged.
