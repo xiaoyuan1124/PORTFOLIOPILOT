@@ -102,7 +102,7 @@ export function EtfResearch({
             <p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">ETF Research · Look-through + Attribution</p>
             <h3 className="mt-2 text-xl font-semibold">從 ETF 一路看到是哪幾家公司在拉抬／拖累</h3>
             <p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">
-              成份權重沿用你匯入的可追溯資料；當日歸因只使用同一最新交易日、可唯一匹配的官方台股收盤漲跌。缺資料不補猜。
+              成份權重使用本機目前保存的可追溯資料；支援的持有台灣 ETF 會在「更新市場資料」時自動同步官方發行人成份。當日歸因仍只使用同一最新交易日、可唯一匹配的官方台股收盤漲跌，缺資料不補猜。
             </p>
           </div>
           <GhostButton disabled={loading} onClick={() => void reload()} className="border-white/20 bg-white/10 text-white dark:border-black/10 dark:bg-black/5 dark:text-[#122018]">
@@ -149,7 +149,7 @@ export function EtfResearch({
           <CardContent className="py-10 text-center">
             <p className="text-sm font-semibold">目前沒有 ETF 成份資料</p>
             <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
-              先到「投資組合 → ETF 穿透」匯入帶來源與資料日的成份 CSV；ETF 研究不會從名稱猜成份股。
+              先到「投資組合」按「更新市場資料」嘗試自動同步官方成份；尚未支援的 ETF 再到「ETF 穿透」用 CSV 補充。ETF 研究不會從名稱猜成份股。
             </p>
           </CardContent>
         </Card>
