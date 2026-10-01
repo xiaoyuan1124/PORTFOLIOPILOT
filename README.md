@@ -712,3 +712,14 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - This remains read-only diagnostics: no holding, cash, activity, snapshot or provenance value is changed.
 - No persisted field changes are required; Backup V17 remains current.
 
+## V0.74 actionable data integrity workflow
+
+- Data Integrity Center issues now include a concrete next action instead of stopping at diagnosis.
+- Taiwan price provenance and manual-US-price items route directly to **Portfolio → Holdings**.
+- Future activities, missing Exact TWR pre-flow boundaries and ambiguous same-day external-flow ordering route directly to **Portfolio → Transactions / Cash Flow**, where TWR boundary/time editing already exists.
+- Future snapshots and missing current-day snapshot coverage route directly to **Portfolio → Performance**.
+- Legacy historical-CSV provenance items stay inside Settings and scroll directly to the **Historical Trade CSV** management section.
+- Portfolio accepts explicit requested-tab navigation from the app shell, including repeat navigation to the same tab via a request sequence, while normal Portfolio navigation still opens the default Holdings view.
+- Integrity actions remain navigation-only: they never auto-edit holdings, activities, snapshots, cash or provenance.
+- No persisted state or backup schema changes are required; Backup V17 remains current.
+
