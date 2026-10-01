@@ -118,6 +118,63 @@ export function parseIssuerComposition({ html, etfSymbol, etfName, sourceName, s
   };
 }
 
+export function parseNomuraFundAssetsPayload({
+  payload,
+  etfSymbol,
+  etfName,
+  sourceName,
+  sourceUrl
+}) {
+  if (!payload || payload.StatusCode !== 0) {
+    throw new Error(`${etfSymbol} 野村官方持股 API 回傳失敗狀態。`);
+  }
+
+  const data = payload.Entries?.Data;
+  const stockTable = Array.isArray(data?.Table)
+    ? data.Table.find((table) => table?.TableTitle === "股票")
+    : null;
+  if (!stockTable || !Array.isArray(stockTable.Rows)) {
+    throw new Error(`${etfSymbol} 野村官方持股 API 沒有股票資料表。`);
+  }
+
+  const asOf = normalizeDate(stockTable.NavDate || data?.FundAsset?.NavDate);
+  if (!asOf) {
+    throw new Error(`${etfSymbol} 野村官方持股 API 缺少可追溯資料日。`);
+  }
+
+  const constituents = stockTable.Rows.flatMap((row) => {
+    if (!Array.isArray(row)) return [];
+    const symbol = String(row[0] ?? "").trim().toUpperCase();
+    const name = String(row[1] ?? "").trim();
+    const weightPct = cleanWeight(row[3]);
+    if (!/^\d{4,6}$/.test(symbol) || !name || weightPct === null) return [];
+    return [{
+      market: "TW",
+      symbol,
+      name,
+      weightPct,
+      sector: "未分類"
+    }];
+  });
+
+  const totalWeight = constituents.reduce((sum, item) => sum + item.weightPct, 0);
+  if (constituents.length < 5 || totalWeight < 10 || totalWeight > 100.5) {
+    throw new Error(`${etfSymbol} 野村官方持股 API 股票資料不完整或權重異常。`);
+  }
+
+  return {
+    id: `composition:TW:${etfSymbol}`,
+    etfMarket: "TW",
+    etfSymbol,
+    etfName,
+    asOf,
+    sourceName,
+    sourceUrl,
+    sourceType: "official_issuer",
+    constituents
+  };
+}
+
 export function applySectorMap(composition, sectorMap) {
   return {
     ...composition,
