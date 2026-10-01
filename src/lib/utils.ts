@@ -13,6 +13,15 @@ export function money(value: number, currency = "TWD") {
   }).format(value);
 }
 
+export function marketPrice(value: number, currency = "TWD") {
+  return new Intl.NumberFormat("zh-TW", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
 export function percent(value: number, digits = 1) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(digits)}%`;
 }
