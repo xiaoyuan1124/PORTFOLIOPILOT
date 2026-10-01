@@ -210,10 +210,10 @@ async function main() {
   }));
 
   if (!hasExistingHistory) {
-    if (acceptedDates.TWSE.size < 180) {
+    if (acceptedDates.TWSE.size < 220) {
       throw new Error(`Refusing initial history seed with only ${acceptedDates.TWSE.size} valid TWSE trading dates.`);
     }
-    if (acceptedDates.TPEx.size < 180) {
+    if (acceptedDates.TPEx.size < 220) {
       throw new Error(`Refusing initial history seed with only ${acceptedDates.TPEx.size} valid TPEx trading dates.`);
     }
   }
