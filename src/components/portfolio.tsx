@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { AppState } from "@/lib/types";
 import { ActivityLedger } from "./activity-ledger";
 import { AllocationTargets } from "./allocation-targets";
@@ -26,20 +26,14 @@ export function Portfolio({
   state,
   onChange,
   onResearch,
-  requestedTab,
-  requestId = 0
+  requestedTab
 }: {
   state: AppState;
   onChange: (state: AppState) => boolean;
   onResearch?: (researchKey: string) => void;
   requestedTab?: PortfolioTab;
-  requestId?: number;
 }) {
   const [tab, setTab] = useState<PortfolioTab>(requestedTab ?? "holdings");
-
-  useEffect(() => {
-    if (requestedTab) setTab(requestedTab);
-  }, [requestId, requestedTab]);
 
   return (
     <div className="space-y-4">
