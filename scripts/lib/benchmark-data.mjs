@@ -25,6 +25,26 @@ export function parseTwseTaiexTotalReturn(payload) {
   });
 }
 
+
+export function parseTwseTaiexPrice(payload) {
+  if (!payload || typeof payload !== "object" || String(payload.stat ?? "").toUpperCase() !== "OK") {
+    return [];
+  }
+  const fields = Array.isArray(payload.fields) ? payload.fields.map((field) => String(field ?? "").trim()) : [];
+  const dateIndex = fields.indexOf("日期");
+  const valueIndex = fields.indexOf("發行量加權股價指數");
+  if (dateIndex < 0 || valueIndex < 0) return [];
+
+  const rows = Array.isArray(payload.data) ? payload.data : [];
+  return rows.flatMap((row) => {
+    if (!Array.isArray(row)) return [];
+    const date = rocDateToIso(row[dateIndex]);
+    const value = cleanNumber(row[valueIndex]);
+    if (!date || value === null || value <= 0) return [];
+    return [{ date, value }];
+  });
+}
+
 export function rollingMonthStarts(now = new Date(), months = 24) {
   if (!Number.isInteger(months) || months < 1) throw new Error("months must be a positive integer");
   const result = [];
@@ -39,6 +59,10 @@ export function rollingMonthStarts(now = new Date(), months = 24) {
 
 export function twseMonthUrl(monthStart) {
   return `https://www.twse.com.tw/indicesReport/MFI94U?response=json&date=${monthStart.replaceAll("-", "")}`;
+}
+
+export function twsePriceMonthUrl(monthStart) {
+  return `https://www.twse.com.tw/rwd/zh/afterTrading/FMTQIK?date=${monthStart.replaceAll("-", "")}&response=json`;
 }
 
 export function isTransientTwseRequestError(error) {

@@ -12,9 +12,10 @@ import {
   type EtfAttributionExclusionReason,
   type EtfProductBand
 } from "@/lib/etf-advanced-analysis";
+import { benchmarkById, benchmarkWindow, loadBundledBenchmarks, type BenchmarkCache } from "@/lib/benchmark";
 import type { TwQuoteCache } from "@/lib/market-data";
 import { loadTwPriceHistory, type TwPriceHistorySeries } from "@/lib/price-history-data";
-import { priceHistoryMetrics } from "@/lib/price-history";
+import { priceHistoryMetrics, relativePerformancePct } from "@/lib/price-history";
 import { loadBundledQuarterlyMargins, type QuarterlyMarginCache } from "@/lib/quarterly-financials";
 import { loadBundledRevenueHistory, type RevenueHistoryCache } from "@/lib/revenue-history";
 import type { EtfComposition } from "@/lib/types";
@@ -162,6 +163,7 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
     quarterlyMargins: null
   });
   const [loaded, setLoaded] = useState(false);
+  const [benchmarkCache, setBenchmarkCache] = useState<BenchmarkCache | null>(null);
   const [historyState, setHistoryState] = useState<{
     key: string;
     history: TwPriceHistorySeries | null;
@@ -183,6 +185,18 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
       });
       setLoaded(true);
     });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void loadBundledBenchmarks()
+      .then((cache) => {
+        if (active) setBenchmarkCache(cache);
+      })
+      .catch(() => {
+        if (active) setBenchmarkCache(null);
+      });
     return () => { active = false; };
   }, []);
 
@@ -233,6 +247,22 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
     () => priceHistory ? priceHistoryMetrics(priceHistory.points) : null,
     [priceHistory]
   );
+
+  const priceBenchmark = benchmarkCache ? benchmarkById(benchmarkCache, "TWSE:TAIEX-PRICE") : null;
+
+  function relativeFor(period: { startDate: string; endDate: string; returnPct: number } | null | undefined) {
+    if (!period || !priceBenchmark) return null;
+    const comparison = benchmarkWindow(priceBenchmark, period.startDate, period.endDate);
+    if (comparison.status !== "available" || comparison.returnPct === null) return null;
+    return relativePerformancePct(period.returnPct, comparison.returnPct);
+  }
+
+  const relativeHistory = historyMetrics ? {
+    oneMonth: relativeFor(historyMetrics.oneMonth),
+    threeMonth: relativeFor(historyMetrics.threeMonth),
+    sixMonth: relativeFor(historyMetrics.sixMonth),
+    oneYear: relativeFor(historyMetrics.oneYear)
+  } : null;
   const top10Band = top10ProductBand(analysis.top10WeightPct);
   const singleBand = singleHoldingProductBand(analysis.top1WeightPct);
   const topSector = analysis.sectorWeights[0] ?? null;
@@ -456,10 +486,10 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
             {historyMetrics && priceHistory ? (
               <>
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  <NumberCard label="1M 價格報酬" value={pct(historyMetrics.oneMonth?.returnPct ?? null)} helper={historyMetrics.oneMonth ? historyMetrics.oneMonth.startDate + " → " + historyMetrics.oneMonth.endDate : "資料不足"} />
-                  <NumberCard label="3M 價格報酬" value={pct(historyMetrics.threeMonth?.returnPct ?? null)} helper={historyMetrics.threeMonth ? historyMetrics.threeMonth.startDate + " → " + historyMetrics.threeMonth.endDate : "資料不足"} />
-                  <NumberCard label="6M 價格報酬" value={pct(historyMetrics.sixMonth?.returnPct ?? null)} helper={historyMetrics.sixMonth ? historyMetrics.sixMonth.startDate + " → " + historyMetrics.sixMonth.endDate : "資料不足"} />
-                  <NumberCard label="1Y 價格報酬" value={pct(historyMetrics.oneYear?.returnPct ?? null)} helper={historyMetrics.oneYear ? historyMetrics.oneYear.startDate + " → " + historyMetrics.oneYear.endDate : "資料不足"} />
+                  <NumberCard label="1M 價格報酬" value={pct(historyMetrics.oneMonth?.returnPct ?? null)} helper={historyMetrics.oneMonth ? "相對加權 " + pct(relativeHistory?.oneMonth ?? null) + " · " + historyMetrics.oneMonth.startDate + " → " + historyMetrics.oneMonth.endDate : "資料不足"} />
+                  <NumberCard label="3M 價格報酬" value={pct(historyMetrics.threeMonth?.returnPct ?? null)} helper={historyMetrics.threeMonth ? "相對加權 " + pct(relativeHistory?.threeMonth ?? null) + " · " + historyMetrics.threeMonth.startDate + " → " + historyMetrics.threeMonth.endDate : "資料不足"} />
+                  <NumberCard label="6M 價格報酬" value={pct(historyMetrics.sixMonth?.returnPct ?? null)} helper={historyMetrics.sixMonth ? "相對加權 " + pct(relativeHistory?.sixMonth ?? null) + " · " + historyMetrics.sixMonth.startDate + " → " + historyMetrics.sixMonth.endDate : "資料不足"} />
+                  <NumberCard label="1Y 價格報酬" value={pct(historyMetrics.oneYear?.returnPct ?? null)} helper={historyMetrics.oneYear ? "相對加權 " + pct(relativeHistory?.oneYear ?? null) + " · " + historyMetrics.oneYear.startDate + " → " + historyMetrics.oneYear.endDate : "資料不足"} />
                   <NumberCard label="最大回撤" value={pct(historyMetrics.maxDrawdownPct)} helper="目前快取區間 raw close" />
                   <NumberCard label="年化波動度" value={pct(historyMetrics.annualizedVolatilityPct)} helper="日對數報酬 × √252" />
                 </div>
@@ -481,7 +511,7 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
                   官方收盤歷史：{historyMetrics.firstDate ?? "—"} → {historyMetrics.latestDate ?? "—"} · {historyMetrics.points.length} 個交易日
                 </p>
                 <InfoDisclosure summary="價格報酬與風險指標怎麼解讀" className="mt-3">
-                  這裡使用 TWSE／TPEx 官方每日收盤價，因此是價格報酬，不含現金配息再投資，也沒有自行製作還原價。ETF 除息會反映在價格序列中，所以不能把這些數字當作總報酬。最大回撤與波動度也基於同一 raw close 序列；RS 需再接同期間 benchmark 後才會顯示。
+                  這裡使用 TWSE／TPEx 官方每日收盤價，因此是價格報酬，不含現金配息再投資，也沒有自行製作還原價。ETF 除息會反映在價格序列中，所以不能把這些數字當作總報酬。相對加權使用同期間 TWSE TAIEX Price Index，同樣採價格報酬口徑；相對值描述價格表現差異，不是投資評級。最大回撤與波動度也基於同一 raw close 序列。
                 </InfoDisclosure>
               </>
             ) : (

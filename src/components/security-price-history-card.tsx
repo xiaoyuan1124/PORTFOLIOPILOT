@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Info } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { benchmarkById, benchmarkWindow, loadBundledBenchmarks, type BenchmarkCache } from "@/lib/benchmark";
 import { loadTwPriceHistory, type TwPriceHistorySeries } from "@/lib/price-history-data";
-import { priceHistoryMetrics } from "@/lib/price-history";
+import { priceHistoryMetrics, relativePerformancePct } from "@/lib/price-history";
 import { Card, CardContent, InfoDisclosure } from "./ui";
 
 function signedPct(value: number | null | undefined) {
@@ -25,6 +26,7 @@ export function SecurityPriceHistoryCard({
     history: TwPriceHistorySeries | null;
     error: string;
   }>({ key: "", history: null, error: "" });
+  const [benchmarkCache, setBenchmarkCache] = useState<BenchmarkCache | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -44,6 +46,18 @@ export function SecurityPriceHistoryCard({
     return () => { active = false; };
   }, [market, requestKey, symbol]);
 
+  useEffect(() => {
+    let active = true;
+    void loadBundledBenchmarks()
+      .then((cache) => {
+        if (active) setBenchmarkCache(cache);
+      })
+      .catch(() => {
+        if (active) setBenchmarkCache(null);
+      });
+    return () => { active = false; };
+  }, []);
+
   const current = loadState.key === requestKey ? loadState : null;
   const history = current?.history ?? null;
   const loading = !current;
@@ -52,6 +66,22 @@ export function SecurityPriceHistoryCard({
     () => history ? priceHistoryMetrics(history.points) : null,
     [history]
   );
+
+  const priceBenchmark = benchmarkCache ? benchmarkById(benchmarkCache, "TWSE:TAIEX-PRICE") : null;
+
+  function relativeFor(period: { startDate: string; endDate: string; returnPct: number } | null | undefined) {
+    if (!period || !priceBenchmark) return null;
+    const comparison = benchmarkWindow(priceBenchmark, period.startDate, period.endDate);
+    if (comparison.status !== "available" || comparison.returnPct === null) return null;
+    return relativePerformancePct(period.returnPct, comparison.returnPct);
+  }
+
+  const relative = metrics ? {
+    oneMonth: relativeFor(metrics.oneMonth),
+    threeMonth: relativeFor(metrics.threeMonth),
+    sixMonth: relativeFor(metrics.sixMonth),
+    oneYear: relativeFor(metrics.oneYear)
+  } : null;
 
   return (
     <Card>
@@ -67,10 +97,10 @@ export function SecurityPriceHistoryCard({
         {metrics ? (
           <>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              <div className="mini-metric"><span>1M</span><strong>{signedPct(metrics.oneMonth?.returnPct)}</strong></div>
-              <div className="mini-metric"><span>3M</span><strong>{signedPct(metrics.threeMonth?.returnPct)}</strong></div>
-              <div className="mini-metric"><span>6M</span><strong>{signedPct(metrics.sixMonth?.returnPct)}</strong></div>
-              <div className="mini-metric"><span>1Y</span><strong>{signedPct(metrics.oneYear?.returnPct)}</strong></div>
+              <div className="mini-metric"><span>1M</span><strong>{signedPct(metrics.oneMonth?.returnPct)}</strong><small className="mt-1 block font-normal text-black/38 dark:text-white/38">相對加權 {signedPct(relative?.oneMonth)}</small></div>
+              <div className="mini-metric"><span>3M</span><strong>{signedPct(metrics.threeMonth?.returnPct)}</strong><small className="mt-1 block font-normal text-black/38 dark:text-white/38">相對加權 {signedPct(relative?.threeMonth)}</small></div>
+              <div className="mini-metric"><span>6M</span><strong>{signedPct(metrics.sixMonth?.returnPct)}</strong><small className="mt-1 block font-normal text-black/38 dark:text-white/38">相對加權 {signedPct(relative?.sixMonth)}</small></div>
+              <div className="mini-metric"><span>1Y</span><strong>{signedPct(metrics.oneYear?.returnPct)}</strong><small className="mt-1 block font-normal text-black/38 dark:text-white/38">相對加權 {signedPct(relative?.oneYear)}</small></div>
               <div className="mini-metric"><span>最大回撤</span><strong>{signedPct(metrics.maxDrawdownPct)}</strong></div>
               <div className="mini-metric"><span>年化波動度</span><strong>{signedPct(metrics.annualizedVolatilityPct)}</strong></div>
             </div>
@@ -90,7 +120,7 @@ export function SecurityPriceHistoryCard({
             </div>
             <p className="mt-2 text-[11px] text-black/35 dark:text-white/35">{metrics.firstDate} → {metrics.latestDate} · {metrics.points.length} 個交易日</p>
             <InfoDisclosure summary="歷史價格口徑" className="mt-3">
-              使用 TWSE／TPEx 官方每日收盤價。這是 raw price return，不含現金股利再投資，也沒有自行製作還原價；除權息會直接反映在價格序列，因此不可視為總報酬。
+              使用 TWSE／TPEx 官方每日收盤價。這是 raw price return，不含現金股利再投資，也沒有自行製作還原價；除權息會直接反映在價格序列，因此不可視為總報酬。「相對加權」使用同期間 TWSE TAIEX Price Index，兩邊都採價格報酬口徑；數值代表相對價格表現，不是投資評級。
             </InfoDisclosure>
           </>
         ) : (

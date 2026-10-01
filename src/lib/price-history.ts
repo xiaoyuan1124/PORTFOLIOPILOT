@@ -73,6 +73,21 @@ export function annualizedVolatilityPct(points: TwPriceHistoryPoint[]) {
   return Math.sqrt(variance) * Math.sqrt(252) * 100;
 }
 
+
+export function relativePerformancePct(securityReturnPct: number | null, benchmarkReturnPct: number | null) {
+  if (
+    securityReturnPct === null ||
+    benchmarkReturnPct === null ||
+    !Number.isFinite(securityReturnPct) ||
+    !Number.isFinite(benchmarkReturnPct) ||
+    benchmarkReturnPct <= -100
+  ) {
+    return null;
+  }
+
+  return ((1 + securityReturnPct / 100) / (1 + benchmarkReturnPct / 100) - 1) * 100;
+}
+
 export function priceHistoryMetrics(points: TwPriceHistoryPoint[]) {
   const rows = normalize(points);
   const latest = rows.at(-1) ?? null;

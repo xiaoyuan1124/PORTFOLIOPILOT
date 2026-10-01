@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { annualizedVolatilityPct, maxDrawdownPct, priceHistoryMetrics, trailingPriceReturn } from "./price-history";
+import { annualizedVolatilityPct, maxDrawdownPct, priceHistoryMetrics, relativePerformancePct, trailingPriceReturn } from "./price-history";
 import type { TwPriceHistoryPoint } from "./price-history-data";
 
 const points: TwPriceHistoryPoint[] = [
@@ -33,6 +33,13 @@ describe("Taiwan price-history analytics", () => {
       100 + index + (index % 2 ? 1 : -1)
     ]);
     expect(annualizedVolatilityPct(dense)).not.toBeNull();
+  });
+
+  it("calculates relative performance on the same return basis", () => {
+    expect(relativePerformancePct(10, 5)).toBeCloseTo((1.1 / 1.05 - 1) * 100);
+    expect(relativePerformancePct(-5, -10)).toBeCloseTo((0.95 / 0.9 - 1) * 100);
+    expect(relativePerformancePct(null, 5)).toBeNull();
+    expect(relativePerformancePct(10, -100)).toBeNull();
   });
 
   it("returns a combined metrics object without inventing unavailable periods", () => {

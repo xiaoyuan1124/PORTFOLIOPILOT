@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   isTransientTwseRequestError,
+  parseTwseTaiexPrice,
   parseTwseTaiexTotalReturn,
   retryTransientTwseRequest,
   rocDateToIso,
   rollingMonthStarts,
-  twseMonthUrl
+  twseMonthUrl,
+  twsePriceMonthUrl
 } from "./benchmark-data.mjs";
 
 describe("TWSE TAIEX total-return benchmark parser", () => {
@@ -29,6 +31,21 @@ describe("TWSE TAIEX total-return benchmark parser", () => {
     ]);
   });
 
+  it("parses official FMTQIK TAIEX price-index rows by field name", () => {
+    expect(parseTwseTaiexPrice({
+      stat: "OK",
+      fields: ["日期", "成交股數", "發行量加權股價指數", "漲跌點數"],
+      data: [
+        ["115/09/23", "1,000", "48,157.29", "100"],
+        ["115/09/24", "1,200", "48,024.60", "-132.69"],
+        ["bad", "1", "1", "0"]
+      ]
+    })).toEqual([
+      { date: "2026-09-23", value: 48157.29 },
+      { date: "2026-09-24", value: 48024.6 }
+    ]);
+  });
+
   it("builds deterministic rolling month requests", () => {
     expect(rollingMonthStarts(new Date("2026-09-27T00:00:00Z"), 3)).toEqual([
       "2026-07-01",
@@ -36,6 +53,7 @@ describe("TWSE TAIEX total-return benchmark parser", () => {
       "2026-09-01"
     ]);
     expect(twseMonthUrl("2026-09-01")).toContain("date=20260901");
+    expect(twsePriceMonthUrl("2026-09-01")).toContain("FMTQIK");
   });
 });
 

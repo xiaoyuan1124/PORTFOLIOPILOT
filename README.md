@@ -919,3 +919,18 @@ The V0.81.2 backfill generated a complete cache (TWSE 266 valid trading dates, T
 - **Initial and incremental safe:** first-time untracked cache files and later tracked updates are both detected correctly.
 - **No data-model change:** history JSON format, safety thresholds, sources and front-end loaders are unchanged.
 - **Zero-cost architecture unchanged:** no paid API, backend, database or dependency is introduced.
+
+
+## V0.82 same-basis relative strength
+
+V0.82 uses the new official Taiwan price-history layer to compare a security with the TAIEX on the **same raw-price basis**.
+
+- **Official TAIEX price benchmark:** the market-data workflow now publishes `TWSE:TAIEX-PRICE` from TWSE `FMTQIK` in addition to the existing dividend-reinvested TAIEX Total Return benchmark.
+- **No mixed return basis:** stock / ETF raw closing-price returns are never compared to the total-return index for relative strength.
+- **Aligned windows:** 1M / 3M / 6M / 1Y relative calculations use the security's actual historical start/end trading dates and require the official price-index cache to cover that same interval.
+- **Relative-performance formula:** `(1 + security price return) / (1 + benchmark price return) - 1`.
+- **Stock + ETF research:** both the general security history card and ETF deep analysis show the same-period relative result beside each raw price return.
+- **Interpretation:** relative strength describes historical price performance versus the broad Taiwan price index. It is not a recommendation, rating or forecast.
+- **Zero cost:** TWSE public endpoints, the existing GitHub Actions workflow and current Recharts UI are reused. No paid API, backend, database or new dependency is added.
+
+The existing Portfolio benchmark comparison continues using TAIEX Total Return because Portfolio TWR includes the economic effect of portfolio cash flows and distributions; the two benchmark series are intentionally kept separate.
