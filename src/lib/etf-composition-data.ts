@@ -52,6 +52,15 @@ export function applyHeldEtfCompositions(
       .map((holding) => key("TW", holding.symbol))
   );
 
+  const supportedKeys = new Set(
+    cache.sources.map((source) => key("TW", source.symbol))
+  );
+  const sourceIssueKeys = new Set(
+    cache.sources
+      .filter((source) => source.status !== "ok")
+      .map((source) => key("TW", source.symbol))
+  );
+
   const incomingByKey = new Map<string, EtfComposition>();
   for (const composition of cache.compositions) {
     const compositionKey = key(composition.etfMarket, composition.etfSymbol);
@@ -97,6 +106,8 @@ export function applyHeldEtfCompositions(
     updated,
     unchanged,
     preservedNewer,
-    unsupported: Math.max(heldKeys.size - matched, 0)
+    supported: [...heldKeys].filter((heldKey) => supportedKeys.has(heldKey)).length,
+    sourceIssues: [...heldKeys].filter((heldKey) => sourceIssueKeys.has(heldKey)).length,
+    unsupported: [...heldKeys].filter((heldKey) => !supportedKeys.has(heldKey)).length
   };
 }
