@@ -25,10 +25,20 @@ function composition(symbol: string, asOf: string, sourceType: EtfComposition["s
   };
 }
 
-function cache(items: EtfComposition[]): EtfCompositionCache {
+function cache(
+  items: EtfComposition[],
+  sources: EtfCompositionCache["sources"] = items.map((item) => ({
+    symbol: item.etfSymbol,
+    name: item.etfName,
+    sourceName: item.sourceName,
+    sourceUrl: item.sourceUrl,
+    fetchedAt: "2026-10-01T10:00:00.000Z",
+    status: "ok" as const
+  }))
+): EtfCompositionCache {
   return {
     generatedAt: "2026-10-01T10:00:00.000Z",
-    sources: [],
+    sources,
     compositions: items
   };
 }
@@ -41,6 +51,8 @@ describe("held ETF automatic composition refresh", () => {
     ]));
     expect(result.matched).toBe(1);
     expect(result.updated).toBe(1);
+    expect(result.supported).toBe(1);
+    expect(result.sourceIssues).toBe(0);
     expect(result.unsupported).toBe(1);
     expect(result.compositions.map((item) => item.etfSymbol)).toEqual(["009816"]);
   });
@@ -68,5 +80,27 @@ describe("held ETF automatic composition refresh", () => {
     expect(result.matched).toBe(0);
     expect(result.unsupported).toBe(2);
     expect(result.compositions).toEqual([existing]);
+  });
+
+  it("distinguishes a supported stale source from an unsupported ETF", () => {
+    const stale = composition("009816", "2026-09-30");
+    const result = applyHeldEtfCompositions(
+      [],
+      held,
+      cache([stale], [{
+        symbol: "009816",
+        name: "凱基台灣TOP50",
+        sourceName: "凱基投信",
+        sourceUrl: "https://example.com",
+        fetchedAt: "2026-10-01T10:00:00.000Z",
+        status: "stale",
+        error: "temporary issuer error"
+      }])
+    );
+
+    expect(result.matched).toBe(1);
+    expect(result.supported).toBe(1);
+    expect(result.sourceIssues).toBe(1);
+    expect(result.unsupported).toBe(1);
   });
 });
