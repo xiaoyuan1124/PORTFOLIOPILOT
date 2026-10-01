@@ -47,8 +47,8 @@ function areaForTab(tab: ResearchTab): ResearchArea {
   return "notes";
 }
 
-export function Research({ state, onChange, researchKey }: { state: AppState; onChange: (state: AppState) => boolean; researchKey?: string }) {
-  const [tab, setTab] = useState<ResearchTab>("snapshot");
+export function Research({ state, onChange, researchKey, researchType }: { state: AppState; onChange: (state: AppState) => boolean; researchKey?: string; researchType?: "stock" | "etf" }) {
+  const [tab, setTab] = useState<ResearchTab>(researchType === "etf" ? "etf" : "snapshot");
   const [snapshotKey, setSnapshotKey] = useState(researchKey);
   const [snapshotRequestId, setSnapshotRequestId] = useState(0);
   const area = useMemo(() => areaForTab(tab), [tab]);
