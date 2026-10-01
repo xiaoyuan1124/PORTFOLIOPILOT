@@ -6,7 +6,7 @@ import type { AppState, EtfComposition } from "@/lib/types";
 import { loadBundledEtfCompositions } from "@/lib/etf-composition-data";
 import { analyzeEtf } from "@/lib/etf-research";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
-import { Badge, Card, CardContent, GhostButton } from "./ui";
+import { Badge, Card, CardContent, GhostButton, InfoDisclosure } from "./ui";
 import { EtfDeepAnalysis } from "./etf-deep-analysis";
 
 
@@ -122,9 +122,10 @@ export function EtfResearch({
           <div>
             <p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">ETF Research · Look-through + Attribution</p>
             <h3 className="mt-2 text-xl font-semibold">從 ETF 一路看到是哪幾家公司在拉抬／拖累</h3>
-            <p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">
-              成份權重使用本機目前保存的可追溯資料；支援的持有台灣 ETF 會在「同步最新資料」時自動同步官方發行人成份。當日歸因仍只使用同一最新交易日、可唯一匹配的官方台股收盤漲跌，缺資料不補猜。
-            </p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">先看今日影響、成份結構與異動，再展開完整資料。</p>
+            <InfoDisclosure summary="資料來源與同步方式" className="mt-3 border-white/15 bg-white/[.06] dark:border-black/10 dark:bg-black/[.04]">
+              成份權重使用目前保存的可追溯資料；支援的持有台灣 ETF 會在「同步最新資料」時同步官方發行人成份。當日歸因只使用同一最新交易日、可唯一匹配的官方台股收盤漲跌，缺資料不補猜。
+            </InfoDisclosure>
           </div>
           <GhostButton disabled={loading} onClick={() => void reload()} className="border-white/20 bg-white/10 text-white dark:border-black/10 dark:bg-black/5 dark:text-[#122018]">
             <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
@@ -191,9 +192,7 @@ export function EtfResearch({
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Daily attribution</p>
                   <h3 className="mt-1 text-lg font-semibold">今天哪些成份股在拉抬／拖累 {selected.etfSymbol}？</h3>
-                  <p className="mt-2 max-w-3xl text-xs leading-5 text-black/45 dark:text-white/45">
-                    估算式：成份權重 × 成份股當日漲跌 = 對 ETF 的近似貢獻百分點。這不是基金公司官方 NAV 歸因，未涵蓋現金、期貨、費用、匯率與未取得行情的成份。
-                  </p>
+                  <p className="mt-2 max-w-3xl text-xs leading-5 text-black/45 dark:text-white/45">先看正負貢獻最大的成份，點成份股可直接進一步研究。</p>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-semibold tabular-nums">{result.attributionDate ? fmtPct(result.estimatedEtfReturnPct) : "—"}</p>
@@ -268,7 +267,7 @@ export function EtfResearch({
                 <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Constituents</p>
                 <h3 className="mt-1 font-semibold">成份股與 ETF 的關聯</h3>
                 <div className="mt-4 space-y-2">
-                  {sortedConstituents.map((item, index) => (
+                  {sortedConstituents.slice(0, 10).map((item, index) => (
                     <div key={`${item.market}:${item.symbol}:${index}`} className="flex items-center gap-3 rounded-xl border border-black/5 px-3 py-2 dark:border-white/6">
                       <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-black/[.04] text-[11px] font-semibold dark:bg-white/[.06]">{index + 1}</span>
                       <span className="min-w-0 flex-1">
@@ -279,6 +278,26 @@ export function EtfResearch({
                     </div>
                   ))}
                 </div>
+                {sortedConstituents.length > 10 ? (
+                  <details className="group mt-3 rounded-xl border border-black/6 dark:border-white/7">
+                    <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between px-3 text-xs font-semibold text-black/50 dark:text-white/50">
+                      查看全部 {sortedConstituents.length} 檔成份股
+                      <span className="text-[11px] font-normal">前 10 大已顯示</span>
+                    </summary>
+                    <div className="space-y-2 border-t border-black/5 p-3 dark:border-white/6">
+                      {sortedConstituents.slice(10).map((item, index) => (
+                        <div key={`${item.market}:${item.symbol}:all:${index}`} className="flex items-center gap-3 rounded-xl border border-black/5 px-3 py-2 dark:border-white/6">
+                          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-black/[.04] text-[11px] font-semibold dark:bg-white/[.06]">{index + 11}</span>
+                          <span className="min-w-0 flex-1">
+                            <strong className="block truncate text-sm">{item.symbol} · {item.name}</strong>
+                            <span className="text-[11px] text-black/38 dark:text-white/38">{item.sector || "未分類"} · {item.market}</span>
+                          </span>
+                          <strong className="shrink-0 text-sm tabular-nums">{item.weightPct.toFixed(2)}%</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
               </CardContent>
             </Card>
 
@@ -302,10 +321,9 @@ export function EtfResearch({
 
           <Card>
             <CardContent>
-              <p className="text-sm font-semibold">資料邊界</p>
-              <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
+              <InfoDisclosure summary="資料邊界與官方來源">
                 成份資料來源：{selected.sourceName} · 資料日 {selected.asOf}。目前每日歸因只涵蓋可唯一比對的台股成份；US 成份股尚未接免費且授權清楚的日行情來源。估算報酬也不含基金現金、期貨、借券、費用、匯率與申贖影響，因此不能當成官方 ETF NAV 報酬。
-              </p>
+              </InfoDisclosure>
             </CardContent>
           </Card>
         </>
