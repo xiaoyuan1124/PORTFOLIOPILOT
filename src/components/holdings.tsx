@@ -641,7 +641,7 @@ function QuickCorrectionForm({
 
 type SortMode = "value" | "gain" | "name";
 
-export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => boolean; onResearch?: (researchKey: string) => void }) {
+export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => boolean; onResearch?: (researchKey: string, researchType: "stock" | "etf") => void }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("value");
   const [account, setAccount] = useState("all");
@@ -890,7 +890,7 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
                         className="h-10 min-h-10 w-10 px-0"
                         aria-label={`研究 ${holding.name}`}
                         title="查看官方研究"
-                        onClick={() => onResearch(`${holding.priceSource}:${holding.symbol}`)}
+                        onClick={() => onResearch(`${holding.priceSource}:${holding.symbol}`, holding.type === "etf" ? "etf" : "stock")}
                       >
                         <Search size={15} />
                       </GhostButton>
