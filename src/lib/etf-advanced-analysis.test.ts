@@ -112,9 +112,44 @@ describe("advanced ETF analysis", () => {
     expect(result.top1WeightPct).toBe(40);
     expect(result.top10WeightPct).toBe(90);
     expect(result.previousCompositionAsOf).toBe("2026-09-01");
-    expect(result.weightChanges[0]).toMatchObject({ symbol: "2330", changePctPoints: 10 });
+    expect(result.weightChanges[0]).toMatchObject({ symbol: "2330", changePctPoints: 10, changeType: "increased" });
     expect(result.overlapComparisons[0]).toMatchObject({ etfSymbol: "00888", overlapWeightPct: 45, sharedCount: 2 });
     expect(compareEtfOverlap(selected, other).topShared.map((row) => row.symbol)).toEqual(["2330", "2317"]);
+  });
+
+  it("detects additions, removals, increases and decreases between snapshots", () => {
+    const current: EtfComposition = {
+      ...selected,
+      asOf: "2026-10-02",
+      constituents: [
+        { market: "TW", symbol: "2330", name: "台積電", weightPct: 42, sector: "半導體" },
+        { market: "TW", symbol: "2454", name: "聯發科", weightPct: 12, sector: "半導體" },
+        { market: "TW", symbol: "3008", name: "大立光", weightPct: 8, sector: "電子" }
+      ]
+    };
+    const prior: EtfComposition = {
+      ...selected,
+      asOf: "2026-10-01",
+      constituents: [
+        { market: "TW", symbol: "2330", name: "台積電", weightPct: 40, sector: "半導體" },
+        { market: "TW", symbol: "2454", name: "聯發科", weightPct: 15, sector: "半導體" },
+        { market: "TW", symbol: "2317", name: "鴻海", weightPct: 10, sector: "電子" }
+      ]
+    };
+
+    const result = analyzeEtfAdvanced(current, [current, prior], {});
+    expect(result.previousCompositionAsOf).toBe("2026-10-01");
+    expect(result.compositionChangeSummary).toEqual({
+      added: 1,
+      removed: 1,
+      increased: 1,
+      decreased: 1,
+      unchanged: 0
+    });
+    expect(result.weightChanges.find((row) => row.symbol === "3008")?.changeType).toBe("added");
+    expect(result.weightChanges.find((row) => row.symbol === "2317")?.changeType).toBe("removed");
+    expect(result.weightChanges.find((row) => row.symbol === "2330")?.changeType).toBe("increased");
+    expect(result.weightChanges.find((row) => row.symbol === "2454")?.changeType).toBe("decreased");
   });
 
   it("aggregates only covered official constituent fundamentals and valuations", () => {
