@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-01T06:10:18.218Z",
+  "generatedAt": "2026-10-01T11:19:46.703Z",
   "sources": [
     {
       "symbol": "00935",
       "name": "野村臺灣新科技50",
       "sourceName": "野村投信官方持股比重",
       "sourceUrl": "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00935&tab=Shareholding",
-      "fetchedAt": "2026-10-01T06:10:13.237Z",
+      "fetchedAt": "2026-10-01T11:19:41.428Z",
       "status": "ok"
     },
     {
@@ -14,11 +14,1099 @@
       "name": "凱基台灣TOP50",
       "sourceName": "凱基投信",
       "sourceUrl": "https://www.kgifund.com.tw/Fund/Detail?fundID=J023",
-      "fetchedAt": "2026-10-01T06:10:17.537Z",
+      "fetchedAt": "2026-10-01T11:19:45.223Z",
       "status": "ok"
     }
   ],
   "compositions": [
+    {
+      "id": "composition:TW:00935",
+      "etfMarket": "TW",
+      "etfSymbol": "00935",
+      "etfName": "野村臺灣新科技50",
+      "asOf": "2026-10-01",
+      "sourceName": "野村投信官方持股比重",
+      "sourceUrl": "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00935&tab=Shareholding",
+      "sourceType": "official_issuer",
+      "constituents": [
+        {
+          "market": "TW",
+          "symbol": "2330",
+          "name": "台灣積體電路製造",
+          "weightPct": 23.6,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2454",
+          "name": "聯發科技",
+          "weightPct": 17.56,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2308",
+          "name": "台達電子工業",
+          "weightPct": 9.38,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3711",
+          "name": "日月光投資控股",
+          "weightPct": 5.47,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2303",
+          "name": "聯華電子",
+          "weightPct": 4.42,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3037",
+          "name": "欣興電子",
+          "weightPct": 3.76,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3017",
+          "name": "奇鋐科技",
+          "weightPct": 2.73,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2327",
+          "name": "國巨",
+          "weightPct": 2.67,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2345",
+          "name": "智邦科技",
+          "weightPct": 2.22,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2360",
+          "name": "致茂電子",
+          "weightPct": 1.88,
+          "sector": "其他電子業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3653",
+          "name": "健策精密工業",
+          "weightPct": 1.73,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3443",
+          "name": "創意電子",
+          "weightPct": 1.62,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2408",
+          "name": "南亞科技",
+          "weightPct": 1.54,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "5274",
+          "name": "信驊科技",
+          "weightPct": 1.47,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3231",
+          "name": "緯創資通",
+          "weightPct": 1.36,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2344",
+          "name": "華邦電子",
+          "weightPct": 1.31,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3665",
+          "name": "貿聯控股（BizLink Holding In",
+          "weightPct": 1.13,
+          "sector": "其他電子業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6223",
+          "name": "旺矽科技",
+          "weightPct": 1,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "4958",
+          "name": "臻鼎科技控股",
+          "weightPct": 0.91,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2379",
+          "name": "瑞昱半導體",
+          "weightPct": 0.87,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2368",
+          "name": "金像電子（股）公司",
+          "weightPct": 0.85,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2449",
+          "name": "京元電子",
+          "weightPct": 0.81,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3034",
+          "name": "聯詠科技",
+          "weightPct": 0.76,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3661",
+          "name": "世芯電子",
+          "weightPct": 0.67,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6488",
+          "name": "環球晶圓",
+          "weightPct": 0.64,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3081",
+          "name": "聯亞光電工業",
+          "weightPct": 0.58,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2313",
+          "name": "華通電腦",
+          "weightPct": 0.54,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3529",
+          "name": "力旺電子",
+          "weightPct": 0.52,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3105",
+          "name": "穩懋半導體",
+          "weightPct": 0.5,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6239",
+          "name": "力成科技",
+          "weightPct": 0.47,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3293",
+          "name": "鈊象電子",
+          "weightPct": 0.46,
+          "sector": "文化創意業"
+        },
+        {
+          "market": "TW",
+          "symbol": "5347",
+          "name": "世界先進積體電路",
+          "weightPct": 0.45,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2356",
+          "name": "英業達",
+          "weightPct": 0.43,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6515",
+          "name": "穎崴科技",
+          "weightPct": 0.38,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3533",
+          "name": "嘉澤端子工業",
+          "weightPct": 0.36,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2324",
+          "name": "仁寶電腦工業",
+          "weightPct": 0.35,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6415",
+          "name": "矽力杰",
+          "weightPct": 0.33,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "5483",
+          "name": "中美矽晶製品",
+          "weightPct": 0.29,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6531",
+          "name": "愛普科技",
+          "weightPct": 0.29,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2492",
+          "name": "華新科技",
+          "weightPct": 0.29,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "1560",
+          "name": "中國砂輪企業",
+          "weightPct": 0.27,
+          "sector": "電機機械"
+        },
+        {
+          "market": "TW",
+          "symbol": "3324",
+          "name": "雙鴻科技",
+          "weightPct": 0.27,
+          "sector": "其他電子業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6442",
+          "name": "光紅建聖",
+          "weightPct": 0.23,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3491",
+          "name": "昇達科技",
+          "weightPct": 0.21,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6285",
+          "name": "啟碁科技",
+          "weightPct": 0.2,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3023",
+          "name": "信邦電子",
+          "weightPct": 0.16,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6510",
+          "name": "中華精測科技",
+          "weightPct": 0.14,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3131",
+          "name": "弘塑科技",
+          "weightPct": 0.13,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6789",
+          "name": "采鈺科技",
+          "weightPct": 0.12,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6526",
+          "name": "達發科技",
+          "weightPct": 0.1,
+          "sector": "半導體業"
+        }
+      ]
+    },
+    {
+      "id": "composition:TW:009816",
+      "etfMarket": "TW",
+      "etfSymbol": "009816",
+      "etfName": "凱基台灣TOP50",
+      "asOf": "2026-10-01",
+      "sourceName": "凱基投信",
+      "sourceUrl": "https://www.kgifund.com.tw/Fund/Detail?fundID=J023",
+      "sourceType": "official_issuer",
+      "constituents": [
+        {
+          "market": "TW",
+          "symbol": "2330",
+          "name": "&#x53F0;&#x7A4D;&#x96FB;",
+          "weightPct": 40.67,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2454",
+          "name": "&#x806F;&#x767C;&#x79D1;",
+          "weightPct": 6.56,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2308",
+          "name": "&#x53F0;&#x9054;&#x96FB;",
+          "weightPct": 3.5,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2887",
+          "name": "&#x53F0;&#x65B0;&#x65B0;&#x5149;&#x91D1;",
+          "weightPct": 2.85,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2317",
+          "name": "&#x9D3B;&#x6D77;",
+          "weightPct": 2.74,
+          "sector": "其他電子業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2885",
+          "name": "&#x5143;&#x5927;&#x91D1;",
+          "weightPct": 2.52,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2412",
+          "name": "&#x4E2D;&#x83EF;&#x96FB;",
+          "weightPct": 2.08,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2884",
+          "name": "&#x7389;&#x5C71;&#x91D1;",
+          "weightPct": 2.05,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3711",
+          "name": "&#x65E5;&#x6708;&#x5149;&#x6295;&#x63A7;",
+          "weightPct": 2.05,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2883",
+          "name": "&#x51F1;&#x57FA;&#x91D1;",
+          "weightPct": 1.76,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2890",
+          "name": "&#x6C38;&#x8C50;&#x91D1;",
+          "weightPct": 1.75,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2303",
+          "name": "&#x806F;&#x96FB;",
+          "weightPct": 1.67,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2886",
+          "name": "&#x5146;&#x8C50;&#x91D1;",
+          "weightPct": 1.62,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3037",
+          "name": "&#x6B23;&#x8208;",
+          "weightPct": 1.55,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2383",
+          "name": "&#x53F0;&#x5149;&#x96FB;",
+          "weightPct": 1.45,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2880",
+          "name": "&#x83EF;&#x5357;&#x91D1;",
+          "weightPct": 1.36,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2881",
+          "name": "&#x5BCC;&#x90A6;&#x91D1;",
+          "weightPct": 1.33,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2892",
+          "name": "&#x7B2C;&#x4E00;&#x91D1;",
+          "weightPct": 1.28,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "1303",
+          "name": "&#x5357;&#x4E9E;",
+          "weightPct": 1.24,
+          "sector": "塑膠工業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2891",
+          "name": "&#x4E2D;&#x4FE1;&#x91D1;",
+          "weightPct": 1.14,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3017",
+          "name": "&#x5947;&#x92D0;",
+          "weightPct": 1.04,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2408",
+          "name": "&#x5357;&#x4E9E;&#x79D1;",
+          "weightPct": 0.99,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2327",
+          "name": "&#x570B;&#x5DE8;*",
+          "weightPct": 0.98,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2882",
+          "name": "&#x570B;&#x6CF0;&#x91D1;",
+          "weightPct": 0.93,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "5880",
+          "name": "&#x5408;&#x5EAB;&#x91D1;",
+          "weightPct": 0.86,
+          "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2345",
+          "name": "&#x667A;&#x90A6;",
+          "weightPct": 0.83,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2382",
+          "name": "&#x5EE3;&#x9054;",
+          "weightPct": 0.8,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2059",
+          "name": "&#x5DDD;&#x6E56;",
+          "weightPct": 0.75,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2360",
+          "name": "&#x81F4;&#x8302;",
+          "weightPct": 0.72,
+          "sector": "其他電子業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3653",
+          "name": "&#x5065;&#x7B56;",
+          "weightPct": 0.66,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6669",
+          "name": "&#x7DEF;&#x7A4E;",
+          "weightPct": 0.63,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3443",
+          "name": "&#x5275;&#x610F;&#x96FB;&#x5B50;",
+          "weightPct": 0.61,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2357",
+          "name": "&#x83EF;&#x78A9;",
+          "weightPct": 0.6,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2301",
+          "name": "&#x5149;&#x5BF6;&#x79D1;",
+          "weightPct": 0.52,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3231",
+          "name": "&#x7DEF;&#x5275;",
+          "weightPct": 0.51,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2344",
+          "name": "&#x83EF;&#x90A6;&#x96FB;",
+          "weightPct": 0.5,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "7769",
+          "name": "&#x9D3B;&#x52C1;",
+          "weightPct": 0.49,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3008",
+          "name": "&#x5927;&#x7ACB;&#x5149;",
+          "weightPct": 0.48,
+          "sector": "光電業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2603",
+          "name": "&#x9577;&#x69AE;",
+          "weightPct": 0.43,
+          "sector": "航運業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3665",
+          "name": "&#x8CBF;&#x806F;-KY",
+          "weightPct": 0.43,
+          "sector": "其他電子業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3481",
+          "name": "&#x7FA4;&#x5275;",
+          "weightPct": 0.37,
+          "sector": "光電業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6446",
+          "name": "&#x85E5;&#x83EF;&#x85E5;",
+          "weightPct": 0.37,
+          "sector": "生技醫療業"
+        },
+        {
+          "market": "TW",
+          "symbol": "4958",
+          "name": "&#x81FB;&#x9F0E;-KY",
+          "weightPct": 0.35,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2368",
+          "name": "&#x91D1;&#x50CF;&#x96FB;",
+          "weightPct": 0.33,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2395",
+          "name": "&#x7814;&#x83EF;",
+          "weightPct": 0.32,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "8046",
+          "name": "&#x5357;&#x96FB;",
+          "weightPct": 0.31,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "1216",
+          "name": "&#x7D71;&#x4E00;",
+          "weightPct": 0.3,
+          "sector": "食品工業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3045",
+          "name": "&#x53F0;&#x7063;&#x5927;",
+          "weightPct": 0.25,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "4904",
+          "name": "&#x9060;&#x50B3;",
+          "weightPct": 0.22,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6505",
+          "name": "&#x53F0;&#x5851;&#x5316;",
+          "weightPct": 0.19,
+          "sector": "油電燃氣業"
+        }
+      ]
+    }
+  ],
+  "history": [
+    {
+      "id": "composition:TW:00935",
+      "etfMarket": "TW",
+      "etfSymbol": "00935",
+      "etfName": "野村臺灣新科技50",
+      "asOf": "2026-10-01",
+      "sourceName": "野村投信官方持股比重",
+      "sourceUrl": "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00935&tab=Shareholding",
+      "sourceType": "official_issuer",
+      "constituents": [
+        {
+          "market": "TW",
+          "symbol": "2330",
+          "name": "台灣積體電路製造",
+          "weightPct": 23.6,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2454",
+          "name": "聯發科技",
+          "weightPct": 17.56,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2308",
+          "name": "台達電子工業",
+          "weightPct": 9.38,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3711",
+          "name": "日月光投資控股",
+          "weightPct": 5.47,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2303",
+          "name": "聯華電子",
+          "weightPct": 4.42,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3037",
+          "name": "欣興電子",
+          "weightPct": 3.76,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3017",
+          "name": "奇鋐科技",
+          "weightPct": 2.73,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2327",
+          "name": "國巨",
+          "weightPct": 2.67,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2345",
+          "name": "智邦科技",
+          "weightPct": 2.22,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2360",
+          "name": "致茂電子",
+          "weightPct": 1.88,
+          "sector": "其他電子業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3653",
+          "name": "健策精密工業",
+          "weightPct": 1.73,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3443",
+          "name": "創意電子",
+          "weightPct": 1.62,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2408",
+          "name": "南亞科技",
+          "weightPct": 1.54,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "5274",
+          "name": "信驊科技",
+          "weightPct": 1.47,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3231",
+          "name": "緯創資通",
+          "weightPct": 1.36,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2344",
+          "name": "華邦電子",
+          "weightPct": 1.31,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3665",
+          "name": "貿聯控股（BizLink Holding In",
+          "weightPct": 1.13,
+          "sector": "其他電子業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6223",
+          "name": "旺矽科技",
+          "weightPct": 1,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "4958",
+          "name": "臻鼎科技控股",
+          "weightPct": 0.91,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2379",
+          "name": "瑞昱半導體",
+          "weightPct": 0.87,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2368",
+          "name": "金像電子（股）公司",
+          "weightPct": 0.85,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2449",
+          "name": "京元電子",
+          "weightPct": 0.81,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3034",
+          "name": "聯詠科技",
+          "weightPct": 0.76,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3661",
+          "name": "世芯電子",
+          "weightPct": 0.67,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6488",
+          "name": "環球晶圓",
+          "weightPct": 0.64,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3081",
+          "name": "聯亞光電工業",
+          "weightPct": 0.58,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2313",
+          "name": "華通電腦",
+          "weightPct": 0.54,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3529",
+          "name": "力旺電子",
+          "weightPct": 0.52,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3105",
+          "name": "穩懋半導體",
+          "weightPct": 0.5,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6239",
+          "name": "力成科技",
+          "weightPct": 0.47,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3293",
+          "name": "鈊象電子",
+          "weightPct": 0.46,
+          "sector": "文化創意業"
+        },
+        {
+          "market": "TW",
+          "symbol": "5347",
+          "name": "世界先進積體電路",
+          "weightPct": 0.45,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2356",
+          "name": "英業達",
+          "weightPct": 0.43,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6515",
+          "name": "穎崴科技",
+          "weightPct": 0.38,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3533",
+          "name": "嘉澤端子工業",
+          "weightPct": 0.36,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2324",
+          "name": "仁寶電腦工業",
+          "weightPct": 0.35,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6415",
+          "name": "矽力杰",
+          "weightPct": 0.33,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "5483",
+          "name": "中美矽晶製品",
+          "weightPct": 0.29,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6531",
+          "name": "愛普科技",
+          "weightPct": 0.29,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2492",
+          "name": "華新科技",
+          "weightPct": 0.29,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "1560",
+          "name": "中國砂輪企業",
+          "weightPct": 0.27,
+          "sector": "電機機械"
+        },
+        {
+          "market": "TW",
+          "symbol": "3324",
+          "name": "雙鴻科技",
+          "weightPct": 0.27,
+          "sector": "其他電子業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6442",
+          "name": "光紅建聖",
+          "weightPct": 0.23,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3491",
+          "name": "昇達科技",
+          "weightPct": 0.21,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6285",
+          "name": "啟碁科技",
+          "weightPct": 0.2,
+          "sector": "通信網路業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3023",
+          "name": "信邦電子",
+          "weightPct": 0.16,
+          "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6510",
+          "name": "中華精測科技",
+          "weightPct": 0.14,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3131",
+          "name": "弘塑科技",
+          "weightPct": 0.13,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6789",
+          "name": "采鈺科技",
+          "weightPct": 0.12,
+          "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "6526",
+          "name": "達發科技",
+          "weightPct": 0.1,
+          "sector": "半導體業"
+        }
+      ]
+    },
     {
       "id": "composition:TW:00935",
       "etfMarket": "TW",
@@ -386,7 +1474,7 @@
       "etfMarket": "TW",
       "etfSymbol": "009816",
       "etfName": "凱基台灣TOP50",
-      "asOf": "2026-09-30",
+      "asOf": "2026-10-01",
       "sourceName": "凱基投信",
       "sourceUrl": "https://www.kgifund.com.tw/Fund/Detail?fundID=J023",
       "sourceType": "official_issuer",
@@ -395,14 +1483,14 @@
           "market": "TW",
           "symbol": "2330",
           "name": "&#x53F0;&#x7A4D;&#x96FB;",
-          "weightPct": 40.64,
+          "weightPct": 40.67,
           "sector": "半導體業"
         },
         {
           "market": "TW",
           "symbol": "2454",
           "name": "&#x806F;&#x767C;&#x79D1;",
-          "weightPct": 6.48,
+          "weightPct": 6.56,
           "sector": "半導體業"
         },
         {
@@ -416,28 +1504,28 @@
           "market": "TW",
           "symbol": "2887",
           "name": "&#x53F0;&#x65B0;&#x65B0;&#x5149;&#x91D1;",
-          "weightPct": 2.94,
+          "weightPct": 2.85,
           "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "2317",
           "name": "&#x9D3B;&#x6D77;",
-          "weightPct": 2.73,
+          "weightPct": 2.74,
           "sector": "其他電子業"
         },
         {
           "market": "TW",
           "symbol": "2885",
           "name": "&#x5143;&#x5927;&#x91D1;",
-          "weightPct": 2.59,
+          "weightPct": 2.52,
           "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "2412",
           "name": "&#x4E2D;&#x83EF;&#x96FB;",
-          "weightPct": 2.07,
+          "weightPct": 2.08,
           "sector": "通信網路業"
         },
         {
@@ -458,113 +1546,120 @@
           "market": "TW",
           "symbol": "2883",
           "name": "&#x51F1;&#x57FA;&#x91D1;",
-          "weightPct": 1.88,
+          "weightPct": 1.76,
           "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "2890",
           "name": "&#x6C38;&#x8C50;&#x91D1;",
-          "weightPct": 1.8,
-          "sector": "金融保險業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2886",
-          "name": "&#x5146;&#x8C50;&#x91D1;",
-          "weightPct": 1.65,
+          "weightPct": 1.75,
           "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "2303",
           "name": "&#x806F;&#x96FB;",
-          "weightPct": 1.62,
+          "weightPct": 1.67,
           "sector": "半導體業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2886",
+          "name": "&#x5146;&#x8C50;&#x91D1;",
+          "weightPct": 1.62,
+          "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "3037",
           "name": "&#x6B23;&#x8208;",
-          "weightPct": 1.51,
+          "weightPct": 1.55,
           "sector": "電子零組件業"
         },
         {
           "market": "TW",
           "symbol": "2383",
           "name": "&#x53F0;&#x5149;&#x96FB;",
-          "weightPct": 1.46,
+          "weightPct": 1.45,
           "sector": "電子零組件業"
         },
         {
           "market": "TW",
           "symbol": "2880",
           "name": "&#x83EF;&#x5357;&#x91D1;",
-          "weightPct": 1.37,
+          "weightPct": 1.36,
           "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "2881",
           "name": "&#x5BCC;&#x90A6;&#x91D1;",
-          "weightPct": 1.34,
+          "weightPct": 1.33,
           "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "2892",
           "name": "&#x7B2C;&#x4E00;&#x91D1;",
-          "weightPct": 1.29,
+          "weightPct": 1.28,
           "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "1303",
           "name": "&#x5357;&#x4E9E;",
-          "weightPct": 1.26,
+          "weightPct": 1.24,
           "sector": "塑膠工業"
         },
         {
           "market": "TW",
           "symbol": "2891",
           "name": "&#x4E2D;&#x4FE1;&#x91D1;",
-          "weightPct": 1.16,
+          "weightPct": 1.14,
           "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "3017",
           "name": "&#x5947;&#x92D0;",
-          "weightPct": 1.03,
+          "weightPct": 1.04,
           "sector": "電腦及週邊設備業"
         },
         {
           "market": "TW",
           "symbol": "2408",
           "name": "&#x5357;&#x4E9E;&#x79D1;",
-          "weightPct": 1,
+          "weightPct": 0.99,
           "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2882",
-          "name": "&#x570B;&#x6CF0;&#x91D1;",
-          "weightPct": 0.95,
-          "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "2327",
           "name": "&#x570B;&#x5DE8;*",
-          "weightPct": 0.91,
+          "weightPct": 0.98,
           "sector": "電子零組件業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2882",
+          "name": "&#x570B;&#x6CF0;&#x91D1;",
+          "weightPct": 0.93,
+          "sector": "金融保險業"
         },
         {
           "market": "TW",
           "symbol": "5880",
           "name": "&#x5408;&#x5EAB;&#x91D1;",
-          "weightPct": 0.87,
+          "weightPct": 0.86,
           "sector": "金融保險業"
+        },
+        {
+          "market": "TW",
+          "symbol": "2345",
+          "name": "&#x667A;&#x90A6;",
+          "weightPct": 0.83,
+          "sector": "通信網路業"
         },
         {
           "market": "TW",
@@ -575,23 +1670,16 @@
         },
         {
           "market": "TW",
-          "symbol": "2345",
-          "name": "&#x667A;&#x90A6;",
-          "weightPct": 0.79,
-          "sector": "通信網路業"
-        },
-        {
-          "market": "TW",
           "symbol": "2059",
           "name": "&#x5DDD;&#x6E56;",
-          "weightPct": 0.77,
+          "weightPct": 0.75,
           "sector": "電子零組件業"
         },
         {
           "market": "TW",
           "symbol": "2360",
           "name": "&#x81F4;&#x8302;",
-          "weightPct": 0.75,
+          "weightPct": 0.72,
           "sector": "其他電子業"
         },
         {
@@ -603,17 +1691,17 @@
         },
         {
           "market": "TW",
-          "symbol": "3443",
-          "name": "&#x5275;&#x610F;&#x96FB;&#x5B50;",
-          "weightPct": 0.63,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
           "symbol": "6669",
           "name": "&#x7DEF;&#x7A4E;",
           "weightPct": 0.63,
           "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3443",
+          "name": "&#x5275;&#x610F;&#x96FB;&#x5B50;",
+          "weightPct": 0.61,
+          "sector": "半導體業"
         },
         {
           "market": "TW",
@@ -626,6 +1714,13 @@
           "market": "TW",
           "symbol": "2301",
           "name": "&#x5149;&#x5BF6;&#x79D1;",
+          "weightPct": 0.52,
+          "sector": "電腦及週邊設備業"
+        },
+        {
+          "market": "TW",
+          "symbol": "3231",
+          "name": "&#x7DEF;&#x5275;",
           "weightPct": 0.51,
           "sector": "電腦及週邊設備業"
         },
@@ -640,63 +1735,56 @@
           "market": "TW",
           "symbol": "7769",
           "name": "&#x9D3B;&#x52C1;",
-          "weightPct": 0.5,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3231",
-          "name": "&#x7DEF;&#x5275;",
           "weightPct": 0.49,
-          "sector": "電腦及週邊設備業"
+          "sector": "半導體業"
         },
         {
           "market": "TW",
           "symbol": "3008",
           "name": "&#x5927;&#x7ACB;&#x5149;",
-          "weightPct": 0.47,
+          "weightPct": 0.48,
           "sector": "光電業"
         },
         {
           "market": "TW",
           "symbol": "2603",
           "name": "&#x9577;&#x69AE;",
-          "weightPct": 0.44,
+          "weightPct": 0.43,
           "sector": "航運業"
         },
         {
           "market": "TW",
           "symbol": "3665",
           "name": "&#x8CBF;&#x806F;-KY",
-          "weightPct": 0.44,
+          "weightPct": 0.43,
           "sector": "其他電子業"
         },
         {
           "market": "TW",
           "symbol": "3481",
           "name": "&#x7FA4;&#x5275;",
-          "weightPct": 0.39,
+          "weightPct": 0.37,
           "sector": "光電業"
         },
         {
           "market": "TW",
           "symbol": "6446",
           "name": "&#x85E5;&#x83EF;&#x85E5;",
-          "weightPct": 0.39,
+          "weightPct": 0.37,
           "sector": "生技醫療業"
         },
         {
           "market": "TW",
           "symbol": "4958",
           "name": "&#x81FB;&#x9F0E;-KY",
-          "weightPct": 0.36,
+          "weightPct": 0.35,
           "sector": "電子零組件業"
         },
         {
           "market": "TW",
           "symbol": "2368",
           "name": "&#x91D1;&#x50CF;&#x96FB;",
-          "weightPct": 0.35,
+          "weightPct": 0.33,
           "sector": "電子零組件業"
         },
         {
@@ -708,23 +1796,23 @@
         },
         {
           "market": "TW",
-          "symbol": "1216",
-          "name": "&#x7D71;&#x4E00;",
+          "symbol": "8046",
+          "name": "&#x5357;&#x96FB;",
           "weightPct": 0.31,
-          "sector": "食品工業"
+          "sector": "電子零組件業"
         },
         {
           "market": "TW",
-          "symbol": "8046",
-          "name": "&#x5357;&#x96FB;",
+          "symbol": "1216",
+          "name": "&#x7D71;&#x4E00;",
           "weightPct": 0.3,
-          "sector": "電子零組件業"
+          "sector": "食品工業"
         },
         {
           "market": "TW",
           "symbol": "3045",
           "name": "&#x53F0;&#x7063;&#x5927;",
-          "weightPct": 0.24,
+          "weightPct": 0.25,
           "sector": "通信網路業"
         },
         {
@@ -738,372 +1826,8 @@
           "market": "TW",
           "symbol": "6505",
           "name": "&#x53F0;&#x5851;&#x5316;",
-          "weightPct": 0.2,
+          "weightPct": 0.19,
           "sector": "油電燃氣業"
-        }
-      ]
-    }
-  ],
-  "history": [
-    {
-      "id": "composition:TW:00935",
-      "etfMarket": "TW",
-      "etfSymbol": "00935",
-      "etfName": "野村臺灣新科技50",
-      "asOf": "2026-09-30",
-      "sourceName": "野村投信官方持股比重",
-      "sourceUrl": "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00935&tab=Shareholding",
-      "sourceType": "official_issuer",
-      "constituents": [
-        {
-          "market": "TW",
-          "symbol": "2330",
-          "name": "台灣積體電路製造",
-          "weightPct": 23.57,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2454",
-          "name": "聯發科技",
-          "weightPct": 17.54,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2308",
-          "name": "台達電子工業",
-          "weightPct": 9.4,
-          "sector": "電子零組件業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3711",
-          "name": "日月光投資控股",
-          "weightPct": 5.47,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2303",
-          "name": "聯華電子",
-          "weightPct": 4.27,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3037",
-          "name": "欣興電子",
-          "weightPct": 3.68,
-          "sector": "電子零組件業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3017",
-          "name": "奇鋐科技",
-          "weightPct": 2.7,
-          "sector": "電腦及週邊設備業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2327",
-          "name": "國巨",
-          "weightPct": 2.47,
-          "sector": "電子零組件業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2345",
-          "name": "智邦科技",
-          "weightPct": 2.09,
-          "sector": "通信網路業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2360",
-          "name": "致茂電子",
-          "weightPct": 1.95,
-          "sector": "其他電子業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3653",
-          "name": "健策精密工業",
-          "weightPct": 1.72,
-          "sector": "電子零組件業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3443",
-          "name": "創意電子",
-          "weightPct": 1.65,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2408",
-          "name": "南亞科技",
-          "weightPct": 1.56,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "5274",
-          "name": "信驊科技",
-          "weightPct": 1.47,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3231",
-          "name": "緯創資通",
-          "weightPct": 1.33,
-          "sector": "電腦及週邊設備業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2344",
-          "name": "華邦電子",
-          "weightPct": 1.32,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3665",
-          "name": "貿聯控股（BizLink Holding In",
-          "weightPct": 1.16,
-          "sector": "其他電子業"
-        },
-        {
-          "market": "TW",
-          "symbol": "6223",
-          "name": "旺矽科技",
-          "weightPct": 1.04,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "4958",
-          "name": "臻鼎科技控股",
-          "weightPct": 0.91,
-          "sector": "電子零組件業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2368",
-          "name": "金像電子（股）公司",
-          "weightPct": 0.88,
-          "sector": "電子零組件業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2379",
-          "name": "瑞昱半導體",
-          "weightPct": 0.88,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2449",
-          "name": "京元電子",
-          "weightPct": 0.81,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3034",
-          "name": "聯詠科技",
-          "weightPct": 0.76,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3661",
-          "name": "世芯電子",
-          "weightPct": 0.68,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "6488",
-          "name": "環球晶圓",
-          "weightPct": 0.62,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3081",
-          "name": "聯亞光電工業",
-          "weightPct": 0.59,
-          "sector": "通信網路業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2313",
-          "name": "華通電腦",
-          "weightPct": 0.56,
-          "sector": "電子零組件業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3529",
-          "name": "力旺電子",
-          "weightPct": 0.53,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3105",
-          "name": "穩懋半導體",
-          "weightPct": 0.51,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "6239",
-          "name": "力成科技",
-          "weightPct": 0.47,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "5347",
-          "name": "世界先進積體電路",
-          "weightPct": 0.45,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3293",
-          "name": "鈊象電子",
-          "weightPct": 0.45,
-          "sector": "文化創意業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2356",
-          "name": "英業達",
-          "weightPct": 0.43,
-          "sector": "電腦及週邊設備業"
-        },
-        {
-          "market": "TW",
-          "symbol": "6515",
-          "name": "穎崴科技",
-          "weightPct": 0.39,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2324",
-          "name": "仁寶電腦工業",
-          "weightPct": 0.36,
-          "sector": "電腦及週邊設備業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3533",
-          "name": "嘉澤端子工業",
-          "weightPct": 0.35,
-          "sector": "電子零組件業"
-        },
-        {
-          "market": "TW",
-          "symbol": "6415",
-          "name": "矽力杰",
-          "weightPct": 0.33,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "6531",
-          "name": "愛普科技",
-          "weightPct": 0.3,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "5483",
-          "name": "中美矽晶製品",
-          "weightPct": 0.29,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3324",
-          "name": "雙鴻科技",
-          "weightPct": 0.27,
-          "sector": "其他電子業"
-        },
-        {
-          "market": "TW",
-          "symbol": "2492",
-          "name": "華新科技",
-          "weightPct": 0.27,
-          "sector": "電子零組件業"
-        },
-        {
-          "market": "TW",
-          "symbol": "1560",
-          "name": "中國砂輪企業",
-          "weightPct": 0.26,
-          "sector": "電機機械"
-        },
-        {
-          "market": "TW",
-          "symbol": "6442",
-          "name": "光紅建聖",
-          "weightPct": 0.24,
-          "sector": "通信網路業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3491",
-          "name": "昇達科技",
-          "weightPct": 0.22,
-          "sector": "通信網路業"
-        },
-        {
-          "market": "TW",
-          "symbol": "6285",
-          "name": "啟碁科技",
-          "weightPct": 0.21,
-          "sector": "通信網路業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3023",
-          "name": "信邦電子",
-          "weightPct": 0.16,
-          "sector": "電子零組件業"
-        },
-        {
-          "market": "TW",
-          "symbol": "6510",
-          "name": "中華精測科技",
-          "weightPct": 0.15,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "3131",
-          "name": "弘塑科技",
-          "weightPct": 0.14,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "6789",
-          "name": "采鈺科技",
-          "weightPct": 0.12,
-          "sector": "半導體業"
-        },
-        {
-          "market": "TW",
-          "symbol": "6526",
-          "name": "達發科技",
-          "weightPct": 0.11,
-          "sector": "半導體業"
         }
       ]
     },
