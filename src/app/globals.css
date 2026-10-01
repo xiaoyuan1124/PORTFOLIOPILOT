@@ -3,6 +3,10 @@
 
 :root {
   color-scheme: light;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
 }
 
 html.dark {
@@ -127,6 +131,42 @@ button {
 
 ::selection {
   background: rgba(69, 107, 88, .22);
+}
+
+.app-topbar {
+  padding-top: calc(.75rem + var(--safe-area-top));
+  padding-right: calc(1rem + var(--safe-area-right));
+  padding-bottom: .75rem;
+  padding-left: calc(1rem + var(--safe-area-left));
+}
+
+.app-mobile-nav {
+  padding-right: calc(.5rem + var(--safe-area-right));
+  padding-bottom: max(.5rem, var(--safe-area-bottom));
+  padding-left: calc(.5rem + var(--safe-area-left));
+}
+
+.app-mobile-main {
+  padding-bottom: calc(7rem + var(--safe-area-bottom));
+}
+
+@media (min-width: 768px) {
+  .app-topbar {
+    padding-top: calc(1rem + var(--safe-area-top));
+    padding-right: calc(2rem + var(--safe-area-right));
+    padding-bottom: 1rem;
+    padding-left: calc(2rem + var(--safe-area-left));
+  }
+
+  .app-desktop-sidebar {
+    padding-top: calc(1.25rem + var(--safe-area-top));
+    padding-bottom: calc(1.25rem + var(--safe-area-bottom));
+    padding-left: calc(1rem + var(--safe-area-left));
+  }
+
+  .app-mobile-main {
+    padding-bottom: calc(2.5rem + var(--safe-area-bottom));
+  }
 }
 
 @media (max-width: 420px) {
