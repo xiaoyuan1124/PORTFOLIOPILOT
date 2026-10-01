@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, BellRing, RefreshCw } from "lucide-react";
+import { Activity, AlertTriangle, ArrowRight, BellRing, RefreshCw } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { localDateKey } from "@/lib/calc";
 import { money, percent } from "@/lib/utils";
-import { buildDailyHoldingDrivers, externalCashFlowForDate } from "@/lib/daily-drivers";
+import { buildDailyHoldingDrivers, externalCashFlowForDate, summarizeDailyHoldingDrivers } from "@/lib/daily-drivers";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { loadBundledMaterialEvents, materialEventsForHoldings, type MaterialEventCache } from "@/lib/material-events-data";
 import { loadBundledRevenue, type RevenueCache } from "@/lib/revenue-data";
 import { buildMarketSectorPulse, heldMarketIndustries } from "@/lib/market-sector-pulse";
-import { Badge, Card, CardContent, CardHeader, GhostButton } from "./ui";
+import { Badge, Card, CardContent, CardHeader, GhostButton, InfoDisclosure } from "./ui";
+import { PortfolioContributionChart } from "./portfolio-contribution-chart";
 
 export function DailyPortfolioDrivers({
   state,
@@ -95,8 +96,10 @@ export function DailyPortfolioDrivers({
 
   const strongestHeldSector = heldSectorRows[0] ?? null;
   const weakestHeldSector = heldSectorRows.at(-1) ?? null;
-  const positive = drivers?.rows.filter((row) => row.impactTwd > 0).slice(0, 3) ?? [];
-  const negative = drivers?.rows.filter((row) => row.impactTwd < 0).slice(0, 3) ?? [];
+  const contribution = useMemo(
+    () => summarizeDailyHoldingDrivers(drivers?.rows ?? []),
+    [drivers?.rows]
+  );
 
   return (
     <Card>
@@ -106,12 +109,12 @@ export function DailyPortfolioDrivers({
             <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Daily drivers</p>
             <h2 className="mt-1 text-lg font-semibold">今天我的資產為什麼變動？</h2>
             <p className="mt-1 max-w-3xl text-xs leading-5 text-black/42 dark:text-white/42">
-              台股部分使用官方收盤漲跌 × 目前持有數量估算當日持倉影響；這不是逐筆交易歸因，也不把入出金算成投資報酬。
+              股票與台灣 ETF 放在同一張圖，直接看今天誰推升、誰拖累。
             </p>
           </div>
           <GhostButton disabled={loading} onClick={() => void reload()}>
             <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-            {loading ? "讀取中" : "重新讀取"}
+            {loading ? "同步中" : "重新同步"}
           </GhostButton>
         </div>
       </CardHeader>
@@ -179,45 +182,46 @@ export function DailyPortfolioDrivers({
           </p>
         ) : null}
 
-        <div className="grid gap-3 lg:grid-cols-2">
+        {drivers?.rows.length ? (
           <div className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
-            <div className="mb-3 flex items-center gap-2">
-              <ArrowUpRight size={16} />
-              <h3 className="text-sm font-semibold">主要推升持倉</h3>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">今日持倉貢獻</p>
+                <p className="mt-1 text-xs text-black/40 dark:text-white/40">
+                  {drivers.latestDate} · 依當日官方收盤漲跌 × 目前持有數量估算
+                </p>
+              </div>
+              <Badge>{drivers.matchedHoldings}/{drivers.eligibleHoldings} 檔覆蓋</Badge>
             </div>
-            <div className="space-y-2">
-              {positive.map((row) => (
-                <div key={row.holdingId} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="min-w-0">
-                    <strong className="block truncate">{row.symbol} · {row.name}</strong>
-                    <span className="text-xs text-black/38 dark:text-white/38">{row.venue} · {percent(row.changePct, 2)}</span>
-                  </span>
-                  <strong className="shrink-0 tabular-nums">{money(row.impactTwd)}</strong>
-                </div>
-              ))}
-              {!positive.length ? <p className="text-xs text-black/38 dark:text-white/38">最新可比較資料沒有正向持倉影響。</p> : null}
+            <PortfolioContributionChart rows={drivers.rows} />
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              <div className="mini-metric"><span>推升合計</span><strong>{money(contribution.positiveImpactTwd)}</strong></div>
+              <div className="mini-metric"><span>拖累合計</span><strong>{money(contribution.negativeImpactTwd)}</strong></div>
+              <div className="mini-metric"><span>淨影響</span><strong>{money(contribution.netImpactTwd)}</strong></div>
             </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div className="rounded-xl bg-black/[.025] p-3 text-xs dark:bg-white/[.035]">
+                <span className="text-black/40 dark:text-white/40">最大推升</span>
+                <strong className="mt-1 block">
+                  {contribution.topPositive
+                    ? `${contribution.topPositive.symbol} · ${contribution.topPositive.name} · ${money(contribution.topPositive.impactTwd)}`
+                    : "—"}
+                </strong>
+              </div>
+              <div className="rounded-xl bg-black/[.025] p-3 text-xs dark:bg-white/[.035]">
+                <span className="text-black/40 dark:text-white/40">最大拖累</span>
+                <strong className="mt-1 block">
+                  {contribution.topNegative
+                    ? `${contribution.topNegative.symbol} · ${contribution.topNegative.name} · ${money(contribution.topNegative.impactTwd)}`
+                    : "—"}
+                </strong>
+              </div>
+            </div>
+            <InfoDisclosure summary="這張貢獻圖怎麼算" className="mt-3">
+              使用目前持有數量 × 官方最新同日收盤漲跌估算每個台股股票／台灣 ETF 的當日持倉影響。它不是券商逐筆損益，也不把入金、出金混進投資表現；不同交易日或缺乏可比報價的標的不會被硬塞進合計。
+            </InfoDisclosure>
           </div>
-
-          <div className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
-            <div className="mb-3 flex items-center gap-2">
-              <ArrowDownRight size={16} />
-              <h3 className="text-sm font-semibold">主要拖累持倉</h3>
-            </div>
-            <div className="space-y-2">
-              {negative.map((row) => (
-                <div key={row.holdingId} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="min-w-0">
-                    <strong className="block truncate">{row.symbol} · {row.name}</strong>
-                    <span className="text-xs text-black/38 dark:text-white/38">{row.venue} · {percent(row.changePct, 2)}</span>
-                  </span>
-                  <strong className="shrink-0 tabular-nums">{money(row.impactTwd)}</strong>
-                </div>
-              ))}
-              {!negative.length ? <p className="text-xs text-black/38 dark:text-white/38">最新可比較資料沒有負向持倉影響。</p> : null}
-            </div>
-          </div>
-        </div>
+        ) : null}
 
         <div className="grid gap-2 sm:grid-cols-3">
           <button onClick={() => onNavigate?.("research")} className="flex min-h-14 items-center justify-between rounded-2xl border border-black/6 px-4 text-left text-sm font-semibold transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]">
@@ -227,7 +231,7 @@ export function DailyPortfolioDrivers({
             <span className="flex items-center gap-2"><Activity size={16} />檢查現金流與績效</span><ArrowRight size={15} />
           </button>
           <div className="flex min-h-14 items-center rounded-2xl border border-black/6 px-4 text-[11px] leading-5 text-black/38 dark:border-white/8 dark:text-white/38">
-            <Badge>估算</Badge><span className="ml-2">當日持倉影響使用目前持股數量，不等於券商逐筆已實現／未實現損益。</span>
+            <Badge>最新交易日</Badge><span className="ml-2">{drivers?.latestDate ?? "等待官方行情"}</span>
           </div>
         </div>
       </CardContent>
