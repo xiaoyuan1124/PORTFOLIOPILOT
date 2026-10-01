@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ExternalLink, Info } from "lucide-react";
-import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   analyzeEtfAdvanced,
   overlapProductBand,
@@ -13,6 +13,8 @@ import {
   type EtfProductBand
 } from "@/lib/etf-advanced-analysis";
 import type { TwQuoteCache } from "@/lib/market-data";
+import { loadTwPriceHistory, type TwPriceHistorySeries } from "@/lib/price-history-data";
+import { priceHistoryMetrics } from "@/lib/price-history";
 import { loadBundledQuarterlyMargins, type QuarterlyMarginCache } from "@/lib/quarterly-financials";
 import { loadBundledRevenueHistory, type RevenueHistoryCache } from "@/lib/revenue-history";
 import type { EtfComposition } from "@/lib/types";
@@ -160,6 +162,9 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
     quarterlyMargins: null
   });
   const [loaded, setLoaded] = useState(false);
+  const [priceHistory, setPriceHistory] = useState<TwPriceHistorySeries | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -179,11 +184,47 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    const candidates = quotes.quotes.filter((quote) =>
+      quote.code.trim().toUpperCase() === composition.etfSymbol.trim().toUpperCase()
+    );
+    const venue = candidates.length === 1 ? candidates[0]?.market : undefined;
+
+    if (composition.etfMarket !== "TW" || !venue) {
+      setPriceHistory(null);
+      setHistoryError(composition.etfMarket === "TW" ? "無法唯一判定此 ETF 的上市／上櫃市場。" : "目前歷史行情先支援台灣市場。");
+      return () => { active = false; };
+    }
+
+    setHistoryLoading(true);
+    setHistoryError("");
+    void loadTwPriceHistory(venue, composition.etfSymbol)
+      .then((history) => {
+        if (!active) return;
+        setPriceHistory(history);
+      })
+      .catch((cause) => {
+        if (!active) return;
+        setPriceHistory(null);
+        setHistoryError(cause instanceof Error ? cause.message : "歷史行情暫時不可用。");
+      })
+      .finally(() => {
+        if (active) setHistoryLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [composition.etfMarket, composition.etfSymbol, quotes]);
+
   const analysis = useMemo(
     () => analyzeEtfAdvanced(composition, compositions, { quotes, ...sourceData }),
     [composition, compositions, quotes, sourceData]
   );
 
+  const historyMetrics = useMemo(
+    () => priceHistory ? priceHistoryMetrics(priceHistory.points) : null,
+    [priceHistory]
+  );
   const top10Band = top10ProductBand(analysis.top10WeightPct);
   const singleBand = singleHoldingProductBand(analysis.top1WeightPct);
   const topSector = analysis.sectorWeights[0] ?? null;
@@ -399,15 +440,51 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
 
         <Card>
           <CardContent>
-            <SectionTitle number={7} title="ETF 動能" status="unavailable" />
-            <div className="mt-4 flex items-start gap-3 rounded-2xl bg-black/[.025] p-4 text-sm dark:bg-white/[.035]">
-              <Info size={17} className="mt-0.5 shrink-0 text-black/35 dark:text-white/35" />
-              <div>
-                <p className="font-semibold">等待歷史行情資料</p>
-                <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">1M、3M、6M、1Y、RS、Max Drawdown 會在可追溯免費歷史行情接入後顯示。</p>
+            <SectionTitle
+              number={7}
+              title="ETF 歷史價格表現"
+              status={historyMetrics?.threeMonth ? "available" : priceHistory ? "partial" : "unavailable"}
+            />
+            {historyMetrics && priceHistory ? (
+              <>
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  <NumberCard label="1M 價格報酬" value={pct(historyMetrics.oneMonth?.returnPct ?? null)} helper={historyMetrics.oneMonth ? historyMetrics.oneMonth.startDate + " → " + historyMetrics.oneMonth.endDate : "資料不足"} />
+                  <NumberCard label="3M 價格報酬" value={pct(historyMetrics.threeMonth?.returnPct ?? null)} helper={historyMetrics.threeMonth ? historyMetrics.threeMonth.startDate + " → " + historyMetrics.threeMonth.endDate : "資料不足"} />
+                  <NumberCard label="6M 價格報酬" value={pct(historyMetrics.sixMonth?.returnPct ?? null)} helper={historyMetrics.sixMonth ? historyMetrics.sixMonth.startDate + " → " + historyMetrics.sixMonth.endDate : "資料不足"} />
+                  <NumberCard label="1Y 價格報酬" value={pct(historyMetrics.oneYear?.returnPct ?? null)} helper={historyMetrics.oneYear ? historyMetrics.oneYear.startDate + " → " + historyMetrics.oneYear.endDate : "資料不足"} />
+                  <NumberCard label="最大回撤" value={pct(historyMetrics.maxDrawdownPct)} helper="目前快取區間 raw close" />
+                  <NumberCard label="年化波動度" value={pct(historyMetrics.annualizedVolatilityPct)} helper="日對數報酬 × √252" />
+                </div>
+                <div className="mt-4 h-[210px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={historyMetrics.points.map(([date, close]) => ({ date, close }))} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} minTickGap={32} tick={{ fontSize: 10 }} tickFormatter={(value) => String(value).slice(5)} />
+                      <YAxis hide domain={["dataMin", "dataMax"]} />
+                      <Tooltip
+                        labelFormatter={(label) => String(label)}
+                        formatter={(value) => [Number(value).toFixed(2), "收盤價"]}
+                        contentStyle={{ borderRadius: 12, fontSize: 12 }}
+                      />
+                      <Area type="monotone" dataKey="close" stroke="#456b58" strokeWidth={2} fill="#456b58" fillOpacity={0.12} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-[11px] text-black/38 dark:text-white/38">
+                  官方收盤歷史：{historyMetrics.firstDate ?? "—"} → {historyMetrics.latestDate ?? "—"} · {historyMetrics.points.length} 個交易日
+                </p>
+                <InfoDisclosure summary="價格報酬與風險指標怎麼解讀" className="mt-3">
+                  這裡使用 TWSE／TPEx 官方每日收盤價，因此是價格報酬，不含現金配息再投資，也沒有自行製作還原價。ETF 除息會反映在價格序列中，所以不能把這些數字當作總報酬。最大回撤與波動度也基於同一 raw close 序列；RS 需再接同期間 benchmark 後才會顯示。
+                </InfoDisclosure>
+              </>
+            ) : (
+              <div className="mt-4 flex items-start gap-3 rounded-2xl bg-black/[.025] p-4 text-sm dark:bg-white/[.035]">
+                <Info size={17} className="mt-0.5 shrink-0 text-black/35 dark:text-white/35" />
+                <div>
+                  <p className="font-semibold">{historyLoading ? "正在載入歷史行情" : "歷史行情尚未可用"}</p>
+                  <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">{historyLoading ? "正在讀取此 ETF 的官方歷史價格分桶。" : historyError || "等待 GitHub Actions 建立官方歷史價格快取。"}</p>
+                </div>
               </div>
-            </div>
-            <InfoDisclosure summary="目前為什麼不計算" className="mt-3">{analysis.momentumUnavailableReason}</InfoDisclosure>
+            )}
           </CardContent>
         </Card>
 
