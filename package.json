@@ -1,6 +1,6 @@
 {
   "name": "portfoliopilot",
-  "version": "0.80.3",
+  "version": "0.81.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,7 +13,8 @@
     "market:events": "node scripts/update-material-events.mjs",
     "market:quarterly": "node scripts/update-quarterly-financials.mjs",
     "market:benchmarks": "node scripts/update-benchmarks.mjs",
-    "etf:update": "node scripts/update-etf-compositions.mjs"
+    "etf:update": "node scripts/update-etf-compositions.mjs",
+    "history:update": "node scripts/update-price-history.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
