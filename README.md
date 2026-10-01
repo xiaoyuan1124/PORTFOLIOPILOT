@@ -754,3 +754,22 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - The displayed thresholds are research warning lines rather than buy/sell scores. Thematic ETFs may intentionally exceed broad-market concentration thresholds.
 - No persisted schema changes are required; Backup V17 remains current.
 
+
+
+## V0.77 ETF multi-dimensional analysis
+
+V0.77 extends the V0.76 ETF attribution work without changing the Local-first storage schema or Backup V17.
+
+- **Tooltip audit:** the net-worth chart keeps a white Recharts tooltip in dark mode, while the date label is explicitly pinned to a readable dark daytime color. This chart uses its own Recharts `Tooltip`; no shared tooltip component was found to patch.
+- **1. Composition:** constituent count, Top 1 / Top 5 / Top 10, all imported constituents, composition source/as-of, and weight changes when an older snapshot for the same ETF is available.
+- **2. Concentration:** HHI and effective holding count. Product rule: Top 10 <40% relatively diversified, 40–60% medium concentration, >60% high concentration.
+- **3. Sector exposure:** aggregated constituent sector weights. Product rule: a single sector >50% is high sector concentration.
+- **4. Single-company risk:** largest constituent and weight. Product rule: <10% low, 10–20% medium, 20–30% high, >30% very concentrated.
+- **5. Constituent quality:** weighted official Taiwan revenue YoY and gross margin, plus share of covered weight with improving gross margin. EPS / ROE / free cash flow / debt stay unavailable until traceable bundled data exists.
+- **6. Valuation:** covered-weight P/E, P/B, earnings yield and dividend yield from bundled official Taiwan valuation data. Missing constituents are excluded from the denominator and coverage is shown.
+- **7. Momentum:** 1M / 3M / 6M / 1Y, relative strength and max drawdown are intentionally unavailable because the repo does not yet bundle a reliable ETF price-history series. One-day change is not substituted for momentum.
+- **8. Daily attribution:** contribution ≈ constituent weight × constituent daily return, with composition as-of, top contributors/detractors, covered weight, unimported weight, explicit excluded constituents, official ETF daily return when uniquely available, and official-minus-covered-estimate residual. It is labeled as an estimate, not issuer attribution.
+- **9. ETF-to-ETF overlap:** shared constituents use minimum shared weight; overlap >70% is labeled highly duplicated exposure. This is holdings overlap, not a return-correlation coefficient.
+- **10. Structure / tracking quality:** composition source/as-of are shown. Fee ratio, AUM, liquidity/spread, premium-discount, tracking error, index rules, rebalance frequency and distribution/accumulation stay unavailable until a stable free public source is integrated.
+
+All thresholds above are **PortfolioPilot product analysis rules**, not investment advice, buy/sell recommendations, or rankings.
