@@ -37,5 +37,6 @@ jobs:
             .map((match) => match[0].replace(/\\s+/g, " "))
             .slice(0, 30);
           console.log("hints", JSON.stringify(apiHints));
+          console.log("body", html.replace(/\\s+/g, " ").slice(0, 2000));
           NODE
       - run: npm run build
