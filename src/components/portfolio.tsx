@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AppState } from "@/lib/types";
 import { ActivityLedger } from "./activity-ledger";
 import { AllocationTargets } from "./allocation-targets";
@@ -10,7 +10,7 @@ import { HoldingsPanel } from "./holdings";
 import { PortfolioRisk } from "./portfolio-risk";
 import { Performance } from "./performance";
 
-type PortfolioTab = "holdings" | "lookthrough" | "risk" | "targets" | "dividends" | "activity" | "performance";
+export type PortfolioTab = "holdings" | "lookthrough" | "risk" | "targets" | "dividends" | "activity" | "performance";
 
 const tabs: Array<{ key: PortfolioTab; label: string }> = [
   { key: "holdings", label: "持股" },
@@ -22,8 +22,24 @@ const tabs: Array<{ key: PortfolioTab; label: string }> = [
   { key: "performance", label: "績效" }
 ];
 
-export function Portfolio({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => boolean; onResearch?: (researchKey: string) => void }) {
+export function Portfolio({
+  state,
+  onChange,
+  onResearch,
+  requestedTab,
+  requestId = 0
+}: {
+  state: AppState;
+  onChange: (state: AppState) => boolean;
+  onResearch?: (researchKey: string) => void;
+  requestedTab?: PortfolioTab;
+  requestId?: number;
+}) {
   const [tab, setTab] = useState<PortfolioTab>("holdings");
+
+  useEffect(() => {
+    if (requestedTab) setTab(requestedTab);
+  }, [requestId, requestedTab]);
 
   return (
     <div className="space-y-4">
