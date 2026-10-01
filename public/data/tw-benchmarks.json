@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T16:33:49.423Z",
+  "generatedAt": "2026-10-01T05:34:56.596Z",
   "benchmarks": [
     {
       "id": "TWSE:TAIEX-TR",
@@ -12,85 +12,9 @@
       "sourceName": "TWSE MFI94U",
       "sourceUrl": "https://www.twse.com.tw/zh/indices/taiex/mfi94u.html",
       "sourceUrlTemplate": "https://www.twse.com.tw/indicesReport/MFI94U?response=json&date=YYYYMM01",
-      "fetchedAt": "2026-09-30T16:33:49.423Z",
+      "fetchedAt": "2026-10-01T05:34:56.596Z",
       "asOf": "2026-09-30",
       "points": [
-        {
-          "date": "2024-10-01",
-          "value": 49400.47
-        },
-        {
-          "date": "2024-10-04",
-          "value": 49207.14
-        },
-        {
-          "date": "2024-10-07",
-          "value": 50089.32
-        },
-        {
-          "date": "2024-10-08",
-          "value": 49888.19
-        },
-        {
-          "date": "2024-10-09",
-          "value": 49993.41
-        },
-        {
-          "date": "2024-10-11",
-          "value": 50528.56
-        },
-        {
-          "date": "2024-10-14",
-          "value": 50691.06
-        },
-        {
-          "date": "2024-10-15",
-          "value": 51389.92
-        },
-        {
-          "date": "2024-10-16",
-          "value": 50769.8
-        },
-        {
-          "date": "2024-10-17",
-          "value": 50864.37
-        },
-        {
-          "date": "2024-10-18",
-          "value": 51820.95
-        },
-        {
-          "date": "2024-10-21",
-          "value": 51942.88
-        },
-        {
-          "date": "2024-10-22",
-          "value": 51927.27
-        },
-        {
-          "date": "2024-10-23",
-          "value": 51484.62
-        },
-        {
-          "date": "2024-10-24",
-          "value": 51170.78
-        },
-        {
-          "date": "2024-10-25",
-          "value": 51514.82
-        },
-        {
-          "date": "2024-10-28",
-          "value": 51183.03
-        },
-        {
-          "date": "2024-10-29",
-          "value": 50584.04
-        },
-        {
-          "date": "2024-10-30",
-          "value": 50349.83
-        },
         {
           "date": "2024-11-01",
           "value": 50261.53
@@ -1956,10 +1880,6 @@
   ],
   "requests": [
     {
-      "month": "2024-10",
-      "url": "https://www.twse.com.tw/indicesReport/MFI94U?response=json&date=20241001"
-    },
-    {
       "month": "2024-11",
       "url": "https://www.twse.com.tw/indicesReport/MFI94U?response=json&date=20241101"
     },
@@ -2050,6 +1970,10 @@
     {
       "month": "2026-09",
       "url": "https://www.twse.com.tw/indicesReport/MFI94U?response=json&date=20260901"
+    },
+    {
+      "month": "2026-10",
+      "url": "https://www.twse.com.tw/indicesReport/MFI94U?response=json&date=20261001"
     }
   ]
 }

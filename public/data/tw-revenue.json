@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-09-30T16:29:11.715Z",
+  "generatedAt": "2026-10-01T05:29:25.069Z",
   "sources": [
     {
       "name": "TWSE",
       "url": "https://openapi.twse.com.tw/v1/opendata/t187ap05_L",
-      "fetchedAt": "2026-09-30T16:29:11.715Z"
+      "fetchedAt": "2026-10-01T05:29:25.069Z"
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap05_O",
-      "fetchedAt": "2026-09-30T16:29:11.715Z"
+      "fetchedAt": "2026-10-01T05:29:25.069Z"
     }
   ],
   "rows": [

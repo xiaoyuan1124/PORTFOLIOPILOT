@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T16:29:11.715Z",
+  "generatedAt": "2026-10-01T05:29:25.069Z",
   "periods": [
     "2026-08",
     "2026-07",
@@ -29471,22 +29471,6 @@
       "lastYearCumulativeRevenue": 1846416,
       "cumulativeYoyPct": 4.49,
       "note": "-"
-    },
-    {
-      "code": "8183",
-      "name": "精星",
-      "market": "TPEx",
-      "industry": "其他電子業",
-      "period": "2026-08",
-      "revenue": 918759,
-      "previousMonthRevenue": 855049,
-      "lastYearRevenue": 588702,
-      "momPct": 7.45,
-      "yoyPct": 56.06,
-      "cumulativeRevenue": 5841187,
-      "lastYearCumulativeRevenue": 4413343,
-      "cumulativeYoyPct": 32.35,
-      "note": "8月合併營收9.19億,較7月增7.45%,與去年8月比增56.07%,係因新能源車用產品需求成長所致。"
     },
     {
       "code": "8201",
@@ -61169,22 +61153,6 @@
       "note": "-"
     },
     {
-      "code": "8183",
-      "name": "精星",
-      "market": "TPEx",
-      "industry": "其他電子業",
-      "period": "2026-07",
-      "revenue": 855049,
-      "previousMonthRevenue": 771224,
-      "lastYearRevenue": 548976,
-      "momPct": 10.86,
-      "yoyPct": 55.75,
-      "cumulativeRevenue": 4922428,
-      "lastYearCumulativeRevenue": 3824641,
-      "cumulativeYoyPct": 28.7,
-      "note": "7月合併營收8.55億,較6月增10.87%,與去年7月比增55.75%,係因新能源車用產品需求成長所致。"
-    },
-    {
       "code": "8201",
       "name": "無敵",
       "market": "TWSE",
@@ -92863,22 +92831,6 @@
       "lastYearCumulativeRevenue": 1381897,
       "cumulativeYoyPct": 1.61,
       "note": "-"
-    },
-    {
-      "code": "8183",
-      "name": "精星",
-      "market": "TPEx",
-      "industry": "其他電子業",
-      "period": "2026-06",
-      "revenue": 771224,
-      "previousMonthRevenue": 694906,
-      "lastYearRevenue": 468374,
-      "momPct": 10.98,
-      "yoyPct": 64.65,
-      "cumulativeRevenue": 4067379,
-      "lastYearCumulativeRevenue": 3275665,
-      "cumulativeYoyPct": 24.16,
-      "note": "6月合併營收7.71億,較5月增10.98%,與去年6月比增64.66%,係因新能源車用產品需求成長所致"
     },
     {
       "code": "8201",
