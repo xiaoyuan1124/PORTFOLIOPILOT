@@ -6,6 +6,7 @@ on:
     paths:
       - "scripts/update-price-history.mjs"
       - "scripts/lib/price-history.mjs"
+      - "scripts/lib/quote-data.mjs"
       - ".github/workflows/price-history.yml"
   schedule:
     - cron: "30 11 * * 1-5"
