@@ -799,6 +799,7 @@ V0.79 turns the V0.78 latest-only issuer cache into a bounded historical series 
 - **Bounded zero-cost storage:** the public cache keeps up to **120 snapshots per ETF** so Git history and GitHub Pages payload size stay controlled as more issuers are added.
 - **Backward compatible:** existing V0.78 caches without a `history` field still load; the first V0.79 market-data run seeds history from the currently committed latest compositions.
 - **Failure safe:** issuer fetch failures keep the previous latest composition and existing history. A failed fetch never creates a fake new snapshot or turns missing constituents into zero.
+- **Workflow isolation:** if the combined TWSE / TPEx / MOPS core refresh fails before writing caches, the workflow preserves those previously committed caches and still runs independent ETF composition, material-event, quarterly and benchmark refreshes.
 - **Change detection:** Research compares the current composition with the immediately preceding dated snapshot and classifies each constituent as added, removed, increased, decreased, or unchanged.
 - **Added / removed:** a constituent moving from 0% to a positive weight is shown as added; a previously positive weight disappearing from the next snapshot is shown as removed.
 - **Weight changes:** continuing constituents show previous weight, current weight, and percentage-point change. The UI exposes the largest movements and an expandable full change list.
