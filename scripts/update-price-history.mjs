@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { parseTwseMiIndexPayload } from "./lib/quote-data.mjs";
 import {
   DEFAULT_HISTORY_CALENDAR_DAYS,
+  assertHistoricalPayloadDate,
   bucketFileName,
   bucketPrefix,
   calendarDateAdd,
@@ -17,18 +18,21 @@ const INDEX_PATH = join(OUTPUT_DIR, "index.json");
 const HISTORY_DAYS = Number(process.env.PRICE_HISTORY_CALENDAR_DAYS || DEFAULT_HISTORY_CALENDAR_DAYS);
 const TWSE_MIN_ROWS = 500;
 const TPEX_MIN_ROWS = 300;
+const REQUEST_TIMEOUT_MS = Number(process.env.PRICE_HISTORY_REQUEST_TIMEOUT_MS || 12_000);
+const REQUEST_ATTEMPTS = Number(process.env.PRICE_HISTORY_REQUEST_ATTEMPTS || 2);
+const DATE_CONCURRENCY = Number(process.env.PRICE_HISTORY_DATE_CONCURRENCY || 2);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function withRetry(label, task, attempts = 4) {
+async function withRetry(label, task, attempts = REQUEST_ATTEMPTS) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
       return await task();
     } catch (error) {
       lastError = error;
-      if (attempt === attempts) break;
-      const delayMs = 1000 * attempt;
+      if (error?.nonRetryable === true || attempt === attempts) break;
+      const delayMs = 750 * attempt;
       console.warn(`${label} attempt ${attempt}/${attempts} failed; retrying in ${delayMs}ms`);
       await sleep(delayMs);
     }
@@ -43,9 +47,15 @@ async function fetchObject(url, label) {
         "user-agent": "Mozilla/5.0 PortfolioPilot/0.81 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
         accept: "application/json,text/javascript,*/*"
       },
-      signal: AbortSignal.timeout(30_000)
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
     });
-    if (!response.ok) throw new Error(`${label} request failed: ${response.status}`);
+    if (!response.ok) {
+      const error = new Error(`${label} request failed: ${response.status}`);
+      if (response.status >= 400 && response.status < 500 && response.status !== 408 && response.status !== 429) {
+        error.nonRetryable = true;
+      }
+      throw error;
+    }
     const payload = await response.json();
     if (!payload || typeof payload !== "object") throw new Error(`${label} returned invalid JSON`);
     return payload;
@@ -63,6 +73,7 @@ function tpexUrl(date) {
 async function fetchMarketDay(date, market) {
   if (market === "TWSE") {
     const payload = await fetchObject(twseUrl(date), `TWSE MI_INDEX ${date}`);
+    assertHistoricalPayloadDate(payload, date, "TWSE");
     return parseTwseMiIndexPayload(payload, date).map((row) => ({
       code: row.code,
       name: row.name,
@@ -72,6 +83,7 @@ async function fetchMarketDay(date, market) {
     }));
   }
   const payload = await fetchObject(tpexUrl(date), `TPEx dailyQuotes ${date}`);
+  assertHistoricalPayloadDate(payload, date, "TPEx");
   return parseTpexDailyQuotesPayload(payload, date);
 }
 
@@ -141,57 +153,76 @@ async function main() {
 
   console.log(`Taiwan price history: ${hasExistingHistory ? "incremental" : "initial"} run, ${dates.length} weekday dates, ${cutoffDate} → ${targetEndDate}`);
 
-  for (const date of dates) {
+  if (!Number.isInteger(REQUEST_TIMEOUT_MS) || REQUEST_TIMEOUT_MS < 5_000 || REQUEST_TIMEOUT_MS > 30_000) {
+    throw new Error(`PRICE_HISTORY_REQUEST_TIMEOUT_MS must be 5000-30000; got ${REQUEST_TIMEOUT_MS}`);
+  }
+  if (!Number.isInteger(REQUEST_ATTEMPTS) || REQUEST_ATTEMPTS < 1 || REQUEST_ATTEMPTS > 4) {
+    throw new Error(`PRICE_HISTORY_REQUEST_ATTEMPTS must be 1-4; got ${REQUEST_ATTEMPTS}`);
+  }
+  if (!Number.isInteger(DATE_CONCURRENCY) || DATE_CONCURRENCY < 1 || DATE_CONCURRENCY > 4) {
+    throw new Error(`PRICE_HISTORY_DATE_CONCURRENCY must be 1-4; got ${DATE_CONCURRENCY}`);
+  }
+
+  async function fetchDate(date) {
     const [twseResult, tpexResult] = await Promise.allSettled([
       fetchMarketDay(date, "TWSE"),
       fetchMarketDay(date, "TPEx")
     ]);
+    return { date, twseResult, tpexResult };
+  }
 
-    const twseRows = twseResult.status === "fulfilled" ? twseResult.value : null;
-    const tpexRows = tpexResult.status === "fulfilled" ? tpexResult.value : null;
+  for (let offset = 0; offset < dates.length; offset += DATE_CONCURRENCY) {
+    const batch = dates.slice(offset, offset + DATE_CONCURRENCY);
+    const batchResults = await Promise.all(batch.map(fetchDate));
 
-    const twseCount = twseRows?.length ?? -1;
-    const tpexCount = tpexRows?.length ?? -1;
-    const bothClosed = twseResult.status === "fulfilled" && tpexResult.status === "fulfilled" && twseCount === 0 && tpexCount === 0;
+    for (const { date, twseResult, tpexResult } of batchResults) {
+      const twseRows = twseResult.status === "fulfilled" ? twseResult.value : null;
+      const tpexRows = tpexResult.status === "fulfilled" ? tpexResult.value : null;
 
-    if (bothClosed) {
-      failed.delete(failureKey("TWSE", date));
-      failed.delete(failureKey("TPEx", date));
-      continue;
+      const twseCount = twseRows?.length ?? -1;
+      const tpexCount = tpexRows?.length ?? -1;
+      const bothClosed = twseResult.status === "fulfilled" && tpexResult.status === "fulfilled" && twseCount === 0 && tpexCount === 0;
+
+      if (bothClosed) {
+        failed.delete(failureKey("TWSE", date));
+        failed.delete(failureKey("TPEx", date));
+        continue;
+      }
+
+      if (twseResult.status === "fulfilled" && twseCount >= TWSE_MIN_ROWS) {
+        incoming.push(...filterUniverse(twseRows, allowed));
+        acceptedDates.TWSE.add(date);
+        failed.delete(failureKey("TWSE", date));
+      } else {
+        failed.set(failureKey("TWSE", date), {
+          market: "TWSE",
+          date,
+          message: twseResult.status === "rejected"
+            ? String(twseResult.reason?.message ?? twseResult.reason)
+            : `incomplete row count: ${twseCount}`
+        });
+      }
+
+      if (tpexResult.status === "fulfilled" && tpexCount >= TPEX_MIN_ROWS) {
+        incoming.push(...filterUniverse(tpexRows, allowed));
+        acceptedDates.TPEx.add(date);
+        failed.delete(failureKey("TPEx", date));
+      } else {
+        failed.set(failureKey("TPEx", date), {
+          market: "TPEx",
+          date,
+          message: tpexResult.status === "rejected"
+            ? String(tpexResult.reason?.message ?? tpexResult.reason)
+            : `incomplete row count: ${tpexCount}`
+        });
+      }
     }
 
-    if (twseResult.status === "fulfilled" && twseCount >= TWSE_MIN_ROWS) {
-      incoming.push(...filterUniverse(twseRows, allowed));
-      acceptedDates.TWSE.add(date);
-      failed.delete(failureKey("TWSE", date));
-    } else {
-      failed.set(failureKey("TWSE", date), {
-        market: "TWSE",
-        date,
-        message: twseResult.status === "rejected"
-          ? String(twseResult.reason?.message ?? twseResult.reason)
-          : `incomplete row count: ${twseCount}`
-      });
+    if ((offset / DATE_CONCURRENCY) % 10 === 0 || offset + DATE_CONCURRENCY >= dates.length) {
+      const lastDate = batch.at(-1) ?? "";
+      console.log(`progress ${Math.min(offset + batch.length, dates.length)}/${dates.length} through ${lastDate}: TWSE ${acceptedDates.TWSE.size}, TPEx ${acceptedDates.TPEx.size}, unresolved ${failed.size}`);
     }
-
-    if (tpexResult.status === "fulfilled" && tpexCount >= TPEX_MIN_ROWS) {
-      incoming.push(...filterUniverse(tpexRows, allowed));
-      acceptedDates.TPEx.add(date);
-      failed.delete(failureKey("TPEx", date));
-    } else {
-      failed.set(failureKey("TPEx", date), {
-        market: "TPEx",
-        date,
-        message: tpexResult.status === "rejected"
-          ? String(tpexResult.reason?.message ?? tpexResult.reason)
-          : `incomplete row count: ${tpexCount}`
-      });
-    }
-
-    if ((acceptedDates.TWSE.size + acceptedDates.TPEx.size) % 20 === 0) {
-      console.log(`progress ${date}: TWSE ${twseCount}, TPEx ${tpexCount}`);
-    }
-    await sleep(250);
+    await sleep(400);
   }
 
   // Always merge the already validated latest official quote cache so the
