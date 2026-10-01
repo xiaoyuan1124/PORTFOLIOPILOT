@@ -101,7 +101,7 @@ describe("portfolio data integrity", () => {
       "snapshot_missing_today"
     ]));
     expect(report.items.find((item) => item.id === "future_activities")?.examples)
-      .toContain("2026-10-02 · deposit · 券商A");
+      .toContain("2026-10-02 09:00 · deposit · 券商A");
     expect(report.items.find((item) => item.id === "tw_price_provenance")?.examples)
       .toContain("2330 · 券商A");
     expect(report.items.find((item) => item.id === "snapshot_missing_today")?.examples)
