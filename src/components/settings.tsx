@@ -8,6 +8,7 @@ import { localDateKey } from "@/lib/calc";
 import { parseTaiwanBrokerInventoryCsv } from "@/lib/broker-inventory-csv";
 import {
   historicalTradeCsvBatches,
+  historicalTradeCsvBatchToCsv,
   historicalTradeCsvTemplate,
   importHistoricalTradeCsv,
   previewHistoricalTradeCsv,
@@ -254,6 +255,26 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
     }
   }
 
+  function exportHistoricalTradeCsvBatch(batch: HistoricalTradeCsvBatchSummary) {
+    try {
+      const csv = historicalTradeCsvBatchToCsv(state, batch.importBatchId);
+      const sourceStem = (batch.sourceFileNames[0] ?? batch.importBatchId)
+        .replace(/\.csv$/i, "")
+        .replace(/[^0-9A-Za-z\u4e00-\u9fff._-]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 100) || "historical-trades";
+
+      downloadText(
+        `portfoliopilot-audit-${sourceStem}.csv`,
+        csv,
+        "text/csv;charset=utf-8"
+      );
+      toast.success(`已匯出 ${batch.remainingCount} 筆歷史成交稽核 CSV`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法匯出歷史成交 CSV 批次");
+    }
+  }
+
   function undoHistoricalTradeCsvImport(batch: HistoricalTradeCsvBatchSummary) {
     if (!window.confirm(
       `確定撤銷這批 ${batch.remainingCount} 筆歷史成交 CSV 嗎？日期範圍 ${batch.firstDate}～${batch.lastDate}。只會刪除這批 Ledger-only 交易日誌，不會修改目前持股或現金。`
@@ -461,9 +482,14 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
                           {" · "}tax 約 TWD {batch.taxesTwd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </p>
                       </div>
-                      <GhostButton onClick={() => undoHistoricalTradeCsvImport(batch)}>
-                        <RotateCcw size={15} />撤銷此批
-                      </GhostButton>
+                      <div className="flex flex-wrap gap-2">
+                        <GhostButton onClick={() => exportHistoricalTradeCsvBatch(batch)}>
+                          <Download size={15} />匯出稽核
+                        </GhostButton>
+                        <GhostButton onClick={() => undoHistoricalTradeCsvImport(batch)}>
+                          <RotateCcw size={15} />撤銷此批
+                        </GhostButton>
+                      </div>
                     </div>
                   </div>
                 ))}

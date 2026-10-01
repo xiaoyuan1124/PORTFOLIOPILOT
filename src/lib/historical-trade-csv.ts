@@ -2,6 +2,8 @@ import Papa from "papaparse";
 import type { AppState, Market } from "./types";
 import { recordHistoricalTrade, type HistoricalTradeInput } from "./historical-trade";
 
+const PORTFOLIOPILOT_AUDIT_HEADER = "portfoliopilotaudit";
+
 const HEADER_ALIASES = {
   date: ["date", "tradedate", "transactiondate", "日期", "成交日期", "交易日期", "委託日期"],
   type: ["type", "side", "action", "買賣", "買賣別", "交易別", "交易類別", "成交類別"],
@@ -239,6 +241,10 @@ export function parseHistoricalTradeCsv(
   }
 
   const headers = parsed.meta.fields ?? [];
+  if (headers.some((header) => normalizeHeader(header) === PORTFOLIOPILOT_AUDIT_HEADER)) {
+    throw new Error("這是 PortfolioPilot 稽核匯出 CSV，不可重新匯入歷史交易。請使用原券商成交檔或 JSON 備份。");
+  }
+
   const headerByField = new Map<CanonicalField, string>();
   for (const header of headers) {
     const field = canonicalHeader(header);
@@ -519,6 +525,43 @@ export function historicalTradeCsvBatches(state: AppState): HistoricalTradeCsvBa
 
 export function latestHistoricalTradeCsvBatch(state: AppState): HistoricalTradeCsvBatchSummary | null {
   return historicalTradeCsvBatches(state)[0] ?? null;
+}
+
+export function historicalTradeCsvBatchToCsv(state: AppState, importBatchId: string) {
+  const batchId = importBatchId.trim();
+  if (!batchId) {
+    throw new Error("找不到可匯出的歷史成交 CSV 批次。");
+  }
+
+  const activities = state.activities.filter(
+    (activity) =>
+      activity.historicalTrade?.importSource === "csv" &&
+      activity.historicalTrade.importBatchId === batchId
+  );
+
+  if (!activities.length) {
+    throw new Error("這個歷史成交 CSV 批次已不存在，無法匯出稽核檔。");
+  }
+
+  return Papa.unparse(activities.map((activity) => ({
+    portfolioPilotAudit: "V0.71",
+    sourceFileName: activity.historicalTrade?.importFileName ?? "",
+    importBatchId: batchId,
+    importFingerprint: activity.historicalTrade?.importFingerprint ?? "",
+    date: activity.date,
+    type: activity.type,
+    market: activity.historicalTrade?.market ?? (activity.currency === "TWD" ? "TW" : "US"),
+    currency: activity.currency,
+    symbol: activity.symbol,
+    quantity: activity.quantity,
+    price: activity.price,
+    fee: activity.historicalTrade?.fee ?? 0,
+    tax: activity.historicalTrade?.tax ?? 0,
+    fxRate: activity.fxRate,
+    amount: activity.amount,
+    account: activity.account?.trim() || "預設帳戶",
+    note: activity.note
+  })));
 }
 
 export function undoHistoricalTradeCsvBatch(state: AppState, importBatchId: string): AppState {

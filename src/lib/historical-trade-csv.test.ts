@@ -1,7 +1,9 @@
+import Papa from "papaparse";
 import { describe, expect, it } from "vitest";
 import type { AppState } from "./types";
 import {
   historicalTradeCsvBatches,
+  historicalTradeCsvBatchToCsv,
   historicalTradeCsvTemplate,
   importHistoricalTradeCsv,
   latestHistoricalTradeCsvBatch,
@@ -368,6 +370,74 @@ describe("historical trade CSV adapter", () => {
       feesTwd: 5,
       taxesTwd: 2
     });
+  });
+
+  it("exports one exact batch as a normalized audit CSV that cannot be re-imported", () => {
+    const csv = [
+      "date,type,market,symbol,quantity,price,fee,tax,fxRate,account,tradeId",
+      "2020-01-02,buy,TW,2330,2,500,10,3,1,台股券商,TW-1",
+      "2020-02-03,sell,US,QQQM,1,100,2,1,30,美股券商,US-1"
+    ].join("\n");
+
+    const imported = importHistoricalTradeCsv(
+      state(),
+      csv,
+      "",
+      null,
+      "broker-history.csv"
+    );
+    const baseHoldings = imported.state.holdings;
+    const fullAudit = Papa.parse<Record<string, string>>(
+      historicalTradeCsvBatchToCsv(imported.state, imported.importBatchId),
+      { header: true, skipEmptyLines: true }
+    );
+    expect(fullAudit.data.map((row) => row.date)).toEqual(["2020-01-02", "2020-02-03"]);
+
+    // Simulate a row having been individually deleted: audit export must reflect
+    // the batch that still exists, in original activity order.
+    const remainingState = {
+      ...imported.state,
+      activities: imported.state.activities.slice(1)
+    };
+    const auditCsv = historicalTradeCsvBatchToCsv(remainingState, imported.importBatchId);
+    const parsed = Papa.parse<Record<string, string>>(auditCsv, {
+      header: true,
+      skipEmptyLines: true
+    });
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.data).toHaveLength(1);
+    expect(parsed.data[0]).toMatchObject({
+      portfolioPilotAudit: "V0.71",
+      sourceFileName: "broker-history.csv",
+      importBatchId: imported.importBatchId,
+      date: "2020-02-03",
+      type: "sell",
+      market: "US",
+      currency: "USD",
+      symbol: "QQQM",
+      quantity: "1",
+      price: "100",
+      fee: "2",
+      tax: "1",
+      fxRate: "30",
+      amount: "97",
+      account: "美股券商"
+    });
+    expect(parsed.data[0]?.importFingerprint).toMatch(/^csv-id-/);
+    expect(remainingState.holdings).toEqual(baseHoldings);
+
+    expect(() => parseHistoricalTradeCsv(
+      auditCsv,
+      "",
+      null,
+      "portfoliopilot-audit.csv"
+    )).toThrow(/稽核匯出 CSV.*不可重新匯入/);
+
+    expect(() => historicalTradeCsvBatchToCsv(
+      remainingState,
+      "csv-batch-does-not-exist"
+    )).toThrow(/已不存在/);
   });
 
   it("provides a template that parses as both TW and US history", () => {
