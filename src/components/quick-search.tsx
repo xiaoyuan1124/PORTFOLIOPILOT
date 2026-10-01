@@ -116,7 +116,7 @@ export function QuickSearch({
                   {[
                     { section: "home" as const, label: "投資總覽", detail: "淨值、資金水位、配置", icon: Home },
                     { section: "portfolio" as const, label: "投資組合", detail: "持股、帳戶、績效", icon: BriefcaseBusiness },
-                    { section: "research" as const, label: "研究中心", detail: "個股總覽與 Scanner", icon: Search },
+                    { section: "research" as const, label: "研究中心", detail: "股票、ETF、市場與策略", icon: Search },
                     { section: "settings" as const, label: "設定與資料", detail: "備份、匯入、匯率", icon: Settings }
                   ].map((item) => {
                     const Icon = item.icon;
