@@ -93,16 +93,25 @@ export function portfolioDataIntegrity(
     });
   }
 
-  const exactTwr = exactTimeWeightedReturn(state, today);
-  if (exactTwr.missingBoundaryIds.length) {
+  const externalFlowsThroughToday = state.activities.filter(
+    (activity) =>
+      (activity.type === "deposit" || activity.type === "withdrawal") &&
+      activity.date <= today
+  );
+  const missingTwrBoundaries = externalFlowsThroughToday.filter(
+    (activity) => activity.preFlowValueTwd === undefined
+  );
+  if (missingTwrBoundaries.length) {
     items.push({
       id: "twr_missing_boundary",
       severity: "warning",
       title: "Exact TWR 還缺現金流前淨值",
       detail: "部分入金／出金沒有事件前淨值，因此 Exact TWR 目前只能維持 insufficient／fallback 狀態。",
-      count: exactTwr.missingBoundaryIds.length
+      count: missingTwrBoundaries.length
     });
   }
+
+  const exactTwr = exactTimeWeightedReturn(state, today);
   if (exactTwr.ambiguousDates.length) {
     items.push({
       id: "twr_ambiguous_order",
