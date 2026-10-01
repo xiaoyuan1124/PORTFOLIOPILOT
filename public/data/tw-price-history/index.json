@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-01T11:06:07.084Z",
+  "calendarDays": 400,
+  "startDate": "2025-08-26",
+  "endDate": "2026-09-30",
+  "targetEndDate": "2026-09-30",
+  "sources": [
+    {
+      "market": "TWSE",
+      "name": "TWSE MI_INDEX",
+      "urlTemplate": "https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?date=YYYYMMDD&type=ALLBUT0999&response=json"
+    },
+    {
+      "market": "TPEx",
+      "name": "TPEx historical daily close",
+      "urlTemplate": "https://www.tpex.org.tw/web/stock/aftertrading/otc_quotes_no1430/stk_wn1430_result.php?l=zh-tw&d=ROC/MM/DD&se=EW&o=json"
+    }
+  ],
+  "markets": {
+    "TWSE": {
+      "symbols": 1373,
+      "points": 352474,
+      "buckets": 67
+    },
+    "TPEx": {
+      "symbols": 6555,
+      "points": 259079,
+      "buckets": 63
+    }
+  },
+  "failed": []
+}
