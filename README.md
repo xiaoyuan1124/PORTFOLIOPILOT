@@ -897,3 +897,15 @@ The first V0.81 production seed exceeded the 30-minute workflow window before an
 - **TPEx historical endpoint:** historical TPEx full-market closes use the official ROC-date after-trading endpoint instead of the latest-oriented dailyQuotes route.
 - **Safety unchanged:** the initial seed still refuses publication unless both TWSE and TPEx reach at least 220 valid trading dates.
 - **Zero-cost architecture unchanged:** no paid API, backend, database or new dependency is introduced.
+
+
+## V0.81.2 TWSE backfill throttling
+
+The V0.81.1 seed completed quickly enough but the official TWSE endpoint throttled after bursts of concurrent historical requests, leaving only 198 valid TWSE trading dates while TPEx reached 266. The safety gate correctly blocked publication.
+
+- **TWSE isolated throttling:** TWSE history now uses concurrency 1 with a 900ms pacing interval between dates.
+- **TPEx stays parallel:** TPEx keeps bounded concurrency 3 because its historical endpoint completed with strong coverage.
+- **Cross-market validation preserved:** both market fetches finish first, then each date is validated together so a one-sided failure is not mistaken for a market holiday.
+- **Safety threshold unchanged:** initial publication still requires at least 220 valid trading dates from both markets.
+- **Failure diagnostics:** if TWSE still misses the seed gate, the workflow prints a sample of unresolved date/reason pairs for the next debug loop.
+- **Zero-cost architecture unchanged:** no paid API, backend, database or additional dependency is added.
