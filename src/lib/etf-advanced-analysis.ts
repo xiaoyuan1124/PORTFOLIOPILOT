@@ -45,6 +45,8 @@ export type EtfOverlapComparison = {
   }>;
 };
 
+export type EtfWeightChangeType = "added" | "removed" | "increased" | "decreased" | "unchanged";
+
 export type EtfWeightChangeRow = {
   market: EtfConstituent["market"];
   symbol: string;
@@ -52,6 +54,15 @@ export type EtfWeightChangeRow = {
   previousWeightPct: number;
   currentWeightPct: number;
   changePctPoints: number;
+  changeType: EtfWeightChangeType;
+};
+
+export type EtfCompositionChangeSummary = {
+  added: number;
+  removed: number;
+  increased: number;
+  decreased: number;
+  unchanged: number;
 };
 
 export type EtfAdvancedAnalysis = {
@@ -66,6 +77,7 @@ export type EtfAdvancedAnalysis = {
   sectorWeights: Array<{ sector: string; weightPct: number }>;
   previousCompositionAsOf: string | null;
   weightChanges: EtfWeightChangeRow[];
+  compositionChangeSummary: EtfCompositionChangeSummary;
   revenueYoY: WeightedMetric;
   grossMargin: WeightedMetric;
   grossMarginTrendCoveredWeightPct: number;
@@ -160,6 +172,16 @@ function quoteMatch(cache: TwQuoteCache | null | undefined, code: string) {
   return { status: "ok" as const, quote };
 }
 
+function classifyWeightChange(previousWeightPct: number, currentWeightPct: number): EtfWeightChangeType {
+  const epsilon = 1e-9;
+  if (previousWeightPct <= epsilon && currentWeightPct > epsilon) return "added";
+  if (previousWeightPct > epsilon && currentWeightPct <= epsilon) return "removed";
+  const delta = currentWeightPct - previousWeightPct;
+  if (delta > epsilon) return "increased";
+  if (delta < -epsilon) return "decreased";
+  return "unchanged";
+}
+
 function weightChanges(selected: EtfComposition, all: EtfComposition[]) {
   const previous = all
     .filter((item) =>
@@ -169,7 +191,20 @@ function weightChanges(selected: EtfComposition, all: EtfComposition[]) {
     )
     .sort((a, b) => b.asOf.localeCompare(a.asOf))[0];
 
-  if (!previous) return { asOf: null as string | null, rows: [] as EtfWeightChangeRow[] };
+  const emptySummary: EtfCompositionChangeSummary = {
+    added: 0,
+    removed: 0,
+    increased: 0,
+    decreased: 0,
+    unchanged: 0
+  };
+  if (!previous) {
+    return {
+      asOf: null as string | null,
+      rows: [] as EtfWeightChangeRow[],
+      summary: emptySummary
+    };
+  }
 
   const currentMap = new Map(aggregate(selected).map((item) => [key(item), item]));
   const previousMap = new Map(aggregate(previous).map((item) => [key(item), item]));
@@ -186,11 +221,17 @@ function weightChanges(selected: EtfComposition, all: EtfComposition[]) {
       name: representative.name,
       previousWeightPct,
       currentWeightPct,
-      changePctPoints: currentWeightPct - previousWeightPct
+      changePctPoints: currentWeightPct - previousWeightPct,
+      changeType: classifyWeightChange(previousWeightPct, currentWeightPct)
     };
   }).sort((a, b) => Math.abs(b.changePctPoints) - Math.abs(a.changePctPoints));
 
-  return { asOf: previous.asOf, rows };
+  const summary = rows.reduce<EtfCompositionChangeSummary>((result, row) => {
+    result[row.changeType] += 1;
+    return result;
+  }, { ...emptySummary });
+
+  return { asOf: previous.asOf, rows, summary };
 }
 
 export function compareEtfOverlap(selected: EtfComposition, other: EtfComposition): EtfOverlapComparison {
@@ -370,6 +411,7 @@ export function analyzeEtfAdvanced(
     sectorWeights,
     previousCompositionAsOf: historical.asOf,
     weightChanges: historical.rows,
+    compositionChangeSummary: historical.summary,
     revenueYoY: weighted(revenueWeighted, revenuePeriod),
     grossMargin: weighted(marginWeighted, marginPeriod),
     grossMarginTrendCoveredWeightPct,

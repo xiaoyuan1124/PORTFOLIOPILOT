@@ -132,12 +132,26 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
   const singleBand = singleHoldingProductBand(analysis.top1WeightPct);
   const topSector = analysis.sectorWeights[0] ?? null;
   const sectorBand = sectorProductBand(topSector?.weightPct ?? 0);
+  const snapshotDates = useMemo(() => [...new Set(
+    [composition, ...compositions]
+      .filter((item) =>
+        item.etfMarket === composition.etfMarket &&
+        item.etfSymbol.trim().toUpperCase() === composition.etfSymbol.trim().toUpperCase()
+      )
+      .map((item) => item.asOf)
+  )].sort((a, b) => b.localeCompare(a)), [composition, compositions]);
+  const addedRows = analysis.weightChanges.filter((row) => row.changeType === "added");
+  const removedRows = analysis.weightChanges.filter((row) => row.changeType === "removed");
+  const weightMovementRows = analysis.weightChanges.filter((row) =>
+    row.changeType === "increased" || row.changeType === "decreased"
+  );
+  const changedRows = analysis.weightChanges.filter((row) => row.changeType !== "unchanged");
 
   return (
     <div className="space-y-4">
       <Card>
         <CardContent>
-          <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">ETF Analysis V0.77</p>
+          <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">ETF Analysis V0.79</p>
           <h3 className="mt-1 text-lg font-semibold">10 種 ETF 穿透分析</h3>
           <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
             以下門檻是 PortfolioPilot 的產品分析規則，用來描述結構與資料完整度，不是買賣建議、推薦或投資評級。所有加權數據都同時顯示覆蓋率；缺資料維持 unavailable，不以 0 補值。
@@ -156,21 +170,91 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
               <NumberCard label="Top 10" value={analysis.top10WeightPct.toFixed(1) + "%"} helper="前十大合計" />
             </div>
             <p className="mt-3 text-xs text-black/42 dark:text-white/42">成份權重資料日：{composition.asOf} · {composition.sourceName}</p>
-            {analysis.previousCompositionAsOf ? (
-              <div className="mt-3 rounded-2xl bg-black/[.025] p-3 dark:bg-white/[.035]">
-                <p className="text-xs font-semibold">權重變化：對比 {analysis.previousCompositionAsOf}</p>
-                <div className="mt-2 space-y-1">
-                  {analysis.weightChanges.slice(0, 6).map((row) => (
-                    <div key={row.market + ":" + row.symbol} className="flex justify-between gap-3 text-xs">
-                      <span className="truncate">{row.symbol} · {row.name}</span>
-                      <span className="shrink-0 tabular-nums">{point(row.changePctPoints)}</span>
-                    </div>
-                  ))}
+            <div className="mt-3 rounded-2xl border border-black/6 p-3 dark:border-white/8">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className="text-xs font-semibold">歷史快照與成份異動／調倉線索</p>
+                  <p className="mt-1 text-[11px] text-black/40 dark:text-white/40">
+                    已保存 {snapshotDates.length} 個資料日{snapshotDates.length > 1 ? ` · ${snapshotDates.at(-1)} → ${snapshotDates[0]}` : ""}
+                  </p>
                 </div>
+                {analysis.previousCompositionAsOf ? <Badge tone="good">可比較前一期</Badge> : <Badge>等待下一期</Badge>}
               </div>
-            ) : (
-              <p className="mt-3 text-xs text-black/38 dark:text-white/38">權重變化 unavailable：目前沒有同一 ETF 更早的 composition snapshot。</p>
-            )}
+
+              {analysis.previousCompositionAsOf ? (
+                <>
+                  <p className="mt-3 text-xs">本期 {composition.asOf} 對比前一期 {analysis.previousCompositionAsOf}</p>
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <NumberCard label="新增成份" value={String(analysis.compositionChangeSummary.added)} helper="前期 0% → 本期有權重" />
+                    <NumberCard label="刪除成份" value={String(analysis.compositionChangeSummary.removed)} helper="前期有權重 → 本期 0%" />
+                    <NumberCard label="權重上升" value={String(analysis.compositionChangeSummary.increased)} helper="兩期皆存在且權重增加" />
+                    <NumberCard label="權重下降" value={String(analysis.compositionChangeSummary.decreased)} helper="兩期皆存在且權重減少" />
+                  </div>
+
+                  {addedRows.length || removedRows.length ? (
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.035]">
+                        <p className="text-xs font-semibold">新增成份股</p>
+                        <div className="mt-2 space-y-1">
+                          {addedRows.length ? addedRows.map((row) => (
+                            <div key={row.market + ":" + row.symbol} className="flex justify-between gap-3 text-xs">
+                              <span className="truncate">{row.symbol} · {row.name}</span>
+                              <strong className="shrink-0 tabular-nums">{row.currentWeightPct.toFixed(2)}%</strong>
+                            </div>
+                          )) : <p className="text-[11px] text-black/38 dark:text-white/38">本期沒有新增成份。</p>}
+                        </div>
+                      </div>
+                      <div className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.035]">
+                        <p className="text-xs font-semibold">刪除成份股</p>
+                        <div className="mt-2 space-y-1">
+                          {removedRows.length ? removedRows.map((row) => (
+                            <div key={row.market + ":" + row.symbol} className="flex justify-between gap-3 text-xs">
+                              <span className="truncate">{row.symbol} · {row.name}</span>
+                              <strong className="shrink-0 tabular-nums">{row.previousWeightPct.toFixed(2)}% → 0%</strong>
+                            </div>
+                          )) : <p className="text-[11px] text-black/38 dark:text-white/38">本期沒有刪除成份。</p>}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-3 rounded-xl bg-black/[.025] p-3 dark:bg-white/[.035]">
+                    <p className="text-xs font-semibold">權重變化最大</p>
+                    <div className="mt-2 space-y-1">
+                      {weightMovementRows.slice(0, 8).map((row) => (
+                        <div key={row.market + ":" + row.symbol} className="flex items-center justify-between gap-3 text-xs">
+                          <span className="min-w-0 truncate">{row.symbol} · {row.name}</span>
+                          <span className="shrink-0 tabular-nums">{row.previousWeightPct.toFixed(2)}% → {row.currentWeightPct.toFixed(2)}% · {point(row.changePctPoints)}</span>
+                        </div>
+                      ))}
+                      {!weightMovementRows.length ? <p className="text-[11px] text-black/38 dark:text-white/38">兩期共同成份的權重沒有變化。</p> : null}
+                    </div>
+                  </div>
+
+                  {changedRows.length > 8 ? (
+                    <details className="mt-3 text-xs">
+                      <summary className="cursor-pointer font-semibold">查看全部 {changedRows.length} 筆成份變化</summary>
+                      <div className="mt-2 space-y-1">
+                        {changedRows.map((row) => (
+                          <div key={row.market + ":" + row.symbol} className="flex justify-between gap-3">
+                            <span className="truncate">{row.symbol} · {row.name} · {row.changeType}</span>
+                            <span className="shrink-0 tabular-nums">{row.previousWeightPct.toFixed(2)}% → {row.currentWeightPct.toFixed(2)}% · {point(row.changePctPoints)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
+
+                  <p className="mt-3 text-[11px] leading-5 text-black/42 dark:text-white/42">
+                    注意：權重上升／下降只是兩個官方快照的權重差，可能來自成份股價格相對變動，不等同基金真的買進／賣出；新增／刪除則代表兩期公開成份集合不同。
+                  </p>
+                </>
+              ) : (
+                <p className="mt-3 text-xs leading-5 text-black/38 dark:text-white/38">
+                  已開始保存官方歷史快照；目前只有一個資料日，等下一個不同 as-of 的官方快照出現後，就會自動顯示新增、刪除與權重變化。
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 

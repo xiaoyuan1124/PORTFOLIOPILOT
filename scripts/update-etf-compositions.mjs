@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { applySectorMap, normalizeDate, parseIssuerComposition, parseNomuraFundAssetsPayload } from "./lib/etf-composition-data.mjs";
+import { mergeEtfCompositionHistory } from "./lib/etf-composition-history.mjs";
 
 const OUTPUT = "public/data/tw-etf-compositions.json";
 const REVENUE = "public/data/tw-revenue.json";
@@ -43,7 +44,7 @@ async function fetchHtml(source) {
   return withRetry(source.etfSymbol, async () => {
     const response = await fetch(source.sourceUrl, {
       headers: {
-        "user-agent": "Mozilla/5.0 PortfolioPilot/0.78 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
+        "user-agent": "Mozilla/5.0 PortfolioPilot/0.79 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
         accept: "text/html,application/xhtml+xml"
       },
       signal: AbortSignal.timeout(30000)
@@ -73,7 +74,7 @@ async function postNomura(path, body) {
     const response = await fetch(NOMURA_API + path, {
       method: "POST",
       headers: {
-        "user-agent": "Mozilla/5.0 PortfolioPilot/0.78 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
+        "user-agent": "Mozilla/5.0 PortfolioPilot/0.79 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
         "content-type": "application/json",
         accept: "application/json, text/plain, */*",
         origin: "https://www.nomurafunds.com.tw",
@@ -136,7 +137,7 @@ async function loadPrevious() {
   try {
     return JSON.parse(await readFile(OUTPUT, "utf8"));
   } catch {
-    return { generatedAt: new Date(0).toISOString(), sources: [], compositions: [] };
+    return { generatedAt: new Date(0).toISOString(), sources: [], compositions: [], history: [] };
   }
 }
 
@@ -195,11 +196,17 @@ for (const source of SOURCES) {
   }
 }
 
+const history = mergeEtfCompositionHistory(
+  [...(previous.history ?? []), ...(previous.compositions ?? [])],
+  compositions
+);
+
 const payload = {
   generatedAt: new Date().toISOString(),
   sources,
-  compositions
+  compositions,
+  history
 };
 
 await writeFile(OUTPUT, JSON.stringify(payload, null, 2) + "\n", "utf8");
-console.log(`Wrote ${OUTPUT} with ${compositions.length}/${SOURCES.length} supported ETF compositions.`);
+console.log(`Wrote ${OUTPUT} with ${compositions.length}/${SOURCES.length} supported ETF compositions and ${history.length} retained snapshots.`);
