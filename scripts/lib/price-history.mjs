@@ -14,6 +14,53 @@ function fieldIndex(fields, candidates) {
   return fields.findIndex((field) => candidates.includes(plainCell(field)));
 }
 
+function sourceDateFromValue(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+
+  const gregorianDigits = raw.replace(/\D/g, "");
+  if (/^\d{8}$/.test(gregorianDigits)) {
+    return `${gregorianDigits.slice(0, 4)}-${gregorianDigits.slice(4, 6)}-${gregorianDigits.slice(6, 8)}`;
+  }
+
+  const roc = raw.match(/(\d{2,3})[年\/\-](\d{1,2})[月\/\-](\d{1,2})日?/);
+  if (roc) {
+    return `${Number(roc[1]) + 1911}-${String(Number(roc[2])).padStart(2, "0")}-${String(Number(roc[3])).padStart(2, "0")}`;
+  }
+
+  const rocDigits = gregorianDigits.match(/^(\d{3})(\d{2})(\d{2})$/);
+  if (rocDigits) {
+    return `${Number(rocDigits[1]) + 1911}-${rocDigits[2]}-${rocDigits[3]}`;
+  }
+
+  return null;
+}
+
+export function historicalPayloadDate(payload) {
+  const direct = sourceDateFromValue(payload?.date);
+  if (direct) return direct;
+
+  const tables = Array.isArray(payload?.tables) ? payload.tables : [];
+  for (const table of tables) {
+    const tableDate = sourceDateFromValue(table?.date);
+    if (tableDate) return tableDate;
+    const titleDate = sourceDateFromValue(table?.title);
+    if (titleDate) return titleDate;
+  }
+  return null;
+}
+
+export function assertHistoricalPayloadDate(payload, requestedDate, market) {
+  const actual = historicalPayloadDate(payload);
+  if (!actual) {
+    throw new Error(`${market} historical source date evidence missing for ${requestedDate}`);
+  }
+  if (actual !== requestedDate) {
+    throw new Error(`${market} historical source date mismatch: requested ${requestedDate}, received ${actual}`);
+  }
+  return actual;
+}
+
 export function parseTpexDailyQuotesPayload(payload, date) {
   if (!payload || typeof payload !== "object") return [];
   const tables = Array.isArray(payload.tables) ? payload.tables : [];
