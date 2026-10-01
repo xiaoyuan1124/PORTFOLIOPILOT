@@ -15,10 +15,15 @@ const sourceSchema = z.object({
 const cacheSchema = z.object({
   generatedAt: z.string(),
   sources: z.array(sourceSchema),
-  compositions: z.array(etfCompositionSchema)
+  compositions: z.array(etfCompositionSchema),
+  history: z.array(etfCompositionSchema).default([])
 });
 
 export type EtfCompositionCache = z.infer<typeof cacheSchema>;
+
+export function parseEtfCompositionCache(value: unknown): EtfCompositionCache {
+  return cacheSchema.parse(value);
+}
 
 function key(market: "TW" | "US", symbol: string) {
   return `${market}:${symbol.trim().toUpperCase()}`;
@@ -38,7 +43,7 @@ export async function loadBundledEtfCompositions(): Promise<EtfCompositionCache>
     throw new Error("尚未取得官方 ETF 成份資料快取。");
   }
 
-  return cacheSchema.parse(await response.json());
+  return parseEtfCompositionCache(await response.json());
 }
 
 export function applyHeldEtfCompositions(
