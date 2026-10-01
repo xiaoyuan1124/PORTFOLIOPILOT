@@ -8,6 +8,7 @@ import {
   mergeSeriesPoints,
   mapWithConcurrency,
   parseTpexDailyQuotesPayload,
+  toRocDate,
   weekdayDates
 } from "./price-history.mjs";
 
@@ -78,6 +79,11 @@ describe("Taiwan price-history cache helpers", () => {
     expect(results).toEqual([2, 4, 6, 8, 10, 12]);
     expect(maxActive).toBeLessThanOrEqual(3);
     expect(maxActive).toBeGreaterThan(1);
+  });
+
+  it("converts ISO dates to TPEx ROC history dates", () => {
+    expect(toRocDate("2026-09-30")).toBe("115/09/30");
+    expect(() => toRocDate("bad-date")).toThrow(/Invalid ISO date/);
   });
 
   it("builds weekday date ranges and handles calendar arithmetic", () => {
