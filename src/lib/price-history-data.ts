@@ -22,6 +22,7 @@ const bucketSchema = z.object({
 
 const indexSchema = z.object({
   version: z.literal(1),
+  universeVersion: z.number().int().positive().optional(),
   generatedAt: z.string(),
   calendarDays: z.number().int().positive(),
   startDate: z.string().nullable(),
@@ -49,6 +50,9 @@ export type TwPriceHistorySeries = z.infer<typeof securitySchema> & {
 export type TwPriceHistoryIndex = z.infer<typeof indexSchema>;
 
 const bucketPromises = new Map<string, Promise<z.infer<typeof bucketSchema>>>();
+const INDEX_PROBE_TTL_MS = 60_000;
+let observedHistoryGeneration: string | null = null;
+let indexProbe: { checkedAt: number; promise: Promise<TwPriceHistoryIndex> } | null = null;
 
 function prefixForSymbol(symbol: string) {
   const normalized = symbol.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -80,11 +84,43 @@ async function loadBucket(market: "TWSE" | "TPEx", symbol: string) {
   }
 }
 
-export async function loadTwPriceHistoryIndex(): Promise<TwPriceHistoryIndex> {
+async function fetchTwPriceHistoryIndex(): Promise<TwPriceHistoryIndex> {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   const response = await fetch(`${base}/data/tw-price-history/index.json?ts=${Date.now()}`, { cache: "no-store" });
   if (!response.ok) throw new Error("尚未建立台股歷史行情快取。");
   return indexSchema.parse(await response.json());
+}
+
+function observeHistoryGeneration(index: TwPriceHistoryIndex) {
+  if (observedHistoryGeneration && observedHistoryGeneration !== index.generatedAt) {
+    bucketPromises.clear();
+  }
+  observedHistoryGeneration = index.generatedAt;
+  return index;
+}
+
+export async function loadTwPriceHistoryIndex(): Promise<TwPriceHistoryIndex> {
+  return observeHistoryGeneration(await fetchTwPriceHistoryIndex());
+}
+
+async function refreshHistoryGeneration() {
+  const now = Date.now();
+  if (indexProbe && now - indexProbe.checkedAt < INDEX_PROBE_TTL_MS) {
+    try {
+      await indexProbe.promise;
+    } catch {
+      // Best effort only: an offline service-worker bucket may still be available.
+    }
+    return;
+  }
+
+  const promise = loadTwPriceHistoryIndex();
+  indexProbe = { checkedAt: now, promise };
+  try {
+    await promise;
+  } catch {
+    if (indexProbe?.promise === promise) indexProbe = null;
+  }
 }
 
 export async function loadTwPriceHistory(
@@ -92,6 +128,7 @@ export async function loadTwPriceHistory(
   symbol: string
 ): Promise<TwPriceHistorySeries> {
   const normalized = symbol.trim().toUpperCase();
+  await refreshHistoryGeneration();
   const bucket = await loadBucket(market, normalized);
   const security = bucket.securities[normalized];
   if (!security) throw new Error("歷史行情快取中尚未找到這個標的。");
