@@ -174,15 +174,20 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
   return <div className="space-y-4">
     <div className="rounded-[24px] border border-black/6 bg-[#1f332a] p-5 text-white shadow-sm dark:border-white/8 dark:bg-[#dce9e2] dark:text-[#122018]">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div><p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">Company Snapshot · Official Data</p><h3 className="mt-2 text-xl font-semibold">一頁看完台股個股／ETF 的核心資料</h3><p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">把已驗證的 TWSE、TPEx、MOPS 快取集中在同一頁。不同指標保留各自日期與來源；缺值、不適用與資料不足不補猜。</p></div>
+        <div><p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">Security Snapshot · Official Data</p><h3 className="mt-2 text-xl font-semibold">一頁掌握台股標的核心資料</h3><p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">把已驗證的 TWSE、TPEx、MOPS 快取集中在同一頁。不同指標保留各自日期與來源；缺值、不適用與資料不足不補猜。</p></div>
         <div className="text-right"><p className="text-3xl font-semibold">{loading ? "…" : error && !caches ? "—" : snapshots.length}</p><p className="text-xs opacity-60">{loading ? "讀取官方資料" : "可研究標的"}</p></div>
       </div>
     </div>
 
-    <div className="grid gap-2 md:grid-cols-[1fr_auto_auto]">
-      <div className="relative"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/35 dark:text-white/35" size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋個股／ETF 代號、名稱或產業" className="field pl-11" /></div>
-      <GhostButton onClick={() => setHeldOnly((value) => !value)}>{heldOnly ? "顯示全部" : "只看持有"}</GhostButton>
-      <GhostButton disabled={loading} onClick={() => void reload()}><RefreshCw size={16} className={loading ? "animate-spin" : ""} />{loading ? "讀取中" : "重新讀取"}</GhostButton>
+    <div className="space-y-2">
+      <div className="relative"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/35 dark:text-white/35" size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋股票／ETF 代號、名稱或產業" className="field pl-11" /></div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="inline-flex rounded-full border border-black/7 bg-white/65 p-1 dark:border-white/8 dark:bg-white/4" role="group" aria-label="標的篩選">
+          <button type="button" onClick={() => setHeldOnly(false)} className={`min-h-9 rounded-full px-3 text-xs font-semibold transition ${!heldOnly ? "bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]" : "text-black/45 dark:text-white/45"}`}>全部</button>
+          <button type="button" onClick={() => setHeldOnly(true)} className={`min-h-9 rounded-full px-3 text-xs font-semibold transition ${heldOnly ? "bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]" : "text-black/45 dark:text-white/45"}`}>持有</button>
+        </div>
+        <GhostButton className="min-h-9 rounded-full px-3 text-xs" disabled={loading} onClick={() => void reload()} aria-label="重新同步研究資料"><RefreshCw size={15} className={loading ? "animate-spin" : ""} />{loading ? "同步中" : "重新同步"}</GhostButton>
+      </div>
     </div>
 
     {error ? <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">{error}</div> : null}
