@@ -3,8 +3,15 @@ import type { TwPriceHistoryPoint } from "./price-history-data";
 function addMonths(date: string, delta: number) {
   const match = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return date;
-  const next = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1 + delta, Number(match[3])));
-  return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}-${String(next.getUTCDate()).padStart(2, "0")}`;
+  const year = Number(match[1]);
+  const monthIndex = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const firstOfTarget = new Date(Date.UTC(year, monthIndex + delta, 1));
+  const targetYear = firstOfTarget.getUTCFullYear();
+  const targetMonth = firstOfTarget.getUTCMonth();
+  const lastDay = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+  const clampedDay = Math.min(day, lastDay);
+  return `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}-${String(clampedDay).padStart(2, "0")}`;
 }
 
 function normalize(points: TwPriceHistoryPoint[]) {
