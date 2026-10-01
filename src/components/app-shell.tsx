@@ -187,7 +187,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <div className="mx-auto max-w-[1360px] px-4 py-5 md:px-8 md:py-8">
+        <div className="app-page-content mx-auto max-w-[1360px] py-5 md:py-8">
           {hasRecoveryBackup || storageWriteBlocked ? (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
               <div>
