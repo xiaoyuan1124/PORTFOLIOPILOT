@@ -35,7 +35,7 @@ export function Portfolio({
   requestedTab?: PortfolioTab;
   requestId?: number;
 }) {
-  const [tab, setTab] = useState<PortfolioTab>("holdings");
+  const [tab, setTab] = useState<PortfolioTab>(requestedTab ?? "holdings");
 
   useEffect(() => {
     if (requestedTab) setTab(requestedTab);
