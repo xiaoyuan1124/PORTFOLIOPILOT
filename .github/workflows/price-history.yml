@@ -9,7 +9,10 @@ on:
       - "scripts/lib/quote-data.mjs"
       - ".github/workflows/price-history.yml"
   schedule:
-    - cron: "30 11 * * 1-5"
+    # Taiwan time: 23:47 and 01:47 (next day) on weekdays.
+    # Run after the final closing-quote attempt; the second slot is a delayed-cron fallback.
+    # The updater exits early when history already matches tw-quotes, avoiding cache churn.
+    - cron: "47 15,17 * * 1-5"
   workflow_dispatch:
 
 permissions:
