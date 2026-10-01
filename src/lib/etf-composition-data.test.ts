@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyHeldEtfCompositions, type EtfCompositionCache } from "./etf-composition-data";
+import { applyHeldEtfCompositions, parseEtfCompositionCache, type EtfCompositionCache } from "./etf-composition-data";
 import type { EtfComposition, Holding } from "./types";
 
 const held: Holding[] = [
@@ -39,7 +39,8 @@ function cache(
   return {
     generatedAt: "2026-10-01T10:00:00.000Z",
     sources,
-    compositions: items
+    compositions: items,
+    history: []
   };
 }
 
@@ -103,4 +104,13 @@ describe("held ETF automatic composition refresh", () => {
     expect(result.sourceIssues).toBe(1);
     expect(result.unsupported).toBe(1);
   });
+  it("keeps legacy V0.78 caches readable by defaulting missing history to an empty array", () => {
+    const parsed = parseEtfCompositionCache({
+      generatedAt: "2026-10-01T10:00:00.000Z",
+      sources: [],
+      compositions: [composition("009816", "2026-09-30")]
+    });
+    expect(parsed.history).toEqual([]);
+  });
+
 });
