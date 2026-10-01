@@ -885,3 +885,10 @@ V0.81 adds a bounded, zero-cost Taiwan daily closing-price history layer for lis
 - **Zero cost:** no paid API, backend, database, AI service or additional dependency is introduced. GitHub Actions and GitHub Pages continue to publish the public cache.
 
 Personal holdings remain Local-first and are never uploaded to the history workflow.
+
+
+### V0.81.1 history backfill hardening
+
+The first production seed showed that TPEx historical dailyQuotes can intermittently stall long enough for a 30-minute workflow to be cancelled. The backfill now uses bounded 12-second requests, at most two attempts, two-date limited concurrency, and short batch throttling. Failed dates remain unresolved instead of becoming zeroes and can be retried later.
+
+Historical payloads must also prove that the source date matches the requested date before a row is accepted. A missing or mismatched source date fails closed.
