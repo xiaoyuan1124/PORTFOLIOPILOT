@@ -40,7 +40,18 @@ jobs:
         with:
           node-version: 24
       - name: Fetch official TWSE / TPEx / MOPS market data
+        id: market_core
+        continue-on-error: true
         run: node scripts/update-market-data.mjs
+      - name: Report core market cache fallback
+        if: steps.market_core.outcome == 'failure'
+        run: |
+          echo "::warning::Core Taiwan market refresh failed after retries. Keeping the previously committed quote/revenue/valuation/institutional caches and continuing independent ETF/event/benchmark refreshes."
+          {
+            echo "### Core Taiwan market cache fallback"
+            echo ""
+            echo "The combined TWSE / TPEx / MOPS market refresh failed before writing any cache files. Previously committed quote, revenue, valuation, revenue-history and institutional caches are preserved while independent ETF, material-event, quarterly and benchmark refreshes continue."
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Refresh official issuer ETF compositions
         run: node scripts/update-etf-compositions.mjs
       - name: Fetch official MOPS / TWSE / TPEx material events
