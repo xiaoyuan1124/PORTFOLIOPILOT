@@ -212,7 +212,7 @@ export function EtfResearch({
         </Card>
       ) : null}
 
-      {selected && result ? (
+      {selected && result && quotes ? (
         <>
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">成份權重覆蓋</p><p className="mt-2 text-xl font-semibold">{result.compositionCoveragePct.toFixed(1)}%</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">{result.constituentCount} 檔已匯入成份</p></CardContent></Card>
