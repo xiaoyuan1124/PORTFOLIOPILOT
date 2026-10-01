@@ -68,7 +68,7 @@ jobs:
           {
             echo "### Quarterly financial cache fallback"
             echo ""
-            echo "MOPS quarterly refresh failed after retries. The workflow will preserve the previously committed `public/data/tw-quarterly-margins.json` cache and continue publishing other official-data updates."
+            echo "MOPS quarterly refresh failed after retries. The workflow will preserve the previously committed public/data/tw-quarterly-margins.json cache and continue publishing other official-data updates."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Fetch official TWSE benchmark history
         run: node scripts/update-benchmarks.mjs
