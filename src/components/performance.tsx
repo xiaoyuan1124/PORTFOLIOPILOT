@@ -12,6 +12,7 @@ import {
 } from "@/lib/performance";
 import { money, percent } from "@/lib/utils";
 import { BenchmarkComparison } from "./benchmark-comparison";
+import { LatestPortfolioContribution } from "./latest-portfolio-contribution";
 import { Badge, Card, CardContent, CardHeader, InfoDisclosure, Metric } from "./ui";
 
 export function Performance({ state }: { state: AppState }) {
@@ -60,6 +61,8 @@ export function Performance({ state }: { state: AppState }) {
       ) : null}
 
       <BenchmarkComparison exactTwr={exactTwr} proxyReturn={dietz} snapshots={currentSnapshots} />
+
+      <LatestPortfolioContribution state={state} />
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>

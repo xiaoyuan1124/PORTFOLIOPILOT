@@ -852,3 +852,18 @@ Phase 3 makes portfolio look-through the default interpretation layer instead of
 - **No new dependency or paid service:** charts reuse Recharts and calculations reuse existing Local-first PortfolioPilot data.
 
 Interpretation remains conservative: unresolved ETF value stays unresolved and is never redistributed across known constituents.
+
+
+## V0.80.3 UX / Information Architecture — Phase 4
+
+Phase 4 visualizes latest-day portfolio contribution using the existing official Taiwan quote cache.
+
+- **Unified contribution chart:** Taiwan stocks and Taiwan ETFs are shown together on one signed bar chart.
+- **Transparent arithmetic:** contribution uses current holding quantity × official same-day close change. External deposits / withdrawals are kept separate.
+- **Gross drivers preserved:** the UI shows total positive contribution, total negative contribution and net impact rather than hiding opposing effects through netting alone.
+- **Shared logic:** Overview Daily Drivers and the Performance page use the same contribution calculation and chart component.
+- **Coverage shown:** only holdings with a uniquely matched comparable official quote on the latest common trading date are included.
+- **No fake period attribution:** 1M / 3M per-security contribution stays unavailable until PortfolioPilot has a traceable historical price series for each security.
+- **No new dependency or paid service:** charts reuse Recharts and bundled official market caches.
+
+The calculation remains an estimate of current-held-position daily impact, not broker-level lot-by-lot realized / unrealized P&L attribution.

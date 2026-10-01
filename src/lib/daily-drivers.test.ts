@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDailyHoldingDrivers, externalCashFlowForDate } from "./daily-drivers";
+import { buildDailyHoldingDrivers, externalCashFlowForDate, summarizeDailyHoldingDrivers } from "./daily-drivers";
 import type { Holding, PortfolioActivity } from "./types";
 import type { TwQuoteCache } from "./market-data";
 
@@ -49,6 +49,7 @@ describe("daily portfolio drivers", () => {
     expect(result.rows[0]).toMatchObject({
       symbol: "2330",
       venue: "TWSE",
+      holdingType: "stock",
       impactTwd: 100,
       changePct: 1
     });
@@ -171,4 +172,46 @@ describe("daily portfolio drivers", () => {
       netTwd: 680
     });
   });
+
+  it("summarizes positive and negative daily contribution without netting away the gross drivers", () => {
+    const rows = [
+      {
+        holdingId: "a",
+        symbol: "2330",
+        name: "台積電",
+        venue: "TWSE" as const,
+        holdingType: "stock" as const,
+        date: "2026-09-30",
+        quantity: 10,
+        close: 1010,
+        change: 10,
+        changePct: 1,
+        impactTwd: 100
+      },
+      {
+        holdingId: "b",
+        symbol: "00935",
+        name: "ETF",
+        venue: "TWSE" as const,
+        holdingType: "etf" as const,
+        date: "2026-09-30",
+        quantity: 10,
+        close: 20,
+        change: -2,
+        changePct: -10,
+        impactTwd: -20
+      }
+    ];
+
+    expect(summarizeDailyHoldingDrivers(rows)).toMatchObject({
+      positiveImpactTwd: 100,
+      negativeImpactTwd: -20,
+      netImpactTwd: 80,
+      absoluteImpactTwd: 120,
+      positiveCount: 1,
+      negativeCount: 1,
+      flatCount: 0
+    });
+  });
+
 });
