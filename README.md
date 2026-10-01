@@ -867,3 +867,21 @@ Phase 4 visualizes latest-day portfolio contribution using the existing official
 - **No new dependency or paid service:** charts reuse Recharts and bundled official market caches.
 
 The calculation remains an estimate of current-held-position daily impact, not broker-level lot-by-lot realized / unrealized P&L attribution.
+
+
+## V0.81 Taiwan official price history
+
+V0.81 adds a bounded, zero-cost Taiwan daily closing-price history layer for listed and TPEx securities.
+
+- **Official sources:** TWSE `MI_INDEX` and TPEx `afterTrading/dailyQuotes` are queried by trading date. One request per market/date retrieves the full market instead of making one API call per security.
+- **Initial backfill:** the first production run targets roughly 400 calendar days and refuses to publish an initial cache unless both TWSE and TPEx contain at least 220 valid trading dates.
+- **Partitioned mobile cache:** history is split by market and the first two characters of the security code. A phone researching one symbol downloads only its small bucket instead of the full Taiwan market history.
+- **Bounded storage:** old points outside the rolling history window are trimmed so repository and Pages size remain controlled.
+- **Retry / failure behavior:** failed market/date requests are retained in the history index for later retries. A failed date never becomes a fabricated zero-price observation.
+- **Latest-day safety:** the already validated bundled latest quote cache is merged into history so a flaky historical endpoint cannot regress the newest official close.
+- **Research metrics:** Taiwan stocks and ETFs can show 1M / 3M / 6M / 1Y raw price return, max drawdown, annualized daily-close volatility and a historical close chart when the corresponding bucket is available.
+- **ETF analysis:** the former unavailable momentum block now uses official history for price-performance metrics. Relative strength remains unavailable until a same-period benchmark series is joined.
+- **Price-return boundary:** official raw closes are not total-return or adjusted-price data. Cash dividends, distributions and corporate-action adjustments are not reinvested or reconstructed.
+- **Zero cost:** no paid API, backend, database, AI service or additional dependency is introduced. GitHub Actions and GitHub Pages continue to publish the public cache.
+
+Personal holdings remain Local-first and are never uploaded to the history workflow.
