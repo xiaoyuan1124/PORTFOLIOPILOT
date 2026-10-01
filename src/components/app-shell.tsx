@@ -9,7 +9,7 @@ import { withTodaySnapshot } from "@/lib/calc";
 import { loadInitialState, saveState } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { Overview } from "./overview";
-import { Portfolio } from "./portfolio";
+import { Portfolio, type PortfolioTab } from "./portfolio";
 import { Research } from "./research";
 import { Settings } from "./settings";
 import { QuickSearch, type AppSection } from "./quick-search";
@@ -40,6 +40,8 @@ export function AppShell() {
   const [researchRequestId, setResearchRequestId] = useState(0);
   const [hasRecoveryBackup, setHasRecoveryBackup] = useState(false);
   const [storageWriteBlocked, setStorageWriteBlocked] = useState(false);
+  const [portfolioRequestedTab, setPortfolioRequestedTab] = useState<PortfolioTab | undefined>();
+  const [portfolioRequestId, setPortfolioRequestId] = useState(0);
   const title = useMemo(() => titles[section], [section]);
 
   useEffect(() => {
@@ -112,7 +114,20 @@ export function AppShell() {
       setResearchKey(nextResearchKey);
       setResearchRequestId((value) => value + 1);
     }
+    if (next === "portfolio") {
+      setPortfolioRequestedTab(undefined);
+      setPortfolioRequestId((value) => value + 1);
+    }
     setSection(next);
+  }
+
+  function navigatePortfolioTab(tab: PortfolioTab) {
+    setPortfolioRequestedTab(tab);
+    setPortfolioRequestId((value) => value + 1);
+    setSection("portfolio");
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
   }
 
   function toggleTheme() {
@@ -183,9 +198,26 @@ export function AppShell() {
             </div>
           ) : null}
           {section === "home" ? <Overview state={state} onNavigate={(target, key) => navigate(target, key)} /> : null}
-          {section === "portfolio" ? <Portfolio state={state} onChange={updateState} onResearch={(key) => navigate("research", key)} /> : null}
+          {section === "portfolio" ? (
+            <Portfolio
+              key={portfolioRequestId}
+              state={state}
+              onChange={updateState}
+              onResearch={(key) => navigate("research", key)}
+              requestedTab={portfolioRequestedTab}
+            />
+          ) : null}
           {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} /> : null}
-          {section === "settings" ? <Settings state={state} onChange={updateState} hasRecoveryBackup={hasRecoveryBackup} onRecoveryBackupCleared={() => setHasRecoveryBackup(false)} storageWriteBlocked={storageWriteBlocked} /> : null}
+          {section === "settings" ? (
+            <Settings
+              state={state}
+              onChange={updateState}
+              hasRecoveryBackup={hasRecoveryBackup}
+              onRecoveryBackupCleared={() => setHasRecoveryBackup(false)}
+              storageWriteBlocked={storageWriteBlocked}
+              onNavigatePortfolio={navigatePortfolioTab}
+            />
+          ) : null}
         </div>
       </main>
 

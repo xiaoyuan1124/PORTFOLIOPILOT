@@ -102,6 +102,8 @@ describe("portfolio data integrity", () => {
     ]));
     expect(report.items.find((item) => item.id === "future_activities")?.examples)
       .toContain("2026-10-02 09:00 · deposit · 券商A");
+    expect(report.items.find((item) => item.id === "future_activities")?.action)
+      .toEqual({ label: "查看交易紀錄", target: "activity" });
     expect(report.items.find((item) => item.id === "tw_price_provenance")?.examples)
       .toContain("2330 · 券商A");
     expect(report.items.find((item) => item.id === "snapshot_missing_today")?.examples)
@@ -131,6 +133,8 @@ describe("portfolio data integrity", () => {
     expect(report.items.find((item) => item.id === "tw_future_price_date")?.count).toBe(1);
     expect(report.items.find((item) => item.id === "tw_future_price_date")?.examples)
       .toEqual(["2330 · 券商A · 2026-10-02"]);
+    expect(report.items.find((item) => item.id === "tw_future_price_date")?.action.target)
+      .toBe("holdings");
     expect(report.items.some((item) => item.id === "tw_price_provenance")).toBe(false);
   });
 
@@ -151,6 +155,8 @@ describe("portfolio data integrity", () => {
     expect(report.items.find((item) => item.id === "twr_ambiguous_order")?.count).toBe(1);
     expect(report.items.find((item) => item.id === "twr_ambiguous_order")?.examples)
       .toEqual(["2026-09-20"]);
+    expect(report.items.find((item) => item.id === "twr_missing_boundary")?.action)
+      .toEqual({ label: "補 TWR 邊界", target: "activity" });
   });
 
   it("keeps legacy CSV provenance and manual US pricing informational", () => {
@@ -205,6 +211,10 @@ describe("portfolio data integrity", () => {
       .toEqual(["2020-01-02 · buy · QQQM · 美股券商"]);
     expect(report.items.find((item) => item.id === "manual_us_price")?.examples)
       .toEqual(["QQQM · 美股券商"]);
+    expect(report.items.find((item) => item.id === "legacy_csv_batch")?.action.target)
+      .toBe("historical_csv");
+    expect(report.items.find((item) => item.id === "manual_us_price")?.action.target)
+      .toBe("holdings");
   });
 
   it("does not flag complete V0.70+ CSV provenance", () => {

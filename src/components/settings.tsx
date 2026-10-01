@@ -1,11 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AlertTriangle, CircleAlert, DatabaseBackup, Download, FileSpreadsheet, Info, RotateCcw, ShieldCheck, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, ArrowRight, CircleAlert, DatabaseBackup, Download, FileSpreadsheet, Info, RotateCcw, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { demoState, emptyState } from "@/lib/demo-data";
 import { localDateKey } from "@/lib/calc";
-import { portfolioDataIntegrity } from "@/lib/data-integrity";
+import { portfolioDataIntegrity, type DataIntegrityActionTarget } from "@/lib/data-integrity";
 import { parseTaiwanBrokerInventoryCsv } from "@/lib/broker-inventory-csv";
 import {
   historicalTradeCsvBatches,
@@ -42,7 +42,21 @@ type PendingHistoricalTradeCsv = {
   preview: HistoricalTradeCsvPreview;
 };
 
-export function Settings({ state, onChange, hasRecoveryBackup = false, onRecoveryBackupCleared, storageWriteBlocked = false }: { state: AppState; onChange: (state: AppState) => boolean; hasRecoveryBackup?: boolean; onRecoveryBackupCleared?: () => void; storageWriteBlocked?: boolean }) {
+export function Settings({
+  state,
+  onChange,
+  hasRecoveryBackup = false,
+  onRecoveryBackupCleared,
+  storageWriteBlocked = false,
+  onNavigatePortfolio
+}: {
+  state: AppState;
+  onChange: (state: AppState) => boolean;
+  hasRecoveryBackup?: boolean;
+  onRecoveryBackupCleared?: () => void;
+  storageWriteBlocked?: boolean;
+  onNavigatePortfolio?: (tab: "holdings" | "activity" | "performance") => void;
+}) {
   const jsonRef = useRef<HTMLInputElement>(null);
   const csvRef = useRef<HTMLInputElement>(null);
   const brokerCsvRef = useRef<HTMLInputElement>(null);
@@ -56,6 +70,20 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
   const tradeCsvBatches = historicalTradeCsvBatches(state);
   const visibleTradeCsvBatches = showAllTradeCsvBatches ? tradeCsvBatches : tradeCsvBatches.slice(0, 3);
   const integrity = portfolioDataIntegrity(state, localDateKey());
+
+  function runIntegrityAction(target: DataIntegrityActionTarget) {
+    if (target === "historical_csv") {
+      window.requestAnimationFrame(() => {
+        document.getElementById("historical-trade-csv")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      });
+      return;
+    }
+
+    onNavigatePortfolio?.(target);
+  }
 
   function exportRecoveryBackup() {
     const raw = getRecoveryBackupRaw();
@@ -382,6 +410,12 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
                               ) : null}
                             </div>
                           ) : null}
+                          <GhostButton
+                            className="mt-3 h-9 min-h-9 px-3 text-xs"
+                            onClick={() => runIntegrityAction(item.action.target)}
+                          >
+                            {item.action.label}<ArrowRight size={14} />
+                          </GhostButton>
                         </div>
                       </div>
                     </div>
@@ -480,7 +514,7 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-2">
+      <Card id="historical-trade-csv" className="scroll-mt-24 lg:col-span-2">
         <CardContent>
           <h3 className="font-semibold">歷史買賣 CSV</h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-black/50 dark:text-white/50">

@@ -10,7 +10,7 @@ import { HoldingsPanel } from "./holdings";
 import { PortfolioRisk } from "./portfolio-risk";
 import { Performance } from "./performance";
 
-type PortfolioTab = "holdings" | "lookthrough" | "risk" | "targets" | "dividends" | "activity" | "performance";
+export type PortfolioTab = "holdings" | "lookthrough" | "risk" | "targets" | "dividends" | "activity" | "performance";
 
 const tabs: Array<{ key: PortfolioTab; label: string }> = [
   { key: "holdings", label: "持股" },
@@ -22,8 +22,18 @@ const tabs: Array<{ key: PortfolioTab; label: string }> = [
   { key: "performance", label: "績效" }
 ];
 
-export function Portfolio({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => boolean; onResearch?: (researchKey: string) => void }) {
-  const [tab, setTab] = useState<PortfolioTab>("holdings");
+export function Portfolio({
+  state,
+  onChange,
+  onResearch,
+  requestedTab
+}: {
+  state: AppState;
+  onChange: (state: AppState) => boolean;
+  onResearch?: (researchKey: string) => void;
+  requestedTab?: PortfolioTab;
+}) {
+  const [tab, setTab] = useState<PortfolioTab>(requestedTab ?? "holdings");
 
   return (
     <div className="space-y-4">
