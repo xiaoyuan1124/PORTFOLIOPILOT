@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCw } from "lucide-react";
 import type { AppState, EtfComposition } from "@/lib/types";
+import { loadBundledEtfCompositions } from "@/lib/etf-composition-data";
 import { analyzeEtf } from "@/lib/etf-research";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
@@ -32,6 +33,8 @@ export function EtfResearch({
   const [quotes, setQuotes] = useState<TwQuoteCache | null>(null);
   const [loading, setLoading] = useState(true);
   const [quoteError, setQuoteError] = useState("");
+  const [compositionHistory, setCompositionHistory] = useState<EtfComposition[]>([]);
+  const [historyError, setHistoryError] = useState("");
   const heldEtfKeys = useMemo(
     () => new Set(
       state.holdings
@@ -53,31 +56,49 @@ export function EtfResearch({
   async function reload() {
     setLoading(true);
     setQuoteError("");
-    try {
-      setQuotes(await loadBundledTwQuotes());
-    } catch (cause) {
+    setHistoryError("");
+    const [quoteResult, compositionResult] = await Promise.allSettled([
+      loadBundledTwQuotes(),
+      loadBundledEtfCompositions()
+    ]);
+
+    if (quoteResult.status === "fulfilled") {
+      setQuotes(quoteResult.value);
+    } else {
       setQuotes(null);
-      setQuoteError(cause instanceof Error ? cause.message : "無法載入官方台股收盤資料。");
-    } finally {
-      setLoading(false);
+      setQuoteError(quoteResult.reason instanceof Error ? quoteResult.reason.message : "無法載入官方台股收盤資料。");
     }
+
+    if (compositionResult.status === "fulfilled") {
+      setCompositionHistory(compositionResult.value.history);
+    } else {
+      setHistoryError(compositionResult.reason instanceof Error ? compositionResult.reason.message : "無法載入 ETF 成份歷史快照。");
+    }
+    setLoading(false);
   }
 
   useEffect(() => {
     let active = true;
-    void loadBundledTwQuotes()
-      .then((cache) => {
-        if (!active) return;
-        setQuotes(cache);
+    void Promise.allSettled([
+      loadBundledTwQuotes(),
+      loadBundledEtfCompositions()
+    ]).then(([quoteResult, compositionResult]) => {
+      if (!active) return;
+      if (quoteResult.status === "fulfilled") {
+        setQuotes(quoteResult.value);
         setQuoteError("");
-      })
-      .catch((cause) => {
-        if (!active) return;
-        setQuoteError(cause instanceof Error ? cause.message : "無法載入官方台股收盤資料。");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+      } else {
+        setQuoteError(quoteResult.reason instanceof Error ? quoteResult.reason.message : "無法載入官方台股收盤資料。");
+      }
+
+      if (compositionResult.status === "fulfilled") {
+        setCompositionHistory(compositionResult.value.history);
+        setHistoryError("");
+      } else {
+        setHistoryError(compositionResult.reason instanceof Error ? compositionResult.reason.message : "無法載入 ETF 成份歷史快照。");
+      }
+      setLoading(false);
+    });
     return () => { active = false; };
   }, []);
 
@@ -112,10 +133,10 @@ export function EtfResearch({
         </div>
       </div>
 
-      {quoteError ? (
+      {quoteError || historyError ? (
         <div className="flex gap-2 rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
           <AlertTriangle size={17} className="mt-0.5 shrink-0" />
-          <span>{quoteError}</span>
+          <span>{[quoteError, historyError].filter(Boolean).join("；")}</span>
         </div>
       ) : null}
 
@@ -277,7 +298,7 @@ export function EtfResearch({
             </Card>
           </section>
 
-          <EtfDeepAnalysis composition={selected} compositions={compositions} quotes={quotes} />
+          <EtfDeepAnalysis composition={selected} compositions={[...compositions, ...compositionHistory]} quotes={quotes} />
 
           <Card>
             <CardContent>
