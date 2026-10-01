@@ -723,3 +723,13 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - Integrity actions remain navigation-only: they never auto-edit holdings, activities, snapshots, cash or provenance.
 - No persisted state or backup schema changes are required; Backup V17 remains current.
 
+## V0.75 global iOS safe-area layout
+
+- Fixes the shared mobile chrome so **all app sections** respect iPhone / iPad safe areas instead of allowing the sticky title bar to render underneath the status bar or Dynamic Island.
+- The existing Next.js viewport already uses `viewportFit: "cover"`; V0.75 completes that setup by consuming `safe-area-inset-top/right/bottom/left` at the shared App Shell level.
+- The sticky top bar now adds the device top inset to its normal visual padding, so Home, Portfolio, Research and Settings all start below the iOS status area.
+- Main page content also respects left/right safe areas for landscape devices.
+- The mobile bottom navigation and main-content bottom clearance now share the same bottom safe-area token, preventing the Home Indicator from covering navigation or page content.
+- Desktop sidebar padding also respects safe-area insets for standalone/tablet layouts.
+- This is layout-only: no portfolio data, storage schema, calculations or Backup V17 payloads are changed.
+
