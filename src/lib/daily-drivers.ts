@@ -6,6 +6,7 @@ export type DailyHoldingDriver = {
   symbol: string;
   name: string;
   venue: "TWSE" | "TPEx";
+  holdingType: "stock" | "etf";
   date: string;
   quantity: number;
   close: number;
@@ -51,6 +52,7 @@ export function buildDailyHoldingDrivers(holdings: Holding[], cache: TwQuoteCach
       symbol: holding.symbol,
       name: holding.name,
       venue: quote.market,
+      holdingType: holding.type === "etf" ? "etf" : "stock",
       date: quote.date,
       quantity: holding.quantity,
       close: quote.close,
@@ -97,5 +99,26 @@ export function externalCashFlowForDate(activities: PortfolioActivity[], date: s
     depositsTwd,
     withdrawalsTwd,
     netTwd: depositsTwd - withdrawalsTwd
+  };
+}
+
+
+export function summarizeDailyHoldingDrivers(rows: DailyHoldingDriver[]) {
+  const positive = rows.filter((row) => row.impactTwd > 0);
+  const negative = rows.filter((row) => row.impactTwd < 0);
+  const positiveImpactTwd = positive.reduce((sum, row) => sum + row.impactTwd, 0);
+  const negativeImpactTwd = negative.reduce((sum, row) => sum + row.impactTwd, 0);
+  const absoluteImpactTwd = rows.reduce((sum, row) => sum + Math.abs(row.impactTwd), 0);
+
+  return {
+    positiveImpactTwd,
+    negativeImpactTwd,
+    netImpactTwd: positiveImpactTwd + negativeImpactTwd,
+    absoluteImpactTwd,
+    positiveCount: positive.length,
+    negativeCount: negative.length,
+    flatCount: rows.length - positive.length - negative.length,
+    topPositive: [...positive].sort((a, b) => b.impactTwd - a.impactTwd)[0] ?? null,
+    topNegative: [...negative].sort((a, b) => a.impactTwd - b.impactTwd)[0] ?? null
   };
 }
