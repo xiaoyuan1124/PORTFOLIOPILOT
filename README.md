@@ -823,3 +823,17 @@ V0.80 starts by reducing navigation and control complexity before adding more an
 - **Zero-cost:** no new dependency, paid API, backend, database, AI service, or hosted infrastructure is added in this phase.
 
 This phase intentionally keeps the existing analytical engines and persisted user schema unchanged.
+
+
+## V0.80.1 UX / Information Architecture — Phase 2
+
+Phase 2 reduces default information density and makes high-value ETF and performance information visual-first.
+
+- **ETF visual summary:** the largest eight constituents are shown as a compact horizontal weight chart using the existing Recharts dependency.
+- **Composition-change chart:** when at least two official composition dates exist, the largest continuing constituent weight changes are shown as a positive/negative percentage-point chart.
+- **Progressive disclosure:** analytical thresholds, attribution formulas, data boundaries, and interpretation notes move behind compact expandable explanations instead of occupying the default mobile reading path.
+- **Constituent list:** ETF research shows the first ten constituents by default and puts the remaining constituents behind an explicit “查看全部” control.
+- **Performance explanations:** XIRR / Exact TWR / TWR Proxy and external-cash-flow rules are still fully available, but no longer dominate the default performance screen.
+- **No new dependency:** all charts reuse Recharts already in PortfolioPilot. No backend, paid API, AI service, or new hosted infrastructure is added.
+
+The information model remains: **先看結論 → 再看主要原因 → 最後展開完整資料**.

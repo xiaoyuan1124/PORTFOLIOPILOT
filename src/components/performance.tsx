@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleHelp, Coins, Landmark, TrendingUp, WalletCards } from "lucide-react";
+import { Coins, Landmark, WalletCards } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { localDateKey, portfolioSummary } from "@/lib/calc";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/lib/performance";
 import { money, percent } from "@/lib/utils";
 import { BenchmarkComparison } from "./benchmark-comparison";
-import { Badge, Card, CardContent, CardHeader, Metric } from "./ui";
+import { Badge, Card, CardContent, CardHeader, InfoDisclosure, Metric } from "./ui";
 
 export function Performance({ state }: { state: AppState }) {
   const valuationDate = localDateKey();
@@ -64,16 +64,20 @@ export function Performance({ state }: { state: AppState }) {
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <TrendingUp size={18} />
-              <h3 className="font-semibold">報酬怎麼算</h3>
-            </div>
+            <h3 className="font-semibold">績效解讀</h3>
           </CardHeader>
-          <CardContent className="space-y-3 pt-4 text-sm leading-6 text-black/55 dark:text-white/55">
-            <p><strong className="text-black/80 dark:text-white/80">XIRR</strong> 使用你記錄的入金、出金日期與目前投資組合淨值，計算年化資金加權報酬。入金視為投資人的現金流出，出金與目前淨值視為現金流入。</p>
-            <p><strong className="text-black/80 dark:text-white/80">Exact TWR</strong> 只在每筆入金／出金都有「現金流發生前的投資組合淨值」時，才把現金流切成子期間並幾何鏈結。今天實際發生的外部現金流可在寫入前由系統擷取目前 PortfolioPilot 淨值；歷史補登仍需使用當時可確認的手動邊界。缺任何必要邊界就顯示資料不足，不會用 Proxy 補洞冒充精確值。</p>
-            <p><strong className="text-black/80 dark:text-white/80">TWR Proxy</strong> 使用每日淨值快照與 Modified Dietz 做現金流調整。它仍是透明的近似值，用來支援舊資料與缺少事件邊界的期間。</p>
-            <p><strong className="text-black/80 dark:text-white/80">費用與換匯</strong> 另外拆開顯示獨立費用、交易手續費、交易稅與換匯估值差額。它們是帳務成本／估值效果的透明拆解，不會另外從 XIRR 或 TWR 再扣一次，避免重複計算。</p>
+          <CardContent className="pt-4">
+            <p className="text-sm leading-6 text-black/55 dark:text-white/55">
+              先看 Exact TWR 是否完整，再用 XIRR 理解個人資金進出後的年化結果；TWR Proxy 只作舊資料與缺邊界期間的近似。
+            </p>
+            <InfoDisclosure summary="XIRR / Exact TWR / TWR Proxy 怎麼算" className="mt-3">
+              <div className="space-y-2">
+                <p><strong className="text-black/75 dark:text-white/75">XIRR：</strong>使用入金、出金日期與目前投資組合淨值，計算年化資金加權報酬。</p>
+                <p><strong className="text-black/75 dark:text-white/75">Exact TWR：</strong>只有每筆外部現金流都有事前淨值邊界時，才切成子期間並幾何鏈結；缺必要邊界就顯示資料不足。</p>
+                <p><strong className="text-black/75 dark:text-white/75">TWR Proxy：</strong>使用每日淨值快照與 Modified Dietz 做透明近似，不冒充 Exact TWR。</p>
+                <p><strong className="text-black/75 dark:text-white/75">費用與換匯：</strong>另外拆開顯示，不會再從 XIRR 或 TWR 重複扣除。</p>
+              </div>
+            </InfoDisclosure>
           </CardContent>
         </Card>
 
@@ -101,28 +105,21 @@ export function Performance({ state }: { state: AppState }) {
       </section>
 
       <Card>
-        <CardContent className="flex gap-3">
-          <CircleHelp size={18} className="mt-0.5 shrink-0 text-[#7a6549]" />
-          <div className="text-sm leading-6 text-black/50 dark:text-white/50">
-            <p className="font-semibold text-black/75 dark:text-white/75">
-              {exactTwr.status === "exact" ? "Exact TWR 已有可計算的事件邊界。" : "Exact TWR 目前資料不足。"}
-            </p>
-            <p className="mt-1">{exactTwr.reason}</p>
-            {exactTwr.status === "exact" && exactTwr.coverageStartsAfterFirstFlow ? (
-              <p className="mt-1">這個 Exact TWR 只代表第一筆有邊界的外部現金流完成後，到目前估值日的覆蓋區間；不是帳戶更早歷史的完整 TWR。</p>
-            ) : null}
-            {exactTwr.ambiguousDates.length ? <p className="mt-1">同日順序不明：{exactTwr.ambiguousDates.join("、")}</p> : null}
+        <CardContent>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold">{exactTwr.status === "exact" ? "Exact TWR 邊界完整" : "Exact TWR 邊界仍不完整"}</p>
+            <Badge tone={exactTwr.status === "exact" ? "good" : "warn"}>{exactTwr.boundedFlowCount}/{exactTwr.externalFlowCount} 外部現金流</Badge>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="flex gap-3">
-          <CircleHelp size={18} className="mt-0.5 shrink-0 text-[#7a6549]" />
-          <div className="text-sm leading-6 text-black/50 dark:text-white/50">
-            <p className="font-semibold text-black/75 dark:text-white/75">入金／出金才是外部現金流。</p>
-            <p className="mt-1">買進、賣出、股息、費用、內部轉帳與內部換匯都不會被當成外部投入／提領。交易費稅與換匯差額會透過持股、現金與淨值自然反映在績效中；成本區塊只做拆解，不會把它們再從報酬率扣一次。</p>
-          </div>
+          <InfoDisclosure summary="查看 TWR 邊界與外部現金流規則" className="mt-3">
+            <div className="space-y-2">
+              <p>{exactTwr.reason}</p>
+              {exactTwr.status === "exact" && exactTwr.coverageStartsAfterFirstFlow ? (
+                <p>這個 Exact TWR 只代表第一筆有邊界的外部現金流完成後，到目前估值日的覆蓋區間；不是帳戶更早歷史的完整 TWR。</p>
+              ) : null}
+              {exactTwr.ambiguousDates.length ? <p>同日順序不明：{exactTwr.ambiguousDates.join("、")}</p> : null}
+              <p>只有入金／出金屬於外部現金流。買進、賣出、股息、費用、內部轉帳與內部換匯都不會被當成外部投入／提領；交易費稅與換匯差額會透過持股、現金與淨值自然反映。</p>
+            </div>
+          </InfoDisclosure>
         </CardContent>
       </Card>
 
