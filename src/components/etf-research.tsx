@@ -6,6 +6,7 @@ import type { AppState, EtfComposition } from "@/lib/types";
 import { analyzeEtf } from "@/lib/etf-research";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
+import { EtfDeepAnalysis } from "./etf-deep-analysis";
 
 const framework = [
   {
@@ -35,12 +36,12 @@ const framework = [
   },
   {
     title: "6. 單一成份股集中度",
-    standard: "一般廣泛型可先看 Top 1 <10%；單一成份 >20% 代表 ETF 行為可能高度受單一公司左右。",
+    standard: "產品規則：單一持股 <10% 低；10–20% 中；20–30% 高；>30% 非常集中。",
     auto: true
   },
   {
     title: "7. Top 10／HHI 集中度",
-    standard: "廣泛型 Top 10 <50% 較分散；>60% 已屬高集中。HHI 越高，代表有效持股數越少。",
+    standard: "產品規則：Top 10 <40% 較分散；40–60% 中度集中；>60% 高集中。HHI 越高，代表有效持股數越少。",
     auto: true
   },
   {
@@ -333,6 +334,8 @@ export function EtfResearch({
             </Card>
           </section>
 
+          <EtfDeepAnalysis composition={selected} compositions={compositions} quotes={quotes} />
+
           <Card>
             <CardContent>
               <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">ETF selection framework</p>
@@ -353,8 +356,8 @@ export function EtfResearch({
               </div>
 
               <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="mini-metric"><span>Top 1</span><strong>{result.top1WeightPct.toFixed(1)}%</strong><div className="mt-2"><Badge tone={metricTone(result.top1WeightPct, 10, 20)}>{result.top1WeightPct <= 10 ? "較分散" : result.top1WeightPct <= 20 ? "中度集中" : "高度集中"}</Badge></div></div>
-                <div className="mini-metric"><span>Top 10</span><strong>{result.top10WeightPct.toFixed(1)}%</strong><div className="mt-2"><Badge tone={metricTone(result.top10WeightPct, 50, 60)}>{result.top10WeightPct <= 50 ? "較分散" : result.top10WeightPct <= 60 ? "中度集中" : "高度集中"}</Badge></div></div>
+                <div className="mini-metric"><span>Top 1</span><strong>{result.top1WeightPct.toFixed(1)}%</strong><div className="mt-2"><Badge tone={metricTone(result.top1WeightPct, 10, 20)}>{result.top1WeightPct < 10 ? "低" : result.top1WeightPct < 20 ? "中" : result.top1WeightPct <= 30 ? "高" : "非常集中"}</Badge></div></div>
+                <div className="mini-metric"><span>Top 10</span><strong>{result.top10WeightPct.toFixed(1)}%</strong><div className="mt-2"><Badge tone={metricTone(result.top10WeightPct, 40, 60)}>{result.top10WeightPct < 40 ? "較分散" : result.top10WeightPct <= 60 ? "中度集中" : "高度集中"}</Badge></div></div>
                 <div className="mini-metric"><span>最大產業</span><strong>{result.topSector ? `${result.topSector.weightPct.toFixed(1)}%` : "—"}</strong><div className="mt-2"><Badge tone={metricTone(result.topSector?.weightPct ?? 0, 30, 50)}>{(result.topSector?.weightPct ?? 0) <= 30 ? "較分散" : (result.topSector?.weightPct ?? 0) <= 50 ? "偏重" : "高度集中"}</Badge></div></div>
                 <div className="mini-metric"><span>直接持股重疊</span><strong>{result.directPortfolioOverlapWeightPct.toFixed(1)}%</strong><div className="mt-2"><Badge tone={metricTone(result.directPortfolioOverlapWeightPct, 20, 40)}>{result.directPortfolioOverlapWeightPct <= 20 ? "較低" : result.directPortfolioOverlapWeightPct <= 40 ? "中度" : "高度重疊"}</Badge></div></div>
               </div>
