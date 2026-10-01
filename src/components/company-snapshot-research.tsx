@@ -14,6 +14,7 @@ import { evaluateOfficialStrategy, type SourceRef } from "@/lib/strategy-gates";
 import { loadBundledValuations, valuationSource, type ValuationCache } from "@/lib/valuation-data";
 import { marketPrice, percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
+import { SecurityPriceHistoryCard } from "./security-price-history-card";
 
 type Caches = {
   quotes: TwQuoteCache;
@@ -221,6 +222,8 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
 
     {selected ? <>
       <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{isHeldCompanySnapshot(selected, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>
+
+      <SecurityPriceHistoryCard market={selected.market} symbol={selected.code} />
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card><CardContent className="p-4 md:p-5"><SectionHeader title="市場與估值" detail="官方收盤 / 估值快照" /><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"><div className="mini-metric"><span>收盤價</span><strong>{selected.quote ? marketPrice(selected.quote.close, "TWD") : "—"}</strong></div><div className="mini-metric"><span>PE</span><strong>{ratio(selected.valuation?.pe)}</strong></div><div className="mini-metric"><span>PB</span><strong>{ratio(selected.valuation?.pb)}</strong></div><div className="mini-metric"><span>殖利率</span><strong>{yieldPercent(selected.valuation?.dividendYield)}</strong></div></div><div className="mt-4 space-y-1 text-[11px] leading-5 text-black/40 dark:text-white/40"><p>收盤資料日：{selected.quote?.date ?? "—"} {quoteSource ? <a href={quoteSource.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 underline underline-offset-2">{quoteSource.name}<ExternalLink size={10} /></a> : null}</p><p>估值資料日：{selected.valuation?.date ?? "—"} {valuationMeta ? <a href={valuationMeta.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 underline underline-offset-2">{valuationMeta.name}<ExternalLink size={10} /></a> : null}</p></div></CardContent></Card>
