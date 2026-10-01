@@ -37,6 +37,7 @@ export function AppShell() {
   const [dark, setDark] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [researchKey, setResearchKey] = useState<string | undefined>();
+  const [researchType, setResearchType] = useState<"stock" | "etf" | undefined>();
   const [researchRequestId, setResearchRequestId] = useState(0);
   const [hasRecoveryBackup, setHasRecoveryBackup] = useState(false);
   const [storageWriteBlocked, setStorageWriteBlocked] = useState(false);
@@ -109,9 +110,10 @@ export function AppShell() {
     }
   }
 
-  function navigate(next: Section, nextResearchKey?: string) {
+  function navigate(next: Section, nextResearchKey?: string, nextResearchType?: "stock" | "etf") {
     if (next === "research" && nextResearchKey) {
       setResearchKey(nextResearchKey);
+      setResearchType(nextResearchType);
       setResearchRequestId((value) => value + 1);
     }
     if (next === "portfolio") {
@@ -203,11 +205,11 @@ export function AppShell() {
               key={portfolioRequestId}
               state={state}
               onChange={updateState}
-              onResearch={(key) => navigate("research", key)}
+              onResearch={(key, type) => navigate("research", key, type)}
               requestedTab={portfolioRequestedTab}
             />
           ) : null}
-          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} /> : null}
+          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} /> : null}
           {section === "settings" ? (
             <Settings
               state={state}

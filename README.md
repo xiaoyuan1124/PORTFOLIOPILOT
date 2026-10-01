@@ -808,3 +808,18 @@ V0.79 turns the V0.78 latest-only issuer cache into a bounded historical series 
 - **Cost:** no Supabase, paid API, broker connection, AI API, or server is added. The feature continues to use the existing public-repo GitHub Actions + GitHub Pages pipeline.
 
 Backup V17 remains unchanged because ETF history is public bundled research data, not new personal persisted state.
+
+
+## V0.80 UX / Information Architecture — Phase 1
+
+V0.80 starts by reducing navigation and control complexity before adding more analytical features.
+
+- **Research hierarchy:** eight always-visible research tabs are grouped into four primary areas — 標的 / 市場 / 策略 / 筆記 — with only contextual secondary controls shown inside the active area.
+- **Portfolio hierarchy:** seven always-visible portfolio tabs are grouped into four primary areas — 總覽 / 活動 / 績效 / 規劃.
+- **Clearer terminology:** 個股總覽 becomes 標的總覽 because the page already supports both stocks and ETFs; 策略 Scanner becomes 選股 Scanner to make its stock-oriented scope explicit.
+- **Progressive disclosure:** secondary functions appear only when their parent area is active instead of forcing mobile users to scan one long horizontal tab strip.
+- **Filter semantics:** 「只看持有」 becomes an 全部 / 持有 filter toggle rather than a full-width action button.
+- **Sync semantics:** market-data actions use consistent wording such as 「同步最新資料」「重新同步」「重新整理」 instead of several overlapping update/read labels.
+- **Zero-cost:** no new dependency, paid API, backend, database, AI service, or hosted infrastructure is added in this phase.
+
+This phase intentionally keeps the existing analytical engines and persisted user schema unchanged.
