@@ -820,7 +820,7 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
         <div className="flex flex-wrap gap-2">
           <GhostButton type="button" disabled={refreshing} onClick={refreshTaiwanPrices}>
             <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-            {refreshing ? "更新中" : "更新市場資料"}
+            {refreshing ? "同步中" : "同步最新資料"}
           </GhostButton>
           {state.holdings.length ? (
             <Modal
