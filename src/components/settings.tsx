@@ -368,6 +368,20 @@ export function Settings({ state, onChange, hasRecoveryBackup = false, onRecover
                           <p className="mt-1 text-[11px] font-semibold text-black/35 dark:text-white/35">
                             影響 {item.count.toLocaleString()} 筆
                           </p>
+                          {item.examples.length ? (
+                            <div className="mt-2 space-y-1">
+                              {item.examples.map((example) => (
+                                <p key={example} className="truncate rounded-lg bg-black/[.035] px-2 py-1 text-[11px] text-black/48 dark:bg-white/[.05] dark:text-white/48">
+                                  {example}
+                                </p>
+                              ))}
+                              {item.count > item.examples.length ? (
+                                <p className="px-1 text-[10px] text-black/30 dark:text-white/30">
+                                  另有 {(item.count - item.examples.length).toLocaleString()} 筆未展開
+                                </p>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>

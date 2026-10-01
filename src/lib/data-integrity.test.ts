@@ -100,6 +100,12 @@ describe("portfolio data integrity", () => {
       "tw_price_provenance",
       "snapshot_missing_today"
     ]));
+    expect(report.items.find((item) => item.id === "future_activities")?.examples)
+      .toContain("2026-10-02 09:00 · deposit · 券商A");
+    expect(report.items.find((item) => item.id === "tw_price_provenance")?.examples)
+      .toContain("2330 · 券商A");
+    expect(report.items.find((item) => item.id === "snapshot_missing_today")?.examples)
+      .toEqual(["最近快照 2026-09-30"]);
   });
 
   it("flags future-dated Taiwan provenance separately from missing provenance", () => {
@@ -123,6 +129,8 @@ describe("portfolio data integrity", () => {
 
     const report = portfolioDataIntegrity(state, TODAY);
     expect(report.items.find((item) => item.id === "tw_future_price_date")?.count).toBe(1);
+    expect(report.items.find((item) => item.id === "tw_future_price_date")?.examples)
+      .toEqual(["2330 · 券商A · 2026-10-02"]);
     expect(report.items.some((item) => item.id === "tw_price_provenance")).toBe(false);
   });
 
@@ -136,7 +144,13 @@ describe("portfolio data integrity", () => {
     const report = portfolioDataIntegrity(state, TODAY);
 
     expect(report.items.find((item) => item.id === "twr_missing_boundary")?.count).toBe(2);
+    expect(report.items.find((item) => item.id === "twr_missing_boundary")?.examples)
+      .toEqual([
+        "2026-09-20 · deposit · 券商A"
+      ]);
     expect(report.items.find((item) => item.id === "twr_ambiguous_order")?.count).toBe(1);
+    expect(report.items.find((item) => item.id === "twr_ambiguous_order")?.examples)
+      .toEqual(["2026-09-20"]);
   });
 
   it("keeps legacy CSV provenance and manual US pricing informational", () => {
@@ -187,6 +201,10 @@ describe("portfolio data integrity", () => {
       "legacy_csv_filename",
       "manual_us_price"
     ]));
+    expect(report.items.find((item) => item.id === "legacy_csv_batch")?.examples)
+      .toEqual(["2020-01-02 · buy · QQQM · 美股券商"]);
+    expect(report.items.find((item) => item.id === "manual_us_price")?.examples)
+      .toEqual(["QQQM · 美股券商"]);
   });
 
   it("does not flag complete V0.70+ CSV provenance", () => {

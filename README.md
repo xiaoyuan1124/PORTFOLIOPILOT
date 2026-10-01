@@ -703,3 +703,12 @@ CSV is intended for holdings and ETF-composition interchange. JSON is the author
 - The diagnostics are pure/read-only and never mutate holdings, cash, activities, snapshots or provenance.
 - No new persisted field is required; Backup V17 remains current and V1–V16 compatibility is unchanged.
 
+## V0.73 data integrity evidence drilldown
+
+- Every Data Integrity Center warning / informational item now carries up to three concrete evidence examples, such as affected security + account, activity date/type, snapshot date, or ambiguous TWR date.
+- Evidence examples are derived from the same local state used to produce the diagnostic count, so the user can identify which records need inspection without guessing.
+- Duplicate evidence labels are collapsed for readability while the full affected-row count remains visible.
+- Settings shows the examples inline and reports how many additional affected rows are not expanded when the issue count exceeds the preview size.
+- This remains read-only diagnostics: no holding, cash, activity, snapshot or provenance value is changed.
+- No persisted field changes are required; Backup V17 remains current.
+
