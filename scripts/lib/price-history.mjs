@@ -143,3 +143,26 @@ export function weekdayDates(startDate, endDate) {
   }
   return dates;
 }
+
+
+export async function mapWithConcurrency(items, limit, worker) {
+  if (!Number.isInteger(limit) || limit < 1) {
+    throw new Error(`Concurrency limit must be a positive integer; got ${limit}`);
+  }
+  const values = Array.from(items);
+  let cursor = 0;
+  const results = new Array(values.length);
+
+  async function runWorker() {
+    while (true) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= values.length) return;
+      results[index] = await worker(values[index], index);
+    }
+  }
+
+  const workerCount = Math.min(limit, values.length);
+  await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+  return results;
+}
