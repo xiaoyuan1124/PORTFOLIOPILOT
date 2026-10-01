@@ -129,7 +129,7 @@ export function AllocationTargets({
   state: AppState;
   onChange: (state: AppState) => boolean;
 }) {
-  const targets = state.allocationTargets ?? [];
+  const targets = useMemo(() => state.allocationTargets ?? [], [state.allocationTargets]);
   const rows = useMemo(
     () => buildAllocationDrift(targets, state.holdings, state.usdTwd),
     [targets, state.holdings, state.usdTwd]
