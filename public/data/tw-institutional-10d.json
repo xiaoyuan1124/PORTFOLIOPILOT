@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T11:18:52.586Z",
+  "generatedAt": "2026-10-01T17:07:01.830Z",
   "tradingDates": [
     "2026-10-01",
     "2026-09-30",
@@ -301,7 +301,7 @@
       "market": "TWSE",
       "foreign10d": 0,
       "trust10d": 0,
-      "observedDays": 9
+      "observedDays": 10
     },
     {
       "code": "00637L",
@@ -469,7 +469,7 @@
       "market": "TWSE",
       "foreign10d": 0,
       "trust10d": 0,
-      "observedDays": 9
+      "observedDays": 10
     },
     {
       "code": "00660",
@@ -541,7 +541,7 @@
       "market": "TWSE",
       "foreign10d": 0,
       "trust10d": 0,
-      "observedDays": 9
+      "observedDays": 10
     },
     {
       "code": "00669R",
@@ -5524,7 +5524,7 @@
       "name": "聯電",
       "market": "TWSE",
       "foreign10d": 55684995,
-      "trust10d": 68705872,
+      "trust10d": 69355872,
       "observedDays": 10
     },
     {
@@ -5604,7 +5604,7 @@
       "name": "國巨*",
       "market": "TWSE",
       "foreign10d": 7698794,
-      "trust10d": 873575,
+      "trust10d": 1069575,
       "observedDays": 10
     },
     {
@@ -5692,7 +5692,7 @@
       "name": "智邦",
       "market": "TWSE",
       "foreign10d": 329673,
-      "trust10d": -7334339,
+      "trust10d": -7391339,
       "observedDays": 10
     },
     {
@@ -5788,7 +5788,7 @@
       "name": "致茂",
       "market": "TWSE",
       "foreign10d": 1666067,
-      "trust10d": -2825202,
+      "trust10d": -2954202,
       "observedDays": 10
     },
     {
@@ -6020,7 +6020,7 @@
       "name": "漢唐",
       "market": "TWSE",
       "foreign10d": 675719,
-      "trust10d": 3620000,
+      "trust10d": 3697000,
       "observedDays": 10
     },
     {
@@ -6044,7 +6044,7 @@
       "name": "南亞科",
       "market": "TWSE",
       "foreign10d": 36761776,
-      "trust10d": 1934361,
+      "trust10d": 1914361,
       "observedDays": 10
     },
     {
@@ -7860,7 +7860,7 @@
       "name": "奇鋐",
       "market": "TWSE",
       "foreign10d": -937466,
-      "trust10d": 49880,
+      "trust10d": -3120,
       "observedDays": 10
     },
     {
@@ -8300,7 +8300,7 @@
       "name": "穩懋",
       "market": "TPEx",
       "foreign10d": 22834266,
-      "trust10d": 5124900,
+      "trust10d": 5662900,
       "observedDays": 10
     },
     {
@@ -9196,7 +9196,7 @@
       "name": "創意",
       "market": "TWSE",
       "foreign10d": 63981,
-      "trust10d": -141158,
+      "trust10d": -175158,
       "observedDays": 10
     },
     {
@@ -9508,7 +9508,7 @@
       "name": "嘉澤",
       "market": "TWSE",
       "foreign10d": -627711,
-      "trust10d": 119655,
+      "trust10d": 118655,
       "observedDays": 10
     },
     {
@@ -14300,7 +14300,7 @@
       "name": "旭隼",
       "market": "TWSE",
       "foreign10d": 55047,
-      "trust10d": -101621,
+      "trust10d": -92621,
       "observedDays": 10
     },
     {
@@ -15828,7 +15828,7 @@
       "name": "富世達",
       "market": "TWSE",
       "foreign10d": 278277,
-      "trust10d": 1579700,
+      "trust10d": 1498700,
       "observedDays": 10
     },
     {
@@ -15884,7 +15884,7 @@
       "name": "邁科",
       "market": "TWSE",
       "foreign10d": 79299,
-      "trust10d": -810000,
+      "trust10d": -929000,
       "observedDays": 10
     },
     {
@@ -88508,7 +88508,7 @@
       "name": "漢測",
       "market": "TPEx",
       "foreign10d": 311242,
-      "trust10d": 678300,
+      "trust10d": 701300,
       "observedDays": 6
     },
     {
@@ -88644,7 +88644,7 @@
       "name": "南電",
       "market": "TWSE",
       "foreign10d": 11002869,
-      "trust10d": 1247901,
+      "trust10d": 1797901,
       "observedDays": 10
     },
     {
@@ -89820,7 +89820,7 @@
       "name": "高力",
       "market": "TWSE",
       "foreign10d": -1196504,
-      "trust10d": 895453,
+      "trust10d": 1021453,
       "observedDays": 10
     },
     {
