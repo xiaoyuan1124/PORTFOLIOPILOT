@@ -1,6 +1,6 @@
 {
   "name": "portfoliopilot",
-  "version": "0.82.10",
+  "version": "0.83.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "native:build": "node scripts/build-native.mjs",
+    "native:sync": "npm run native:build && cap sync",
+    "native:ios:add": "npm run native:build && cap add ios --packagemanager SPM",
+    "native:ios:open": "cap open ios",
     "market:update": "node scripts/update-market-data.mjs && node scripts/update-etf-compositions.mjs && node scripts/update-material-events.mjs && node scripts/update-quarterly-financials.mjs && node scripts/update-benchmarks.mjs",
     "market:events": "node scripts/update-material-events.mjs",
     "market:quarterly": "node scripts/update-quarterly-financials.mjs",
@@ -17,6 +21,9 @@
     "history:update": "node scripts/update-price-history.mjs"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "@radix-ui/react-dialog": "^1.1.15",
     "clsx": "^2.1.1",
     "lucide-react": "^0.468.0",
@@ -30,6 +37,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
     "@tailwindcss/postcss": "^4.1.14",
     "@types/node": "^22.10.0",
     "@types/papaparse": "^5.3.16",
