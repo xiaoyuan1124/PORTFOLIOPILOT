@@ -107,7 +107,10 @@ export function AppShell() {
 
     function onNativeDeepLink(event: Event) {
       const value = (event as CustomEvent<string>).detail;
-      if (typeof value === "string") openNativeDeepLink(value);
+      if (typeof value === "string") {
+        consumePendingNativeDeepLink();
+        openNativeDeepLink(value);
+      }
     }
 
     window.addEventListener(NATIVE_DEEP_LINK_EVENT, onNativeDeepLink);
