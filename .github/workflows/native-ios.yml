@@ -26,6 +26,8 @@ on:
       - "src/app/support/page.tsx"
       - "scripts/configure-ios-native.mjs"
       - "scripts/verify-ios-packaging.mjs"
+      - "scripts/archive-ios-unsigned.mjs"
+      - "scripts/verify-ios-archive.mjs"
       - ".github/workflows/native-ios.yml"
   workflow_dispatch:
 
@@ -77,13 +79,11 @@ jobs:
           -destination "generic/platform=iOS Simulator"
           CODE_SIGNING_ALLOWED=NO
           build
-      - name: Build unsigned iOS device release
-        run: >
-          xcodebuild
-          -project ios/App/App.xcodeproj
-          -scheme App
-          -configuration Release
-          -sdk iphoneos
-          -destination "generic/platform=iOS"
-          CODE_SIGNING_ALLOWED=NO
-          build
+      - name: Build unsigned iOS RC archive
+        env:
+          ARCHIVE_PATH: ${{ runner.temp }}/PortfolioPilot.xcarchive
+        run: npm run native:ios:archive:unsigned
+      - name: Verify unsigned iOS RC archive
+        env:
+          ARCHIVE_PATH: ${{ runner.temp }}/PortfolioPilot.xcarchive
+        run: npm run native:ios:archive:verify
