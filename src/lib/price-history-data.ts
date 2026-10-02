@@ -119,7 +119,7 @@ async function refreshHistoryGeneration() {
   try {
     await promise;
   } catch {
-    if (indexProbe?.promise === promise) indexProbe = null;
+    // Keep the rejected probe for the TTL so repeated offline reads do not hammer the network.
   }
 }
 
