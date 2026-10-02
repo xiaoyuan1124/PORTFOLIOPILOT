@@ -28,6 +28,10 @@ on:
       - "scripts/verify-ios-packaging.mjs"
       - "scripts/archive-ios-unsigned.mjs"
       - "scripts/verify-ios-archive.mjs"
+      - "scripts/create-testflight-export-options.mjs"
+      - "scripts/archive-ios-signed.mjs"
+      - "scripts/upload-ios-testflight.mjs"
+      - ".github/workflows/testflight-upload.yml"
       - ".github/workflows/native-ios.yml"
   workflow_dispatch:
 
@@ -56,6 +60,19 @@ jobs:
           echo "Validated Xcode $XCODE_VERSION / iOS SDK $SDK_VERSION"
       - name: Install dependencies
         run: npm install --legacy-peer-deps
+      - name: Validate TestFlight CLI contract
+        env:
+          APPLE_TEAM_ID: CI_TEAM_PLACEHOLDER
+          EXPORT_OPTIONS_PATH: ${{ runner.temp }}/ExportOptions-TestFlight.plist
+        run: |
+          xcodebuild -help > "$RUNNER_TEMP/xcodebuild-help.txt" 2>&1
+          grep -q "app-store-connect" "$RUNNER_TEMP/xcodebuild-help.txt"
+          grep -q "authenticationKeyPath" "$RUNNER_TEMP/xcodebuild-help.txt"
+          npm run native:ios:testflight:options
+          plutil -lint "$EXPORT_OPTIONS_PATH"
+          test "$(plutil -extract method raw -o - "$EXPORT_OPTIONS_PATH")" = "app-store-connect"
+          test "$(plutil -extract destination raw -o - "$EXPORT_OPTIONS_PATH")" = "upload"
+          test "$(plutil -extract signingStyle raw -o - "$EXPORT_OPTIONS_PATH")" = "automatic"
       - name: Generate iOS shell
         run: npm run native:ios:add
       - name: Validate iOS privacy manifest
