@@ -1,0 +1,109 @@
+name: TestFlight Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_upload:
+        description: Type UPLOAD to confirm a real App Store Connect upload
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portfoliopilot-testflight-upload
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - name: Guard manual production upload
+        env:
+          CONFIRM_UPLOAD: ${{ inputs.confirm_upload }}
+        run: |
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$CONFIRM_UPLOAD" = "UPLOAD"
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Validate required GitHub Secrets
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
+        run: |
+          test -n "$APPLE_TEAM_ID"
+          test -n "$APP_STORE_CONNECT_KEY_ID"
+          test -n "$APP_STORE_CONNECT_ISSUER_ID"
+          test -n "$APP_STORE_CONNECT_API_KEY_P8_BASE64"
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Prepare App Store Connect API key
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
+        run: |
+          KEY_PATH="$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
+          printf '%s' "$APP_STORE_CONNECT_API_KEY_P8_BASE64" | base64 --decode > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+          echo "APP_STORE_CONNECT_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
+
+      - name: Generate and verify iOS shell
+        run: npm run native:ios:add
+
+      - name: Resolve Swift packages
+        run: xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App
+
+      - name: Create TestFlight export options
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          EXPORT_OPTIONS_PATH: ${{ runner.temp }}/ExportOptions-TestFlight.plist
+        run: |
+          npm run native:ios:testflight:options
+          plutil -lint "$EXPORT_OPTIONS_PATH"
+          echo "EXPORT_OPTIONS_PATH=$EXPORT_OPTIONS_PATH" >> "$GITHUB_ENV"
+
+      - name: Build signed App Store archive
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ARCHIVE_PATH: ${{ runner.temp }}/PortfolioPilot-signed.xcarchive
+        run: |
+          npm run native:ios:archive:signed
+          echo "ARCHIVE_PATH=$ARCHIVE_PATH" >> "$GITHUB_ENV"
+
+      - name: Verify signed archive identity
+        env:
+          ARCHIVE_PATH: ${{ runner.temp }}/PortfolioPilot-signed.xcarchive
+        run: |
+          APP_PATH="$ARCHIVE_PATH/Products/Applications/PortfolioPilot.app"
+          test -d "$APP_PATH"
+          test "$(plutil -extract CFBundleIdentifier raw -o - "$APP_PATH/Info.plist")" = "com.sy1124.portfoliopilot"
+          test "$(plutil -extract CFBundleShortVersionString raw -o - "$APP_PATH/Info.plist")" = "$(node -p "require('./native/app-store.json').version")"
+          test "$(plutil -extract CFBundleVersion raw -o - "$APP_PATH/Info.plist")" = "$(node -p "require('./native/app-store.json').buildNumber")"
+          codesign --verify --deep --strict "$APP_PATH"
+          codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -q "Authority="
+
+      - name: Upload exact archive to App Store Connect
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          EXPORT_OPTIONS_PATH: ${{ runner.temp }}/ExportOptions-TestFlight.plist
+          ARCHIVE_PATH: ${{ runner.temp }}/PortfolioPilot-signed.xcarchive
+          EXPORT_PATH: ${{ runner.temp }}/testflight-export
+        run: npm run native:ios:testflight:upload
+
+      - name: Report uploaded identity
+        run: |
+          echo "Uploaded PortfolioPilot $(node -p "require('./native/app-store.json').version") ($(node -p "require('./native/app-store.json').buildNumber")) from commit $GITHUB_SHA"
