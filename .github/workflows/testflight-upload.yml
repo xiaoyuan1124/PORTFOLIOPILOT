@@ -7,6 +7,10 @@ on:
         description: Type UPLOAD to confirm a real App Store Connect upload
         required: true
         type: string
+      confirm_bundle_id:
+        description: Type com.sy1124.portfoliopilot to confirm the target app
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -19,13 +23,18 @@ jobs:
   upload:
     runs-on: macos-26
     timeout-minutes: 45
+    environment:
+      name: portfolio-testflight
     steps:
       - name: Guard manual production upload
         env:
           CONFIRM_UPLOAD: ${{ inputs.confirm_upload }}
+          CONFIRM_BUNDLE_ID: ${{ inputs.confirm_bundle_id }}
         run: |
+          test "$GITHUB_REPOSITORY" = "xiaoyuan1124/PORTFOLIOPILOT"
           test "$GITHUB_REF" = "refs/heads/main"
           test "$CONFIRM_UPLOAD" = "UPLOAD"
+          test "$CONFIRM_BUNDLE_ID" = "com.sy1124.portfoliopilot"
 
       - uses: actions/checkout@v5
 
@@ -35,10 +44,10 @@ jobs:
 
       - name: Validate required GitHub Secrets
         env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
+          APPLE_TEAM_ID: ${{ secrets.PORTFOLIOPILOT_APPLE_TEAM_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.PORTFOLIOPILOT_ASC_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.PORTFOLIOPILOT_ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.PORTFOLIOPILOT_ASC_API_KEY_P8_BASE64 }}
         run: |
           test -n "$APPLE_TEAM_ID"
           test -n "$APP_STORE_CONNECT_KEY_ID"
@@ -50,8 +59,8 @@ jobs:
 
       - name: Prepare App Store Connect API key
         env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.PORTFOLIOPILOT_ASC_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.PORTFOLIOPILOT_ASC_API_KEY_P8_BASE64 }}
         run: |
           KEY_PATH="$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
           node -e 'require("fs").writeFileSync(process.argv[1], Buffer.from(process.env.APP_STORE_CONNECT_API_KEY_P8_BASE64, "base64"))' "$KEY_PATH"
@@ -66,7 +75,7 @@ jobs:
 
       - name: Create TestFlight export options
         env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_TEAM_ID: ${{ secrets.PORTFOLIOPILOT_APPLE_TEAM_ID }}
           EXPORT_OPTIONS_PATH: ${{ runner.temp }}/ExportOptions-TestFlight.plist
         run: |
           npm run native:ios:testflight:options
@@ -75,9 +84,9 @@ jobs:
 
       - name: Build signed App Store archive
         env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.PORTFOLIOPILOT_APPLE_TEAM_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.PORTFOLIOPILOT_ASC_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.PORTFOLIOPILOT_ASC_ISSUER_ID }}
           ARCHIVE_PATH: ${{ runner.temp }}/PortfolioPilot-signed.xcarchive
         run: |
           npm run native:ios:archive:signed
@@ -98,8 +107,8 @@ jobs:
 
       - name: Upload exact archive to App Store Connect
         env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.PORTFOLIOPILOT_ASC_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.PORTFOLIOPILOT_ASC_ISSUER_ID }}
           EXPORT_OPTIONS_PATH: ${{ runner.temp }}/ExportOptions-TestFlight.plist
           ARCHIVE_PATH: ${{ runner.temp }}/PortfolioPilot-signed.xcarchive
           EXPORT_PATH: ${{ runner.temp }}/testflight-export
