@@ -7,7 +7,12 @@ import { Toaster, toast } from "sonner";
 import type { AppState } from "@/lib/types";
 import { emptyState } from "@/lib/demo-data";
 import { withTodaySnapshot } from "@/lib/calc";
-import { loadInitialState, saveState } from "@/lib/storage";
+import { loadInitialState } from "@/lib/storage";
+import {
+  loadDurableInitialState,
+  NativeDurabilityError,
+  saveDurableState
+} from "@/lib/durable-storage";
 import { cn } from "@/lib/utils";
 import {
   consumePendingNativeDeepLink,
@@ -47,35 +52,60 @@ export function AppShell() {
   const [researchRequestId, setResearchRequestId] = useState(0);
   const [hasRecoveryBackup, setHasRecoveryBackup] = useState(false);
   const [storageWriteBlocked, setStorageWriteBlocked] = useState(false);
+  const [storageReady, setStorageReady] = useState(false);
+  const [nativeStorageDegraded, setNativeStorageDegraded] = useState(false);
   const [portfolioRequestedTab, setPortfolioRequestedTab] = useState<PortfolioTab | undefined>();
   const [portfolioRequestId, setPortfolioRequestId] = useState(0);
   const title = useMemo(() => titles[section], [section]);
 
   useEffect(() => {
+    let cancelled = false;
     const frame = window.requestAnimationFrame(() => {
-      const loaded = loadInitialState();
-      const initial = withTodaySnapshot(loaded.state);
-      setState(initial);
-      setHasRecoveryBackup(loaded.recoveryPreserved);
-      setStorageWriteBlocked(loaded.invalidStoredState && !loaded.recoveryPreserved);
-
-      if (!loaded.invalidStoredState) {
+      void (async () => {
         try {
-          saveState(initial);
-        } catch {
-          setStorageWriteBlocked(true);
-        }
-      }
+          let loaded;
+          try {
+            loaded = await loadDurableInitialState();
+          } catch {
+            loaded = {
+              ...loadInitialState(),
+              nativeDurabilityDegraded: Capacitor.isNativePlatform()
+            };
+          }
 
-      let saved: string | null = null;
-      try {
-        saved = window.localStorage.getItem("portfoliopilot:theme");
-      } catch {
-        saved = null;
-      }
-      const shouldDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setDark(shouldDark);
-      document.documentElement.classList.toggle("dark", shouldDark);
+          if (cancelled) return;
+
+          const initial = withTodaySnapshot(loaded.state);
+          setState(initial);
+          setHasRecoveryBackup(loaded.recoveryPreserved);
+          setStorageWriteBlocked(loaded.invalidStoredState && !loaded.recoveryPreserved);
+          setNativeStorageDegraded(loaded.nativeDurabilityDegraded);
+
+          if (!loaded.invalidStoredState) {
+            try {
+              await saveDurableState(initial);
+            } catch (error) {
+              if (error instanceof NativeDurabilityError) {
+                setNativeStorageDegraded(true);
+              } else {
+                setStorageWriteBlocked(true);
+              }
+            }
+          }
+
+          let saved: string | null = null;
+          try {
+            saved = window.localStorage.getItem("portfoliopilot:theme");
+          } catch {
+            saved = null;
+          }
+          const shouldDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+          setDark(shouldDark);
+          document.documentElement.classList.toggle("dark", shouldDark);
+        } finally {
+          if (!cancelled) setStorageReady(true);
+        }
+      })();
     });
 
     if (!Capacitor.isNativePlatform() && "serviceWorker" in navigator) {
@@ -83,7 +113,10 @@ export function AppShell() {
       navigator.serviceWorker.register(`${base}/sw.js`).catch(() => undefined);
     }
 
-    return () => window.cancelAnimationFrame(frame);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   useEffect(() => {
@@ -137,12 +170,26 @@ export function AppShell() {
 
     const prepared = withTodaySnapshot(next);
     try {
-      saveState(prepared);
+      const durableWrite = saveDurableState(prepared);
       setState(prepared);
+
+      void durableWrite
+        .then(() => setNativeStorageDegraded(false))
+        .catch((error) => {
+          if (error instanceof NativeDurabilityError) {
+            setNativeStorageDegraded(true);
+            toast.error("資料已保存在目前 App，但原生耐久副本寫入失敗。請先匯出備份，之後再重試。");
+            return;
+          }
+
+          setStorageWriteBlocked(true);
+          toast.error("本機儲存失敗。請先匯出備份並檢查裝置儲存空間。");
+        });
+
       return true;
     } catch {
       setStorageWriteBlocked(true);
-      toast.error("本機儲存失敗，這次變更沒有套用。請先匯出備份並檢查瀏覽器儲存空間。");
+      toast.error("本機儲存失敗，這次變更沒有套用。請先匯出備份並檢查裝置儲存空間。");
       return false;
     }
   }
@@ -178,6 +225,14 @@ export function AppShell() {
     } catch {
       toast.info("主題已套用，但瀏覽器目前無法記住這個偏好。");
     }
+  }
+
+  if (!storageReady) {
+    return (
+      <div className="grid min-h-dvh place-items-center px-6 text-center text-sm text-black/45 dark:text-white/45">
+        正在讀取本機投資資料…
+      </div>
+    );
   }
 
   return (
@@ -227,11 +282,23 @@ export function AppShell() {
         </header>
 
         <div className="app-page-content mx-auto max-w-[1360px] py-5 md:py-8">
-          {hasRecoveryBackup || storageWriteBlocked ? (
+          {hasRecoveryBackup || storageWriteBlocked || nativeStorageDegraded ? (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
               <div>
-                <p className="text-sm font-semibold">{storageWriteBlocked ? "本機儲存暫停寫入" : "已保留一份本機資料復原備份"}</p>
-                <p className="mt-0.5 text-xs opacity-80">{storageWriteBlocked ? "偵測到資料異常且無法安全建立復原副本，為避免覆蓋原始資料，已停止儲存新變更。" : "曾有一次本機資料無法通過驗證；原始內容沒有直接丟棄，可到「我的」匯出復原檔。"}</p>
+                <p className="text-sm font-semibold">
+                  {storageWriteBlocked
+                    ? "本機儲存暫停寫入"
+                    : nativeStorageDegraded
+                      ? "Native 耐久儲存需要注意"
+                      : "已保留一份本機資料復原備份"}
+                </p>
+                <p className="mt-0.5 text-xs opacity-80">
+                  {storageWriteBlocked
+                    ? "偵測到資料異常且無法安全建立復原副本，為避免覆蓋原始資料，已停止儲存新變更。"
+                    : nativeStorageDegraded
+                      ? "目前畫面仍保有本機快取，但 Preferences 耐久副本暫時無法確認寫入；建議先匯出 JSON 備份。"
+                      : "曾有一次本機資料無法通過驗證；原始內容沒有直接丟棄，可到「我的」匯出復原檔。"}
+                </p>
               </div>
               <button onClick={() => setSection("settings")} className="min-h-10 rounded-xl border border-current/20 px-3 text-sm font-semibold">前往處理</button>
             </div>
@@ -254,6 +321,7 @@ export function AppShell() {
               hasRecoveryBackup={hasRecoveryBackup}
               onRecoveryBackupCleared={() => setHasRecoveryBackup(false)}
               storageWriteBlocked={storageWriteBlocked}
+              nativeStorageDegraded={nativeStorageDegraded}
               onNavigatePortfolio={navigatePortfolioTab}
             />
           ) : null}
