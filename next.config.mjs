@@ -1,4 +1,5 @@
-const isGithubPages = process.env.GITHUB_ACTIONS === "true";
+const isNativeBuild = process.env.PORTFOLIOPILOT_NATIVE === "true";
+const isGithubPages = process.env.GITHUB_ACTIONS === "true" && !isNativeBuild;
 const basePath = isGithubPages ? "/PORTFOLIOPILOT" : "";
 
 /** @type {import('next').NextConfig} */
