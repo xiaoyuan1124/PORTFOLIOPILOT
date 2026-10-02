@@ -25,9 +25,12 @@ export type DurableInitialStateLoad = InitialStateLoad & {
 };
 
 export class NativeDurabilityError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
+  readonly cause: unknown;
+
+  constructor(message: string, cause?: unknown) {
+    super(message);
     this.name = "NativeDurabilityError";
+    this.cause = cause;
   }
 }
 
@@ -69,10 +72,12 @@ export function encodeNativeStateEnvelope(state: AppState, revision: number) {
 
 export function decodeNativeStateEnvelope(raw: string): NativeStateEnvelope {
   const parsed = JSON.parse(raw) as Partial<NativeStateEnvelope>;
+  const revision = parsed.revision;
   if (
     parsed.version !== NATIVE_ENVELOPE_VERSION ||
-    !Number.isSafeInteger(parsed.revision) ||
-    (parsed.revision ?? 0) <= 0 ||
+    typeof revision !== "number" ||
+    !Number.isSafeInteger(revision) ||
+    revision <= 0 ||
     !parsed.state
   ) {
     throw new Error("Native storage envelope is invalid.");
@@ -80,7 +85,7 @@ export function decodeNativeStateEnvelope(raw: string): NativeStateEnvelope {
 
   return {
     version: NATIVE_ENVELOPE_VERSION,
-    revision: parsed.revision,
+    revision,
     state: parseStoredStateRaw(JSON.stringify(parsed.state))
   };
 }
@@ -211,7 +216,7 @@ export function saveDurableState(state: AppState) {
   return queueNativeWrite(raw).catch((cause) => {
     throw new NativeDurabilityError(
       "Native durable storage write failed.",
-      { cause }
+      cause
     );
   });
 }
