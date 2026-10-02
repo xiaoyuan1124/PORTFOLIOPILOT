@@ -20,7 +20,12 @@ on:
       - "src/lib/storage.ts"
       - "src/lib/durable-storage.ts"
       - "native/ios/PrivacyInfo.xcprivacy"
+      - "native/app-store.json"
+      - "assets/logo.svg"
+      - "src/app/privacy/page.tsx"
+      - "src/app/support/page.tsx"
       - "scripts/configure-ios-native.mjs"
+      - "scripts/verify-ios-packaging.mjs"
       - ".github/workflows/native-ios.yml"
   workflow_dispatch:
 
@@ -38,6 +43,15 @@ jobs:
           node-version: 24
       - name: Show Xcode version
         run: xcodebuild -version
+      - name: Validate App Store SDK floor
+        run: |
+          XCODE_VERSION="$(xcodebuild -version | awk '/^Xcode / {print $2}')"
+          XCODE_MAJOR="${XCODE_VERSION%%.*}"
+          SDK_VERSION="$(xcrun --sdk iphoneos --show-sdk-version)"
+          SDK_MAJOR="${SDK_VERSION%%.*}"
+          test "$XCODE_MAJOR" -ge 26
+          test "$SDK_MAJOR" -ge 26
+          echo "Validated Xcode $XCODE_VERSION / iOS SDK $SDK_VERSION"
       - name: Install dependencies
         run: npm install --legacy-peer-deps
       - name: Generate iOS shell
@@ -50,6 +64,8 @@ jobs:
           grep -q "PrivacyInfo.xcprivacy in Resources" ios/App/App.xcodeproj/project.pbxproj
       - name: Sync Capacitor iOS
         run: npx cap sync ios
+      - name: Verify App Store packaging
+        run: npm run native:ios:verify
       - name: Resolve Swift packages
         run: xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App
       - name: Build iOS simulator target
@@ -59,5 +75,15 @@ jobs:
           -scheme App
           -configuration Debug
           -destination "generic/platform=iOS Simulator"
+          CODE_SIGNING_ALLOWED=NO
+          build
+      - name: Build unsigned iOS device release
+        run: >
+          xcodebuild
+          -project ios/App/App.xcodeproj
+          -scheme App
+          -configuration Release
+          -sdk iphoneos
+          -destination "generic/platform=iOS"
           CODE_SIGNING_ALLOWED=NO
           build
