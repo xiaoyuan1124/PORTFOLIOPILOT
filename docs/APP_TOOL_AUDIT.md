@@ -39,7 +39,7 @@ Stars are a point-in-time GitHub snapshot and can change.
 | ionic-team/capacitor-plugins | ~680 stars; active 2026 | MIT packages; not archived | Official Capacitor 8 plugins, iOS/Android/Web depending plugin | None | A: use official plugins first |
 | @capacitor/preferences | 8.0.1 | MIT; official | core >=8; iOS UserDefaults, Android SharedPreferences, PWA LocalStorage fallback | None; Apple PrivacyInfo reason CA92.1 required | A: add now; V0.83.2 |
 | @capacitor/local-notifications | 8.3.1 | MIT; official, not archived | core >=8; iOS/Android; Web does not provide equivalent native delivery | No server required for local notifications | A/B: foundation already added; Smart Alerts later |
-| ionic-team/capacitor-assets | ~583 stars; active; 3.x | MIT; not archived | iOS/Android/PWA asset generation | None | A: use before store packaging; CLI/build tool, not product runtime |
+| ionic-team/capacitor-assets | official 3.0.5 | MIT; not archived | iOS/Android/PWA asset generation | None | A: integrated in V0.83.4 as a build-time tool |
 | capacitor-community/sqlite | ~663 stars; 8.1.1 | MIT; not archived | Capacitor 8; iOS/Android/Web adapter | No backend; higher migration/complexity cost | D: defer until state/query volume justifies a DB |
 | ionic-team/capacitor-privacy-screen | official | MIT; not archived | Native iOS/Android only; core >=8 | None | A: added in V0.83.3 |
 | capacitor-community/privacy-screen | ~103 stars | MIT; maintenance/legacy path | Older community implementation | None | E: do not add; official plugin supersedes it |
@@ -50,7 +50,7 @@ Stars are a point-in-time GitHub snapshot and can change.
 
 ## A–E execution order
 
-**A — now:** official Local Notifications (V0.83.1), official Preferences (V0.83.2), and official Privacy Screen (V0.83.3) are integrated. Use Capacitor Assets when final icon/splash source artwork is ready.
+**A — now:** official Local Notifications (V0.83.1), official Preferences (V0.83.2), official Privacy Screen (V0.83.3), and Capacitor Assets (V0.83.4 build tooling) are integrated.
 
 **B — Smart Alerts phase:** build the rule model and local scheduling on top of the existing Local Notifications foundation. Price-threshold alerts cannot be promised as reliable background monitoring without a reliable background data-refresh design; do not add a backend just to claim that feature.
 

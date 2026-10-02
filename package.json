@@ -1,6 +1,6 @@
 {
   "name": "portfoliopilot",
-  "version": "0.83.3",
+  "version": "0.83.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,7 +11,7 @@
     "test": "vitest run",
     "native:build": "node scripts/build-native.mjs",
     "native:sync": "npm run native:build && cap sync",
-    "native:ios:add": "npm run native:build && cap add ios --packagemanager SPM && node scripts/configure-ios-native.mjs",
+    "native:ios:add": "npm run native:build && cap add ios --packagemanager SPM && node scripts/configure-ios-native.mjs && npm run native:ios:assets && npm run native:ios:verify",
     "native:ios:open": "cap open ios",
     "market:update": "node scripts/update-market-data.mjs && node scripts/update-etf-compositions.mjs && node scripts/update-material-events.mjs && node scripts/update-quarterly-financials.mjs && node scripts/update-benchmarks.mjs",
     "market:events": "node scripts/update-material-events.mjs",
@@ -19,7 +19,9 @@
     "market:benchmarks": "node scripts/update-benchmarks.mjs",
     "etf:update": "node scripts/update-etf-compositions.mjs",
     "history:update": "node scripts/update-price-history.mjs",
-    "native:ios:configure": "node scripts/configure-ios-native.mjs"
+    "native:ios:configure": "node scripts/configure-ios-native.mjs",
+    "native:ios:assets": "capacitor-assets generate --ios --assetPath assets --iconBackgroundColor '#1f332a' --iconBackgroundColorDark '#101412' --splashBackgroundColor '#1f332a' --splashBackgroundColorDark '#101412'",
+    "native:ios:verify": "node scripts/verify-ios-packaging.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",
@@ -51,7 +53,8 @@
     "eslint-config-next": "^16.0.0",
     "tailwindcss": "^4.1.14",
     "typescript": "^5.9.2",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "@capacitor/assets": "^3.0.5"
   },
   "overrides": {
     "baseline-browser-mapping": "2.11.26"

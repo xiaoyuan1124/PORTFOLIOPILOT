@@ -90,6 +90,20 @@ PortfolioPilot now uses the official `@capacitor/privacy-screen` plugin in Nativ
 
 This slice validates package integration and iOS compilation. Physical-device behavior for app-switcher presentation, Android screenshot blocking, Recharts touch gestures, and browser-style JSON/CSV file transport remains a real-device acceptance task.
 
+## V0.83.4 App Store Packaging Readiness
+
+The repository now owns reproducible App Store packaging inputs instead of relying on manual Xcode edits.
+
+- `native/app-store.json` is the source of truth for app name, bundle ID, marketing version, build number, privacy-policy URL, and support URL.
+- `package.json` version is required to match the App Store marketing version.
+- `scripts/configure-ios-native.mjs` configures `CFBundleDisplayName`, `MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`, bundle identifier, and PrivacyInfo after generating a fresh Capacitor shell.
+- Official `@capacitor/assets` generates the iOS AppIcon and splash assets from the repository-owned SVG source.
+- Native asset generation uses a foreground-only logo so iOS owns the final icon mask instead of double-rounding a pre-masked PWA icon.
+- `/privacy/` and `/support/` are included in both the GitHub Pages export and Native static export, and are linked from Settings.
+- The iOS gate verifies Xcode 26+ / iOS SDK 26+, packaging metadata, the 1024 App Store icon entry, PrivacyInfo, public support/privacy pages, Simulator Debug compilation, and unsigned device Release compilation.
+
+Signed Archive creation, App Store Connect upload, screenshots, age-rating answers, final privacy questionnaire, legal agreements, pricing, distribution territories, and review submission remain external/account-gated steps.
+
 ## Non-goals for V0.83 foundation
 
 - No subscription / IAP yet
