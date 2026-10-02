@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 
 const teamId = process.env.APPLE_TEAM_ID?.trim();
 if (!teamId) {
@@ -9,7 +9,7 @@ if (!teamId) {
 const output = resolve(
   process.env.EXPORT_OPTIONS_PATH || "build/ExportOptions-TestFlight.plist"
 );
-mkdirSync(resolve("build"), { recursive: true });
+mkdirSync(dirname(output), { recursive: true });
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
