@@ -25,6 +25,8 @@ const xml = `<?xml version="1.0" encoding="UTF-8"?>
   <string>${teamId}</string>
   <key>uploadSymbols</key>
   <true/>
+  <key>manageAppVersionAndBuildNumber</key>
+  <false/>
 </dict>
 </plist>
 `;
