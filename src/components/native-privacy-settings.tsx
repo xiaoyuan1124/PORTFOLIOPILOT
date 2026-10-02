@@ -11,7 +11,8 @@ import {
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
 function stateLabel(state: NativePrivacyState | null) {
-  if (!state || !state.available) return "Web / PWA";
+  if (!state) return "檢查中";
+  if (!state.available) return "Web / PWA";
   return state.enabled ? "已保護" : "未保護";
 }
 
