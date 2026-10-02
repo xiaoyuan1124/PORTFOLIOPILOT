@@ -1,6 +1,6 @@
 {
   "name": "portfoliopilot",
-  "version": "0.83.1",
+  "version": "0.83.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,14 +11,15 @@
     "test": "vitest run",
     "native:build": "node scripts/build-native.mjs",
     "native:sync": "npm run native:build && cap sync",
-    "native:ios:add": "npm run native:build && cap add ios --packagemanager SPM",
+    "native:ios:add": "npm run native:build && cap add ios --packagemanager SPM && node scripts/configure-ios-native.mjs",
     "native:ios:open": "cap open ios",
     "market:update": "node scripts/update-market-data.mjs && node scripts/update-etf-compositions.mjs && node scripts/update-material-events.mjs && node scripts/update-quarterly-financials.mjs && node scripts/update-benchmarks.mjs",
     "market:events": "node scripts/update-material-events.mjs",
     "market:quarterly": "node scripts/update-quarterly-financials.mjs",
     "market:benchmarks": "node scripts/update-benchmarks.mjs",
     "etf:update": "node scripts/update-etf-compositions.mjs",
-    "history:update": "node scripts/update-price-history.mjs"
+    "history:update": "node scripts/update-price-history.mjs",
+    "native:ios:configure": "node scripts/configure-ios-native.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",
@@ -35,7 +36,8 @@
     "recharts": "^3.2.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
-    "zod": "^4.1.11"
+    "zod": "^4.1.11",
+    "@capacitor/preferences": "^8.0.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",

@@ -60,6 +60,23 @@ The first native-only product capability uses the official `@capacitor/local-not
 
 Smart Alert rules, recurring schedules, subscriptions, and remote push are deliberately deferred.
 
+## V0.83.2 Native Storage Durability
+
+Capacitor Native now adds the official `@capacitor/preferences` plugin as a durable recovery layer for the portfolio state.
+
+- GitHub Pages / PWA keeps the existing LocalStorage behavior.
+- Native startup checks Preferences before presenting portfolio data.
+- Existing valid WebView LocalStorage data is migrated into Preferences on first Native launch.
+- Native and WebView copies carry a monotonic revision so an interrupted async write cannot let an older Preferences copy overwrite a newer local session copy.
+- If WebView storage is cleared but Preferences survives, the Native copy restores the validated PortfolioPilot state.
+- Invalid Native payloads are preserved through the existing recovery-backup path before any replacement.
+- A Preferences write failure is surfaced as a durability warning without pretending that all local writes failed.
+- SQLite remains deferred because the current portfolio state is a lightweight JSON document without complex local queries or high write volume.
+
+The generated iOS shell also receives `PrivacyInfo.xcprivacy` with
+`NSPrivacyAccessedAPICategoryUserDefaults` / `CA92.1`, as required for Preferences usage.
+The Native iOS smoke gate validates that manifest and its Xcode resources entry before compiling.
+
 ## Non-goals for V0.83 foundation
 
 - No subscription / IAP yet
@@ -67,7 +84,7 @@ Smart Alert rules, recurring schedules, subscriptions, and remote push are delib
 - No broker login or trading
 - No AI API
 - No cloud account system
-- No changes to the LocalStorage portfolio model
+- No SQLite/database migration; Web/PWA continues to use LocalStorage
 
 ## Platform requirement
 

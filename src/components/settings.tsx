@@ -31,7 +31,8 @@ import {
   parseHoldingsCsv,
   serializeBackup
 } from "@/lib/local-data";
-import { clearRecoveryBackup, getRecoveryBackupRaw, saveState } from "@/lib/storage";
+import { clearRecoveryBackup, getRecoveryBackupRaw } from "@/lib/storage";
+import { saveDurableState } from "@/lib/durable-storage";
 import { NativeNotificationSettings } from "./native-notification-settings";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
@@ -49,6 +50,7 @@ export function Settings({
   hasRecoveryBackup = false,
   onRecoveryBackupCleared,
   storageWriteBlocked = false,
+  nativeStorageDegraded = false,
   onNavigatePortfolio
 }: {
   state: AppState;
@@ -56,6 +58,7 @@ export function Settings({
   hasRecoveryBackup?: boolean;
   onRecoveryBackupCleared?: () => void;
   storageWriteBlocked?: boolean;
+  nativeStorageDegraded?: boolean;
   onNavigatePortfolio?: (tab: "holdings" | "activity" | "performance") => void;
 }) {
   const jsonRef = useRef<HTMLInputElement>(null);
@@ -100,13 +103,13 @@ export function Settings({
     toast.success("原始復原資料已匯出");
   }
 
-  function removeRecoveryBackup() {
+  async function removeRecoveryBackup() {
     if (!window.confirm("確定要清除復原備份嗎？系統會先把目前畫面中的有效資料設為新的本機基準，再刪除舊的原始復原副本。此動作無法復原。")) return;
 
     try {
-      saveState(state);
+      await saveDurableState(state);
     } catch {
-      toast.error("無法先儲存目前資料，因此沒有清除復原備份。");
+      toast.error("無法先完成耐久儲存，因此沒有清除復原備份。");
       return;
     }
 
@@ -322,7 +325,7 @@ export function Settings({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      {hasRecoveryBackup || storageWriteBlocked ? (
+      {hasRecoveryBackup || storageWriteBlocked || nativeStorageDegraded ? (
         <Card className="lg:col-span-2">
           <CardContent>
             <div className="flex items-start gap-3">
@@ -330,16 +333,31 @@ export function Settings({
                 <AlertTriangle size={19} />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="font-semibold">{storageWriteBlocked ? "本機資料需要人工處理" : "本機資料復原備份"}</h3>
+                <h3 className="font-semibold">
+                  {storageWriteBlocked
+                    ? "本機資料需要人工處理"
+                    : nativeStorageDegraded
+                      ? "Native 耐久儲存需要注意"
+                      : "本機資料復原備份"}
+                </h3>
                 <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
                   {storageWriteBlocked
-                    ? "瀏覽器無法安全建立復原副本，因此 PortfolioPilot 已停止寫入新變更，避免覆蓋原始資料。建議先不要清除網站資料。"
-                    : "系統曾偵測到本機資料無法通過目前 schema 驗證，已另外保留當時的原始內容。現在使用中的資料不會把這份副本一起刪掉。"}
+                    ? "目前本機快取無法安全寫入，因此 PortfolioPilot 已停止套用新變更，避免覆蓋原始資料。"
+                    : nativeStorageDegraded
+                      ? "目前畫面仍保有 WebView 本機快取，但 Capacitor Preferences 耐久副本暫時無法確認寫入。先匯出 JSON 可避免在裝置清理 WebView 資料時失去最後一份可攜備份。"
+                      : "系統曾偵測到本機資料無法通過目前 schema 驗證，已另外保留當時的原始內容。現在使用中的資料不會把這份副本一起刪掉。"}
                 </p>
-                {hasRecoveryBackup ? (
+                {hasRecoveryBackup || nativeStorageDegraded ? (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Button onClick={exportRecoveryBackup}><Download size={16} />匯出原始復原檔</Button>
-                    <GhostButton onClick={removeRecoveryBackup}><Trash2 size={16} />清除復原備份</GhostButton>
+                    {hasRecoveryBackup ? (
+                      <>
+                        <Button onClick={exportRecoveryBackup}><Download size={16} />匯出原始復原檔</Button>
+                        <GhostButton onClick={() => void removeRecoveryBackup()}><Trash2 size={16} />清除復原備份</GhostButton>
+                      </>
+                    ) : null}
+                    {nativeStorageDegraded ? (
+                      <GhostButton onClick={exportJson}><DatabaseBackup size={16} />匯出 JSON 備份</GhostButton>
+                    ) : null}
                   </div>
                 ) : null}
               </div>

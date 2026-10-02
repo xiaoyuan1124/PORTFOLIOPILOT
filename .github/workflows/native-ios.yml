@@ -15,6 +15,10 @@ on:
       - "src/components/use-resume-refresh-key.ts"
       - "src/lib/native-deep-link.ts"
       - "src/lib/native-notifications.ts"
+      - "src/lib/storage.ts"
+      - "src/lib/durable-storage.ts"
+      - "native/ios/PrivacyInfo.xcprivacy"
+      - "scripts/configure-ios-native.mjs"
       - ".github/workflows/native-ios.yml"
   workflow_dispatch:
 
@@ -36,6 +40,12 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Generate iOS shell
         run: npm run native:ios:add
+      - name: Validate iOS privacy manifest
+        run: |
+          plutil -lint ios/App/App/PrivacyInfo.xcprivacy
+          grep -q "NSPrivacyAccessedAPICategoryUserDefaults" ios/App/App/PrivacyInfo.xcprivacy
+          grep -q "CA92.1" ios/App/App/PrivacyInfo.xcprivacy
+          grep -q "PrivacyInfo.xcprivacy in Resources" ios/App/App.xcodeproj/project.pbxproj
       - name: Sync Capacitor iOS
         run: npx cap sync ios
       - name: Resolve Swift packages
