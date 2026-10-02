@@ -7,6 +7,7 @@ import { benchmarkById, benchmarkWindow, loadBundledBenchmarks, type BenchmarkCa
 import { loadTwPriceHistory, type TwPriceHistorySeries } from "@/lib/price-history-data";
 import { priceHistoryMetrics, relativePerformancePct } from "@/lib/price-history";
 import { Card, CardContent, InfoDisclosure } from "./ui";
+import { useResumeRefreshKey } from "./use-resume-refresh-key";
 
 function signedPct(value: number | null | undefined) {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
@@ -27,6 +28,7 @@ export function SecurityPriceHistoryCard({
     error: string;
   }>({ key: "", history: null, error: "" });
   const [benchmarkCache, setBenchmarkCache] = useState<BenchmarkCache | null>(null);
+  const resumeRefreshKey = useResumeRefreshKey();
 
   useEffect(() => {
     let active = true;
@@ -44,7 +46,7 @@ export function SecurityPriceHistoryCard({
         });
       });
     return () => { active = false; };
-  }, [market, requestKey, symbol]);
+  }, [market, requestKey, resumeRefreshKey, symbol]);
 
   useEffect(() => {
     let active = true;
@@ -56,7 +58,7 @@ export function SecurityPriceHistoryCard({
         if (active) setBenchmarkCache(null);
       });
     return () => { active = false; };
-  }, []);
+  }, [resumeRefreshKey]);
 
   const current = loadState.key === requestKey ? loadState : null;
   const history = current?.history ?? null;
