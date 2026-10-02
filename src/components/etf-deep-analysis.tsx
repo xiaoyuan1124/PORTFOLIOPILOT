@@ -21,6 +21,7 @@ import { loadBundledRevenueHistory, type RevenueHistoryCache } from "@/lib/reven
 import type { EtfComposition } from "@/lib/types";
 import { loadBundledValuations, type ValuationCache } from "@/lib/valuation-data";
 import { Badge, Card, CardContent, InfoDisclosure } from "./ui";
+import { useResumeRefreshKey } from "./use-resume-refresh-key";
 
 type Props = {
   composition: EtfComposition;
@@ -169,6 +170,7 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
     history: TwPriceHistorySeries | null;
     error: string;
   }>({ key: "", history: null, error: "" });
+  const resumeRefreshKey = useResumeRefreshKey();
 
   useEffect(() => {
     let active = true;
@@ -198,7 +200,7 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
         if (active) setBenchmarkCache(null);
       });
     return () => { active = false; };
-  }, []);
+  }, [resumeRefreshKey]);
 
   const historyVenue = useMemo(() => {
     if (composition.etfMarket !== "TW") return null;
@@ -229,7 +231,7 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
         });
       });
     return () => { active = false; };
-  }, [composition.etfSymbol, historyKey, historyVenue]);
+  }, [composition.etfSymbol, historyKey, historyVenue, resumeRefreshKey]);
 
   const currentHistoryState = historyKey && historyState.key === historyKey ? historyState : null;
   const priceHistory = currentHistoryState?.history ?? null;
