@@ -5,6 +5,7 @@ import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { publishNativeDeepLink } from "@/lib/native-deep-link";
+import { initializeNativePrivacyScreen } from "@/lib/native-privacy";
 
 export const NATIVE_RESUME_EVENT = "portfoliopilot:native-resume";
 
@@ -14,6 +15,8 @@ export function NativeRuntimeBridge() {
     document.documentElement.dataset.runtime = isNative ? Capacitor.getPlatform() : "web";
 
     if (!isNative) return;
+
+    void initializeNativePrivacyScreen().catch(() => undefined);
 
     const appStateListener = App.addListener("appStateChange", ({ isActive }) => {
       if (isActive) {

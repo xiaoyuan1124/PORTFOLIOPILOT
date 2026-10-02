@@ -34,6 +34,7 @@ import {
 import { clearRecoveryBackup, getRecoveryBackupRaw } from "@/lib/storage";
 import { saveDurableState } from "@/lib/durable-storage";
 import { NativeNotificationSettings } from "./native-notification-settings";
+import { NativePrivacySettings } from "./native-privacy-settings";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
 type PendingHistoricalTradeCsv = {
@@ -470,6 +471,7 @@ export function Settings({
       </Card>
 
       <NativeNotificationSettings state={state} />
+      <NativePrivacySettings />
 
       <Card>
         <CardContent>

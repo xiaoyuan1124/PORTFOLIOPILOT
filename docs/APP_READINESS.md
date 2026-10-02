@@ -77,6 +77,19 @@ The generated iOS shell also receives `PrivacyInfo.xcprivacy` with
 `NSPrivacyAccessedAPICategoryUserDefaults` / `CA92.1`, as required for Preferences usage.
 The Native iOS smoke gate validates that manifest and its Xcode resources entry before compiling.
 
+## V0.83.3 Native Privacy Protection
+
+PortfolioPilot now uses the official `@capacitor/privacy-screen` plugin in Native builds.
+
+- Native protection defaults to enabled when no preference exists or the stored value is invalid.
+- The user can explicitly disable or re-enable it from Settings.
+- iOS uses a dark blur in the App Switcher / background privacy surface.
+- Android uses `FLAG_SECURE`; while enabled this also blocks screenshots, screen recording, and non-secure display output.
+- Web / GitHub Pages does not load or expose the native protection.
+- The preference is stored locally with Capacitor Preferences; no account, backend, analytics, or paid service is added.
+
+This slice validates package integration and iOS compilation. Physical-device behavior for app-switcher presentation, Android screenshot blocking, Recharts touch gestures, and browser-style JSON/CSV file transport remains a real-device acceptance task.
+
 ## Non-goals for V0.83 foundation
 
 - No subscription / IAP yet
