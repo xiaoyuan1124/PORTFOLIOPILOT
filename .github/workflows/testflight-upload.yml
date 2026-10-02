@@ -54,7 +54,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
         run: |
           KEY_PATH="$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
-          printf '%s' "$APP_STORE_CONNECT_API_KEY_P8_BASE64" | base64 --decode > "$KEY_PATH"
+          node -e 'require("fs").writeFileSync(process.argv[1], Buffer.from(process.env.APP_STORE_CONNECT_API_KEY_P8_BASE64, "base64"))' "$KEY_PATH"
           chmod 600 "$KEY_PATH"
           echo "APP_STORE_CONNECT_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
 
@@ -87,7 +87,8 @@ jobs:
         env:
           ARCHIVE_PATH: ${{ runner.temp }}/PortfolioPilot-signed.xcarchive
         run: |
-          APP_PATH="$ARCHIVE_PATH/Products/Applications/PortfolioPilot.app"
+          APP_PATH="$(find "$ARCHIVE_PATH/Products/Applications" -maxdepth 1 -type d -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
           test -d "$APP_PATH"
           test "$(plutil -extract CFBundleIdentifier raw -o - "$APP_PATH/Info.plist")" = "com.sy1124.portfoliopilot"
           test "$(plutil -extract CFBundleShortVersionString raw -o - "$APP_PATH/Info.plist")" = "$(node -p "require('./native/app-store.json').version")"
