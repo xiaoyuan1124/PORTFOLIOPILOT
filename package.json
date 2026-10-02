@@ -1,6 +1,6 @@
 {
   "name": "portfoliopilot",
-  "version": "0.83.4",
+  "version": "0.84.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -21,7 +21,9 @@
     "history:update": "node scripts/update-price-history.mjs",
     "native:ios:configure": "node scripts/configure-ios-native.mjs",
     "native:ios:assets": "capacitor-assets generate --ios --assetPath assets --iconBackgroundColor '#1f332a' --iconBackgroundColorDark '#101412' --splashBackgroundColor '#1f332a' --splashBackgroundColorDark '#101412'",
-    "native:ios:verify": "node scripts/verify-ios-packaging.mjs"
+    "native:ios:verify": "node scripts/verify-ios-packaging.mjs",
+    "native:ios:archive:unsigned": "node scripts/archive-ios-unsigned.mjs",
+    "native:ios:archive:verify": "node scripts/verify-ios-archive.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",
