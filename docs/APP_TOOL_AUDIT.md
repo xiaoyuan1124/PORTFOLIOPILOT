@@ -41,7 +41,7 @@ Stars are a point-in-time GitHub snapshot and can change.
 | @capacitor/local-notifications | 8.3.1 | MIT; official, not archived | core >=8; iOS/Android; Web does not provide equivalent native delivery | No server required for local notifications | A/B: foundation already added; Smart Alerts later |
 | ionic-team/capacitor-assets | ~583 stars; active; 3.x | MIT; not archived | iOS/Android/PWA asset generation | None | A: use before store packaging; CLI/build tool, not product runtime |
 | capacitor-community/sqlite | ~663 stars; 8.1.1 | MIT; not archived | Capacitor 8; iOS/Android/Web adapter | No backend; higher migration/complexity cost | D: defer until state/query volume justifies a DB |
-| ionic-team/capacitor-privacy-screen | ~12 stars; official | MIT; not archived | Native iOS/Android only | None | A: next security-hardening candidate |
+| ionic-team/capacitor-privacy-screen | official | MIT; not archived | Native iOS/Android only; core >=8 | None | A: added in V0.83.3 |
 | capacitor-community/privacy-screen | ~103 stars | MIT; maintenance/legacy path | Older community implementation | None | E: do not add; official plugin supersedes it |
 | aparajita/capacitor-biometric-auth | ~226 stars; v10.0.0 | MIT; not archived | Capacitor 8, iOS/Android, SPM; Web simulation | Face ID requires NSFaceIDUsageDescription | D: add only with an explicit App Lock feature |
 | RevenueCat/purchases-capacitor | ~233 stars; v13.7.0 | MIT SDK; not archived | core >=8; iOS/Android | Uses RevenueCat service and App Store / Play billing | C: evaluate when Plus/Pro IAP begins |
@@ -50,7 +50,7 @@ Stars are a point-in-time GitHub snapshot and can change.
 
 ## A–E execution order
 
-**A — now:** official Local Notifications (done), official Preferences (V0.83.2), Capacitor Assets when final icon/splash source artwork is ready, then official Privacy Screen as a small security-hardening slice.
+**A — now:** official Local Notifications (V0.83.1), official Preferences (V0.83.2), and official Privacy Screen (V0.83.3) are integrated. Use Capacitor Assets when final icon/splash source artwork is ready.
 
 **B — Smart Alerts phase:** build the rule model and local scheduling on top of the existing Local Notifications foundation. Price-threshold alerts cannot be promised as reliable background monitoring without a reliable background data-refresh design; do not add a backend just to claim that feature.
 
