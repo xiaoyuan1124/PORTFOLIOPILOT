@@ -26,7 +26,15 @@ function migrateLegacyState(value: unknown): AppState {
   });
 }
 
-function preserveRecovery(raw: string) {
+export function parseStoredStateRaw(raw: string): AppState {
+  return migrateLegacyState(JSON.parse(raw));
+}
+
+export function serializeStoredState(state: AppState) {
+  return JSON.stringify(appStateSchema.parse(state));
+}
+
+export function preserveRecoveryBackupRaw(raw: string) {
   if (typeof window === "undefined") return false;
   try {
     if (!window.localStorage.getItem(RECOVERY_KEY)) {
@@ -56,7 +64,7 @@ export function loadInitialState(): InitialStateLoad {
 
   try {
     return {
-      state: migrateLegacyState(JSON.parse(raw)),
+      state: parseStoredStateRaw(raw),
       invalidStoredState: false,
       recoveryPreserved: Boolean(window.localStorage.getItem(RECOVERY_KEY))
     };
@@ -64,7 +72,7 @@ export function loadInitialState(): InitialStateLoad {
     return {
       state: emptyState,
       invalidStoredState: true,
-      recoveryPreserved: preserveRecovery(raw)
+      recoveryPreserved: preserveRecoveryBackupRaw(raw)
     };
   }
 }
@@ -75,7 +83,7 @@ export function getInitialState(): AppState {
 
 export function saveState(state: AppState) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(appStateSchema.parse(state)));
+  window.localStorage.setItem(KEY, serializeStoredState(state));
 }
 
 export function getRecoveryBackupRaw() {
