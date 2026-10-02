@@ -3,18 +3,45 @@ import { join } from "node:path";
 
 const root = process.cwd();
 const templatePath = join(root, "native", "ios", "PrivacyInfo.xcprivacy");
+const metadataPath = join(root, "native", "app-store.json");
 const iosProjectRoot = join(root, "ios", "App");
 const targetPath = join(iosProjectRoot, "App", "PrivacyInfo.xcprivacy");
+const infoPlistPath = join(iosProjectRoot, "App", "Info.plist");
 const projectPath = join(iosProjectRoot, "App.xcodeproj", "project.pbxproj");
 
-if (!existsSync(templatePath)) {
-  throw new Error("Missing native/ios/PrivacyInfo.xcprivacy template.");
+for (const [label, path] of [
+  ["PrivacyInfo template", templatePath],
+  ["App Store metadata", metadataPath],
+  ["generated iOS project", projectPath],
+  ["generated Info.plist", infoPlistPath]
+]) {
+  if (!existsSync(path)) {
+    throw new Error(`Missing ${label}: ${path}`);
+  }
 }
-if (!existsSync(projectPath)) {
-  throw new Error("Missing generated iOS project. Run capacitor add ios first.");
+
+const metadata = JSON.parse(readFileSync(metadataPath, "utf8"));
+for (const key of ["appName", "bundleId", "version", "buildNumber"]) {
+  if (typeof metadata[key] !== "string" || !metadata[key].trim()) {
+    throw new Error(`native/app-store.json is missing ${key}.`);
+  }
+}
+
+if (!/^\d+\.\d+\.\d+$/.test(metadata.version)) {
+  throw new Error("App Store version must be three period-separated integers.");
+}
+if (!/^\d+(?:\.\d+){0,2}$/.test(metadata.buildNumber)) {
+  throw new Error("App Store build number must contain one to three integer components.");
 }
 
 copyFileSync(templatePath, targetPath);
+
+let infoPlist = readFileSync(infoPlistPath, "utf8");
+infoPlist = infoPlist.replace(
+  /(<key>CFBundleDisplayName<\/key>\s*<string>)[^<]*(<\/string>)/,
+  `$1${metadata.appName}$2`
+);
+writeFileSync(infoPlistPath, infoPlist);
 
 let project = readFileSync(projectPath, "utf8");
 if (!project.includes("PrivacyInfo.xcprivacy")) {
@@ -53,8 +80,15 @@ if (!project.includes("PrivacyInfo.xcprivacy")) {
     resources,
     `$1\t\t\t\t${buildFileId} /* PrivacyInfo.xcprivacy in Resources */,\n`
   );
-
-  writeFileSync(projectPath, project);
 }
 
-console.log("Configured iOS PrivacyInfo.xcprivacy for PortfolioPilot.");
+project = project
+  .replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${metadata.version};`)
+  .replace(/CURRENT_PROJECT_VERSION = [^;]+;/g, `CURRENT_PROJECT_VERSION = ${metadata.buildNumber};`)
+  .replace(/PRODUCT_BUNDLE_IDENTIFIER = [^;]+;/g, `PRODUCT_BUNDLE_IDENTIFIER = ${metadata.bundleId};`);
+
+writeFileSync(projectPath, project);
+
+console.log(
+  `Configured iOS packaging: ${metadata.appName} ${metadata.version} (${metadata.buildNumber}) ${metadata.bundleId}.`
+);
