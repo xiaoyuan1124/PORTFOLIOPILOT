@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AlertTriangle, ArrowRight, CircleAlert, DatabaseBackup, Download, FileSpreadsheet, Info, RotateCcw, ShieldCheck, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, ArrowRight, CircleAlert, DatabaseBackup, Download, ExternalLink, FileSpreadsheet, Info, LifeBuoy, RotateCcw, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { demoState, emptyState } from "@/lib/demo-data";
 import { localDateKey } from "@/lib/calc";
@@ -36,6 +36,8 @@ import { saveDurableState } from "@/lib/durable-storage";
 import { NativeNotificationSettings } from "./native-notification-settings";
 import { NativePrivacySettings } from "./native-privacy-settings";
 import { Button, Card, CardContent, GhostButton } from "./ui";
+
+const appBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 type PendingHistoricalTradeCsv = {
   fileName: string;
@@ -472,6 +474,36 @@ export function Settings({
 
       <NativeNotificationSettings state={state} />
       <NativePrivacySettings />
+
+      <Card className="lg:col-span-2">
+        <CardContent>
+          <div className="flex items-start gap-3">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#edf2ee] text-[#335b46] dark:bg-[#17201b] dark:text-[#a8dab8]">
+              <LifeBuoy size={19} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold">支援與隱私</h3>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-black/50 dark:text-white/50">
+                查看 PortfolioPilot 的公開隱私權政策與技術支援入口。Native App 與 GitHub Pages 共用同一份內容。
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a
+                  href={`${appBasePath}/privacy/`}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-black/8 px-3 text-sm font-semibold dark:border-white/10"
+                >
+                  <ShieldCheck size={15} />隱私權政策
+                </a>
+                <a
+                  href={`${appBasePath}/support/`}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-black/8 px-3 text-sm font-semibold dark:border-white/10"
+                >
+                  <ExternalLink size={15} />技術支援
+                </a>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent>
