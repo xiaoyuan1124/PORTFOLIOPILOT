@@ -47,10 +47,7 @@ export function NativeNotificationSettings({ state }: { state: AppState }) {
   const target = useMemo(() => researchTarget(state), [state]);
 
   useEffect(() => {
-    if (!nativeNotificationsAvailable()) {
-      setPermission("unavailable");
-      return;
-    }
+    if (!nativeNotificationsAvailable()) return;
 
     void checkNativeNotificationPermission()
       .then(setPermission)
