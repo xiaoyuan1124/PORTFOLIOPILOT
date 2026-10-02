@@ -73,6 +73,7 @@ jobs:
           test "$(plutil -extract method raw -o - "$EXPORT_OPTIONS_PATH")" = "app-store-connect"
           test "$(plutil -extract destination raw -o - "$EXPORT_OPTIONS_PATH")" = "upload"
           test "$(plutil -extract signingStyle raw -o - "$EXPORT_OPTIONS_PATH")" = "automatic"
+          test "$(plutil -extract manageAppVersionAndBuildNumber raw -o - "$EXPORT_OPTIONS_PATH")" = "false"
       - name: Generate iOS shell
         run: npm run native:ios:add
       - name: Validate iOS privacy manifest
