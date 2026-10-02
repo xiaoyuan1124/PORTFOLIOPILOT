@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { BarChart3, BriefcaseBusiness, Home, Moon, Search, Settings as SettingsIcon, Sun } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import type { AppState } from "@/lib/types";
@@ -8,6 +9,11 @@ import { emptyState } from "@/lib/demo-data";
 import { withTodaySnapshot } from "@/lib/calc";
 import { loadInitialState, saveState } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import {
+  consumePendingNativeDeepLink,
+  NATIVE_DEEP_LINK_EVENT,
+  parseNativeDeepLink
+} from "@/lib/native-deep-link";
 import { Overview } from "./overview";
 import { Portfolio, type PortfolioTab } from "./portfolio";
 import { Research } from "./research";
@@ -72,12 +78,40 @@ export function AppShell() {
       document.documentElement.classList.toggle("dark", shouldDark);
     });
 
-    if ("serviceWorker" in navigator) {
+    if (!Capacitor.isNativePlatform() && "serviceWorker" in navigator) {
       const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
       navigator.serviceWorker.register(`${base}/sw.js`).catch(() => undefined);
     }
 
     return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    function openNativeDeepLink(value: string) {
+      const target = parseNativeDeepLink(value);
+      if (!target) return;
+
+      if (target.section === "settings") {
+        setSection("settings");
+        return;
+      }
+
+      setResearchKey(target.researchKey);
+      setResearchType(target.researchType);
+      setResearchRequestId((value) => value + 1);
+      setSection("research");
+    }
+
+    const pending = consumePendingNativeDeepLink();
+    if (pending) openNativeDeepLink(pending);
+
+    function onNativeDeepLink(event: Event) {
+      const value = (event as CustomEvent<string>).detail;
+      if (typeof value === "string") openNativeDeepLink(value);
+    }
+
+    window.addEventListener(NATIVE_DEEP_LINK_EVENT, onNativeDeepLink);
+    return () => window.removeEventListener(NATIVE_DEEP_LINK_EVENT, onNativeDeepLink);
   }, []);
 
   useEffect(() => {
