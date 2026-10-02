@@ -20,7 +20,7 @@
     "etf:update": "node scripts/update-etf-compositions.mjs",
     "history:update": "node scripts/update-price-history.mjs",
     "native:ios:configure": "node scripts/configure-ios-native.mjs",
-    "native:ios:assets": "capacitor-assets generate --ios --assetPath assets --iconBackgroundColor '#1f332a' --iconBackgroundColorDark '#101412' --splashBackgroundColor '#f4f2ed' --splashBackgroundColorDark '#101412'",
+    "native:ios:assets": "capacitor-assets generate --ios --assetPath assets --iconBackgroundColor '#1f332a' --iconBackgroundColorDark '#101412' --splashBackgroundColor '#1f332a' --splashBackgroundColorDark '#101412'",
     "native:ios:verify": "node scripts/verify-ios-packaging.mjs"
   },
   "dependencies": {
