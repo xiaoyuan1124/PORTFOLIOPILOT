@@ -104,6 +104,19 @@ The repository now owns reproducible App Store packaging inputs instead of relyi
 
 Signed Archive creation, App Store Connect upload, screenshots, age-rating answers, final privacy questionnaire, legal agreements, pricing, distribution territories, and review submission remain external/account-gated steps.
 
+## V0.84 Native RC / TestFlight Readiness
+
+The release pipeline now validates the Archive action itself instead of stopping at an unsigned device build.
+
+- Marketing version is `0.84.0`; build number starts at `1`.
+- CI generates a real Release `.xcarchive` with code signing disabled.
+- The archive verifier reads the archived app bundle and checks the real `CFBundleIdentifier`, `CFBundleDisplayName`, `CFBundleShortVersionString`, and `CFBundleVersion` against `native/app-store.json`.
+- The gate also verifies that the RC archive was not accidentally treated as an Apple Distribution-signed build.
+- The previous standalone unsigned device Release build is replaced by the archive gate because the Archive action already performs a Release device build.
+- No unsigned archive is uploaded or retained as a GitHub artifact; it exists only for CI validation, avoiding unnecessary artifact storage.
+
+This is still not a TestFlight build. Apple requires an App Store Connect app record and a signed build associated with an application identifier/provisioning profile before TestFlight distribution.
+
 ## Non-goals for V0.83 foundation
 
 - No subscription / IAP yet
