@@ -30,7 +30,16 @@ describe("native durable storage envelope", () => {
       decodeNativeStateEnvelope(JSON.stringify({
         version: 1,
         revision: 1234,
-        state: { holdings: "not-an-array" }
+        state: {
+          holdings: [],
+          etfCompositions: [],
+          journal: [],
+          activities: [],
+          snapshots: [],
+          allocationTargets: [],
+          usdTwd: 0,
+          dataMode: "personal"
+        }
       }))
     ).toThrow();
   });
