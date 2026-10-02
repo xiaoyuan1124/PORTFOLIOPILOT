@@ -1,6 +1,6 @@
 # PortfolioPilot App Store Submission Checklist
 
-Baseline version: 0.83.4
+Baseline version: 0.84.0
 Bundle ID: `com.sy1124.portfoliopilot`
 
 This file distinguishes repository/CI evidence from Apple Developer and App Store Connect actions that cannot be completed by source code alone.
@@ -18,7 +18,7 @@ This file distinguishes repository/CI evidence from Apple Developer and App Stor
 - [x] Settings exposes privacy and support links inside the app.
 - [x] Xcode / iOS SDK floor is checked against the current App Store upload minimum used by this release line.
 - [x] Debug iOS Simulator build is gated.
-- [x] unsigned iPhone-device Release build is gated.
+- [x] unsigned Release `.xcarchive` generation and archived app metadata verification are gated.
 - [x] Local Notifications, Preferences, and Privacy Screen native plugins compile through Swift Package Manager.
 - [x] No broker credentials, automatic trading, cloud account, AI API, advertising SDK, or analytics SDK is included.
 
@@ -31,6 +31,9 @@ This file distinguishes repository/CI evidence from Apple Developer and App Stor
 - [ ] Confirm the privacy screen obscures portfolio data in the real iOS App Switcher.
 - [ ] Choose signing Team and provisioning profile under the Apple Developer account.
 - [ ] Increment `buildNumber` in `native/app-store.json` before uploading another build with the same marketing version.
+- [ ] Create/select the matching App Store Connect app record before the first upload.
+- [ ] Confirm an explicit App ID matching `com.sy1124.portfoliopilot` exists in the Apple Developer account.
+- [ ] Configure automatic signing in Xcode or create an App Store Connect provisioning profile tied to the matching App ID and an Apple Distribution certificate.
 - [ ] Produce a signed Release Archive and validate it in Xcode Organizer.
 - [ ] Upload the exact validated archive to App Store Connect / TestFlight.
 - [ ] Run TestFlight acceptance against the uploaded build, not a development shell.

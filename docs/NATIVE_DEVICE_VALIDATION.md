@@ -1,6 +1,6 @@
 # PortfolioPilot Native Device Validation
 
-Status baseline: V0.83.3
+Status baseline: V0.84.0
 
 This checklist separates CI evidence from physical-device evidence. A successful Simulator compile is not a claim that touch, file transport, privacy overlays, or OS permission UX has passed on a real phone.
 
@@ -13,6 +13,7 @@ This checklist separates CI evidence from physical-device evidence. A successful
 - iOS PrivacyInfo.xcprivacy validation for Preferences
 - Swift Package dependency resolution
 - unsigned generic iOS Simulator compile
+- unsigned Release .xcarchive generation and archived bundle metadata verification
 - TypeScript, ESLint, Vitest
 - pure native deep-link parsing
 - durable-storage envelope validation
