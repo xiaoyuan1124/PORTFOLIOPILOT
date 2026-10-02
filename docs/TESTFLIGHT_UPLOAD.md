@@ -5,6 +5,8 @@ Baseline: V0.84.2
 The repository contains a guarded, manual GitHub Actions workflow at
 `.github/workflows/testflight-upload.yml`.
 
+For the shortest Windows setup path, use `scripts/bootstrap-testflight.ps1`; it creates the dedicated environment, writes the four secrets from local input, verifies them, and can dispatch/watch the upload. See `docs/TESTFLIGHT_ONE_COMMAND.md`.
+
 It is intentionally **not** triggered by pushes or pull requests. A real upload happens only when the workflow is manually dispatched from `main` and the confirmation input is exactly `UPLOAD`.
 
 ## Required Apple setup
