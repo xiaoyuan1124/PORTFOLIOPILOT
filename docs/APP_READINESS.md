@@ -132,6 +132,17 @@ The repository now contains a guarded manual TestFlight upload workflow.
 
 A successful manual workflow run will be the first evidence of real Apple signing/upload. Until then, signed archive and TestFlight upload remain prepared but not yet executed.
 
+## V0.84.2 TestFlight Environment Isolation
+
+TestFlight deployment credentials are now isolated from every other app/repository workflow.
+
+- The upload job references the dedicated GitHub Actions environment `portfolio-testflight`.
+- Apple credentials use PortfolioPilot-specific environment-secret names with the `PORTFOLIOPILOT_` prefix.
+- The upload guard verifies the repository identity, `main` branch, explicit `UPLOAD` confirmation, and exact PortfolioPilot bundle ID before any Apple credential is used.
+- The documented setup requires a Team App Store Connect API key because Apple states Individual keys cannot access Provisioning endpoints.
+- GitHub environment protection rules can be used to require an additional human approval before environment secrets become available to the runner.
+- No Apple credential value is stored in source, workflow artifacts, or documentation.
+
 ## Non-goals for V0.83 foundation
 
 - No subscription / IAP yet
