@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-02T13:54:44.601Z",
+  "generatedAt": "2026-10-02T16:20:32.729Z",
   "sources": [
     {
-      "name": "TWSE MI_INDEX",
-      "url": "https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?date=20261002&type=ALLBUT0999&response=json",
-      "fetchedAt": "2026-10-02T13:54:44.601Z"
+      "name": "TWSE",
+      "url": "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL",
+      "fetchedAt": "2026-10-02T16:20:32.729Z"
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes",
-      "fetchedAt": "2026-10-02T13:54:44.601Z"
+      "fetchedAt": "2026-10-02T16:20:32.729Z"
     }
   ],
   "quotes": [
