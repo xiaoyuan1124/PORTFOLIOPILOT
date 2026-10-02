@@ -42,9 +42,7 @@ function researchTarget(state: AppState): NativeNotificationResearchTarget | und
 }
 
 export function NativeNotificationSettings({ state }: { state: AppState }) {
-  const [permission, setPermission] = useState<NativeNotificationPermissionState>(
-    nativeNotificationsAvailable() ? "prompt" : "unavailable"
-  );
+  const [permission, setPermission] = useState<NativeNotificationPermissionState>("unavailable");
   const [working, setWorking] = useState(false);
   const target = useMemo(() => researchTarget(state), [state]);
 
