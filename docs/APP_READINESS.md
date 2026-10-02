@@ -117,6 +117,21 @@ The release pipeline now validates the Archive action itself instead of stopping
 
 This is still not a TestFlight build. Apple requires an App Store Connect app record and a signed build associated with an application identifier/provisioning profile before TestFlight distribution.
 
+## V0.84.1 Signed Archive / TestFlight Upload Readiness
+
+The repository now contains a guarded manual TestFlight upload workflow.
+
+- It can only be started manually and only from `main`.
+- The operator must type `UPLOAD` before a real upload is attempted.
+- App Store Connect API authentication is injected only through GitHub Secrets.
+- Xcode automatic signing is used with the PortfolioPilot Team/App ID instead of reusing another app's provisioning profile.
+- The signed archive is checked for bundle ID, version, build number, and a valid code signature before upload.
+- The exact archive is uploaded through Xcode's `app-store-connect` export path.
+- Build numbers are never mutated inside CI; every uploaded Version/Build must already exist in committed `native/app-store.json`.
+- PR CI validates the Xcode 26 signing/export CLI contract without requiring or exposing Apple secrets.
+
+A successful manual workflow run will be the first evidence of real Apple signing/upload. Until then, signed archive and TestFlight upload remain prepared but not yet executed.
+
 ## Non-goals for V0.83 foundation
 
 - No subscription / IAP yet
