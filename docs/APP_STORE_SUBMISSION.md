@@ -1,6 +1,6 @@
 # PortfolioPilot App Store Submission Checklist
 
-Baseline version: 0.84.0
+Baseline version: 0.84.1
 Bundle ID: `com.sy1124.portfoliopilot`
 
 This file distinguishes repository/CI evidence from Apple Developer and App Store Connect actions that cannot be completed by source code alone.
@@ -35,7 +35,10 @@ This file distinguishes repository/CI evidence from Apple Developer and App Stor
 - [ ] Confirm an explicit App ID matching `com.sy1124.portfoliopilot` exists in the Apple Developer account.
 - [ ] Configure automatic signing in Xcode or create an App Store Connect provisioning profile tied to the matching App ID and an Apple Distribution certificate.
 - [ ] Produce a signed Release Archive and validate it in Xcode Organizer.
-- [ ] Upload the exact validated archive to App Store Connect / TestFlight.
+- [x] Guarded manual GitHub Actions path for signed archive + App Store Connect upload is implemented.
+- [ ] Configure the four required GitHub Secrets listed in `docs/TESTFLIGHT_UPLOAD.md`.
+- [ ] Run the guarded TestFlight workflow successfully from `main`.
+- [ ] Confirm Apple accepts and processes the uploaded exact Version/Build.
 - [ ] Run TestFlight acceptance against the uploaded build, not a development shell.
 
 ## App Store Connect metadata still required
