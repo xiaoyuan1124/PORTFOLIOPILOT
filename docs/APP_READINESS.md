@@ -47,6 +47,19 @@ Then:
 
 The native runtime bridge maps Capacitor foreground events into PortfolioPilot's existing resume-revalidation mechanism. This keeps official market history and benchmark views from remaining stale after the native app has been backgrounded.
 
+## V0.83.1 Native Notification Foundation
+
+The first native-only product capability uses the official `@capacitor/local-notifications` plugin.
+
+- Web / GitHub Pages never requests notification permission.
+- Native permission is requested only after an explicit user action in Settings.
+- Test notifications are local-only and require no backend or paid service.
+- Notification payloads carry a PortfolioPilot deep link that can open a specific TWSE/TPEx stock or ETF research page.
+- Android test notifications explicitly avoid exact alarms, so V0.83.1 does not request exact-alarm privileges.
+- The service worker remains a PWA concern and is not registered inside the Capacitor native shell.
+
+Smart Alert rules, recurring schedules, subscriptions, and remote push are deliberately deferred.
+
 ## Non-goals for V0.83 foundation
 
 - No subscription / IAP yet
