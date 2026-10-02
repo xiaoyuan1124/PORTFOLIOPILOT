@@ -86,7 +86,7 @@ $Secrets = @{
 }
 
 foreach ($Name in $Secrets.Keys) {
-  $Secrets[$Name] | & gh secret set $Name --repo $Repo --env $EnvironmentName
+  & gh secret set $Name --repo $Repo --env $EnvironmentName --body $Secrets[$Name]
   if ($LASTEXITCODE -ne 0) {
     throw "Failed to set environment secret: $Name"
   }
