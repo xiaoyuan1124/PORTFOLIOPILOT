@@ -76,7 +76,10 @@ describe("Taiwan price-history client cache", () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
-  it("still attempts the bucket when the lightweight generation probe is unavailable", async () => {
+  it("throttles failed generation probes while still using the cached bucket offline", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-01T00:00:00Z"));
+
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes("/index.json")) throw new Error("offline");
@@ -85,9 +88,21 @@ describe("Taiwan price-history client cache", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const { loadTwPriceHistory } = await import("./price-history-data");
-    const history = await loadTwPriceHistory("TWSE", "2330");
 
-    expect(history.points.at(-1)?.[1]).toBe(100);
+    const first = await loadTwPriceHistory("TWSE", "2330");
+    const cached = await loadTwPriceHistory("TWSE", "2330");
+    vi.setSystemTime(new Date("2026-10-01T00:00:59Z"));
+    const stillThrottled = await loadTwPriceHistory("TWSE", "2330");
+
+    expect(first.points.at(-1)?.[1]).toBe(100);
+    expect(cached.points.at(-1)?.[1]).toBe(100);
+    expect(stillThrottled.points.at(-1)?.[1]).toBe(100);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    vi.setSystemTime(new Date("2026-10-01T00:01:01Z"));
+    const retried = await loadTwPriceHistory("TWSE", "2330");
+
+    expect(retried.points.at(-1)?.[1]).toBe(100);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
