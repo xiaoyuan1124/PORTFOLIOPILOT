@@ -32,6 +32,7 @@ import {
   serializeBackup
 } from "@/lib/local-data";
 import { clearRecoveryBackup, getRecoveryBackupRaw, saveState } from "@/lib/storage";
+import { NativeNotificationSettings } from "./native-notification-settings";
 import { Button, Card, CardContent, GhostButton } from "./ui";
 
 type PendingHistoricalTradeCsv = {
@@ -449,6 +450,8 @@ export function Settings({
           </div>
         </CardContent>
       </Card>
+
+      <NativeNotificationSettings state={state} />
 
       <Card>
         <CardContent>
