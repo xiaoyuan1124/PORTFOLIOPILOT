@@ -1,6 +1,6 @@
 # PortfolioPilot TestFlight Upload
 
-Baseline: V0.84.1
+Baseline: V0.84.2
 
 The repository contains a guarded, manual GitHub Actions workflow at
 `.github/workflows/testflight-upload.yml`.
@@ -17,18 +17,26 @@ The Apple Developer account must also have a matching explicit App ID. Xcode aut
 
 Do not reuse another app's bundle ID or provisioning profile.
 
-## Required GitHub Secrets
+## Dedicated GitHub environment and secrets
 
-Configure these repository secrets before the first real upload:
+Create a GitHub Actions environment named exactly:
 
-- `APPLE_TEAM_ID`
-- `APP_STORE_CONNECT_KEY_ID`
-- `APP_STORE_CONNECT_ISSUER_ID`
-- `APP_STORE_CONNECT_API_KEY_P8_BASE64`
+`portfolio-testflight`
+
+Store the Apple credentials as **environment secrets**, not shared repository secrets:
+
+- `PORTFOLIOPILOT_APPLE_TEAM_ID`
+- `PORTFOLIOPILOT_ASC_KEY_ID`
+- `PORTFOLIOPILOT_ASC_ISSUER_ID`
+- `PORTFOLIOPILOT_ASC_API_KEY_P8_BASE64`
+
+The workflow references only this environment, so PortfolioPilot does not depend on or reuse another app's GitHub deployment credentials.
+
+If your GitHub plan/repository settings allow deployment protection rules, require manual approval for `portfolio-testflight` and restrict deployment to `main`.
 
 The `.p8` private key is stored only as a base64-encoded GitHub Secret and is written to the temporary macOS runner directory at runtime. It is not committed, uploaded as an artifact, or printed.
 
-Recommended: use a Team App Store Connect API key with the minimum role that still permits build upload and signing/provisioning operations required by the workflow.
+Use a **Team App Store Connect API key**, not an Individual API key. Apple documents that Individual API keys cannot use Provisioning endpoints; PortfolioPilot's Xcode automatic-signing flow may need provisioning access. Build upload itself is permitted for Account Holder, Admin, App Manager, or Developer roles. Use the least-privileged Team key that successfully supports your signing/provisioning setup.
 
 ## Upload flow
 
@@ -64,6 +72,10 @@ Confirmation:
 
 `UPLOAD`
 
+Bundle confirmation:
+
+`com.sy1124.portfoliopilot`
+
 If the app record, App ID, Team access, API key permissions, or automatic-signing relationship is incomplete, Xcode should fail the workflow before upload. Do not weaken signing checks just to make the workflow green.
 
 ## What happens after upload
@@ -75,3 +87,12 @@ A successful upload does not mean the build is immediately available. Apple proc
 PR CI proves the signing/upload CLI contract exists in the current Xcode toolchain without using secrets.
 
 The manual TestFlight workflow proves real signing and upload only after it has been successfully run with the PortfolioPilot App Store Connect record and Apple credentials.
+
+
+## Safe secret setup from a local terminal
+
+Do not paste the private `.p8` contents into chat.
+
+With GitHub CLI authenticated to the correct account, environment secrets can be set locally. Keep the original `.p8` file outside the repository. Convert it to base64 only in the local shell and pipe the value directly to `gh secret set`; do not commit the encoded value.
+
+After all four secrets exist in `portfolio-testflight`, the next step is to create/confirm the PortfolioPilot App Store Connect record and run the guarded workflow from `main`.
