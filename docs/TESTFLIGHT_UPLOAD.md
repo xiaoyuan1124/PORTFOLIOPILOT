@@ -42,6 +42,7 @@ Recommended: use a Team App Store Connect API key with the minimum role that sti
    - destination: `upload`
    - signingStyle: `automatic`
    - the configured Apple Team ID
+   - `manageAppVersionAndBuildNumber = false`, so Xcode cannot silently change the committed build identity
 7. Create a signed Release archive using Xcode automatic signing plus App Store Connect API authentication.
 8. Verify the signed archive's bundle ID, marketing version, build number, and code signature.
 9. Export/upload the exact archive to App Store Connect.
