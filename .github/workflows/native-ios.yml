@@ -1,0 +1,47 @@
+name: Native iOS Smoke Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "capacitor.config.ts"
+      - "package.json"
+      - "next.config.mjs"
+      - "scripts/build-native.mjs"
+      - "src/app/page.tsx"
+      - "src/components/native-runtime-bridge.tsx"
+      - "src/components/use-resume-refresh-key.ts"
+      - ".github/workflows/native-ios.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-smoke:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Show Xcode version
+        run: xcodebuild -version
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Generate iOS shell
+        run: npm run native:ios:add
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+      - name: Resolve Swift packages
+        run: xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App
+      - name: Build iOS simulator target
+        run: >
+          xcodebuild
+          -project ios/App/App.xcodeproj
+          -scheme App
+          -configuration Debug
+          -destination "generic/platform=iOS Simulator"
+          CODE_SIGNING_ALLOWED=NO
+          build
