@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T16:20:32.729Z",
+  "generatedAt": "2026-10-05T19:22:45.942Z",
   "periods": [
     "2026-08",
     "2026-07",
@@ -24174,6 +24174,22 @@
       "cumulativeRevenue": 3109389,
       "lastYearCumulativeRevenue": 3065106,
       "cumulativeYoyPct": 1.44,
+      "note": "-"
+    },
+    {
+      "code": "6604",
+      "name": "儒億",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-08",
+      "revenue": 163251,
+      "previousMonthRevenue": 200444,
+      "lastYearRevenue": 132379,
+      "momPct": -18.55,
+      "yoyPct": 23.32,
+      "cumulativeRevenue": 1446800,
+      "lastYearCumulativeRevenue": 1260393,
+      "cumulativeYoyPct": 14.78,
       "note": "-"
     },
     {
@@ -55857,6 +55873,22 @@
       "note": "-"
     },
     {
+      "code": "6604",
+      "name": "儒億",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-07",
+      "revenue": 200444,
+      "previousMonthRevenue": 207234,
+      "lastYearRevenue": 150787,
+      "momPct": -3.27,
+      "yoyPct": 32.93,
+      "cumulativeRevenue": 1283549,
+      "lastYearCumulativeRevenue": 1128014,
+      "cumulativeYoyPct": 13.78,
+      "note": "-"
+    },
+    {
       "code": "6605",
       "name": "帝寶",
       "market": "TWSE",
@@ -87534,6 +87566,22 @@
       "cumulativeRevenue": 2255371,
       "lastYearCumulativeRevenue": 2273093,
       "cumulativeYoyPct": -0.77,
+      "note": "-"
+    },
+    {
+      "code": "6604",
+      "name": "儒億",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-06",
+      "revenue": 207234,
+      "previousMonthRevenue": 168863,
+      "lastYearRevenue": 147245,
+      "momPct": 22.72,
+      "yoyPct": 40.74,
+      "cumulativeRevenue": 1083105,
+      "lastYearCumulativeRevenue": 977227,
+      "cumulativeYoyPct": 10.83,
       "note": "-"
     },
     {
