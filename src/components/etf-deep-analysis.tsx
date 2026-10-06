@@ -244,6 +244,13 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
     () => analyzeEtfAdvanced(composition, compositions, { quotes, ...sourceData }),
     [composition, compositions, quotes, sourceData]
   );
+  const topContributors = analysis.attributionRows
+    .filter((row) => row.contributionPctPoints > 0)
+    .slice(0, 5);
+  const topDetractors = [...analysis.attributionRows]
+    .filter((row) => row.contributionPctPoints < 0)
+    .sort((a, b) => a.contributionPctPoints - b.contributionPctPoints)
+    .slice(0, 5);
 
   const historyMetrics = useMemo(
     () => priceHistory ? priceHistoryMetrics(priceHistory.points) : null,
@@ -540,6 +547,53 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
               <NumberCard label="歸因 coverage" value={analysis.attributionCoveredWeightPct.toFixed(1) + "%"} helper={coverageLabel(analysis.attributionCoveredWeightPct)} />
               <NumberCard label="官方－估算 residual" value={point(analysis.attributionResidualPctPoints)} helper="可能含未覆蓋成份、現金、期貨、費用、匯率與基金結構差異" />
             </div>
+
+            {analysis.attributionRows.length ? (
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <div className="rounded-2xl border border-[#6c8c79]/20 bg-[#edf2ee]/60 p-3.5 dark:border-[#6c8c79]/18 dark:bg-[#17201b]/65">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold">主要推升成份</p>
+                    <Badge tone="good">{topContributors.length} 檔</Badge>
+                  </div>
+                  {topContributors.length ? (
+                    <div className="mt-3 space-y-2">
+                      {topContributors.map((row, index) => (
+                        <div key={row.market + ":" + row.symbol} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-xl bg-white/65 px-3 py-2.5 dark:bg-white/[.045]">
+                          <span className="grid h-7 w-7 place-items-center rounded-lg bg-black/[.04] text-[11px] font-semibold dark:bg-white/[.06]">{index + 1}</span>
+                          <span className="min-w-0">
+                            <strong className="block truncate text-xs">{row.symbol} · {row.name}</strong>
+                            <span className="mt-0.5 block text-[10px] text-black/40 dark:text-white/40">權重 {row.weightPct.toFixed(2)}% · 當日 {pct(row.changePct)}</span>
+                          </span>
+                          <strong className="text-xs tabular-nums text-[#315f49] dark:text-[#a8dab8]">{point(row.contributionPctPoints)}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  ) : <p className="mt-3 text-xs text-black/40 dark:text-white/40">本次已涵蓋成份沒有正貢獻。</p>}
+                </div>
+
+                <div className="rounded-2xl border border-[#b98b57]/20 bg-[#f5ece1]/60 p-3.5 dark:border-[#b98b57]/18 dark:bg-[#2a2117]/65">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold">主要拖累成份</p>
+                    <Badge tone={topDetractors.length ? "warn" : "neutral"}>{topDetractors.length} 檔</Badge>
+                  </div>
+                  {topDetractors.length ? (
+                    <div className="mt-3 space-y-2">
+                      {topDetractors.map((row, index) => (
+                        <div key={row.market + ":" + row.symbol} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-xl bg-white/65 px-3 py-2.5 dark:bg-white/[.045]">
+                          <span className="grid h-7 w-7 place-items-center rounded-lg bg-black/[.04] text-[11px] font-semibold dark:bg-white/[.06]">{index + 1}</span>
+                          <span className="min-w-0">
+                            <strong className="block truncate text-xs">{row.symbol} · {row.name}</strong>
+                            <span className="mt-0.5 block text-[10px] text-black/40 dark:text-white/40">權重 {row.weightPct.toFixed(2)}% · 當日 {pct(row.changePct)}</span>
+                          </span>
+                          <strong className="text-xs tabular-nums text-[#8b6538] dark:text-[#e0bd8c]">{point(row.contributionPctPoints)}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  ) : <p className="mt-3 text-xs text-black/40 dark:text-white/40">本次已涵蓋成份沒有負貢獻。</p>}
+                </div>
+              </div>
+            ) : null}
+
             {analysis.attributionUnimportedWeightPct > 0 ? <p className="mt-3 text-xs text-[#8b6538] dark:text-[#d4ad7c]">尚未匯入成份權重約 {analysis.attributionUnimportedWeightPct.toFixed(1)}%。</p> : null}
             {analysis.attributionExclusions.length ? (
               <div className="mt-3 rounded-2xl border border-[#b98b57]/20 p-3">
