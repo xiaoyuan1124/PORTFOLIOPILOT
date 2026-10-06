@@ -172,6 +172,9 @@ describe("advanced ETF analysis", () => {
     expect(result.estimatedCoveredReturnPct).toBeCloseTo(-0.55, 8);
     expect(result.officialEtfDailyReturnPct).toBe(-0.7);
     expect(result.attributionResidualPctPoints).toBeCloseTo(-0.15, 8);
+    expect(result.attributionRows.map((row) => row.symbol)).toEqual(["2317", "2330"]);
+    expect(result.attributionRows[0]?.contributionPctPoints).toBeCloseTo(0.25, 8);
+    expect(result.attributionRows[1]?.contributionPctPoints).toBeCloseTo(-0.8, 8);
     expect(result.attributionExclusions.map((row) => [row.symbol, row.reason])).toEqual([
       ["2454", "different_trading_date"],
       ["AAPL", "unsupported_market"]
