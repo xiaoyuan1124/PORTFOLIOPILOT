@@ -509,7 +509,7 @@ export function Settings({
         <CardContent>
           <h3 className="font-semibold">完整備份</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
-            JSON 會包含持股、帳戶、ETF 成分來源、交易／現金流、投資筆記、匯率、DEMO/個人模式與歷史淨值快照，匯入時會先用 schema 驗證格式。
+            JSON 會包含持股、帳戶、自選清單、ETF 成分來源、交易／現金流、投資筆記、匯率、DEMO/個人模式與歷史淨值快照，匯入時會先用 schema 驗證格式。
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={exportJson}><Download size={16} />匯出 JSON</Button>

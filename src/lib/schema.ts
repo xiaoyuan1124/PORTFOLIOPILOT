@@ -237,6 +237,17 @@ export const etfCompositionSchema = z.object({
   }
 });
 
+export const watchlistItemSchema = z.object({
+  id: z.string().min(1),
+  market: z.literal("TW"),
+  venue: z.enum(["TWSE", "TPEx"]),
+  symbol: z.string().trim().min(1).max(32),
+  name: z.string().trim().min(1).max(160),
+  type: z.enum(["stock", "etf"]),
+  industry: z.string().trim().min(1).max(120),
+  addedAt: dateKeySchema
+});
+
 export const journalEntrySchema = z.object({
   id: z.string().min(1),
   date: dateKeySchema,
@@ -1133,6 +1144,7 @@ function normalizedAccountKey(account?: string) {
 export const appStateSchema = z.object({
   holdings: z.array(holdingSchema),
   etfCompositions: z.array(etfCompositionSchema).default([]),
+  watchlist: z.array(watchlistItemSchema).default([]),
   journal: z.array(journalEntrySchema),
   activities: z.array(activitySchema).default([]),
   snapshots: z.array(snapshotSchema).default([]),
@@ -1164,6 +1176,25 @@ export const appStateSchema = z.object({
       code: "custom",
       path: ["etfCompositions", index, "id"],
       message: "同一類型資料不可使用重複 ID。"
+    });
+  }
+
+  for (const index of duplicateIndexes(state.watchlist, (item) => item.id)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["watchlist", index, "id"],
+      message: "自選清單不可使用重複 ID。"
+    });
+  }
+
+  for (const index of duplicateIndexes(
+    state.watchlist,
+    (item) => `${item.venue}:${item.symbol.trim().toUpperCase()}`
+  )) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["watchlist", index],
+      message: "同一市場與代號不可重複加入自選清單。"
     });
   }
 
@@ -1224,7 +1255,7 @@ export const appStateSchema = z.object({
 
 export const backupSchema = z.union([
   z.object({
-    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12), z.literal(13), z.literal(14), z.literal(15), z.literal(16), z.literal(17)]),
+    version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8), z.literal(9), z.literal(10), z.literal(11), z.literal(12), z.literal(13), z.literal(14), z.literal(15), z.literal(16), z.literal(17), z.literal(18)]),
     exportedAt: z.string(),
     state: appStateSchema
   }).transform((value) => value.state),

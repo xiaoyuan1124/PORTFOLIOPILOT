@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { AppState } from "@/lib/types";
+import type { HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { CompanySnapshotResearch } from "./company-snapshot-research";
 import { MaterialEventsResearch } from "./material-events-research";
 import { RevenueResearch } from "./revenue-research";
@@ -10,14 +11,15 @@ import { Scanner } from "./scanner";
 import { SectorPulseResearch } from "./sector-pulse-research";
 import { Journal } from "./journal";
 import { EtfResearch } from "./etf-research";
+import { Watchlist } from "./watchlist";
 
-type ResearchTab = "snapshot" | "etf" | "materialEvents" | "sectorPulse" | "revenue" | "valuation" | "scanner" | "journal";
+type ResearchTab = "snapshot" | "etf" | "materialEvents" | "sectorPulse" | "revenue" | "valuation" | "watchlist" | "scanner" | "journal";
 type ResearchArea = "security" | "market" | "strategy" | "notes";
 
 const areas: Array<{ key: ResearchArea; label: string; defaultTab: ResearchTab }> = [
   { key: "security", label: "標的", defaultTab: "snapshot" },
   { key: "market", label: "市場", defaultTab: "materialEvents" },
-  { key: "strategy", label: "策略", defaultTab: "scanner" },
+  { key: "strategy", label: "策略", defaultTab: "watchlist" },
   { key: "notes", label: "筆記", defaultTab: "journal" }
 ];
 
@@ -33,6 +35,7 @@ const tabsByArea: Record<ResearchArea, Array<{ key: ResearchTab; label: string }
     { key: "valuation", label: "市場估值" }
   ],
   strategy: [
+    { key: "watchlist", label: "自選清單" },
     { key: "scanner", label: "選股 Scanner" }
   ],
   notes: [
@@ -43,17 +46,43 @@ const tabsByArea: Record<ResearchArea, Array<{ key: ResearchTab; label: string }
 function areaForTab(tab: ResearchTab): ResearchArea {
   if (tab === "snapshot" || tab === "etf") return "security";
   if (tab === "materialEvents" || tab === "sectorPulse" || tab === "revenue" || tab === "valuation") return "market";
-  if (tab === "scanner") return "strategy";
+  if (tab === "watchlist" || tab === "scanner") return "strategy";
   return "notes";
 }
 
-export function Research({ state, onChange, researchKey, researchType }: { state: AppState; onChange: (state: AppState) => boolean; researchKey?: string; researchType?: "stock" | "etf" }) {
+export function Research({
+  state,
+  onChange,
+  researchKey,
+  researchType,
+  onAddHolding
+}: {
+  state: AppState;
+  onChange: (state: AppState) => boolean;
+  researchKey?: string;
+  researchType?: "stock" | "etf";
+  onAddHolding?: (candidate: HoldingLookupCandidate) => void;
+}) {
   const [tab, setTab] = useState<ResearchTab>(researchType === "etf" ? "etf" : "snapshot");
   const [snapshotKey, setSnapshotKey] = useState(researchKey);
   const [snapshotRequestId, setSnapshotRequestId] = useState(0);
+  const [etfRequestedSymbol, setEtfRequestedSymbol] = useState<string | undefined>(
+    researchType === "etf" && researchKey ? researchKey.split(":").at(-1) : undefined
+  );
   const area = useMemo(() => areaForTab(tab), [tab]);
 
   function openStockFromEtf(key: string) {
+    setSnapshotKey(key);
+    setSnapshotRequestId((value) => value + 1);
+    setTab("snapshot");
+  }
+
+  function openFromWatchlist(key: string, type: "stock" | "etf") {
+    if (type === "etf") {
+      setEtfRequestedSymbol(key.split(":").at(-1));
+      setTab("etf");
+      return;
+    }
     setSnapshotKey(key);
     setSnapshotRequestId((value) => value + 1);
     setTab("snapshot");
@@ -91,11 +120,12 @@ export function Research({ state, onChange, researchKey, researchType }: { state
       ) : null}
 
       {tab === "snapshot" ? <CompanySnapshotResearch key={snapshotRequestId} state={state} requestedKey={snapshotKey} /> : null}
-      {tab === "etf" ? <EtfResearch state={state} onOpenStock={openStockFromEtf} /> : null}
+      {tab === "etf" ? <EtfResearch key={etfRequestedSymbol ?? "default"} state={state} onOpenStock={openStockFromEtf} requestedSymbol={etfRequestedSymbol} /> : null}
       {tab === "materialEvents" ? <MaterialEventsResearch state={state} /> : null}
       {tab === "sectorPulse" ? <SectorPulseResearch state={state} /> : null}
       {tab === "revenue" ? <RevenueResearch state={state} /> : null}
       {tab === "valuation" ? <ValuationResearch state={state} /> : null}
+      {tab === "watchlist" ? <Watchlist state={state} onChange={onChange} onOpenResearch={openFromWatchlist} onAddHolding={onAddHolding} /> : null}
       {tab === "scanner" ? <Scanner state={state} /> : null}
       {tab === "journal" ? <Journal state={state} onChange={onChange} /> : null}
     </div>

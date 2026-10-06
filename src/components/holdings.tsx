@@ -27,7 +27,15 @@ const emptyHolding: Omit<Holding, "id"> = {
   account: "預設帳戶"
 };
 
-function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding: Holding) => boolean }) {
+function HoldingForm({
+  initial,
+  candidate,
+  onSave
+}: {
+  initial?: Holding;
+  candidate?: HoldingLookupCandidate;
+  onSave: (holding: Holding) => boolean;
+}) {
   const [form, setForm] = useState<Omit<Holding, "id">>(initial ? {
     symbol: initial.type === "cash" ? `CASH-${initial.currency}` : initial.symbol,
     name: initial.type === "cash" ? `${initial.currency} 現金` : initial.name,
@@ -41,6 +49,19 @@ function HoldingForm({ initial, onSave }: { initial?: Holding; onSave: (holding:
     account: accountName(initial.account),
     priceSource: initial.type === "cash" ? undefined : initial.priceSource,
     priceAsOf: initial.type === "cash" ? undefined : initial.priceAsOf
+  } : candidate ? {
+    symbol: candidate.code,
+    name: candidate.name,
+    market: "TW",
+    type: candidate.type,
+    quantity: 0,
+    price: candidate.close,
+    averageCost: 0,
+    currency: "TWD",
+    sector: candidate.industry,
+    account: "預設帳戶",
+    priceSource: candidate.venue,
+    priceAsOf: candidate.date
   } : emptyHolding);
   const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
   const [lookupQuery, setLookupQuery] = useState("");
@@ -641,8 +662,20 @@ function QuickCorrectionForm({
 
 type SortMode = "value" | "gain" | "name";
 
-export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState; onChange: (state: AppState) => boolean; onResearch?: (researchKey: string, researchType: "stock" | "etf") => void }) {
+export function HoldingsPanel({
+  state,
+  onChange,
+  onResearch,
+  requestedCandidate
+}: {
+  state: AppState;
+  onChange: (state: AppState) => boolean;
+  onResearch?: (researchKey: string, researchType: "stock" | "etf") => void;
+  requestedCandidate?: HoldingLookupCandidate;
+}) {
   const [query, setQuery] = useState("");
+  const [addOpen, setAddOpen] = useState(Boolean(requestedCandidate));
+  const [addCandidate, setAddCandidate] = useState<HoldingLookupCandidate | undefined>(requestedCandidate);
   const [sort, setSort] = useState<SortMode>("value");
   const [account, setAccount] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
@@ -851,8 +884,16 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
               <QuickCorrectionForm holdings={state.holdings} onSave={quickCorrect} />
             </Modal>
           ) : null}
-          <Modal title="新增投資部位" trigger={<Button><Plus size={16} />新增部位</Button>}>
-            <HoldingForm onSave={upsert} />
+          <Modal
+            title="新增投資部位"
+            open={addOpen}
+            onOpenChange={(open) => {
+              setAddOpen(open);
+              if (!open) setAddCandidate(undefined);
+            }}
+            trigger={<Button onClick={() => setAddCandidate(undefined)}><Plus size={16} />新增部位</Button>}
+          >
+            <HoldingForm candidate={addCandidate} onSave={upsert} />
           </Modal>
         </div>
       </div>

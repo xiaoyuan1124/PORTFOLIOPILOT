@@ -55,6 +55,17 @@ export interface ResearchStock {
   statusNote: string;
 }
 
+export interface WatchlistItem {
+  id: string;
+  market: "TW";
+  venue: "TWSE" | "TPEx";
+  symbol: string;
+  name: string;
+  type: Exclude<AssetType, "cash">;
+  industry: string;
+  addedAt: string;
+}
+
 export interface JournalEntry {
   id: string;
   date: string;
@@ -176,6 +187,7 @@ export interface AllocationTarget {
 export interface AppState {
   holdings: Holding[];
   etfCompositions: EtfComposition[];
+  watchlist?: WatchlistItem[];
   journal: JournalEntry[];
   activities: PortfolioActivity[];
   snapshots: NetWorthSnapshot[];

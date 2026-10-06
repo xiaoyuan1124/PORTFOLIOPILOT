@@ -17,6 +17,7 @@ function migrateLegacyState(value: unknown): AppState {
   return appStateSchema.parse({
     holdings: Array.isArray(record.holdings) ? record.holdings : [],
     etfCompositions: Array.isArray(record.etfCompositions) ? record.etfCompositions : [],
+    watchlist: Array.isArray(record.watchlist) ? record.watchlist : [],
     journal: Array.isArray(record.journal) ? record.journal : [],
     activities: Array.isArray(record.activities) ? record.activities : [],
     snapshots: Array.isArray(record.snapshots) ? record.snapshots : [],

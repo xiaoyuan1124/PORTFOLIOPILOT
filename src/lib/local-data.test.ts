@@ -49,8 +49,8 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("round-trips V11 internal cash transfer metadata", () => {
@@ -104,8 +104,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("round-trips V12 internal FX conversion metadata", () => {
@@ -174,8 +174,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("round-trips V13 security account transfer metadata", () => {
@@ -235,8 +235,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("round-trips V14 historical ledger-only trade metadata", () => {
@@ -270,8 +270,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("round-trips V15 historical CSV provenance", () => {
@@ -307,8 +307,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("round-trips V16 historical CSV batch identity", () => {
@@ -345,8 +345,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("round-trips V17 historical CSV source filename provenance", () => {
@@ -384,8 +384,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("rejects V17 CSV source paths and filename provenance without a fingerprint", () => {
@@ -987,8 +987,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("round-trips V7 corporate share-adjustment metadata", () => {
@@ -1039,8 +1039,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("round-trips V8 cash-linked activity metadata", () => {
@@ -1090,8 +1090,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("rejects tampered V8 cash snapshots whose arithmetic does not match delta", () => {
@@ -1215,8 +1215,8 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
-    expect(parseBackup(serialized)).toEqual(state);
+    expect(JSON.parse(serialized).version).toBe(18);
+    expect(parseBackup(serialized)).toEqual({ ...state, watchlist: state.watchlist ?? [] });
   });
 
   it("keeps version 4 backups compatible by defaulting allocation targets to empty", () => {
