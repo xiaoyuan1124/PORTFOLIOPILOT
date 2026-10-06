@@ -16,7 +16,7 @@ import { addToWatchlist, removeFromWatchlist, watchlistContains, watchlistKey } 
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 
 function candidateKey(candidate: HoldingLookupCandidate) {
-  return \`\${candidate.venue}:\${candidate.code.trim().toUpperCase()}\`;
+  return `${candidate.venue}:${candidate.code.trim().toUpperCase()}`;
 }
 
 export function Watchlist({
@@ -64,7 +64,7 @@ export function Watchlist({
     for (const holding of state.holdings) {
       if (holding.market !== "TW" || holding.type === "cash") continue;
       if (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") {
-        keys.add(\`\${holding.priceSource}:\${holding.symbol.trim().toUpperCase()}\`);
+        keys.add(`${holding.priceSource}:${holding.symbol.trim().toUpperCase()}`);
       }
     }
     return keys;
@@ -73,17 +73,17 @@ export function Watchlist({
   function add(candidate: HoldingLookupCandidate) {
     const next = addToWatchlist(watched, candidate, localDateKey());
     if (next === watched) {
-      toast.info(\`\${candidate.code} 已在自選清單\`);
+      toast.info(`${candidate.code} 已在自選清單`);
       return;
     }
     if (!onChange({ ...state, watchlist: next })) return;
-    toast.success(\`已加入 \${candidate.code} · \${candidate.name}\`);
+    toast.success(`已加入 ${candidate.code} · ${candidate.name}`);
   }
 
   function remove(venue: "TWSE" | "TPEx", symbol: string, name: string) {
     const next = removeFromWatchlist(watched, { venue, symbol });
     if (!onChange({ ...state, watchlist: next })) return;
-    toast.success(\`已移除 \${symbol} · \${name}\`);
+    toast.success(`已移除 ${symbol} · ${name}`);
   }
 
   return (
@@ -129,7 +129,7 @@ export function Watchlist({
                   >
                     <button
                       type="button"
-                      onClick={() => onOpenResearch?.(\`\${candidate.venue}:\${candidate.code}\`, candidate.type)}
+                      onClick={() => onOpenResearch?.(`${candidate.venue}:${candidate.code}`, candidate.type)}
                       className="min-w-0 flex-1 text-left"
                     >
                       <span className="flex flex-wrap items-center gap-2">
@@ -180,7 +180,7 @@ export function Watchlist({
                 <div className="flex items-start justify-between gap-3">
                   <button
                     type="button"
-                    onClick={() => onOpenResearch?.(\`\${item.venue}:\${item.symbol}\`, item.type)}
+                    onClick={() => onOpenResearch?.(`${item.venue}:${item.symbol}`, item.type)}
                     className="min-w-0 flex-1 text-left"
                   >
                     <span className="flex flex-wrap items-center gap-2">
@@ -195,7 +195,7 @@ export function Watchlist({
                   <GhostButton
                     type="button"
                     className="h-9 min-h-9 w-9 shrink-0 px-0"
-                    aria-label={\`移除 \${item.name}\`}
+                    aria-label={`移除 ${item.name}`}
                     onClick={() => remove(item.venue, item.symbol, item.name)}
                   >
                     <Trash2 size={14} />
