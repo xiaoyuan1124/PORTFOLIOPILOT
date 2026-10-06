@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { AppState } from "@/lib/types";
+import type { HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { CompanySnapshotResearch } from "./company-snapshot-research";
 import { MaterialEventsResearch } from "./material-events-research";
 import { RevenueResearch } from "./revenue-research";
@@ -49,7 +50,19 @@ function areaForTab(tab: ResearchTab): ResearchArea {
   return "notes";
 }
 
-export function Research({ state, onChange, researchKey, researchType }: { state: AppState; onChange: (state: AppState) => boolean; researchKey?: string; researchType?: "stock" | "etf" }) {
+export function Research({
+  state,
+  onChange,
+  researchKey,
+  researchType,
+  onAddHolding
+}: {
+  state: AppState;
+  onChange: (state: AppState) => boolean;
+  researchKey?: string;
+  researchType?: "stock" | "etf";
+  onAddHolding?: (candidate: HoldingLookupCandidate) => void;
+}) {
   const [tab, setTab] = useState<ResearchTab>(researchType === "etf" ? "etf" : "snapshot");
   const [snapshotKey, setSnapshotKey] = useState(researchKey);
   const [snapshotRequestId, setSnapshotRequestId] = useState(0);
@@ -112,7 +125,7 @@ export function Research({ state, onChange, researchKey, researchType }: { state
       {tab === "sectorPulse" ? <SectorPulseResearch state={state} /> : null}
       {tab === "revenue" ? <RevenueResearch state={state} /> : null}
       {tab === "valuation" ? <ValuationResearch state={state} /> : null}
-      {tab === "watchlist" ? <Watchlist state={state} onChange={onChange} onOpenResearch={openFromWatchlist} /> : null}
+      {tab === "watchlist" ? <Watchlist state={state} onChange={onChange} onOpenResearch={openFromWatchlist} onAddHolding={onAddHolding} /> : null}
       {tab === "scanner" ? <Scanner state={state} /> : null}
       {tab === "journal" ? <Journal state={state} onChange={onChange} /> : null}
     </div>
