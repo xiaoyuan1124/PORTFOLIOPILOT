@@ -50,6 +50,18 @@ export type OfficialStrategyResult = {
   trustGate: InstitutionalGateDetail;
 };
 
+export type StrategyGateConfig = {
+  revenueYoyMinPct: number;
+  foreignNet10dMin: number;
+  trustNet10dMin: number;
+};
+
+export const defaultStrategyGateConfig: StrategyGateConfig = {
+  revenueYoyMinPct: 20,
+  foreignNet10dMin: 0,
+  trustNet10dMin: 0
+};
+
 function key(market: "TWSE" | "TPEx", code: string) {
   return `${market}:${code.toUpperCase()}`;
 }
@@ -72,7 +84,8 @@ function revenueSources(cache: RevenueHistoryCache, market: "TWSE" | "TPEx", per
 function evaluateRevenueGate(
   cache: RevenueHistoryCache,
   rows: RevenueHistoryRow[],
-  market: "TWSE" | "TPEx"
+  market: "TWSE" | "TPEx",
+  minYoyPct: number
 ): RevenueGateDetail {
   const periods = [...cache.periods].sort().slice(-3);
   const byPeriod = new Map(rows.map((row) => [row.period, row]));
@@ -90,12 +103,12 @@ function evaluateRevenueGate(
     };
   }
 
-  const pass = selected.every((row) => (row.yoyPct ?? -Infinity) > 20);
+  const pass = selected.every((row) => (row.yoyPct ?? -Infinity) > minYoyPct);
   return {
     status: pass ? "pass" : "fail",
     reason: pass
-      ? "最近 3 個月營收 YoY 均大於 20%。"
-      : "至少一個月營收 YoY 未大於 20%。",
+      ? `最近 3 個月營收 YoY 均大於 ${minYoyPct.toLocaleString("zh-TW", { maximumFractionDigits: 2 })}%。`
+      : `至少一個月營收 YoY 未大於 ${minYoyPct.toLocaleString("zh-TW", { maximumFractionDigits: 2 })}%。`,
     dataAsOf: periods.join(" / "),
     values,
     sources
@@ -134,7 +147,8 @@ function evaluateInstitutionalGate(
   cache: InstitutionalCache,
   row: InstitutionalRow | null,
   field: "foreign10d" | "trust10d",
-  label: string
+  label: string,
+  minNet10d: number
 ): InstitutionalGateDetail {
   const net10d = row?.[field] ?? null;
   if (cache.tradingDates.length !== 10 || row === null) {
@@ -148,10 +162,12 @@ function evaluateInstitutionalGate(
     };
   }
 
-  const pass = net10d !== null && net10d > 0;
+  const pass = net10d !== null && net10d > minNet10d;
   return {
     status: pass ? "pass" : "fail",
-    reason: pass ? `${label}近 10 個交易日合計為淨買超。` : `${label}近 10 個交易日合計未呈淨買超。`,
+    reason: pass
+      ? `${label}近 10 個交易日淨買超大於 ${minNet10d.toLocaleString("zh-TW")} 股。`
+      : `${label}近 10 個交易日淨買超未大於 ${minNet10d.toLocaleString("zh-TW")} 股。`,
     dataAsOf: institutionalAsOf(cache),
     net10d,
     observedDays: row.observedDays,
@@ -169,8 +185,14 @@ function statusRank(status: GateStatus) {
 export function evaluateOfficialStrategy(
   revenueCache: RevenueHistoryCache,
   institutionalCache: InstitutionalCache,
-  quarterlyCache: QuarterlyMarginCache
+  quarterlyCache: QuarterlyMarginCache,
+  config: StrategyGateConfig = defaultStrategyGateConfig
 ): OfficialStrategyResult[] {
+  const thresholds: StrategyGateConfig = {
+    revenueYoyMinPct: Number.isFinite(config.revenueYoyMinPct) ? config.revenueYoyMinPct : defaultStrategyGateConfig.revenueYoyMinPct,
+    foreignNet10dMin: Number.isFinite(config.foreignNet10dMin) ? config.foreignNet10dMin : defaultStrategyGateConfig.foreignNet10dMin,
+    trustNet10dMin: Number.isFinite(config.trustNet10dMin) ? config.trustNet10dMin : defaultStrategyGateConfig.trustNet10dMin
+  };
   const metadata = new Map<string, { code: string; name: string; market: "TWSE" | "TPEx"; industry: string }>();
   const revenueByKey = new Map<string, RevenueHistoryRow[]>();
 
@@ -204,10 +226,10 @@ export function evaluateOfficialStrategy(
   }
 
   const results = [...metadata.entries()].map(([rowKey, company]) => {
-    const revenueGate = evaluateRevenueGate(revenueCache, revenueByKey.get(rowKey) ?? [], company.market);
+    const revenueGate = evaluateRevenueGate(revenueCache, revenueByKey.get(rowKey) ?? [], company.market, thresholds.revenueYoyMinPct);
     const institutional = institutionalByKey.get(rowKey) ?? null;
-    const foreignGate = evaluateInstitutionalGate(institutionalCache, institutional, "foreign10d", "外資");
-    const trustGate = evaluateInstitutionalGate(institutionalCache, institutional, "trust10d", "投信");
+    const foreignGate = evaluateInstitutionalGate(institutionalCache, institutional, "foreign10d", "外資", thresholds.foreignNet10dMin);
+    const trustGate = evaluateInstitutionalGate(institutionalCache, institutional, "trust10d", "投信", thresholds.trustNet10dMin);
     const gross = evaluateQuarterlyGrossMarginGate(quarterlyCache, company.code, company.market);
     const grossMarginGate: GrossMarginGateDetail = {
       status: gross.status,
