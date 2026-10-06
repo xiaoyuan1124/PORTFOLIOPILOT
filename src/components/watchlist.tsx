@@ -61,20 +61,14 @@ export function Watchlist({
     [catalog, query]
   );
 
-  const heldKeys = useMemo(() => {
-    const keys = new Set<string>();
-    for (const holding of state.holdings) {
-      if (holding.market !== "TW" || holding.type === "cash") continue;
-      const symbol = holding.symbol.trim().toUpperCase();
-      if (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") {
-        keys.add(`${holding.priceSource}:${symbol}`);
-      } else {
-        keys.add(`TWSE:${symbol}`);
-        keys.add(`TPEx:${symbol}`);
-      }
-    }
-    return keys;
-  }, [state.holdings]);
+  const heldSymbols = useMemo(
+    () => new Set(
+      state.holdings
+        .filter((holding) => holding.market === "TW" && holding.type !== "cash")
+        .map((holding) => holding.symbol.trim().toUpperCase())
+    ),
+    [state.holdings]
+  );
 
   function add(candidate: HoldingLookupCandidate) {
     const next = addToWatchlist(watched, candidate, localDateKey());
@@ -127,7 +121,7 @@ export function Watchlist({
                   venue: candidate.venue,
                   symbol: candidate.code
                 });
-                const held = heldKeys.has(candidateKey(candidate));
+                const held = heldSymbols.has(candidate.code.trim().toUpperCase());
                 return (
                   <div
                     key={candidateKey(candidate)}
@@ -179,7 +173,7 @@ export function Watchlist({
       <div className="grid gap-3 lg:grid-cols-2">
         {watched.map((item) => {
           const current = lookup.get(watchlistKey(item));
-          const held = heldKeys.has(watchlistKey(item));
+          const held = heldSymbols.has(item.symbol.trim().toUpperCase());
           return (
             <Card key={item.id}>
               <CardContent className="p-4">
