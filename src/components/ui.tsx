@@ -57,9 +57,21 @@ export function InfoDisclosure({
   );
 }
 
-export function Modal({ trigger, title, children }: { trigger: ReactNode; title: string; children: ReactNode }) {
+export function Modal({
+  trigger,
+  title,
+  children,
+  open,
+  onOpenChange
+}: {
+  trigger: ReactNode;
+  title: string;
+  children: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   return (
-    <Dialog.Root>
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/35 backdrop-blur-sm" />
