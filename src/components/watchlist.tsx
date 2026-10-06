@@ -22,11 +22,13 @@ function candidateKey(candidate: HoldingLookupCandidate) {
 export function Watchlist({
   state,
   onChange,
-  onOpenResearch
+  onOpenResearch,
+  onAddHolding
 }: {
   state: AppState;
   onChange: (state: AppState) => boolean;
   onOpenResearch?: (researchKey: string, researchType: "stock" | "etf") => void;
+  onAddHolding?: (candidate: HoldingLookupCandidate) => void;
 }) {
   const watched = state.watchlist ?? [];
   const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
@@ -63,8 +65,12 @@ export function Watchlist({
     const keys = new Set<string>();
     for (const holding of state.holdings) {
       if (holding.market !== "TW" || holding.type === "cash") continue;
+      const symbol = holding.symbol.trim().toUpperCase();
       if (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") {
-        keys.add(`${holding.priceSource}:${holding.symbol.trim().toUpperCase()}`);
+        keys.add(`${holding.priceSource}:${symbol}`);
+      } else {
+        keys.add(`TWSE:${symbol}`);
+        keys.add(`TPEx:${symbol}`);
       }
     }
     return keys;
@@ -215,6 +221,15 @@ export function Watchlist({
                 <p className="mt-3 text-[11px] text-black/35 dark:text-white/35">
                   加入自選 {item.addedAt}{current ? " · 點標的查看研究" : " · 官方清單目前找不到最新資料，已保留你的自選項目"}
                 </p>
+                {!held && current && onAddHolding ? (
+                  <GhostButton
+                    type="button"
+                    className="mt-3 min-h-9 px-3 text-xs"
+                    onClick={() => onAddHolding(current)}
+                  >
+                    <Plus size={14} />轉成持股
+                  </GhostButton>
+                ) : null}
               </CardContent>
             </Card>
           );
