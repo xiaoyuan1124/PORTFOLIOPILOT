@@ -107,7 +107,7 @@ export function Research({ state, onChange, researchKey, researchType }: { state
       ) : null}
 
       {tab === "snapshot" ? <CompanySnapshotResearch key={snapshotRequestId} state={state} requestedKey={snapshotKey} /> : null}
-      {tab === "etf" ? <EtfResearch state={state} onOpenStock={openStockFromEtf} requestedSymbol={etfRequestedSymbol} /> : null}
+      {tab === "etf" ? <EtfResearch key={etfRequestedSymbol ?? "default"} state={state} onOpenStock={openStockFromEtf} requestedSymbol={etfRequestedSymbol} /> : null}
       {tab === "materialEvents" ? <MaterialEventsResearch state={state} /> : null}
       {tab === "sectorPulse" ? <SectorPulseResearch state={state} /> : null}
       {tab === "revenue" ? <RevenueResearch state={state} /> : null}
