@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Holding } from "./types";
-import { applyTwQuotes, cacheFreshnessLabel, cacheMarketFreshness, shouldRejectStaleClosingCache, type TwQuoteCache } from "./market-data";
+import { applyTwQuotes, cacheFreshnessLabel, cacheMarketFreshness, closingPriceStatusLabel, shouldRejectStaleClosingCache, type TwQuoteCache } from "./market-data";
 
 const holdings: Holding[] = [
   { id: "1", symbol: "2330", name: "台積電", market: "TW", type: "stock", quantity: 2, price: 1000, averageCost: 900, currency: "TWD", sector: "半導體" },
@@ -108,8 +108,23 @@ describe("official Taiwan quote cache", () => {
     expect(cacheFreshnessLabel(cache)).toBe("2026-09-27");
   });
 
+  it("labels the previous close clearly during Taiwan market hours", () => {
+    expect(closingPriceStatusLabel("2026-10-05", new Date("2026-10-06T03:30:00.000Z")))
+      .toBe("盤中時段 · 最近收盤 2026-10-05");
+  });
+
+  it("labels a same-day quote as today's close", () => {
+    expect(closingPriceStatusLabel("2026-10-06", new Date("2026-10-06T06:30:00.000Z")))
+      .toBe("今日收盤 · 2026-10-06");
+  });
+
+  it("labels an older quote generically outside market hours", () => {
+    expect(closingPriceStatusLabel("2026-10-05", new Date("2026-10-06T07:00:00.000Z")))
+      .toBe("最近收盤 · 2026-10-05");
+  });
+
   it("rejects an older cache after the Taiwan close publishing window", () => {
-    expect(shouldRejectStaleClosingCache(cache, new Date("2026-09-29T12:00:00.000Z"))).toBe(true);
+    expect(shouldRejectStaleClosingCache(cache, new Date("2026-09-29T07:30:00.000Z"))).toBe(true);
   });
 
   it("allows an older trading date when the cache itself was refreshed today", () => {
