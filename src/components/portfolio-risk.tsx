@@ -1,9 +1,9 @@
 "use client";
 
-import { Layers3, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Info, Layers3, ShieldCheck } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { AppState } from "@/lib/types";
-import { calculatePortfolioRisk, type RiskSlice } from "@/lib/portfolio-risk";
+import { buildPortfolioRiskNotices, calculatePortfolioRisk, portfolioRiskNoticeThresholds, type RiskSlice } from "@/lib/portfolio-risk";
 import { money } from "@/lib/utils";
 import { Badge, Card, CardContent, InfoDisclosure } from "./ui";
 
@@ -83,6 +83,7 @@ function CompanyExposureChart({
 
 export function PortfolioRisk({ state }: { state: AppState }) {
   const risk = calculatePortfolioRisk(state.holdings, state.etfCompositions, state.usdTwd);
+  const notices = buildPortfolioRiskNotices(risk);
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -112,6 +113,61 @@ export function PortfolioRisk({ state }: { state: AppState }) {
         <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">最大產業</p><p className="mt-2 text-xl font-semibold">{risk.largestSector ? pct(risk.largestSector.portfolioPct) : "—"}</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">{risk.largestSector?.label ?? "沒有已解析產業曝險"}</p></CardContent></Card>
         <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">未解析 ETF</p><p className="mt-2 text-xl font-semibold">{pct(risk.unresolvedEtfPct)}</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">{money(risk.unresolvedEtfValueTwd)} 不做推估</p></CardContent></Card>
       </section>
+
+
+      <Card>
+        <CardContent>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Risk Notices</p>
+              <h3 className="mt-1 font-semibold">集中度與重複曝險提醒</h3>
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-black/42 dark:text-white/42">
+                用固定產品閾值把值得檢查的曝險先浮上來；這些是注意提示，不是買賣建議或個人化風險評級。
+              </p>
+            </div>
+            <Badge tone={notices.some((notice) => notice.severity === "attention") ? "warn" : "good"}>
+              {notices.length ? `${notices.length} 項提醒` : "沒有觸發提醒"}
+            </Badge>
+          </div>
+
+          {notices.length ? (
+            <div className="mt-4 grid gap-2 md:grid-cols-2">
+              {notices.map((notice) => {
+                const attention = notice.severity === "attention";
+                const Icon = attention ? AlertTriangle : Info;
+                return (
+                  <div
+                    key={notice.id}
+                    className={attention
+                      ? "rounded-2xl border border-[#b98b57]/22 bg-[#f5ece1]/65 p-3.5 dark:border-[#b98b57]/18 dark:bg-[#2a2117]/65"
+                      : "rounded-2xl border border-black/6 bg-black/[.018] p-3.5 dark:border-white/8 dark:bg-white/[.025]"}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <Icon size={16} className={attention ? "mt-0.5 shrink-0 text-[#8b6538] dark:text-[#e0bd8c]" : "mt-0.5 shrink-0 text-black/35 dark:text-white/35"} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">{notice.title}</p>
+                        <p className="mt-1 text-xs leading-5 text-black/48 dark:text-white/48">{notice.detail}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-[#6c8c79]/20 bg-[#edf2ee] px-4 py-3 text-sm text-[#335b46] dark:border-[#6c8c79]/18 dark:bg-[#17201b] dark:text-[#a8dab8]">
+              目前沒有超過 PortfolioPilot 的集中度注意閾值，也沒有偵測到達門檻的直接持股＋ETF 重複曝險。
+            </div>
+          )}
+
+          <InfoDisclosure summary="提醒閾值怎麼設定" className="mt-3">
+            最大單一公司 ≥ {portfolioRiskNoticeThresholds.largestCompanyPct}%、
+            前五大公司 ≥ {portfolioRiskNoticeThresholds.top5CompanyPct}%、
+            最大產業 ≥ {portfolioRiskNoticeThresholds.largestSectorPct}%、
+            直接＋ETF 的同一公司總曝險 ≥ {portfolioRiskNoticeThresholds.duplicateCompanyPct}% 時顯示注意提醒。
+            未解析 ETF ≥ {portfolioRiskNoticeThresholds.unresolvedEtfPct}% 或證券曝險覆蓋低於 {portfolioRiskNoticeThresholds.riskCoveragePct}% 時則另外顯示資料完整度提醒。
+          </InfoDisclosure>
+        </CardContent>
+      </Card>
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_.9fr]">
         <Card>

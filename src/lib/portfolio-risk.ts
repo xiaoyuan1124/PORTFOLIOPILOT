@@ -9,6 +9,14 @@ export type RiskSlice = {
   portfolioPct: number;
 };
 
+export type PortfolioRiskNotice = {
+  id: string;
+  severity: "attention" | "info";
+  title: string;
+  detail: string;
+  valuePct?: number;
+};
+
 export type PortfolioRiskResult = {
   portfolioValueTwd: number;
   investedValueTwd: number;
@@ -128,4 +136,79 @@ export function calculatePortfolioRisk(
     resolvedCompanyHhi,
     effectiveCompanyCount
   };
+}
+
+
+export const portfolioRiskNoticeThresholds = {
+  largestCompanyPct: 20,
+  top5CompanyPct: 70,
+  largestSectorPct: 40,
+  unresolvedEtfPct: 10,
+  riskCoveragePct: 90,
+  duplicateCompanyPct: 10
+} as const;
+
+export function buildPortfolioRiskNotices(risk: PortfolioRiskResult): PortfolioRiskNotice[] {
+  const notices: PortfolioRiskNotice[] = [];
+  const thresholds = portfolioRiskNoticeThresholds;
+
+  if (risk.largestCompany && risk.largestCompany.portfolioPct >= thresholds.largestCompanyPct) {
+    notices.push({
+      id: "largest-company",
+      severity: "attention",
+      title: "單一公司曝險偏高",
+      detail: `${risk.largestCompany.name}（${risk.largestCompany.symbol}）穿透後占總資產 ${risk.largestCompany.portfolioPct.toFixed(1)}%。`,
+      valuePct: risk.largestCompany.portfolioPct
+    });
+  }
+
+  if (risk.top5CompanyPct >= thresholds.top5CompanyPct) {
+    notices.push({
+      id: "top5-companies",
+      severity: "attention",
+      title: "前五大公司集中",
+      detail: `前五大公司合計占總資產 ${risk.top5CompanyPct.toFixed(1)}%。`,
+      valuePct: risk.top5CompanyPct
+    });
+  }
+
+  if (risk.largestSector && risk.largestSector.portfolioPct >= thresholds.largestSectorPct) {
+    notices.push({
+      id: "largest-sector",
+      severity: "attention",
+      title: "單一產業曝險偏高",
+      detail: `${risk.largestSector.label}占總資產 ${risk.largestSector.portfolioPct.toFixed(1)}%。`,
+      valuePct: risk.largestSector.portfolioPct
+    });
+  }
+
+  const duplicateExposures = risk.companyExposures
+    .filter((row) =>
+      row.directValueTwd > 0 &&
+      row.implicitValueTwd > 0 &&
+      row.portfolioPct >= thresholds.duplicateCompanyPct
+    )
+    .slice(0, 3);
+
+  for (const row of duplicateExposures) {
+    notices.push({
+      id: `duplicate:${row.market}:${row.symbol}`,
+      severity: "attention",
+      title: "直接持股＋ETF 重複曝險",
+      detail: `${row.name}（${row.symbol}）總曝險 ${row.portfolioPct.toFixed(1)}%，同時來自直接持股與 ETF 成份。`,
+      valuePct: row.portfolioPct
+    });
+  }
+
+  if (risk.unresolvedEtfPct >= thresholds.unresolvedEtfPct || risk.riskCoveragePct < thresholds.riskCoveragePct) {
+    notices.push({
+      id: "coverage",
+      severity: "info",
+      title: "部分 ETF 尚未完整穿透",
+      detail: `證券曝險覆蓋 ${risk.riskCoveragePct.toFixed(1)}%，未解析 ETF 占總資產 ${risk.unresolvedEtfPct.toFixed(1)}%；未知部分不會被猜進公司或產業曝險。`,
+      valuePct: risk.riskCoveragePct
+    });
+  }
+
+  return notices;
 }
