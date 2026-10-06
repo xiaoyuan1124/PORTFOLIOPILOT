@@ -5,6 +5,7 @@ import { Capacitor } from "@capacitor/core";
 import { BarChart3, BriefcaseBusiness, Home, Moon, Search, Settings as SettingsIcon, Sun } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import type { AppState } from "@/lib/types";
+import type { HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { emptyState } from "@/lib/demo-data";
 import { withTodaySnapshot } from "@/lib/calc";
 import { loadInitialState } from "@/lib/storage";
@@ -55,6 +56,7 @@ export function AppShell() {
   const [storageReady, setStorageReady] = useState(false);
   const [nativeStorageDegraded, setNativeStorageDegraded] = useState(false);
   const [portfolioRequestedTab, setPortfolioRequestedTab] = useState<PortfolioTab | undefined>();
+  const [portfolioHoldingCandidate, setPortfolioHoldingCandidate] = useState<HoldingLookupCandidate | undefined>();
   const [portfolioRequestId, setPortfolioRequestId] = useState(0);
   const title = useMemo(() => titles[section], [section]);
 
@@ -202,6 +204,7 @@ export function AppShell() {
     }
     if (next === "portfolio") {
       setPortfolioRequestedTab(undefined);
+      setPortfolioHoldingCandidate(undefined);
       setPortfolioRequestId((value) => value + 1);
     }
     setSection(next);
@@ -209,6 +212,17 @@ export function AppShell() {
 
   function navigatePortfolioTab(tab: PortfolioTab) {
     setPortfolioRequestedTab(tab);
+    setPortfolioHoldingCandidate(undefined);
+    setPortfolioRequestId((value) => value + 1);
+    setSection("portfolio");
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  function addWatchlistCandidateToPortfolio(candidate: HoldingLookupCandidate) {
+    setPortfolioRequestedTab("holdings");
+    setPortfolioHoldingCandidate(candidate);
     setPortfolioRequestId((value) => value + 1);
     setSection("portfolio");
     window.requestAnimationFrame(() => {
@@ -311,9 +325,10 @@ export function AppShell() {
               onChange={updateState}
               onResearch={(key, type) => navigate("research", key, type)}
               requestedTab={portfolioRequestedTab}
+              requestedHoldingCandidate={portfolioHoldingCandidate}
             />
           ) : null}
-          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} /> : null}
+          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} onAddHolding={addWatchlistCandidateToPortfolio} /> : null}
           {section === "settings" ? (
             <Settings
               state={state}
