@@ -8,7 +8,7 @@ import type { AppState, AssetType, Currency, Holding, Market } from "@/lib/types
 import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
 import { applyHoldingCorrections, accountName, holdingIdentityKey, type HoldingCorrection } from "@/lib/local-data";
 import { money, percent } from "@/lib/utils";
-import { applyTwQuotes, cacheFreshnessLabel, cacheMarketFreshness, loadBundledTwQuotes, shouldRejectStaleClosingCache } from "@/lib/market-data";
+import { applyTwQuotes, cacheFreshnessLabel, cacheMarketFreshness, closingPriceStatusLabel, loadBundledTwQuotes, shouldRejectStaleClosingCache } from "@/lib/market-data";
 import { applyHeldEtfCompositions, loadBundledEtfCompositions } from "@/lib/etf-composition-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
 import { buildHoldingLookupCatalog, findExactHoldingLookupCandidate, searchHoldingLookupCatalog, type HoldingLookupCandidate } from "@/lib/holding-autofill";
@@ -650,6 +650,20 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
 
   const accounts = useMemo(() => [...new Set(state.holdings.map((holding) => accountName(holding.account)))].sort((a, b) => a.localeCompare(b, "zh-Hant")), [state.holdings]);
 
+  const latestOfficialPriceDate = useMemo(
+    () => state.holdings
+      .filter((holding) =>
+        holding.market === "TW" &&
+        holding.type !== "cash" &&
+        (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") &&
+        Boolean(holding.priceAsOf)
+      )
+      .map((holding) => holding.priceAsOf!)
+      .sort()
+      .at(-1) ?? null,
+    [state.holdings]
+  );
+
   const sorted = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const filtered = state.holdings.filter((holding) =>
@@ -744,8 +758,8 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
           nextHoldings = result.holdings;
           const freshness = cacheMarketFreshness(cache);
           const dateLabel = [
-            freshness.TWSE ? `TWSE ${freshness.TWSE}` : null,
-            freshness.TPEx ? `TPEx ${freshness.TPEx}` : null
+            freshness.TWSE ? `TWSE ${closingPriceStatusLabel(freshness.TWSE)}` : null,
+            freshness.TPEx ? `TPEx ${closingPriceStatusLabel(freshness.TPEx)}` : null
           ].filter(Boolean).join(" · ");
           quoteSummary = result.updated
             ? `台股價格 ${result.updated}/${result.matched} · ${dateLabel || asOf}`
@@ -817,11 +831,18 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
           <p className="mt-1 text-3xl font-semibold tracking-tight">{money(summary.total)}</p>
           {accounts.length ? <p className="mt-1 text-xs text-black/38 dark:text-white/38">{accounts.length} 個帳戶 · 可分帳戶檢視</p> : null}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <GhostButton type="button" disabled={refreshing} onClick={refreshTaiwanPrices}>
-            <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-            {refreshing ? "同步中" : "同步最新資料"}
-          </GhostButton>
+        <div className="flex flex-wrap items-start gap-2">
+          <div className="flex flex-col items-end gap-1">
+            <GhostButton type="button" disabled={refreshing} onClick={refreshTaiwanPrices}>
+              <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+              {refreshing ? "同步中" : "同步最新資料"}
+            </GhostButton>
+            {latestOfficialPriceDate ? (
+              <span className="px-1 text-[11px] text-black/38 dark:text-white/38">
+                {closingPriceStatusLabel(latestOfficialPriceDate)}
+              </span>
+            ) : null}
+          </div>
           {state.holdings.length ? (
             <Modal
               title="快速校正目前庫存"
@@ -880,7 +901,7 @@ export function HoldingsPanel({ state, onChange, onResearch }: { state: AppState
                     </p>
                     {!isCash && holding.priceSource && holding.priceAsOf ? (
                       <p className="mt-1 text-[11px] text-black/35 dark:text-white/35">
-                        價格來源 {holding.priceSource} · {holding.priceAsOf}
+                        價格來源 {holding.priceSource} · {closingPriceStatusLabel(holding.priceAsOf)}
                       </p>
                     ) : null}
                   </div>
