@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { AppState } from "@/lib/types";
+import type { HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { ActivityLedger } from "./activity-ledger";
 import { AllocationTargets } from "./allocation-targets";
 import { DividendCenter } from "./dividend-center";
@@ -49,12 +50,14 @@ export function Portfolio({
   state,
   onChange,
   onResearch,
-  requestedTab
+  requestedTab,
+  requestedHoldingCandidate
 }: {
   state: AppState;
   onChange: (state: AppState) => boolean;
   onResearch?: (researchKey: string, researchType: "stock" | "etf") => void;
   requestedTab?: PortfolioTab;
+  requestedHoldingCandidate?: HoldingLookupCandidate;
 }) {
   const [tab, setTab] = useState<PortfolioTab>(requestedTab ?? "holdings");
   const area = useMemo(() => areaForTab(tab), [tab]);
@@ -90,7 +93,7 @@ export function Portfolio({
         </div>
       ) : null}
 
-      {tab === "holdings" ? <HoldingsPanel state={state} onChange={onChange} onResearch={onResearch} /> : null}
+      {tab === "holdings" ? <HoldingsPanel state={state} onChange={onChange} onResearch={onResearch} requestedCandidate={requestedHoldingCandidate} /> : null}
       {tab === "lookthrough" ? <EtfLookThrough state={state} onChange={onChange} /> : null}
       {tab === "risk" ? <PortfolioRisk state={state} /> : null}
       {tab === "targets" ? <AllocationTargets state={state} onChange={onChange} /> : null}
