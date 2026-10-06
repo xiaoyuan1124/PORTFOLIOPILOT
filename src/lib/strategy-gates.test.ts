@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { InstitutionalCache } from "./institutional-data";
 import type { QuarterlyMarginCache } from "./quarterly-financials";
 import type { RevenueHistoryCache } from "./revenue-history";
-import { evaluateOfficialStrategy } from "./strategy-gates";
+import { defaultStrategyGateConfig, evaluateOfficialStrategy } from "./strategy-gates";
 
 function revenueFor(code: string, name: string, market: "TWSE" | "TPEx", industry: string): RevenueHistoryCache["rows"] {
   return [
@@ -118,5 +118,33 @@ describe("official four-gate scanner", () => {
     expect(result?.overallStatus).toBe("fail");
     expect(result?.foreignGate.status).toBe("fail");
     expect(result?.grossMarginGate.status).toBe("insufficient");
+  });
+
+
+  it("preserves the original scanner thresholds as defaults", () => {
+    expect(defaultStrategyGateConfig).toEqual({
+      revenueYoyMinPct: 20,
+      foreignNet10dMin: 0,
+      trustNet10dMin: 0
+    });
+    expect(evaluateOfficialStrategy(revenue, institutional, quarterly())[0]?.overallStatus).toBe("pass");
+  });
+
+  it("re-evaluates official gates when the user raises scanner thresholds", () => {
+    const stricterRevenue = evaluateOfficialStrategy(revenue, institutional, quarterly(), {
+      revenueYoyMinPct: 25,
+      foreignNet10dMin: 0,
+      trustNet10dMin: 0
+    })[0];
+    expect(stricterRevenue?.revenueGate.status).toBe("fail");
+    expect(stricterRevenue?.overallStatus).toBe("fail");
+
+    const stricterForeign = evaluateOfficialStrategy(revenue, institutional, quarterly(), {
+      revenueYoyMinPct: 20,
+      foreignNet10dMin: 100000,
+      trustNet10dMin: 10000
+    })[0];
+    expect(stricterForeign?.foreignGate.status).toBe("fail");
+    expect(stricterForeign?.trustGate.status).toBe("pass");
   });
 });
