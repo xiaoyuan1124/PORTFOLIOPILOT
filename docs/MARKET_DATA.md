@@ -20,6 +20,10 @@ Normalized cache:
 
 The PWA can apply the latest cached close to Taiwan non-cash holdings and stores `priceSource` plus `priceAsOf` on each updated holding.
 
+`.github/workflows/quotes.yml` starts checking the official closing-price sources shortly after the Taiwan market closes: 13:40, 13:50, 14:00, 14:15, 14:30 and 15:00 Asia/Taipei on weekdays, with 17:00, 19:00 and 21:00 fallback attempts for delayed upstream publication. A run that finds no newer official close skips the dependency install/build/deploy steps.
+
+During the 09:00–13:30 weekday market window, the UI explicitly labels cached values as `盤中時段 · 最近收盤 YYYY-MM-DD`; it does not present the previous close as an intraday quote.
+
 ### Monthly revenue
 
 Listed market:
