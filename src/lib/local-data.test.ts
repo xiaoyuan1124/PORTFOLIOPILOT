@@ -49,7 +49,7 @@ describe("local data import/export", () => {
       snapshots: [{ date: "2026-09-27", total: 10, cost: 8, gain: 2, usdTwd: 31.8 }]
     };
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -104,7 +104,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -174,7 +174,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -235,7 +235,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -270,7 +270,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -307,7 +307,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -345,7 +345,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -384,7 +384,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -987,7 +987,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -1039,7 +1039,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -1090,7 +1090,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
@@ -1215,7 +1215,7 @@ describe("local data import/export", () => {
     };
 
     const serialized = serializeBackup(state);
-    expect(JSON.parse(serialized).version).toBe(17);
+    expect(JSON.parse(serialized).version).toBe(18);
     expect(parseBackup(serialized)).toEqual(state);
   });
 
