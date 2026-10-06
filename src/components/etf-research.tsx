@@ -61,13 +61,6 @@ export function EtfResearch({
     return match ? compositionKey(match) : compositions[0] ? compositionKey(compositions[0]) : "";
   });
 
-  useEffect(() => {
-    const requested = requestedSymbol?.trim().toUpperCase();
-    if (!requested) return;
-    const match = compositions.find((composition) => composition.etfSymbol.trim().toUpperCase() === requested);
-    if (match) setSelectedKey(compositionKey(match));
-  }, [compositions, requestedSymbol]);
-
   async function reload() {
     setLoading(true);
     setQuoteError("");
