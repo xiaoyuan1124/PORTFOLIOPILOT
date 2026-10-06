@@ -28,6 +28,16 @@ export type EtfAttributionExclusion = {
   quoteDate: string | null;
 };
 
+export type EtfAttributionRow = {
+  symbol: string;
+  name: string;
+  market: EtfConstituent["market"];
+  weightPct: number;
+  changePct: number;
+  contributionPctPoints: number;
+  quoteDate: string;
+};
+
 export type EtfOverlapComparison = {
   etfMarket: EtfComposition["etfMarket"];
   etfSymbol: string;
@@ -96,6 +106,9 @@ export type EtfAdvancedAnalysis = {
   officialEtfDailyReturnPct: number | null;
   officialEtfQuoteDate: string | null;
   attributionResidualPctPoints: number | null;
+  attributionRows: EtfAttributionRow[];
+  topContributors: EtfAttributionRow[];
+  topDetractors: EtfAttributionRow[];
   attributionExclusions: EtfAttributionExclusion[];
   momentumAvailable: false;
   momentumUnavailableReason: string;
@@ -366,12 +379,24 @@ export function analyzeEtfAdvanced(
   ));
   let attributionCoveredWeightPct = 0;
   let estimatedCoveredReturnPct = 0;
+  const attributionRows: EtfAttributionRow[] = [];
   const attributionExclusions: EtfAttributionExclusion[] = [];
 
   for (const { item, match } of quoteStates) {
     if (match.status === "ok" && match.quote && attributionDate && match.quote.date === attributionDate) {
+      const changePct = match.quote.changePct ?? 0;
+      const contributionPctPoints = item.weightPct * changePct / 100;
       attributionCoveredWeightPct += item.weightPct;
-      estimatedCoveredReturnPct += item.weightPct * (match.quote.changePct ?? 0) / 100;
+      estimatedCoveredReturnPct += contributionPctPoints;
+      attributionRows.push({
+        symbol: item.symbol,
+        name: item.name,
+        market: item.market,
+        weightPct: item.weightPct,
+        changePct,
+        contributionPctPoints,
+        quoteDate: match.quote.date
+      });
       continue;
     }
     const reason: EtfAttributionExclusionReason =
@@ -385,6 +410,15 @@ export function analyzeEtfAdvanced(
       quoteDate: match.status === "ok" && match.quote ? match.quote.date : null
     });
   }
+  attributionRows.sort((a, b) => Math.abs(b.contributionPctPoints) - Math.abs(a.contributionPctPoints));
+  const topContributors = attributionRows
+    .filter((row) => row.contributionPctPoints > 0)
+    .sort((a, b) => b.contributionPctPoints - a.contributionPctPoints)
+    .slice(0, 5);
+  const topDetractors = attributionRows
+    .filter((row) => row.contributionPctPoints < 0)
+    .sort((a, b) => a.contributionPctPoints - b.contributionPctPoints)
+    .slice(0, 5);
   attributionExclusions.sort((a, b) => b.weightPct - a.weightPct);
 
   const etfMatch = selected.etfMarket === "TW"
@@ -434,6 +468,9 @@ export function analyzeEtfAdvanced(
     officialEtfQuoteDate,
     attributionResidualPctPoints:
       officialEtfDailyReturnPct === null ? null : officialEtfDailyReturnPct - estimatedCoveredReturnPct,
+    attributionRows,
+    topContributors,
+    topDetractors,
     attributionExclusions,
     momentumAvailable: false,
     momentumUnavailableReason:
