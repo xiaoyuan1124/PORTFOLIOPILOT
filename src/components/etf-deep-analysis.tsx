@@ -244,6 +244,17 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
     () => analyzeEtfAdvanced(composition, compositions, { quotes, ...sourceData }),
     [composition, compositions, quotes, sourceData]
   );
+  const topContributors = useMemo(
+    () => analysis.attributionRows.filter((row) => row.contributionPctPoints > 0).slice(0, 5),
+    [analysis.attributionRows]
+  );
+  const topDetractors = useMemo(
+    () => analysis.attributionRows
+      .filter((row) => row.contributionPctPoints < 0)
+      .sort((a, b) => a.contributionPctPoints - b.contributionPctPoints)
+      .slice(0, 5),
+    [analysis.attributionRows]
+  );
 
   const historyMetrics = useMemo(
     () => priceHistory ? priceHistoryMetrics(priceHistory.points) : null,
@@ -540,6 +551,51 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
               <NumberCard label="歸因 coverage" value={analysis.attributionCoveredWeightPct.toFixed(1) + "%"} helper={coverageLabel(analysis.attributionCoveredWeightPct)} />
               <NumberCard label="官方－估算 residual" value={point(analysis.attributionResidualPctPoints)} helper="可能含未覆蓋成份、現金、期貨、費用、匯率與基金結構差異" />
             </div>
+
+            {analysis.attributionRows.length ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-black/6 p-3.5 dark:border-white/8">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold">主要推升成份</p>
+                    <Badge tone="good">{topContributors.length} 檔</Badge>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {topContributors.length ? topContributors.map((row) => (
+                      <div key={row.market + ":" + row.symbol} className="flex items-start justify-between gap-3 text-xs">
+                        <span className="min-w-0">
+                          <strong className="block truncate">{row.symbol} · {row.name}</strong>
+                          <span className="mt-0.5 block text-[11px] text-black/38 dark:text-white/38">
+                            權重 {row.weightPct.toFixed(2)}% · 成份漲跌 {pct(row.changePct)}
+                          </span>
+                        </span>
+                        <strong className="shrink-0 tabular-nums">{point(row.contributionPctPoints)}</strong>
+                      </div>
+                    )) : <p className="text-xs text-black/38 dark:text-white/38">本次涵蓋成份沒有正貢獻。</p>}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-black/6 p-3.5 dark:border-white/8">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold">主要拖累成份</p>
+                    <Badge tone={topDetractors.length ? "warn" : "neutral"}>{topDetractors.length} 檔</Badge>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {topDetractors.length ? topDetractors.map((row) => (
+                      <div key={row.market + ":" + row.symbol} className="flex items-start justify-between gap-3 text-xs">
+                        <span className="min-w-0">
+                          <strong className="block truncate">{row.symbol} · {row.name}</strong>
+                          <span className="mt-0.5 block text-[11px] text-black/38 dark:text-white/38">
+                            權重 {row.weightPct.toFixed(2)}% · 成份漲跌 {pct(row.changePct)}
+                          </span>
+                        </span>
+                        <strong className="shrink-0 tabular-nums">{point(row.contributionPctPoints)}</strong>
+                      </div>
+                    )) : <p className="text-xs text-black/38 dark:text-white/38">本次涵蓋成份沒有負貢獻。</p>}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             {analysis.attributionUnimportedWeightPct > 0 ? <p className="mt-3 text-xs text-[#8b6538] dark:text-[#d4ad7c]">尚未匯入成份權重約 {analysis.attributionUnimportedWeightPct.toFixed(1)}%。</p> : null}
             {analysis.attributionExclusions.length ? (
               <div className="mt-3 rounded-2xl border border-[#b98b57]/20 p-3">
