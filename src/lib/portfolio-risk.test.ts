@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculatePortfolioRisk } from "./portfolio-risk";
+import { buildPortfolioRiskNotices, calculatePortfolioRisk } from "./portfolio-risk";
 import type { EtfComposition, Holding } from "./types";
 
 const holdings: Holding[] = [
@@ -85,5 +85,28 @@ describe("portfolio risk", () => {
     expect(result.sectorExposures.reduce((sum, row) => sum + row.valueTwd, 0)).toBe(4200);
     expect(result.marketExposures.reduce((sum, row) => sum + row.valueTwd, 0)).toBe(4200);
     expect(result.riskCoveragePct).toBe(50);
+  });
+
+
+  it("surfaces concentration and duplicate-exposure notices without guessing missing ETF exposure", () => {
+    const risk = calculatePortfolioRisk(holdings, compositions, 32);
+    const notices = buildPortfolioRiskNotices(risk);
+
+    expect(notices.some((notice) => notice.id === "largest-company")).toBe(true);
+    expect(notices.some((notice) => notice.id === "top5-companies")).toBe(true);
+    expect(notices.some((notice) => notice.id === "largest-sector")).toBe(true);
+    expect(notices.some((notice) => notice.id === "duplicate:US:NVDA")).toBe(true);
+    expect(notices.some((notice) => notice.id === "duplicate:TW:2330")).toBe(true);
+    expect(notices.some((notice) => notice.id === "coverage")).toBe(false);
+  });
+
+  it("warns about incomplete look-through coverage separately from concentration", () => {
+    const risk = calculatePortfolioRisk(holdings, [], 32);
+    const notices = buildPortfolioRiskNotices(risk);
+    const coverage = notices.find((notice) => notice.id === "coverage");
+
+    expect(coverage?.severity).toBe("info");
+    expect(coverage?.detail).toContain("50.0%");
+    expect(coverage?.detail).toContain("44.7%");
   });
 });
