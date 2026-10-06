@@ -21,6 +21,7 @@ import { money, percent } from "@/lib/utils";
 import { calculatePortfolioRisk } from "@/lib/portfolio-risk";
 import { Badge, Card, CardContent, CardHeader, GhostButton, Metric } from "./ui";
 import { DailyPortfolioDrivers } from "./daily-portfolio-drivers";
+import { MarketStatusCenter } from "./market-status-center";
 
 const ranges: Array<{ key: SnapshotRange; label: string }> = [
   { key: "1M", label: "1月" },
@@ -183,6 +184,8 @@ export function Overview({
           </CardContent>
         </Card>
       </section>
+
+      <MarketStatusCenter />
 
       <DailyPortfolioDrivers state={state} onNavigate={onNavigate} />
 
