@@ -11,8 +11,10 @@ import {
   type QuarterlyMarginCache
 } from "@/lib/quarterly-financials";
 import {
+  defaultStrategyGateConfig,
   evaluateOfficialStrategy,
-  type SourceRef
+  type SourceRef,
+  type StrategyGateConfig
 } from "@/lib/strategy-gates";
 import { isHeldTwSecurity, resolveHeldTwSecurityKeys } from "@/lib/research-holdings";
 import { percent } from "@/lib/utils";
@@ -116,7 +118,8 @@ export function Scanner({ state }: { state: AppState }) {
   const [institutional, setInstitutional] = useState<InstitutionalCache | null>(null);
   const [quarterly, setQuarterly] = useState<QuarterlyMarginCache | null>(null);
   const [query, setQuery] = useState("");
-  const [showAll, setShowAll] = useState(false);
+  const [view, setView] = useState<"pass" | "near" | "all">("pass");
+  const [thresholds, setThresholds] = useState<StrategyGateConfig>({ ...defaultStrategyGateConfig });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -182,8 +185,10 @@ export function Scanner({ state }: { state: AppState }) {
   }
 
   const evaluated = useMemo(
-    () => revenue && institutional && quarterly ? evaluateOfficialStrategy(revenue, institutional, quarterly) : [],
-    [revenue, institutional, quarterly]
+    () => revenue && institutional && quarterly
+      ? evaluateOfficialStrategy(revenue, institutional, quarterly, thresholds)
+      : [],
+    [institutional, quarterly, revenue, thresholds]
   );
   const heldKeys = useMemo(
     () => resolveHeldTwSecurityKeys(state.holdings, evaluated),
@@ -191,6 +196,7 @@ export function Scanner({ state }: { state: AppState }) {
   );
   const counts = useMemo(() => ({
     pass: evaluated.filter((item) => item.overallStatus === "pass").length,
+    near: evaluated.filter((item) => item.overallStatus !== "pass" && item.passedGateCount === 3).length,
     fail: evaluated.filter((item) => item.overallStatus === "fail").length,
     insufficient: evaluated.filter((item) => item.overallStatus === "insufficient").length,
     notApplicable: evaluated.filter((item) => item.overallStatus === "not_applicable").length
@@ -199,10 +205,15 @@ export function Scanner({ state }: { state: AppState }) {
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return evaluated
-      .filter((item) => showAll || Boolean(needle) || item.overallStatus === "pass")
+      .filter((item) => {
+        if (needle) return true;
+        if (view === "all") return true;
+        if (view === "near") return item.overallStatus !== "pass" && item.passedGateCount === 3;
+        return item.overallStatus === "pass";
+      })
       .filter((item) => !needle || `${item.code} ${item.name} ${item.industry}`.toLowerCase().includes(needle))
       .slice(0, 120);
-  }, [evaluated, query, showAll]);
+  }, [evaluated, query, view]);
 
   return (
     <div className="space-y-4">
@@ -211,20 +222,76 @@ export function Scanner({ state }: { state: AppState }) {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">Official Scanner · 4 / 4 Gates</p>
             <h3 className="mt-2 text-xl font-semibold">成長＋毛利改善＋雙法人共振</h3>
-            <p className="mt-2 max-w-2xl text-sm leading-6 opacity-70">全部條件皆來自 TWSE、TPEx 或 MOPS 官方公開資料。季毛利率使用單季數字；Q2～Q4 由同年累計財報差分後計算，不把累計毛利率冒充單季毛利率。</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 opacity-70">全部條件皆來自 TWSE、TPEx 或 MOPS 官方公開資料。你可調整營收與法人門檻；季度毛利率仍要求最近三季嚴格連續改善，避免把條件調成黑箱分數。</p>
+            <p className="mt-2 text-xs opacity-60">目前：3 月營收 YoY &gt; {thresholds.revenueYoyMinPct}% · 外資 10D &gt; {number(thresholds.foreignNet10dMin)} 股 · 投信 10D &gt; {number(thresholds.trustNet10dMin)} 股</p>
           </div>
           <div className="text-right"><p className="text-3xl font-semibold">{loading ? "…" : error ? "—" : counts.pass}</p><p className="text-xs opacity-60">{loading ? "讀取官方 Gate" : "四關正式通過"}</p></div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2 text-xs opacity-70">
-          <span>通過 {counts.pass}</span><span>·</span><span>未通過 {counts.fail}</span><span>·</span><span>資料不足 {counts.insufficient}</span><span>·</span><span>不適用 {counts.notApplicable}</span>
+          <span>通過 {counts.pass}</span><span>·</span><span>差一關 {counts.near}</span><span>·</span><span>未通過 {counts.fail}</span><span>·</span><span>資料不足 {counts.insufficient}</span><span>·</span><span>不適用 {counts.notApplicable}</span>
         </div>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-[1fr_auto_auto]">
+      <div className="grid gap-2 md:grid-cols-[1fr_180px_auto]">
         <div className="relative"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/35 dark:text-white/35" size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋代號、名稱或產業" className="field pl-11" /></div>
-        <GhostButton onClick={() => setShowAll((value) => !value)}>{showAll ? "只看正式通過" : "查看全部狀態"}</GhostButton>
+        <select className="field" value={view} onChange={(event) => setView(event.target.value as "pass" | "near" | "all")}>
+          <option value="pass">只看正式通過</option>
+          <option value="near">只看差一關</option>
+          <option value="all">查看全部狀態</option>
+        </select>
         <GhostButton disabled={loading} onClick={() => void reload()}><RefreshCw size={16} className={loading ? "animate-spin" : ""} />{loading ? "讀取中" : "重新讀取"}</GhostButton>
       </div>
+
+      <Card>
+        <CardContent className="p-4 md:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">自訂 Scanner 門檻</p>
+              <p className="mt-1 text-xs leading-5 text-black/42 dark:text-white/42">只改變篩選門檻，不改資料來源、不產生買賣分數；重整頁面會回到產品預設值。</p>
+            </div>
+            <GhostButton className="min-h-9 rounded-full px-3 text-xs" onClick={() => setThresholds({ ...defaultStrategyGateConfig })}>還原預設</GhostButton>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <label className="text-xs font-semibold text-black/50 dark:text-white/50">
+              近 3 月營收 YoY 每月都大於
+              <div className="relative mt-2">
+                <input
+                  type="number"
+                  step="1"
+                  min="-100"
+                  max="1000"
+                  value={thresholds.revenueYoyMinPct}
+                  onChange={(event) => setThresholds((current) => ({ ...current, revenueYoyMinPct: Number(event.target.value) }))}
+                  className="field pr-9"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-black/35 dark:text-white/35">%</span>
+              </div>
+            </label>
+            <label className="text-xs font-semibold text-black/50 dark:text-white/50">
+              外資近 10 日淨買超大於
+              <input
+                type="number"
+                step="1000"
+                min="0"
+                value={thresholds.foreignNet10dMin}
+                onChange={(event) => setThresholds((current) => ({ ...current, foreignNet10dMin: Math.max(0, Number(event.target.value)) }))}
+                className="field mt-2"
+              />
+            </label>
+            <label className="text-xs font-semibold text-black/50 dark:text-white/50">
+              投信近 10 日淨買超大於
+              <input
+                type="number"
+                step="1000"
+                min="0"
+                value={thresholds.trustNet10dMin}
+                onChange={(event) => setThresholds((current) => ({ ...current, trustNet10dMin: Math.max(0, Number(event.target.value)) }))}
+                className="field mt-2"
+              />
+            </label>
+          </div>
+        </CardContent>
+      </Card>
 
       {error ? <div className="rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">{error}</div> : null}
       {!error && warnings.length ? (
@@ -258,7 +325,7 @@ export function Scanner({ state }: { state: AppState }) {
             <details className="group mt-4 rounded-2xl border border-black/6 dark:border-white/8">
               <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-black/65 dark:text-white/65">查看 Gate 實際數字、日期與官方來源</summary>
               <div className="grid gap-3 border-t border-black/6 p-3 dark:border-white/8">
-                <GateDetail title="最近 3 個月營收 YoY > 20%" status={item.revenueGate.status} reason={item.revenueGate.reason} dataAsOf={item.revenueGate.dataAsOf} sources={item.revenueGate.sources}>
+                <GateDetail title={`最近 3 個月營收 YoY > ${thresholds.revenueYoyMinPct}%`} status={item.revenueGate.status} reason={item.revenueGate.reason} dataAsOf={item.revenueGate.dataAsOf} sources={item.revenueGate.sources}>
                   <div className="grid grid-cols-3 gap-2">
                     {item.revenueGate.values.map((value) => <div key={value.period} className="mini-metric"><span>{value.period} YoY</span><strong>{value.yoyPct === null ? "—" : percent(value.yoyPct, 1)}</strong></div>)}
                   </div>
@@ -270,11 +337,11 @@ export function Scanner({ state }: { state: AppState }) {
                   </div> : <p className="text-xs text-black/40 dark:text-white/40">沒有可套用的一般產業季度毛利資料。</p>}
                 </GateDetail>
 
-                <GateDetail title="外資最近 10 個交易日淨買超 > 0" status={item.foreignGate.status} reason={item.foreignGate.reason} dataAsOf={item.foreignGate.dataAsOf} sources={item.foreignGate.sources}>
+                <GateDetail title={`外資最近 10 個交易日淨買超 > ${number(thresholds.foreignNet10dMin)} 股`} status={item.foreignGate.status} reason={item.foreignGate.reason} dataAsOf={item.foreignGate.dataAsOf} sources={item.foreignGate.sources}>
                   <div className="mini-metric"><span>10D 淨買超（股）</span><strong>{number(item.foreignGate.net10d)}</strong></div>
                 </GateDetail>
 
-                <GateDetail title="投信最近 10 個交易日淨買超 > 0" status={item.trustGate.status} reason={item.trustGate.reason} dataAsOf={item.trustGate.dataAsOf} sources={item.trustGate.sources}>
+                <GateDetail title={`投信最近 10 個交易日淨買超 > ${number(thresholds.trustNet10dMin)} 股`} status={item.trustGate.status} reason={item.trustGate.reason} dataAsOf={item.trustGate.dataAsOf} sources={item.trustGate.sources}>
                   <div className="mini-metric"><span>10D 淨買超（股）</span><strong>{number(item.trustGate.net10d)}</strong></div>
                 </GateDetail>
               </div>
@@ -283,7 +350,7 @@ export function Scanner({ state }: { state: AppState }) {
         ))}
       </div>
 
-      {!loading && !error && !visible.length ? <p className="py-14 text-center text-sm text-black/40 dark:text-white/40">目前沒有符合顯示條件的公司。可切換「查看全部狀態」檢查未通過、資料不足與不適用。</p> : null}
+      {!loading && !error && !visible.length ? <p className="py-14 text-center text-sm text-black/40 dark:text-white/40">目前沒有符合顯示條件的公司。可切換「差一關」或「全部狀態」，也可放寬自訂門檻。</p> : null}
     </div>
   );
 }
