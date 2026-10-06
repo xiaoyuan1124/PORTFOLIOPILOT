@@ -11,6 +11,7 @@ export const demoState: AppState = {
     { id: "h5", symbol: "CASH-TWD", name: "台幣現金", market: "TW", type: "cash", quantity: 1, price: 18000, averageCost: 18000, currency: "TWD", sector: "現金", account: "銀行現金" }
   ],
   etfCompositions: [],
+  watchlist: [],
   journal: [
     {
       id: "j1",
@@ -41,6 +42,7 @@ export const emptyState: AppState = {
   usdTwd: 31.8,
   holdings: [],
   etfCompositions: [],
+  watchlist: [],
   journal: [],
   activities: [],
   allocationTargets: [],
