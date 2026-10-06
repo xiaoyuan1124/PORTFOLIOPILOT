@@ -130,8 +130,25 @@ function taipeiParts(now: Date) {
   return {
     date: `${value("year")}-${value("month")}-${value("day")}`,
     hour: Number(value("hour")),
+    minute: Number(value("minute") || "0"),
     weekday: value("weekday")
   };
+}
+
+export function closingPriceStatusLabel(priceDate: string, now = new Date()) {
+  const date = String(priceDate ?? "").trim();
+  if (!date) return "尚無官方收盤資料";
+
+  const taipei = taipeiParts(now);
+  if (date === taipei.date) return `今日收盤 · ${date}`;
+
+  const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri"].includes(taipei.weekday);
+  const minuteOfDay = taipei.hour * 60 + taipei.minute;
+  if (weekday && minuteOfDay >= 9 * 60 && minuteOfDay <= 13 * 60 + 30) {
+    return `盤中時段 · 最近收盤 ${date}`;
+  }
+
+  return `最近收盤 · ${date}`;
 }
 
 export function shouldRejectStaleClosingCache(cache: TwQuoteCache, now = new Date()) {
@@ -139,12 +156,13 @@ export function shouldRejectStaleClosingCache(cache: TwQuoteCache, now = new Dat
   const taipei = taipeiParts(now);
   const generatedTaipei = taipeiParts(new Date(cache.generatedAt));
   const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri"].includes(taipei.weekday);
+  const minuteOfDay = taipei.hour * 60 + taipei.minute;
 
-  // A cache fetched today is allowed even when the latest official trading
-  // date is older (for example a weekday market holiday). Only reject a cache
-  // that itself has not been refreshed today after the publishing window.
+  // After the normal closing-data publication window, fail closed when the
+  // cache itself has not refreshed today. A same-day refresh with an older
+  // official trading date is still allowed (for example a weekday holiday).
   return weekday &&
-    taipei.hour >= 17 &&
+    minuteOfDay >= 15 * 60 + 30 &&
     generatedTaipei.date < taipei.date &&
     latest < taipei.date;
 }
