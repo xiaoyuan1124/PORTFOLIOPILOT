@@ -25,10 +25,12 @@ function fmtPoint(value: number, digits = 3) {
 
 export function EtfResearch({
   state,
-  onOpenStock
+  onOpenStock,
+  requestedSymbol
 }: {
   state: AppState;
   onOpenStock?: (researchKey: string) => void;
+  requestedSymbol?: string;
 }) {
   const [quotes, setQuotes] = useState<TwQuoteCache | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,20 @@ export function EtfResearch({
     }),
     [heldEtfKeys, state.etfCompositions]
   );
-  const [selectedKey, setSelectedKey] = useState(() => compositions[0] ? compositionKey(compositions[0]) : "");
+  const [selectedKey, setSelectedKey] = useState(() => {
+    const requested = requestedSymbol?.trim().toUpperCase();
+    const match = requested
+      ? compositions.find((composition) => composition.etfSymbol.trim().toUpperCase() === requested)
+      : undefined;
+    return match ? compositionKey(match) : compositions[0] ? compositionKey(compositions[0]) : "";
+  });
+
+  useEffect(() => {
+    const requested = requestedSymbol?.trim().toUpperCase();
+    if (!requested) return;
+    const match = compositions.find((composition) => composition.etfSymbol.trim().toUpperCase() === requested);
+    if (match) setSelectedKey(compositionKey(match));
+  }, [compositions, requestedSymbol]);
 
   async function reload() {
     setLoading(true);
