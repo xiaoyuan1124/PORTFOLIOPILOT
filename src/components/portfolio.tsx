@@ -9,9 +9,10 @@ import { DividendCenter } from "./dividend-center";
 import { EtfLookThrough } from "./etf-lookthrough";
 import { HoldingsPanel } from "./holdings";
 import { PortfolioRisk } from "./portfolio-risk";
+import { PortfolioReportView } from "./portfolio-report";
 import { Performance } from "./performance";
 
-export type PortfolioTab = "holdings" | "lookthrough" | "risk" | "targets" | "dividends" | "activity" | "performance";
+export type PortfolioTab = "holdings" | "lookthrough" | "risk" | "targets" | "dividends" | "activity" | "performance" | "report";
 type PortfolioArea = "overview" | "activity" | "performance" | "planning";
 
 const areas: Array<{ key: PortfolioArea; label: string; defaultTab: PortfolioTab }> = [
@@ -32,7 +33,8 @@ const tabsByArea: Record<PortfolioArea, Array<{ key: PortfolioTab; label: string
     { key: "dividends", label: "股息" }
   ],
   performance: [
-    { key: "performance", label: "績效" }
+    { key: "performance", label: "績效" },
+    { key: "report", label: "報告" }
   ],
   planning: [
     { key: "targets", label: "配置目標" }
@@ -42,7 +44,7 @@ const tabsByArea: Record<PortfolioArea, Array<{ key: PortfolioTab; label: string
 function areaForTab(tab: PortfolioTab): PortfolioArea {
   if (tab === "holdings" || tab === "lookthrough" || tab === "risk") return "overview";
   if (tab === "activity" || tab === "dividends") return "activity";
-  if (tab === "performance") return "performance";
+  if (tab === "performance" || tab === "report") return "performance";
   return "planning";
 }
 
@@ -100,6 +102,7 @@ export function Portfolio({
       {tab === "dividends" ? <DividendCenter state={state} /> : null}
       {tab === "activity" ? <ActivityLedger state={state} onChange={onChange} /> : null}
       {tab === "performance" ? <Performance state={state} /> : null}
+      {tab === "report" ? <PortfolioReportView state={state} /> : null}
     </div>
   );
 }
