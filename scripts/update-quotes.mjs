@@ -8,6 +8,9 @@ import {
 } from "./lib/quote-data.mjs";
 
 const OUTPUT = "public/data/tw-quotes.json";
+const FETCH_ATTEMPTS = 6;
+const FETCH_TIMEOUT_MS = 30_000;
+const RETRY_DELAYS_MS = [1_500, 3_000, 6_000, 10_000, 15_000];
 const TWSE_OPENAPI = {
   name: "TWSE STOCK_DAY_ALL fallback",
   url: "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
@@ -16,6 +19,14 @@ const TPEX_SOURCE = {
   name: "TPEx",
   url: "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes"
 };
+
+class HttpStatusError extends Error {
+  constructor(label, status) {
+    super(`${label} request failed: HTTP ${status}`);
+    this.name = "HttpStatusError";
+    this.status = status;
+  }
+}
 
 function taipeiToday() {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -34,33 +45,58 @@ function addDays(date, delta) {
   return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}-${String(next.getUTCDate()).padStart(2, "0")}`;
 }
 
+function isRetryable(error) {
+  if (!(error instanceof HttpStatusError)) return true;
+  return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+}
+
+function errorSummary(error) {
+  if (error instanceof Error) return `${error.name}: ${error.message}`;
+  return String(error);
+}
+
 async function fetchPayload(url, label) {
   let lastError;
 
-  for (let attempt = 1; attempt <= 4; attempt += 1) {
+  for (let attempt = 1; attempt <= FETCH_ATTEMPTS; attempt += 1) {
     try {
       const response = await fetch(url, {
         headers: {
           "user-agent": "PortfolioPilot/0.18 (+https://github.com/xiaoyuan1124/PORTFOLIOPILOT)",
           accept: "application/json"
         },
-        signal: AbortSignal.timeout(30_000)
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
       });
 
       if (!response.ok) {
-        throw new Error(`${label} request failed: ${response.status}`);
+        throw new HttpStatusError(label, response.status);
       }
-      return await response.json();
+
+      const body = await response.text();
+      try {
+        return JSON.parse(body);
+      } catch (error) {
+        throw new Error(`${label} returned invalid or incomplete JSON`, { cause: error });
+      }
     } catch (error) {
       lastError = error;
-      if (attempt === 4) break;
-      const delayMs = attempt * 1_500;
-      console.warn(`${label} attempt ${attempt}/4 failed; retrying in ${delayMs}ms`);
+
+      if (!isRetryable(error) || attempt === FETCH_ATTEMPTS) {
+        break;
+      }
+
+      const delayMs = RETRY_DELAYS_MS[attempt - 1] ?? RETRY_DELAYS_MS.at(-1) ?? 15_000;
+      console.warn(
+        `${label} attempt ${attempt}/${FETCH_ATTEMPTS} failed (${errorSummary(error)}); retrying in ${delayMs}ms`
+      );
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error(`${label} request failed after retries`);
+  throw new Error(
+    `${label} request failed after ${FETCH_ATTEMPTS} attempts: ${errorSummary(lastError)}`,
+    { cause: lastError instanceof Error ? lastError : undefined }
+  );
 }
 
 async function fetchArray(source) {
