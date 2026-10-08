@@ -55,6 +55,8 @@ describe("held ETF automatic composition refresh", () => {
     expect(result.supported).toBe(1);
     expect(result.sourceIssues).toBe(0);
     expect(result.unsupported).toBe(1);
+    expect(result.unsupportedSymbols).toEqual(["00935"]);
+    expect(result.sourceIssueSymbols).toEqual([]);
     expect(result.compositions.map((item) => item.etfSymbol)).toEqual(["009816"]);
   });
 
@@ -80,6 +82,7 @@ describe("held ETF automatic composition refresh", () => {
     expect(result.updated).toBe(0);
     expect(result.matched).toBe(0);
     expect(result.unsupported).toBe(2);
+    expect(result.unsupportedSymbols).toEqual(["00935", "009816"]);
     expect(result.compositions).toEqual([existing]);
   });
 
@@ -102,7 +105,9 @@ describe("held ETF automatic composition refresh", () => {
     expect(result.matched).toBe(1);
     expect(result.supported).toBe(1);
     expect(result.sourceIssues).toBe(1);
+    expect(result.sourceIssueSymbols).toEqual(["009816"]);
     expect(result.unsupported).toBe(1);
+    expect(result.unsupportedSymbols).toEqual(["00935"]);
   });
   it("keeps legacy V0.78 caches readable by defaulting missing history to an empty array", () => {
     const parsed = parseEtfCompositionCache({
