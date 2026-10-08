@@ -829,7 +829,10 @@ export function HoldingsPanel({
             details.push("沒有需要更新收盤價的台股持倉。");
           }
           if (result.skippedStale || result.skippedAmbiguous) {
-            warnings.push(`${result.skippedStale + result.skippedAmbiguous} 筆持倉因報價日期較舊或交易市場不明，已保留原價。`);
+            warnings.push(`${result.skippedStale + result.skippedAmbiguous} 筆持倉因報價日期較舊或交易市場／來源重複不明，已保留原價。`);
+          }
+          if (result.skippedInvalidDate) {
+            warnings.push(`${result.skippedInvalidDate} 筆報價日期無效或晚於台灣今天，已拒絕覆寫持股價格。`);
           }
         }
       } else {
