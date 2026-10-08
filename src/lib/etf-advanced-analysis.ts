@@ -193,30 +193,16 @@ function classifyWeightChange(previousWeightPct: number, currentWeightPct: numbe
   return "unchanged";
 }
 
-function weightChanges(selected: EtfComposition, all: EtfComposition[]) {
-  const previous = all
-    .filter((item) =>
-      item.etfMarket === selected.etfMarket &&
-      symbol(item.etfSymbol) === symbol(selected.etfSymbol) &&
-      item.asOf < selected.asOf
-    )
-    .sort((a, b) => b.asOf.localeCompare(a.asOf))[0];
-
-  const emptySummary: EtfCompositionChangeSummary = {
-    added: 0,
-    removed: 0,
-    increased: 0,
-    decreased: 0,
-    unchanged: 0
-  };
-  if (!previous) {
-    return {
-      asOf: null as string | null,
-      rows: [] as EtfWeightChangeRow[],
-      summary: emptySummary
-    };
+// Shared by deep-analysis and the local composition change timeline. Treat
+// missing constituents as missing entries (0% in a pair), not a price forecast.
+export function compareEtfCompositionSnapshots(previous: EtfComposition, selected: EtfComposition) {
+  if (
+    previous.etfMarket !== selected.etfMarket ||
+    symbol(previous.etfSymbol) !== symbol(selected.etfSymbol) ||
+    previous.asOf >= selected.asOf
+  ) {
+    throw new Error("ETF 成份比較必須是同一檔 ETF 的不同且遞增資料日。");
   }
-
   const currentMap = new Map(aggregate(selected).map((item) => [key(item), item]));
   const previousMap = new Map(aggregate(previous).map((item) => [key(item), item]));
   const keys = new Set([...currentMap.keys(), ...previousMap.keys()]);
@@ -242,7 +228,26 @@ function weightChanges(selected: EtfComposition, all: EtfComposition[]) {
     return result;
   }, { ...emptySummary });
 
-  return { asOf: previous.asOf, rows, summary };
+  return { previousAsOf: previous.asOf, currentAsOf: selected.asOf, rows, summary };
+}
+
+function weightChanges(selected: EtfComposition, all: EtfComposition[]) {
+  const previous = all
+    .filter((item) =>
+      item.etfMarket === selected.etfMarket &&
+      symbol(item.etfSymbol) === symbol(selected.etfSymbol) &&
+      item.asOf < selected.asOf
+    )
+    .sort((a, b) => b.asOf.localeCompare(a.asOf))[0];
+  if (!previous) {
+    return {
+      asOf: null as string | null,
+      rows: [] as EtfWeightChangeRow[],
+      summary: { added: 0, removed: 0, increased: 0, decreased: 0, unchanged: 0 }
+    };
+  }
+  const compared = compareEtfCompositionSnapshots(previous, selected);
+  return { asOf: compared.previousAsOf, rows: compared.rows, summary: compared.summary };
 }
 
 export function compareEtfOverlap(selected: EtfComposition, other: EtfComposition): EtfOverlapComparison {
