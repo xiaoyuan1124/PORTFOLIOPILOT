@@ -7,6 +7,7 @@ This audit describes the **existing** UI and specific next actions. It is not a 
 - Manual holdings refresh returns an **inline, dismissible status panel** instead of stacking multiple Sonner toasts over the iPhone status bar.
 - Status distinguishes no-change, partial update, unavailable official data, and a failed local save; it never reports unsupported ETF constituents as a successful update.
 - For held Taiwan ETFs, displays unsupported symbols and official issuer fetch failures separately, plus Taiwan-local ETF cache generation time; links to ETF look-through / manual CSV import.
+- PWA Service Worker data fallbacks carry an explicit offline marker; manual refresh displays offline/stale status and **does not overwrite** local holdings or ETF constituents with offline fallback bytes.
 - Cache is applied to the latest local portfolio state if users edit holdings while fetches are in flight; concurrent refresh taps are ignored.
 - Mobile holdings actions: **Add position** primary/full-width, **Sync data** and **Quick correction** secondary; search spans full width, account and sort occupy one row.
 - Portfolio and Research secondary navigation have >=44px touch targets and expose selected state to accessibility APIs.
@@ -37,7 +38,7 @@ Small-screen principles: one clearly colored primary CTA per context; secondary 
 | Priority | Candidate | Specific acceptance criteria | Guardrails |
 |---|---|---|---|
 | P0 | iPhone visual regression pass | Real iPhone screenshots at standard text and Large Text: toast/status bar, bottom nav, modal keyboard, landscape and long warning text | Native simulator CI alone does not prove layout |
-| P0 | Offline/stale-cache transparency | Distinguish offline Service Worker fallback from successfully fetched cache; show exact TWSE/TPEx and ETF generatedAt; stale data never labeled 'today' | No unauthorized live quote |
+| P0 | Offline/stale-cache transparency | Offline fallback labeling and no-write behavior implemented; next: real-device online/offline regression and explicit TWSE/TPEx generatedAt visibility | No unauthorized live quote |
 | P0 | Local data restore drill | Test backup -> reset test instance -> restore -> verify holdings, watchlist, activities, ETF compositions, TWR boundaries | Never upload portfolios to CI/servers |
 | P1 | ETF support diagnostics | Compare issuer-source map to held symbols; show coverage and last success per fund; add authorized official issuer connectors only when proven reliable | No guessed constituents; latest cache currently includes 00935 and 009816 |
 | P1 | ETF composition-change notices | Diff verified dated issuer snapshots and show added/removed/weight changes | App-open/foreground evaluation only, no 24/7 claims |
