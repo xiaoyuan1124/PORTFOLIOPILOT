@@ -75,9 +75,9 @@ export function Modal({
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/35 backdrop-blur-sm" />
-        <Dialog.Content className="fixed bottom-0 left-0 right-0 z-50 max-h-[calc(100dvh-.75rem)] overflow-y-auto overscroll-contain rounded-t-[28px] border border-black/10 bg-[#f8f7f3] p-0 shadow-2xl outline-none dark:border-white/10 dark:bg-[#111614] md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:max-h-[88vh] md:w-[560px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[28px]">
+        <Dialog.Content className="app-modal-sheet fixed bottom-0 left-0 right-0 z-50 max-h-[calc(100dvh-.75rem)] overflow-y-auto overscroll-contain rounded-t-[28px] border border-black/10 bg-[#f8f7f3] p-0 shadow-2xl outline-none dark:border-white/10 dark:bg-[#111614] md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:max-h-[88vh] md:w-[560px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[28px]">
           <div className="sticky top-0 z-10 flex items-center justify-between border-b border-black/5 bg-[#f8f7f3]/96 px-5 py-4 backdrop-blur dark:border-white/6 dark:bg-[#111614]/96 md:px-6">
-            <Dialog.Title className="pr-3 text-xl font-semibold">{title}</Dialog.Title>
+            <Dialog.Title className="min-w-0 break-words pr-3 text-xl font-semibold">{title}</Dialog.Title>
             <Dialog.Close asChild>
               <button className="grid h-11 w-11 shrink-0 place-items-center rounded-full hover:bg-black/5 dark:hover:bg-white/8" aria-label="關閉"><X size={20} /></button>
             </Dialog.Close>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowDownUp, ListChecks, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
+import { ArrowDownUp, ListChecks, MoreHorizontal, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import type { AppState, AssetType, Currency, Holding, Market } from "@/lib/types";
 import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
@@ -660,6 +660,87 @@ function QuickCorrectionForm({
   );
 }
 
+function HoldingActions({ holding, state, onChange, onSave, onResearch }: {
+  holding: Holding;
+  state: AppState;
+  onChange: (next: AppState) => boolean;
+  onSave: (holding: Holding) => boolean;
+  onResearch?: (key: string, type: "stock" | "etf") => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const canResearch = holding.market === "TW" &&
+    (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") &&
+    Boolean(onResearch);
+
+  function deleteHolding() {
+    if (!window.confirm(`確定要刪除「${holding.name}」？此操作只會刪除該持股，不會直接修改交易紀錄。`)) return;
+    if (!onChange({
+      ...state,
+      holdings: state.holdings.filter((item) => item.id !== holding.id)
+    })) return;
+    setOpen(false);
+    toast.success("部位已刪除");
+  }
+
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      {canResearch ? (
+        <GhostButton
+          type="button"
+          className="h-11 min-h-11 w-11 px-0"
+          aria-label={`研究 ${holding.name}`}
+          title="查看官方研究"
+          onClick={() => onResearch?.(`${holding.priceSource}:${holding.symbol}`, holding.type === "etf" ? "etf" : "stock")}
+        >
+          <Search size={17} />
+        </GhostButton>
+      ) : null}
+      <Modal
+        title={editing ? `編輯 ${holding.name}` : `管理 ${holding.name}`}
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) setEditing(false);
+        }}
+        trigger={
+          <GhostButton
+            type="button"
+            className="h-11 min-h-11 w-11 px-0"
+            aria-label={`更多操作：${holding.name}`}
+            title="更多操作"
+          >
+            <MoreHorizontal size={19} />
+          </GhostButton>
+        }
+      >
+        {editing ? (
+          <HoldingForm initial={holding} onSave={onSave} />
+        ) : (
+          <div className="space-y-4">
+            <p className="break-words text-sm text-black/55 dark:text-white/55">
+              {holding.symbol} · {accountName(holding.account)}
+            </p>
+            <Button type="button" className="w-full justify-start" onClick={() => setEditing(true)}>
+              <Pencil size={17} />編輯部位
+            </Button>
+            <GhostButton
+              type="button"
+              className="w-full justify-start border-[#b45f5f]/20 text-[#9a3d3d] dark:text-[#e6a3a3]"
+              onClick={deleteHolding}
+            >
+              <Trash2 size={17} />刪除部位
+            </GhostButton>
+            <p className="text-xs leading-5 text-black/45 dark:text-white/45">
+              刪除前會再次確認；保留原始交易紀錄，避免誤以為刪除部位即撤銷交易。
+            </p>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
 type SortMode = "value" | "gain" | "name";
 
 type RefreshFeedback = {
@@ -1029,7 +1110,7 @@ export function HoldingsPanel({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <p className="font-semibold">{isCash ? `${holding.currency} 現金` : holding.name}</p>
+                      <p className="min-w-0 break-words font-semibold">{isCash ? `${holding.currency} 現金` : holding.name}</p>
                       {!isCash ? <span className="text-xs text-black/40 dark:text-white/40">{holding.symbol}</span> : null}
                       <Badge>{accountName(holding.account)}</Badge>
                       {isCash ? <Badge tone="good">現金</Badge> : null}
@@ -1043,32 +1124,7 @@ export function HoldingsPanel({
                       </p>
                     ) : null}
                   </div>
-                  <div className="flex shrink-0 gap-1">
-                    {holding.market === "TW" && (holding.priceSource === "TWSE" || holding.priceSource === "TPEx") && onResearch ? (
-                      <GhostButton
-                        className="h-10 min-h-10 w-10 px-0"
-                        aria-label={`研究 ${holding.name}`}
-                        title="查看官方研究"
-                        onClick={() => onResearch(`${holding.priceSource}:${holding.symbol}`, holding.type === "etf" ? "etf" : "stock")}
-                      >
-                        <Search size={15} />
-                      </GhostButton>
-                    ) : null}
-                    <Modal title={`編輯 ${holding.name}`} trigger={<GhostButton className="h-10 min-h-10 w-10 px-0" aria-label="編輯"><Pencil size={15} /></GhostButton>}>
-                      <HoldingForm initial={holding} onSave={upsert} />
-                    </Modal>
-                    <GhostButton
-                      className="h-10 min-h-10 w-10 px-0"
-                      aria-label="刪除"
-                      onClick={() => {
-                        if (!window.confirm(`刪除 ${holding.name}？`)) return;
-                        if (!onChange({ ...state, holdings: state.holdings.filter((item) => item.id !== holding.id) })) return;
-                        toast.success("部位已刪除");
-                      }}
-                    >
-                      <Trash2 size={15} />
-                    </GhostButton>
-                  </div>
+                  <HoldingActions holding={holding} state={state} onChange={onChange} onSave={upsert} onResearch={onResearch} />
                 </div>
                 {isCash ? (
                   <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
