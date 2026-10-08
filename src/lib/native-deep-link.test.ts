@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildNotificationSettingsDeepLink,
+  buildPortfolioDeepLink,
   buildResearchDeepLink,
   parseNativeDeepLink
 } from "./native-deep-link";
@@ -26,10 +27,22 @@ describe("native deep-link routing", () => {
     });
   });
 
+  it("round-trips supported portfolio smart-alert destinations", () => {
+    expect(parseNativeDeepLink(buildPortfolioDeepLink("risk"))).toEqual({
+      section: "portfolio",
+      tab: "risk"
+    });
+    expect(parseNativeDeepLink(buildPortfolioDeepLink("targets"))).toEqual({
+      section: "portfolio",
+      tab: "targets"
+    });
+  });
+
   it("routes notification settings and rejects malformed or foreign links", () => {
     expect(parseNativeDeepLink(buildNotificationSettingsDeepLink())).toEqual({
       section: "settings"
     });
+    expect(parseNativeDeepLink("portfoliopilot://portfolio?tab=holdings")).toBeNull();
     expect(parseNativeDeepLink("portfoliopilot://research?key=TWSE%3A2330")).toBeNull();
     expect(parseNativeDeepLink("https://example.com/research?key=TWSE%3A2330&type=stock")).toBeNull();
     expect(parseNativeDeepLink("not a url")).toBeNull();

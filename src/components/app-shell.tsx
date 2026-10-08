@@ -20,11 +20,13 @@ import {
   NATIVE_DEEP_LINK_EVENT,
   parseNativeDeepLink
 } from "@/lib/native-deep-link";
+import { syncNativeSmartAlerts } from "@/lib/native-notifications";
 import { Overview } from "./overview";
 import { Portfolio, type PortfolioTab } from "./portfolio";
 import { Research } from "./research";
 import { Settings } from "./settings";
 import { QuickSearch, type AppSection } from "./quick-search";
+import { NATIVE_RESUME_EVENT } from "./native-runtime-bridge";
 import { Badge } from "./ui";
 
 type Section = AppSection;
@@ -122,12 +124,34 @@ export function AppShell() {
   }, []);
 
   useEffect(() => {
+    if (!storageReady || !Capacitor.isNativePlatform()) return;
+
+    let disposed = false;
+    const syncAlerts = () => {
+      if (disposed) return;
+      void syncNativeSmartAlerts(state).catch(() => undefined);
+    };
+
+    syncAlerts();
+    window.addEventListener(NATIVE_RESUME_EVENT, syncAlerts);
+    return () => {
+      disposed = true;
+      window.removeEventListener(NATIVE_RESUME_EVENT, syncAlerts);
+    };
+  }, [state, storageReady]);
+
+  useEffect(() => {
     function openNativeDeepLink(value: string) {
       const target = parseNativeDeepLink(value);
       if (!target) return;
 
       if (target.section === "settings") {
         setSection("settings");
+        return;
+      }
+
+      if (target.section === "portfolio") {
+        navigatePortfolioTab(target.tab);
         return;
       }
 
