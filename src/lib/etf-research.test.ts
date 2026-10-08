@@ -60,6 +60,20 @@ const quotes: TwQuoteCache = {
 };
 
 describe("ETF research attribution", () => {
+  it("retains concentration, sector weights and overlap without a quote cache", () => {
+    const result = analyzeEtf(composition, holdings, null, 32);
+    expect(result.constituentCount).toBe(4);
+    expect(result.compositionCoveragePct).toBe(90);
+    expect(result.top1WeightPct).toBe(40);
+    expect(result.topSector).toEqual({ sector: "半導體", weightPct: 55 });
+    expect(result.directPortfolioOverlapSymbols).toEqual(["2330"]);
+    expect(result.attributionDate).toBeNull();
+    expect(result.rows).toEqual([]);
+    expect(result.estimatedEtfReturnPct).toBe(0);
+    expect(result.attributionCoveredWeightPct).toBe(0);
+    expect(result.attributionUnresolvedWeightPct).toBe(90);
+  });
+
   it("calculates concentration, sector exposure and portfolio overlap", () => {
     const result = analyzeEtf(composition, holdings, quotes, 32);
 
