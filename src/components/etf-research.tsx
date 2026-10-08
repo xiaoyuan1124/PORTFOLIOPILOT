@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCw } from "lucide-react";
 import type { AppState, EtfComposition } from "@/lib/types";
-import { loadBundledEtfCompositions } from "@/lib/etf-composition-data";
+import { loadBundledEtfCompositions, normalizeEtfCompositionNames } from "@/lib/etf-composition-data";
 import { analyzeEtf } from "@/lib/etf-research";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { Badge, Card, CardContent, GhostButton, InfoDisclosure } from "./ui";
@@ -47,7 +47,7 @@ export function EtfResearch({
     [state.holdings]
   );
   const compositions = useMemo(
-    () => [...state.etfCompositions].sort((a, b) => {
+    () => state.etfCompositions.map(normalizeEtfCompositionNames).sort((a, b) => {
       const aHeld = heldEtfKeys.has(compositionKey(a)) ? 1 : 0;
       const bHeld = heldEtfKeys.has(compositionKey(b)) ? 1 : 0;
       return bHeld - aHeld || a.etfSymbol.localeCompare(b.etfSymbol);
