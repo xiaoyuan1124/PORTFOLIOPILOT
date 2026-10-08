@@ -719,7 +719,7 @@ function HoldingActions({ holding, state, onChange, onSave, onResearch }: {
         ) : (
           <div className="space-y-4">
             <p className="break-words text-sm text-black/55 dark:text-white/55">
-              ${holding.symbol} · ${accountName(holding.account)}
+              {holding.symbol} · {accountName(holding.account)}
             </p>
             <Button type="button" className="w-full justify-start" onClick={() => setEditing(true)}>
               <Pencil size={17} />編輯部位
@@ -1110,7 +1110,7 @@ export function HoldingsPanel({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <p className="font-semibold">{isCash ? `${holding.currency} 現金` : holding.name}</p>
+                      <p className="min-w-0 break-words font-semibold">{isCash ? `${holding.currency} 現金` : holding.name}</p>
                       {!isCash ? <span className="text-xs text-black/40 dark:text-white/40">{holding.symbol}</span> : null}
                       <Badge>{accountName(holding.account)}</Badge>
                       {isCash ? <Badge tone="good">現金</Badge> : null}
