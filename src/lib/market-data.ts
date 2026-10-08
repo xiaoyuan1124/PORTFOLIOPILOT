@@ -186,6 +186,10 @@ export function shouldRejectStaleClosingCache(cache: TwQuoteCache, now = new Dat
   const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri"].includes(taipei.weekday);
   const minuteOfDay = taipei.hour * 60 + taipei.minute;
 
+  // No valid dated quotes means this cache cannot safely update holdings,
+  // regardless of whether the bundle itself was generated today.
+  if (!validOfficialCloseDate(latest, taipei.date)) return true;
+
   // After the normal closing-data publication window, fail closed when the
   // cache itself has not refreshed today. A same-day refresh with an older
   // official trading date is still allowed (for example a weekday holiday).
