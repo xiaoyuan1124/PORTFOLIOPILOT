@@ -138,7 +138,17 @@ export function Settings({
     if (!file) return;
     try {
       const parsed = parseBackup(await file.text());
-      if (!window.confirm("匯入 JSON 會覆蓋目前本機資料，確定繼續？")) return;
+      const currentCount = state.holdings.length;
+      const incomingCount = parsed.holdings.length;
+      const details = [
+        `持股：${currentCount} → ${incomingCount} 筆`,
+        `交易／現金流：${parsed.activities.length} 筆`,
+        `ETF 成份：${parsed.etfCompositions.length} 檔`,
+        `自選清單：${parsed.watchlist?.length ?? 0} 筆`,
+        `筆記：${parsed.journal.length} 筆`,
+        `淨值快照：${parsed.snapshots.length} 筆`
+      ].join("\\n");
+      if (!window.confirm(`確定要以這份 JSON 備份覆蓋目前所有本機資料嗎？\\n\\n${details}\\n\\n建議先匯出目前的 JSON 備份再執行還原。`)) return;
       if (!onChange(parsed)) return;
       toast.success("JSON 備份已匯入");
     } catch (error) {
