@@ -109,6 +109,31 @@ describe("held ETF automatic composition refresh", () => {
     expect(result.unsupported).toBe(1);
     expect(result.unsupportedSymbols).toEqual(["00935"]);
   });
+  it("decodes both current and historical official ETF stock names without changing weights", () => {
+    const encodedCurrent = {
+      ...composition("009816", "2026-10-08"),
+      constituents: [
+        { market: "TW" as const, symbol: "2454", name: "&#x806F;&#x767C;&#x79D1;", weightPct: 6.03, sector: "半導體" }
+      ]
+    };
+    const encodedHistory = {
+      ...composition("009816", "2026-10-07"),
+      constituents: [
+        { market: "TW" as const, symbol: "2330", name: "&#x53F0;&#x7A4D;&#x96FB;", weightPct: 40.65, sector: "半導體" }
+      ]
+    };
+    const parsed = parseEtfCompositionCache({
+      ...cache([encodedCurrent]),
+      history: [encodedHistory]
+    });
+    expect(parsed.compositions[0]?.constituents[0]).toMatchObject({
+      symbol: "2454", name: "聯發科", weightPct: 6.03
+    });
+    expect(parsed.history[0]?.constituents[0]).toMatchObject({
+      symbol: "2330", name: "台積電", weightPct: 40.65
+    });
+  });
+
   it("keeps legacy V0.78 caches readable by defaulting missing history to an empty array", () => {
     const parsed = parseEtfCompositionCache({
       generatedAt: "2026-10-01T10:00:00.000Z",

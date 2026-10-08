@@ -2,6 +2,7 @@ import type { TwQuoteCache } from "./market-data";
 import type { QuarterlyMarginCache } from "./quarterly-financials";
 import type { RevenueHistoryCache } from "./revenue-history";
 import type { EtfComposition, EtfConstituent } from "./types";
+import { decodeHtmlEntities } from "./html-entities";
 import type { ValuationCache } from "./valuation-data";
 
 export type EtfProductBand = "low" | "medium" | "high" | "very_high";
@@ -133,8 +134,8 @@ function aggregate(composition: EtfComposition) {
     const item: EtfConstituent = {
       ...raw,
       symbol: symbol(raw.symbol),
-      name: raw.name.trim(),
-      sector: raw.sector.trim(),
+      name: decodeHtmlEntities(raw.name.trim()),
+      sector: decodeHtmlEntities(raw.sector.trim()),
       weightPct: Number.isFinite(raw.weightPct) ? raw.weightPct : 0
     };
     const current = map.get(key(item));

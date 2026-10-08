@@ -2,6 +2,7 @@ import { z } from "zod";
 import { etfCompositionSchema } from "./schema";
 import type { EtfComposition, Holding } from "./types";
 import { isOfflineBundleResponse } from "./bundled-data-status";
+import { decodeHtmlEntities } from "./html-entities";
 
 const sourceSchema = z.object({
   symbol: z.string().min(1),
@@ -22,8 +23,35 @@ const cacheSchema = z.object({
 
 export type EtfCompositionCache = z.infer<typeof cacheSchema> & { offlineFallback?: boolean };
 
+// Use this for old local-first portfolios as well as newly fetched issuer
+// caches. It is display/data hygiene only: dates and weights are untouched.
+export function normalizeEtfCompositionNames(item: EtfComposition): EtfComposition {
+  return {
+    ...item,
+    etfName: decodeHtmlEntities(item.etfName),
+    sourceName: decodeHtmlEntities(item.sourceName),
+    constituents: item.constituents.map((constituent) => ({
+      ...constituent,
+      name: decodeHtmlEntities(constituent.name),
+      sector: decodeHtmlEntities(constituent.sector)
+    }))
+  };
+}
+
 export function parseEtfCompositionCache(value: unknown): EtfCompositionCache {
-  return cacheSchema.parse(value);
+  const parsed = cacheSchema.parse(value);
+  // Correct current and historical snapshots even if an older service worker
+  // returns a previously encoded official JSON bundle.
+  return {
+    ...parsed,
+    sources: parsed.sources.map((source) => ({
+      ...source,
+      name: decodeHtmlEntities(source.name),
+      sourceName: decodeHtmlEntities(source.sourceName)
+    })),
+    compositions: parsed.compositions.map(normalizeEtfCompositionNames),
+    history: parsed.history.map(normalizeEtfCompositionNames)
+  };
 }
 
 function key(market: "TW" | "US", symbol: string) {

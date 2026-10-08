@@ -1,12 +1,21 @@
-function decodeHtmlEntities(value) {
-  return value
+// Issuer HTML can encode Chinese stock names with hexadecimal numeric
+// references (e.g. "&#x806F;&#x767C;&#x79D1;" = "聯發科").
+// Decode at ingestion, before persisting current and historical snapshots.
+export function decodeHtmlEntities(value) {
+  return String(value ?? "")
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;|&apos;/gi, "'")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)));
+    .replace(/&#(?:x([0-9a-f]+)|(\d+));/gi, (entity, hex, decimal) => {
+      const point = Number.parseInt(hex ?? decimal, hex ? 16 : 10);
+      return Number.isInteger(point) && point > 0 && point <= 0x10ffff &&
+        !(point >= 0xd800 && point <= 0xdfff)
+        ? String.fromCodePoint(point)
+        : entity;
+    });
 }
 
 export function textFromHtml(html) {
@@ -145,7 +154,7 @@ export function parseNomuraFundAssetsPayload({
   const constituents = stockTable.Rows.flatMap((row) => {
     if (!Array.isArray(row)) return [];
     const symbol = String(row[0] ?? "").trim().toUpperCase();
-    const name = String(row[1] ?? "").trim();
+    const name = decodeHtmlEntities(row[1]).trim();
     const weightPct = cleanWeight(row[3]);
     if (!/^\d{4,6}$/.test(symbol) || !name || weightPct === null) return [];
     return [{
