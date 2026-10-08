@@ -805,7 +805,9 @@ export function HoldingsPanel({
       if (quoteLoad.status === "fulfilled") {
         const cache = quoteLoad.value;
         const asOf = cacheFreshnessLabel(cache);
-        if (shouldRejectStaleClosingCache(cache)) {
+        if (cache.offlineFallback) {
+          warnings.push(`離線狀態：目前僅取得 ${asOf} 的收盤價快取，沒有更新持股價格。請恢復網路後再同步。`);
+        } else if (shouldRejectStaleClosingCache(cache)) {
           warnings.push(`官方收盤快取目前只到 ${asOf}，本次未覆寫持股價格。`);
         } else {
           const result = applyTwQuotes(currentState.holdings, cache);
@@ -838,6 +840,9 @@ export function HoldingsPanel({
 
       if (compositionLoad.status === "fulfilled") {
         const cache = compositionLoad.value;
+        if (cache.offlineFallback) {
+          warnings.push(`離線狀態：ETF 成份僅取得 ${cache.generatedAt.slice(0, 10)} 的舊快取，沒有覆寫本機成份。`);
+        } else {
         const result = applyHeldEtfCompositions(currentState.etfCompositions, currentState.holdings, cache);
         nextCompositions = result.compositions;
         if (result.heldTwEtfCount > 0) {
@@ -872,6 +877,7 @@ export function HoldingsPanel({
           }
         } else {
           details.push("目前沒有需要同步成份的台灣 ETF。");
+        }
         }
       } else {
         warnings.push(
