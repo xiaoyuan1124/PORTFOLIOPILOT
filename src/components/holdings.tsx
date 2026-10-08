@@ -691,7 +691,9 @@ export function HoldingsPanel({
   const [refreshFeedback, setRefreshFeedback] = useState<RefreshFeedback | null>(null);
   const refreshInFlight = useRef(false);
   const latestState = useRef(state);
-  latestState.current = state;
+  useEffect(() => {
+    latestState.current = state;
+  }, [state]);
   const summary = portfolioSummary(state.holdings, state.usdTwd);
 
   const accounts = useMemo(() => [...new Set(state.holdings.map((holding) => accountName(holding.account)))].sort((a, b) => a.localeCompare(b, "zh-Hant")), [state.holdings]);
