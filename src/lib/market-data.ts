@@ -40,10 +40,20 @@ export async function loadBundledTwQuotes(): Promise<TwQuoteCache> {
     : parsed;
 }
 
-export function applyTwQuotes(holdings: Holding[], cache: TwQuoteCache) {
+// A closing quote must be dated on or before the current calendar day in Taiwan.
+// Fail closed for malformed or future dates instead of changing portfolio values.
+function validOfficialCloseDate(date: string, today: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === date &&
+    date <= today;
+}
+
+export function applyTwQuotes(holdings: Holding[], cache: TwQuoteCache, now = new Date()) {
   const quoteMap = new Map<string, TwQuoteCache["quotes"]>();
   for (const quote of cache.quotes) {
-    const code = quote.code.toUpperCase();
+    const code = quote.code.trim().toUpperCase();
     quoteMap.set(code, [...(quoteMap.get(code) ?? []), quote]);
   }
 
@@ -51,28 +61,35 @@ export function applyTwQuotes(holdings: Holding[], cache: TwQuoteCache) {
   let updated = 0;
   let skippedStale = 0;
   let skippedAmbiguous = 0;
+  let skippedInvalidDate = 0;
+  const today = taipeiParts(now).date;
 
   const next = holdings.map((holding) => {
     if (holding.market !== "TW" || holding.type === "cash") return holding;
 
-    const candidates = quoteMap.get(holding.symbol.toUpperCase()) ?? [];
+    const candidates = quoteMap.get(holding.symbol.trim().toUpperCase()) ?? [];
     if (!candidates.length) return holding;
 
     const preferredVenue =
       holding.priceSource === "TWSE" || holding.priceSource === "TPEx"
         ? holding.priceSource
         : null;
-    const quote = preferredVenue
-      ? candidates.find((candidate) => candidate.market === preferredVenue)
-      : candidates.length === 1
-        ? candidates[0]
-        : undefined;
+    // Duplicate records for the same venue are ambiguous: never choose an
+    // arbitrary first price or override the user's locally stored position.
+    const matching = preferredVenue
+      ? candidates.filter((candidate) => candidate.market === preferredVenue)
+      : candidates;
+    const quote = matching.length === 1 ? matching[0] : undefined;
 
     if (!quote) {
       skippedAmbiguous += 1;
       return holding;
     }
     if (quote.close <= 0) return holding;
+    if (!validOfficialCloseDate(quote.date, today)) {
+      skippedInvalidDate += 1;
+      return holding;
+    }
     if (holding.priceAsOf && quote.date < holding.priceAsOf) {
       skippedStale += 1;
       return holding;
@@ -98,18 +115,24 @@ export function applyTwQuotes(holdings: Holding[], cache: TwQuoteCache) {
     };
   });
 
-  return { holdings: next, matched, updated, skippedStale, skippedAmbiguous };
+  return { holdings: next, matched, updated, skippedStale, skippedAmbiguous, skippedInvalidDate };
 }
 
-export function cacheFreshnessLabel(cache: TwQuoteCache) {
-  const newest = [...cache.quotes].map((quote) => quote.date).sort().at(-1);
-  return newest ?? cache.generatedAt.slice(0, 10);
+export function cacheFreshnessLabel(cache: TwQuoteCache, now = new Date()) {
+  const today = taipeiParts(now).date;
+  const newest = cache.quotes
+    .map((quote) => quote.date)
+    .filter((date) => validOfficialCloseDate(date, today))
+    .sort()
+    .at(-1);
+  return newest ?? "尚無有效收盤日期";
 }
 
-export function cacheMarketFreshness(cache: TwQuoteCache) {
+export function cacheMarketFreshness(cache: TwQuoteCache, now = new Date()) {
+  const today = taipeiParts(now).date;
   const latestFor = (market: "TWSE" | "TPEx") =>
     cache.quotes
-      .filter((quote) => quote.market === market)
+      .filter((quote) => quote.market === market && validOfficialCloseDate(quote.date, today))
       .map((quote) => quote.date)
       .sort()
       .at(-1) ?? null;
@@ -157,11 +180,15 @@ export function closingPriceStatusLabel(priceDate: string, now = new Date()) {
 }
 
 export function shouldRejectStaleClosingCache(cache: TwQuoteCache, now = new Date()) {
-  const latest = cacheFreshnessLabel(cache);
+  const latest = cacheFreshnessLabel(cache, now);
   const taipei = taipeiParts(now);
   const generatedTaipei = taipeiParts(new Date(cache.generatedAt));
   const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri"].includes(taipei.weekday);
   const minuteOfDay = taipei.hour * 60 + taipei.minute;
+
+  // No valid dated quotes means this cache cannot safely update holdings,
+  // regardless of whether the bundle itself was generated today.
+  if (!validOfficialCloseDate(latest, taipei.date)) return true;
 
   // After the normal closing-data publication window, fail closed when the
   // cache itself has not refreshed today. A same-day refresh with an older
