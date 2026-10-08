@@ -1,4 +1,4 @@
-const CACHE = "portfoliopilot-v2";
+const CACHE = "portfoliopilot-v3";
 const CACHE_PREFIX = "portfoliopilot-";
 
 self.addEventListener("install", (event) => {
@@ -30,6 +30,20 @@ function canonicalDataRequest(request) {
   });
 }
 
+// A cached response is useful offline, but must never be mistaken for a
+// freshly fetched official market dataset by the manual Sync action.
+async function offlineDataFallback(request) {
+  const cached = await caches.match(request);
+  if (!cached) return undefined;
+  const headers = new Headers(cached.headers);
+  headers.set("x-portfoliopilot-data-cache", "offline");
+  return new Response(cached.body, {
+    status: cached.status,
+    statusText: cached.statusText,
+    headers
+  });
+}
+
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
@@ -47,7 +61,7 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(canonical))
+        .catch(() => offlineDataFallback(canonical))
     );
     return;
   }
