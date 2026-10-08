@@ -64,7 +64,6 @@ export function EtfCompositionTracker({ selected, snapshots, loading, error }: P
   const seenKey = `portfoliopilot:etf-change-seen:v1:${selected.etfMarket}:${selected.etfSymbol.trim().toUpperCase()}`;
   const latestFingerprint = latest ? etfTimelineFingerprint(latest) : "";
   const hasLatestChange = Boolean(latest?.changedCount);
-  const unread = hasLatestChange && acknowledged !== latestFingerprint;
 
   // React 19: subscribe to external storage rather than synchronously set
   // React state from an effect; SSR uses a null snapshot until hydration.
@@ -76,6 +75,7 @@ export function EtfCompositionTracker({ selected, snapshots, loading, error }: P
     }
   }, [seenKey]);
   const acknowledged = useSyncExternalStore(subscribeSeenChanges, readSeenMarker, () => null);
+  const unread = hasLatestChange && acknowledged !== latestFingerprint;
 
   const filtered = selectedPair?.rows.filter((row) => {
     if (row.changeType === "unchanged") return false;
