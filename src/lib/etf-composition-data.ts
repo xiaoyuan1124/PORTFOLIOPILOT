@@ -23,11 +23,10 @@ const cacheSchema = z.object({
 
 export type EtfCompositionCache = z.infer<typeof cacheSchema> & { offlineFallback?: boolean };
 
-export function parseEtfCompositionCache(value: unknown): EtfCompositionCache {
-  const parsed = cacheSchema.parse(value);
-  // Old published bundles may contain hexadecimal HTML entities in stock
-  // names; correct both current and historical snapshots on client load.
-  const decodeComposition = (item: EtfComposition): EtfComposition => ({
+// Use this for old local-first portfolios as well as newly fetched issuer
+// caches. It is display/data hygiene only: dates and weights are untouched.
+export function normalizeEtfCompositionNames(item: EtfComposition): EtfComposition {
+  return {
     ...item,
     etfName: decodeHtmlEntities(item.etfName),
     sourceName: decodeHtmlEntities(item.sourceName),
@@ -36,7 +35,13 @@ export function parseEtfCompositionCache(value: unknown): EtfCompositionCache {
       name: decodeHtmlEntities(constituent.name),
       sector: decodeHtmlEntities(constituent.sector)
     }))
-  });
+  };
+}
+
+export function parseEtfCompositionCache(value: unknown): EtfCompositionCache {
+  const parsed = cacheSchema.parse(value);
+  // Correct current and historical snapshots even if an older service worker
+  // returns a previously encoded official JSON bundle.
   return {
     ...parsed,
     sources: parsed.sources.map((source) => ({
@@ -44,8 +49,8 @@ export function parseEtfCompositionCache(value: unknown): EtfCompositionCache {
       name: decodeHtmlEntities(source.name),
       sourceName: decodeHtmlEntities(source.sourceName)
     })),
-    compositions: parsed.compositions.map(decodeComposition),
-    history: parsed.history.map(decodeComposition)
+    compositions: parsed.compositions.map(normalizeEtfCompositionNames),
+    history: parsed.history.map(normalizeEtfCompositionNames)
   };
 }
 
