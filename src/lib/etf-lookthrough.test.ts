@@ -42,6 +42,24 @@ const compositions: EtfComposition[] = [
 ];
 
 describe("ETF look-through exposure", () => {
+  it("does not let an older duplicate ETF snapshot alter the newer look-through result", () => {
+    const newer: EtfComposition = {
+      ...compositions[0]!,
+      asOf: "2026-10-08",
+      constituents: [
+        { market: "TW", symbol: "2330", name: "台積電", weightPct: 60, sector: "半導體" },
+        { market: "TW", symbol: "2317", name: "鴻海", weightPct: 35, sector: "電子" }
+      ]
+    };
+    const older = { ...compositions[0]!, asOf: "2026-09-26" };
+    const onlyTwEtf = holdings.filter((item) => item.id === "tw-etf");
+    // Old record is last, which previously caused the map to select it.
+    const result = calculateEtfLookThrough(onlyTwEtf, [newer, older], 32);
+    expect(result.exposures.find((item) => item.symbol === "2330")?.implicitValueTwd).toBe(600);
+    expect(result.etfs[0]?.asOf).toBe("2026-10-08");
+    expect(result.etfs[0]?.unresolvedValueTwd).toBe(50);
+  });
+
   it("combines direct and ETF-implied exposure for the same company", () => {
     const result = calculateEtfLookThrough(holdings, compositions, 32);
     const tsmc = result.exposures.find((item) => item.symbol === "2330");
