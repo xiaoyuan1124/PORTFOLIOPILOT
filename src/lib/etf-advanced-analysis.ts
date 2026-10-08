@@ -223,6 +223,13 @@ export function compareEtfCompositionSnapshots(previous: EtfComposition, selecte
     };
   }).sort((a, b) => Math.abs(b.changePctPoints) - Math.abs(a.changePctPoints));
 
+  const emptySummary: EtfCompositionChangeSummary = {
+    added: 0,
+    removed: 0,
+    increased: 0,
+    decreased: 0,
+    unchanged: 0
+  };
   const summary = rows.reduce<EtfCompositionChangeSummary>((result, row) => {
     result[row.changeType] += 1;
     return result;
