@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { Check, Clock3, ExternalLink, Eye, History, Info } from "lucide-react";
 import { toast } from "sonner";
 import type { EtfComposition } from "@/lib/types";
@@ -9,6 +9,16 @@ import {
   etfTimelineFingerprint
 } from "@/lib/etf-composition-tracker";
 import { Badge, Card, CardContent, InfoDisclosure } from "./ui";
+
+const ETF_SEEN_CHANGE_EVENT = "portfoliopilot:etf-change-seen";
+function subscribeSeenChanges(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  window.addEventListener(ETF_SEEN_CHANGE_EVENT, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(ETF_SEEN_CHANGE_EVENT, onChange);
+  };
+}
 
 type ChangeFilter = "all" | "added" | "removed" | "weight";
 type Props = {
@@ -48,7 +58,6 @@ export function EtfCompositionTracker({ selected, snapshots, loading, error }: P
   );
   const [activePair, setActivePair] = useState("");
   const [filter, setFilter] = useState<ChangeFilter>("all");
-  const [acknowledged, setAcknowledged] = useState<string | null>(null);
 
   const latest = timeline[0] ?? null;
   const selectedPair = timeline.find((event) => event.currentAsOf === activePair) ?? latest;
@@ -57,13 +66,16 @@ export function EtfCompositionTracker({ selected, snapshots, loading, error }: P
   const hasLatestChange = Boolean(latest?.changedCount);
   const unread = hasLatestChange && acknowledged !== latestFingerprint;
 
-  useEffect(() => {
+  // React 19: subscribe to external storage rather than synchronously set
+  // React state from an effect; SSR uses a null snapshot until hydration.
+  const readSeenMarker = useCallback(() => {
     try {
-      setAcknowledged(window.localStorage.getItem(seenKey));
+      return window.localStorage.getItem(seenKey);
     } catch {
-      setAcknowledged(null);
+      return null;
     }
-  }, [seenKey, latestFingerprint]);
+  }, [seenKey]);
+  const acknowledged = useSyncExternalStore(subscribeSeenChanges, readSeenMarker, () => null);
 
   const filtered = selectedPair?.rows.filter((row) => {
     if (row.changeType === "unchanged") return false;
@@ -80,7 +92,7 @@ export function EtfCompositionTracker({ selected, snapshots, loading, error }: P
     if (!latest || !hasLatestChange) return;
     try {
       window.localStorage.setItem(seenKey, latestFingerprint);
-      setAcknowledged(latestFingerprint);
+      window.dispatchEvent(new Event(ETF_SEEN_CHANGE_EVENT));
     } catch {
       toast.error("無法儲存已讀狀態；請檢查本機儲存空間。");
     }
