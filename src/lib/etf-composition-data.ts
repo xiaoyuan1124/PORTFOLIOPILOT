@@ -104,6 +104,18 @@ export function applyHeldEtfCompositions(
     updated += 1;
   }
 
+  // Expose the exact held symbols for actionable, local-only diagnostics.
+  // A missing issuer mapping is not the same as a failed official-source fetch.
+  const held = [...heldKeys];
+  const unsupportedSymbols = held
+    .filter((heldKey) => !supportedKeys.has(heldKey))
+    .map((heldKey) => heldKey.slice(3))
+    .sort();
+  const sourceIssueSymbols = held
+    .filter((heldKey) => sourceIssueKeys.has(heldKey))
+    .map((heldKey) => heldKey.slice(3))
+    .sort();
+
   return {
     compositions: [...nextByKey.values()],
     heldTwEtfCount: heldKeys.size,
@@ -111,8 +123,10 @@ export function applyHeldEtfCompositions(
     updated,
     unchanged,
     preservedNewer,
-    supported: [...heldKeys].filter((heldKey) => supportedKeys.has(heldKey)).length,
-    sourceIssues: [...heldKeys].filter((heldKey) => sourceIssueKeys.has(heldKey)).length,
-    unsupported: [...heldKeys].filter((heldKey) => !supportedKeys.has(heldKey)).length
+    supported: held.filter((heldKey) => supportedKeys.has(heldKey)).length,
+    sourceIssues: sourceIssueSymbols.length,
+    unsupported: unsupportedSymbols.length,
+    unsupportedSymbols,
+    sourceIssueSymbols
   };
 }
