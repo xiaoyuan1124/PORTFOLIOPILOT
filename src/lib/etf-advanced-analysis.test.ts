@@ -117,6 +117,22 @@ describe("advanced ETF analysis", () => {
     expect(compareEtfOverlap(selected, other).topShared.map((row) => row.symbol)).toEqual(["2330", "2317"]);
   });
 
+  it("shows readable company names from old locally saved encoded ETF snapshots", () => {
+    const encodedCurrent: EtfComposition = {
+      ...selected,
+      constituents: selected.constituents.map((row) => row.symbol === "2330"
+        ? { ...row, name: "&#x53F0;&#x7A4D;&#x96FB;" }
+        : row)
+    };
+    const result = analyzeEtfAdvanced(encodedCurrent, [previous], { quotes });
+    expect(result.weightChanges.find((row) => row.symbol === "2330")).toMatchObject({
+      name: "台積電",
+      previousWeightPct: 30,
+      currentWeightPct: 40,
+      changePctPoints: 10
+    });
+  });
+
   it("detects additions, removals, increases and decreases between snapshots", () => {
     const current: EtfComposition = {
       ...selected,
