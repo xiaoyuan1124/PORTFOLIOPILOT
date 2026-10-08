@@ -177,7 +177,7 @@ export function EtfResearch({
           const active = selected ? compositionKey(selected) === key : false;
           const source = officialCache?.sources.find((entry) =>
             entry.symbol.trim().toUpperCase() === composition.etfSymbol.trim().toUpperCase() &&
-            composition.etfMarket === "TW"
+            composition.etfMarket === "TW" && composition.sourceType !== "user_import"
           );
           return (
             <button
