@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { etfCompositionSchema } from "./schema";
 import type { EtfComposition, Holding } from "./types";
+import { isOfflineBundleResponse } from "./bundled-data-status";
 
 const sourceSchema = z.object({
   symbol: z.string().min(1),
@@ -19,7 +20,7 @@ const cacheSchema = z.object({
   history: z.array(etfCompositionSchema).default([])
 });
 
-export type EtfCompositionCache = z.infer<typeof cacheSchema>;
+export type EtfCompositionCache = z.infer<typeof cacheSchema> & { offlineFallback?: boolean };
 
 export function parseEtfCompositionCache(value: unknown): EtfCompositionCache {
   return cacheSchema.parse(value);
@@ -43,7 +44,10 @@ export async function loadBundledEtfCompositions(): Promise<EtfCompositionCache>
     throw new Error("尚未取得官方 ETF 成份資料快取。");
   }
 
-  return parseEtfCompositionCache(await response.json());
+  const parsed = parseEtfCompositionCache(await response.json());
+  return isOfflineBundleResponse(response.headers)
+    ? { ...parsed, offlineFallback: true }
+    : parsed;
 }
 
 export function applyHeldEtfCompositions(
