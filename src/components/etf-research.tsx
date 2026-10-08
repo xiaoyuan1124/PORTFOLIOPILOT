@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, RefreshCw } from "lucide-react";
 import type { AppState, EtfComposition } from "@/lib/types";
-import { loadBundledEtfCompositions, normalizeEtfCompositionNames } from "@/lib/etf-composition-data";
+import { loadBundledEtfCompositions, normalizeEtfCompositionNames, type EtfCompositionCache } from "@/lib/etf-composition-data";
+import { chooseCurrentEtfCompositions } from "@/lib/etf-composition-catalog";
 import { analyzeEtf } from "@/lib/etf-research";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { Badge, Card, CardContent, GhostButton, InfoDisclosure } from "./ui";
@@ -37,6 +38,7 @@ export function EtfResearch({
   const [loading, setLoading] = useState(true);
   const [quoteError, setQuoteError] = useState("");
   const [compositionHistory, setCompositionHistory] = useState<EtfComposition[]>([]);
+  const [officialCache, setOfficialCache] = useState<EtfCompositionCache | null>(null);
   const [historyError, setHistoryError] = useState("");
   const heldEtfKeys = useMemo(
     () => new Set(
@@ -46,21 +48,26 @@ export function EtfResearch({
     ),
     [state.holdings]
   );
-  const compositions = useMemo(
-    () => state.etfCompositions.map(normalizeEtfCompositionNames).sort((a, b) => {
+  const compositions = useMemo(() => {
+    // Research is read-only: permit browsing issuer-supported ETFs even when
+    // the user has not bought them or synchronized local holdings.
+    const current = chooseCurrentEtfCompositions([
+      ...state.etfCompositions,
+      ...(officialCache?.compositions.filter((item) => item.sourceType !== "user_import") ?? [])
+    ]);
+    return current.map(normalizeEtfCompositionNames).sort((a, b) => {
       const aHeld = heldEtfKeys.has(compositionKey(a)) ? 1 : 0;
       const bHeld = heldEtfKeys.has(compositionKey(b)) ? 1 : 0;
       return bHeld - aHeld || a.etfSymbol.localeCompare(b.etfSymbol);
-    }),
-    [heldEtfKeys, state.etfCompositions]
-  );
-  const [selectedKey, setSelectedKey] = useState(() => {
-    const requested = requestedSymbol?.trim().toUpperCase();
-    const match = requested
-      ? compositions.find((composition) => composition.etfSymbol.trim().toUpperCase() === requested)
-      : undefined;
-    return match ? compositionKey(match) : compositions[0] ? compositionKey(compositions[0]) : "";
-  });
+    });
+  }, [heldEtfKeys, state.etfCompositions, officialCache]);
+  const [manualSelectedKey, setManualSelectedKey] = useState<string | null>(null);
+  // The requested ETF might only appear after the issuer bundle loads.
+  // Resolve the requested symbol after loading, unless the user chose a tab.
+  const requestedKey = requestedSymbol
+    ? compositions.find((item) => item.etfSymbol.trim().toUpperCase() === requestedSymbol.trim().toUpperCase())
+    : undefined;
+  const selectedKey = manualSelectedKey ?? (requestedKey ? compositionKey(requestedKey) : compositions[0] ? compositionKey(compositions[0]) : "");
 
   async function reload() {
     setLoading(true);
@@ -79,6 +86,7 @@ export function EtfResearch({
     }
 
     if (compositionResult.status === "fulfilled") {
+      setOfficialCache(compositionResult.value);
       setCompositionHistory(compositionResult.value.history);
     } else {
       setHistoryError(compositionResult.reason instanceof Error ? compositionResult.reason.message : "無法載入 ETF 成份歷史快照。");
@@ -101,6 +109,7 @@ export function EtfResearch({
       }
 
       if (compositionResult.status === "fulfilled") {
+        setOfficialCache(compositionResult.value);
         setCompositionHistory(compositionResult.value.history);
         setHistoryError("");
       } else {
@@ -150,6 +159,13 @@ export function EtfResearch({
         </div>
       ) : null}
 
+      <div role="status" className="rounded-xl border border-black/6 bg-white/50 px-3 py-2 text-xs leading-5 text-black/55 dark:border-white/8 dark:bg-white/4 dark:text-white/55">
+        {officialCache
+          ? `官方成份目錄 ${officialCache.compositions.length} 檔 · 快取產生 ${officialCache.generatedAt.slice(0, 10)}${officialCache.offlineFallback ? " · 離線舊快取（非最新更新）" : ""}。`
+          : loading ? "正在讀取官方 ETF 成份目錄…" : "官方 ETF 目錄未載入，僅能查看本機已有的資料。"}
+        {" "}瀏覽不會修改持股或覆寫本機成份。
+      </div>
+
       <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
         {compositions.map((composition) => {
           const key = compositionKey(composition);
@@ -157,7 +173,7 @@ export function EtfResearch({
           return (
             <button
               key={key}
-              onClick={() => setSelectedKey(key)}
+              onClick={() => setManualSelectedKey(key)}
               className={`min-w-[150px] rounded-2xl border p-3 text-left transition ${
                 active
                   ? "border-[#315f49]/35 bg-[#e7f1e9] dark:border-[#8ec7a3]/30 dark:bg-[#173426]"
@@ -169,7 +185,9 @@ export function EtfResearch({
                 {heldEtfKeys.has(key) ? <Badge tone="good">持有</Badge> : null}
               </div>
               <p className="mt-1 truncate text-sm">{composition.etfName}</p>
-              <p className="mt-1 text-[11px] text-black/40 dark:text-white/40">成分日 {composition.asOf}</p>
+              <p className="mt-1 text-[11px] text-black/40 dark:text-white/40">
+                {composition.sourceType === "user_import" ? "手動匯入" : "官方成份"} · 資料日 {composition.asOf}
+              </p>
             </button>
           );
         })}
@@ -180,7 +198,7 @@ export function EtfResearch({
           <CardContent className="py-10 text-center">
             <p className="text-sm font-semibold">目前沒有 ETF 成份資料</p>
             <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
-              先到「投資組合」按「同步最新資料」嘗試自動同步官方成份；尚未支援的 ETF 再到「ETF 穿透」用 CSV 補充。ETF 研究不會從名稱猜成份股。
+              目前尚未取得可研究的官方或本機 ETF 成份；請檢查網路並按「重新整理」。未支援的 ETF 可到「ETF 穿透」以 CSV 匯入；不會從名稱推測成份。
             </p>
           </CardContent>
         </Card>

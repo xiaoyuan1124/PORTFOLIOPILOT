@@ -1,6 +1,7 @@
 import { holdingValueTwd, portfolioSummary } from "./calc";
 import { ETF_WEIGHT_EPSILON } from "./schema";
 import { normalizeEtfCompositionNames } from "./etf-composition-data";
+import { chooseCurrentEtfCompositions } from "./etf-composition-catalog";
 import type { EtfComposition, Holding, Market } from "./types";
 
 export type LookThroughContribution = {
@@ -64,8 +65,11 @@ export function calculateEtfLookThrough(
   usdTwd: number
 ): LookThroughResult {
   const portfolioValueTwd = portfolioSummary(holdings, usdTwd).total;
+  // Legacy/restored data can contain multiple dated copies of one fund.
+  // Never let an old entry that happens to appear last silently override
+  // the latest valid composition and distort exposure or concentration.
   const compositionByEtf = new Map(
-    compositions.map((composition) => [
+    chooseCurrentEtfCompositions(compositions).map((composition) => [
       positionKey(composition.etfMarket, composition.etfSymbol),
       normalizeEtfCompositionNames(composition)
     ])
