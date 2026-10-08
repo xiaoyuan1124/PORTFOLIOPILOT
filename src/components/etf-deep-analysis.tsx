@@ -323,6 +323,10 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
               <span>前 8 大成份 · 權重 %</span>
               <span>{composition.asOf}</span>
             </div>
+            <details className="group mt-3 rounded-2xl border border-black/6 px-3 py-2 dark:border-white/8">
+              <summary className="flex min-h-11 cursor-pointer items-center text-xs font-semibold text-black/60 dark:text-white/60">
+                展開進階歷史成份異動圖表
+              </summary>
             <div className="mt-3 rounded-2xl border border-black/6 p-3 dark:border-white/8">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
@@ -402,7 +406,8 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
                   已開始保存官方歷史快照；目前只有一個資料日，等下一個不同 as-of 的官方快照出現後，就會自動顯示新增、刪除與權重變化。
                 </p>
               )}
-            </div>
+            </div> 
+            </details>
           </CardContent>
         </Card>
 

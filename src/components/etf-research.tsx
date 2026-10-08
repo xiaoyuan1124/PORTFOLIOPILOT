@@ -8,6 +8,7 @@ import { analyzeEtf } from "@/lib/etf-research";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { Badge, Card, CardContent, GhostButton, InfoDisclosure } from "./ui";
 import { EtfDeepAnalysis } from "./etf-deep-analysis";
+import { EtfCompositionTracker } from "./etf-composition-tracker";
 
 
 
@@ -183,6 +184,15 @@ export function EtfResearch({
             </p>
           </CardContent>
         </Card>
+      ) : null}
+
+      {selected ? (
+        <EtfCompositionTracker
+          selected={selected}
+          snapshots={[...compositions, ...compositionHistory]}
+          loading={loading}
+          error={historyError}
+        />
       ) : null}
 
       {selected && result && quotes ? (
