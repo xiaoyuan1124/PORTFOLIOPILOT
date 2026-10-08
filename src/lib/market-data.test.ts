@@ -79,6 +79,62 @@ describe("official Taiwan quote cache", () => {
     expect(result.holdings[0]?.price).toBe(150);
   });
 
+  it("does not overwrite holdings from a future-dated quote", () => {
+    const current = [{ ...holdings[0]!, price: 1215, priceSource: "TWSE" as const }];
+    const badCache: TwQuoteCache = {
+      ...cache,
+      quotes: [{ code: "2330", name: "台積電", market: "TWSE", close: 9999, date: "2026-10-09" }]
+    };
+    const now = new Date("2026-10-08T10:00:00.000Z");
+    const result = applyTwQuotes(current, badCache, now);
+    expect(result.updated).toBe(0);
+    expect(result.skippedInvalidDate).toBe(1);
+    expect(result.holdings[0]?.price).toBe(1215);
+    expect(cacheMarketFreshness(badCache, now).TWSE).toBeNull();
+    expect(cacheFreshnessLabel(badCache, now)).toBe("尚無有效收盤日期");
+  });
+
+  it("does not apply an impossible calendar date", () => {
+    const invalid: TwQuoteCache = {
+      ...cache,
+      quotes: [{ code: "2330", name: "台積電", market: "TWSE", close: 9999, date: "2026-02-30" }]
+    };
+    const result = applyTwQuotes([holdings[0]!], invalid, new Date("2026-10-08T10:00:00.000Z"));
+    expect(result.updated).toBe(0);
+    expect(result.skippedInvalidDate).toBe(1);
+    expect(result.holdings[0]?.price).toBe(1000);
+  });
+
+  it("does not arbitrarily select conflicting same-venue quotes", () => {
+    const duplicated: TwQuoteCache = {
+      ...cache,
+      quotes: [
+        { code: "2330", name: "台積電", market: "TWSE", close: 1000, date: "2026-10-07" },
+        { code: "2330", name: "台積電", market: "TWSE", close: 9999, date: "2026-10-07" }
+      ]
+    };
+    const current = [{ ...holdings[0]!, priceSource: "TWSE" as const }];
+    const result = applyTwQuotes(current, duplicated, new Date("2026-10-08T10:00:00.000Z"));
+    expect(result.matched).toBe(0);
+    expect(result.updated).toBe(0);
+    expect(result.skippedAmbiguous).toBe(1);
+    expect(result.holdings).toEqual(current);
+  });
+
+  it("does not let a future date from one market contaminate the other's freshness", () => {
+    const split: TwQuoteCache = {
+      ...cache,
+      quotes: [
+        { code: "2330", name: "台積電", market: "TWSE", close: 9999, date: "2026-10-09" },
+        { code: "6488", name: "環球晶", market: "TPEx", close: 438, date: "2026-10-07" }
+      ]
+    };
+    expect(cacheMarketFreshness(split, new Date("2026-10-08T10:00:00.000Z"))).toEqual({
+      TWSE: null,
+      TPEx: "2026-10-07"
+    });
+  });
+
   it("does not report unchanged official holdings as updated", () => {
     const current = [
       { ...holdings[0]!, price: 1215, priceSource: "TWSE" as const, priceAsOf: "2026-09-27" },
