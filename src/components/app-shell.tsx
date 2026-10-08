@@ -275,7 +275,14 @@ export function AppShell() {
 
   return (
     <div className="min-h-dvh text-[#1b241f] dark:text-[#e7eee9]">
-      <Toaster theme={dark ? "dark" : "light"} position="top-center" richColors closeButton />
+      <Toaster
+        theme={dark ? "dark" : "light"}
+        position="top-center"
+        offset={{ top: "max(5.5rem, calc(env(safe-area-inset-top, 0px) + 1rem))" }}
+        mobileOffset={{ top: "max(5.5rem, calc(env(safe-area-inset-top, 0px) + 1rem))" }}
+        richColors
+        closeButton
+      />
       <QuickSearch state={state} open={searchOpen} onOpenChange={setSearchOpen} onNavigate={navigate} />
 
       <aside className="app-desktop-sidebar fixed inset-y-0 left-0 z-30 hidden w-[248px] border-r border-black/6 bg-[#efeee9]/85 px-4 backdrop-blur-xl dark:border-white/7 dark:bg-[#0d1210]/90 md:flex md:flex-col">
