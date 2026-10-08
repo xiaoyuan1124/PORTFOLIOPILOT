@@ -73,6 +73,7 @@ export function Portfolio({
             <button
               key={item.key}
               onClick={() => setTab(item.defaultTab)}
+              aria-pressed={active}
               className={`min-h-11 rounded-xl px-2 text-sm font-semibold transition ${active ? "bg-[#1f332a] text-white shadow-sm dark:bg-[#dce9e2] dark:text-[#122018]" : "text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"}`}
             >
               {item.label}
@@ -87,7 +88,8 @@ export function Portfolio({
             <button
               key={item.key}
               onClick={() => setTab(item.key)}
-              className={`min-h-9 whitespace-nowrap rounded-full border px-3 text-xs font-semibold transition ${tab === item.key ? "border-[#315f49]/25 bg-[#e7f1e9] text-[#245238] dark:border-[#8ec7a3]/25 dark:bg-[#173426] dark:text-[#a9d7b7]" : "border-black/7 bg-white/55 text-black/45 dark:border-white/8 dark:bg-white/4 dark:text-white/45"}`}
+              aria-pressed={tab === item.key}
+              className={`min-h-11 whitespace-nowrap rounded-full border px-3 text-xs font-semibold transition ${tab === item.key ? "border-[#315f49]/25 bg-[#e7f1e9] text-[#245238] dark:border-[#8ec7a3]/25 dark:bg-[#173426] dark:text-[#a9d7b7]" : "border-black/7 bg-white/55 text-black/45 dark:border-white/8 dark:bg-white/4 dark:text-white/45"}`}
             >
               {item.label}
             </button>
