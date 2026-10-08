@@ -124,7 +124,9 @@ export function EtfResearch({
     compositions.find((composition) => compositionKey(composition) === selectedKey) ??
     compositions[0] ??
     null;
-  const result = selected && quotes
+  // Concentration, sector weights and overlaps require composition data,
+  // not a live quote cache; only daily contribution depends on quotes.
+  const result = selected
     ? analyzeEtf(selected, state.holdings, quotes, state.usdTwd)
     : null;
   const positive = result?.rows.filter((row) => row.contributionPctPoints > 0).slice(0, 8) ?? [];
@@ -163,6 +165,9 @@ export function EtfResearch({
         {officialCache
           ? `官方成份目錄 ${officialCache.compositions.length} 檔 · 快取產生 ${officialCache.generatedAt.slice(0, 10)}${officialCache.offlineFallback ? " · 離線舊快取（非最新更新）" : ""}。`
           : loading ? "正在讀取官方 ETF 成份目錄…" : "官方 ETF 目錄未載入，僅能查看本機已有的資料。"}
+        {officialCache?.sources.some((source) => source.status !== "ok")
+          ? ` · ${officialCache.sources.filter((source) => source.status !== "ok").length} 檔來源本次異常，部分官方資料可能是保留的舊快取。`
+          : ""}
         {" "}瀏覽不會修改持股或覆寫本機成份。
       </div>
 
@@ -170,6 +175,10 @@ export function EtfResearch({
         {compositions.map((composition) => {
           const key = compositionKey(composition);
           const active = selected ? compositionKey(selected) === key : false;
+          const source = officialCache?.sources.find((entry) =>
+            entry.symbol.trim().toUpperCase() === composition.etfSymbol.trim().toUpperCase() &&
+            composition.etfMarket === "TW" && composition.sourceType !== "user_import"
+          );
           return (
             <button
               key={key}
@@ -183,6 +192,8 @@ export function EtfResearch({
               <div className="flex items-center justify-between gap-2">
                 <strong className="text-sm">{composition.etfSymbol}</strong>
                 {heldEtfKeys.has(key) ? <Badge tone="good">持有</Badge> : null}
+                {source?.status === "stale" ? <Badge tone="warn">來源延遲</Badge> : null}
+                {source?.status === "error" ? <Badge tone="warn">來源異常</Badge> : null}
               </div>
               <p className="mt-1 truncate text-sm">{composition.etfName}</p>
               <p className="mt-1 text-[11px] text-black/40 dark:text-white/40">
@@ -213,7 +224,7 @@ export function EtfResearch({
         />
       ) : null}
 
-      {selected && result && quotes ? (
+      {selected && result ? (
         <>
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">成份權重覆蓋</p><p className="mt-2 text-xl font-semibold">{result.compositionCoveragePct.toFixed(1)}%</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">{result.constituentCount} 檔已匯入成份</p></CardContent></Card>
@@ -222,6 +233,7 @@ export function EtfResearch({
             <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">與直接持股重疊</p><p className="mt-2 text-xl font-semibold">{result.directPortfolioOverlapWeightPct.toFixed(1)}%</p><p className="mt-1 truncate text-xs text-black/35 dark:text-white/35">{result.directPortfolioOverlapSymbols.length ? result.directPortfolioOverlapSymbols.join("、") : "沒有直接持股重疊"}</p></CardContent></Card>
           </section>
 
+          {quotes ? (
           <Card>
             <CardContent>
               <div className="flex flex-wrap items-start justify-between gap-4">
@@ -297,6 +309,18 @@ export function EtfResearch({
             </CardContent>
           </Card>
 
+          ) : (
+            <Card>
+              <CardContent>
+                <h3 className="text-sm font-semibold">目前無法計算每日 ETF 成份貢獻</h3>
+                <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
+                  官方收盤行情尚未載入；成份權重、產業分布與歷史異動仍可查看。
+                  系統不會拿舊行情猜測今天的上漲／下跌來源。
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           <section className="grid gap-4 xl:grid-cols-[1.1fr_.9fr]">
             <Card>
               <CardContent>
@@ -353,7 +377,7 @@ export function EtfResearch({
             </Card>
           </section>
 
-          <EtfDeepAnalysis composition={selected} compositions={[...compositions, ...compositionHistory]} quotes={quotes} />
+          {quotes ? <EtfDeepAnalysis composition={selected} compositions={[...compositions, ...compositionHistory]} quotes={quotes} /> : null}
 
           <Card>
             <CardContent>

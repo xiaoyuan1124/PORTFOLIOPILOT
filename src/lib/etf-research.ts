@@ -43,7 +43,8 @@ function key(market: "TW" | "US", symbol: string) {
   return `${market}:${symbol.trim().toUpperCase()}`;
 }
 
-function uniqueQuoteFor(symbol: string, cache: TwQuoteCache) {
+function uniqueQuoteFor(symbol: string, cache: TwQuoteCache | null) {
+  if (!cache) return null;
   const code = symbol.trim().toUpperCase();
   const rows = cache.quotes.filter((quote) => quote.code.trim().toUpperCase() === code);
   if (rows.length !== 1) return null;
@@ -61,7 +62,7 @@ function uniqueQuoteFor(symbol: string, cache: TwQuoteCache) {
 export function analyzeEtf(
   composition: EtfComposition,
   holdings: Holding[],
-  quotes: TwQuoteCache,
+  quotes: TwQuoteCache | null,
   usdTwd: number
 ): EtfResearchResult {
   const constituents = [...composition.constituents].sort((a, b) => b.weightPct - a.weightPct);
