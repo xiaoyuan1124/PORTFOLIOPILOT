@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Holding } from "./types";
+import { isOfflineBundleResponse } from "./bundled-data-status";
 
 const quoteSchema = z.object({
   code: z.string().min(1),
@@ -21,7 +22,7 @@ const cacheSchema = z.object({
   quotes: z.array(quoteSchema)
 });
 
-export type TwQuoteCache = z.infer<typeof cacheSchema>;
+export type TwQuoteCache = z.infer<typeof cacheSchema> & { offlineFallback?: boolean };
 
 export async function loadBundledTwQuotes(): Promise<TwQuoteCache> {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -33,7 +34,10 @@ export async function loadBundledTwQuotes(): Promise<TwQuoteCache> {
     throw new Error("尚未取得官方台股資料快取。");
   }
 
-  return cacheSchema.parse(await response.json());
+  const parsed = cacheSchema.parse(await response.json());
+  return isOfflineBundleResponse(response.headers)
+    ? { ...parsed, offlineFallback: true }
+    : parsed;
 }
 
 export function applyTwQuotes(holdings: Holding[], cache: TwQuoteCache) {

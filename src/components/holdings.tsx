@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowDownUp, ListChecks, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { ArrowDownUp, ListChecks, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import type { AppState, AssetType, Currency, Holding, Market } from "@/lib/types";
 import { holdingCostTwd, holdingValueTwd, portfolioSummary } from "@/lib/calc";
@@ -662,15 +662,24 @@ function QuickCorrectionForm({
 
 type SortMode = "value" | "gain" | "name";
 
+type RefreshFeedback = {
+  tone: "good" | "warn";
+  title: string;
+  details: string[];
+  needsEtfHelp: boolean;
+};
+
 export function HoldingsPanel({
   state,
   onChange,
   onResearch,
+  onOpenEtfLookthrough,
   requestedCandidate
 }: {
   state: AppState;
   onChange: (state: AppState) => boolean;
   onResearch?: (researchKey: string, researchType: "stock" | "etf") => void;
+  onOpenEtfLookthrough?: () => void;
   requestedCandidate?: HoldingLookupCandidate;
 }) {
   const [query, setQuery] = useState("");
@@ -679,6 +688,12 @@ export function HoldingsPanel({
   const [sort, setSort] = useState<SortMode>("value");
   const [account, setAccount] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshFeedback, setRefreshFeedback] = useState<RefreshFeedback | null>(null);
+  const refreshInFlight = useRef(false);
+  const latestState = useRef(state);
+  useEffect(() => {
+    latestState.current = state;
+  }, [state]);
   const summary = portfolioSummary(state.holdings, state.usdTwd);
 
   const accounts = useMemo(() => [...new Set(state.holdings.map((holding) => accountName(holding.account)))].sort((a, b) => a.localeCompare(b, "zh-Hant")), [state.holdings]);
@@ -767,123 +782,159 @@ export function HoldingsPanel({
   }
 
   async function refreshTaiwanPrices() {
+    if (refreshInFlight.current) return;
+    refreshInFlight.current = true;
     setRefreshing(true);
+    setRefreshFeedback(null);
+
     try {
       const [quoteLoad, compositionLoad] = await Promise.allSettled([
         loadBundledTwQuotes(),
         loadBundledEtfCompositions()
       ]);
 
-      let nextHoldings = state.holdings;
-      let nextCompositions = state.etfCompositions;
-      let quoteSummary = "";
-      let quoteWarning = "";
-      let compositionSummary = "";
-      let compositionWarning = "";
+      // A user may edit a holding while the two network requests are pending.
+      // Always apply the fetched cache to the latest local state, not a stale closure.
+      const currentState = latestState.current;
+      let nextHoldings = currentState.holdings;
+      let nextCompositions = currentState.etfCompositions;
+      const details: string[] = [];
+      const warnings: string[] = [];
+      let needsEtfHelp = false;
 
       if (quoteLoad.status === "fulfilled") {
         const cache = quoteLoad.value;
         const asOf = cacheFreshnessLabel(cache);
-        if (shouldRejectStaleClosingCache(cache)) {
-          quoteWarning = `官方收盤價快取目前只到 ${asOf}，可能休市或尚未發布今天資料；本次沒有覆寫持股價格。`;
+        if (cache.offlineFallback) {
+          warnings.push(`離線狀態：目前僅取得 ${asOf} 的收盤價快取，沒有更新持股價格。請恢復網路後再同步。`);
+        } else if (shouldRejectStaleClosingCache(cache)) {
+          warnings.push(`官方收盤快取目前只到 ${asOf}，本次未覆寫持股價格。`);
         } else {
-          const result = applyTwQuotes(state.holdings, cache);
+          const result = applyTwQuotes(currentState.holdings, cache);
           nextHoldings = result.holdings;
           const freshness = cacheMarketFreshness(cache);
           const dateLabel = [
             freshness.TWSE ? `TWSE ${closingPriceStatusLabel(freshness.TWSE)}` : null,
             freshness.TPEx ? `TPEx ${closingPriceStatusLabel(freshness.TPEx)}` : null
           ].filter(Boolean).join(" · ");
-          quoteSummary = result.updated
-            ? `台股價格 ${result.updated}/${result.matched} · ${dateLabel || asOf}`
-            : result.matched > 0
-              ? `台股價格已最新 · ${dateLabel || asOf}`
-              : `台股無可套用報價 · ${dateLabel || asOf}`;
+          if (result.matched > 0) {
+            details.push(
+              result.updated > 0
+                ? `收盤價：更新 ${result.updated}/${result.matched} 筆 · ${dateLabel || asOf}`
+                : `收盤價：已是最新可用資料 · ${dateLabel || asOf}`
+            );
+          } else if (currentState.holdings.some((holding) => holding.market === "TW" && holding.type !== "cash")) {
+            warnings.push(`現有台股持倉沒有可安全匹配的官方收盤價 · ${dateLabel || asOf}`);
+          } else {
+            details.push("沒有需要更新收盤價的台股持倉。");
+          }
           if (result.skippedStale || result.skippedAmbiguous) {
-            quoteWarning = `另有 ${result.skippedStale + result.skippedAmbiguous} 筆價格因舊日期或市場不明而保留原值。`;
+            warnings.push(`${result.skippedStale + result.skippedAmbiguous} 筆持倉因報價日期較舊或交易市場不明，已保留原價。`);
           }
         }
       } else {
-        quoteWarning = quoteLoad.reason instanceof Error ? quoteLoad.reason.message : "無法載入官方台股收盤資料。";
+        warnings.push(
+          quoteLoad.reason instanceof Error ? quoteLoad.reason.message : "官方收盤價快取暫時不可用。"
+        );
       }
 
       if (compositionLoad.status === "fulfilled") {
-        const result = applyHeldEtfCompositions(state.etfCompositions, state.holdings, compositionLoad.value);
-        nextCompositions = result.compositions;
-        if (result.heldTwEtfCount > 0) {
-          compositionSummary = result.matched > 0
-            ? `ETF 成份 ${result.updated} 更新、${result.unchanged} 未變更`
-            : result.supported > 0
-              ? "ETF 成份本次沒有可安全套用的更新"
-              : "持有 ETF 尚無支援的官方自動成份來源";
-          if (result.unsupported > 0 || result.preservedNewer > 0 || result.sourceIssues > 0) {
-            compositionWarning = [
-              result.sourceIssues > 0 ? `${result.sourceIssues} 檔官方來源本次抓取異常，已保留可用舊資料` : "",
-              result.unsupported > 0 ? `${result.unsupported} 檔持有台灣 ETF 尚未支援自動成份` : "",
-              result.preservedNewer > 0 ? `${result.preservedNewer} 檔本機資料較新，已保留` : ""
-            ].filter(Boolean).join("；");
+        const cache = compositionLoad.value;
+        if (cache.offlineFallback) {
+          warnings.push(`離線狀態：ETF 成份僅取得 ${cache.generatedAt.slice(0, 10)} 的舊快取，沒有覆寫本機成份。`);
+        } else {
+          const result = applyHeldEtfCompositions(currentState.etfCompositions, currentState.holdings, cache);
+          nextCompositions = result.compositions;
+          if (result.heldTwEtfCount > 0) {
+            const generatedAt = new Date(cache.generatedAt);
+            const cacheTime = Number.isFinite(generatedAt.getTime())
+              ? generatedAt.toLocaleString("zh-TW", {
+                  timeZone: "Asia/Taipei",
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false
+                })
+              : "時間未知";
+            details.push(`ETF 官方快取時間：${cacheTime}（台灣時間）`);
+            if (result.matched > 0) {
+              details.push(`ETF 成份：${result.updated} 檔更新、${result.unchanged} 檔未變更。`);
+            } else if (result.supported > 0) {
+              warnings.push("ETF 官方來源已收錄，但這次沒有可安全套用的成份資料。");
+            }
+            if (result.sourceIssueSymbols.length) {
+              warnings.push(`ETF ${result.sourceIssueSymbols.join("、")}：官方成份來源本次異常，已保留可用本機資料。`);
+              needsEtfHelp = true;
+            }
+            if (result.unsupportedSymbols.length) {
+              warnings.push(`ETF ${result.unsupportedSymbols.join("、")}：尚未支援官方自動成份；未推估或覆寫成份。`);
+              needsEtfHelp = true;
+            }
+            if (result.preservedNewer > 0) {
+              details.push(`${result.preservedNewer} 檔 ETF 的本機成份日期較新，已保留。`);
+            }
+          } else {
+            details.push("目前沒有需要同步成份的台灣 ETF。");
           }
         }
       } else {
-        compositionWarning = compositionLoad.reason instanceof Error
-          ? compositionLoad.reason.message
-          : "無法載入官方 ETF 成份快取。";
+        warnings.push(
+          compositionLoad.reason instanceof Error ? compositionLoad.reason.message : "官方 ETF 成份快取暫時不可用。"
+        );
       }
 
       const changed =
-        nextHoldings.some((holding, index) => holding !== state.holdings[index]) ||
-        nextCompositions.length !== state.etfCompositions.length ||
-        nextCompositions.some((composition, index) => composition !== state.etfCompositions[index]);
+        nextHoldings.some((holding, index) => holding !== currentState.holdings[index]) ||
+        nextCompositions.length !== currentState.etfCompositions.length ||
+        nextCompositions.some((composition, index) => composition !== currentState.etfCompositions[index]);
 
       if (changed && !onChange({
-        ...state,
+        ...currentState,
         holdings: nextHoldings,
         etfCompositions: nextCompositions
-      })) return;
+      })) {
+        setRefreshFeedback({
+          tone: "warn",
+          title: "已讀取資料，但本機儲存未成功",
+          details: ["請先處理本機資料儲存狀態；此次沒有安全套用變更。"],
+          needsEtfHelp: false
+        });
+        return;
+      }
 
-      const successes = [quoteSummary, compositionSummary].filter(Boolean);
-      if (successes.length) toast.success(`市場資料更新完成 · ${successes.join(" · ")}`);
-      if (!successes.length && (quoteWarning || compositionWarning)) {
-        toast.warning("市場資料本次沒有可安全套用的更新。");
-      }
-      for (const warning of [quoteWarning, compositionWarning].filter(Boolean)) {
-        toast.info(warning);
-      }
+      setRefreshFeedback({
+        tone: warnings.length ? "warn" : "good",
+        title: warnings.length
+          ? changed ? "部分更新完成，另有資料需要注意" : "已檢查，部分資料未更新"
+          : changed ? "最新資料已同步" : "已檢查，資料沒有新變更",
+        details: [...details, ...warnings],
+        needsEtfHelp
+      });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "市場資料更新失敗");
+      setRefreshFeedback({
+        tone: "warn",
+        title: "同步未完成",
+        details: [error instanceof Error ? error.message : "市場資料更新失敗"],
+        needsEtfHelp: false
+      });
     } finally {
+      refreshInFlight.current = false;
       setRefreshing(false);
     }
   }
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm text-black/45 dark:text-white/45">目前總淨值</p>
           <p className="mt-1 text-3xl font-semibold tracking-tight">{money(summary.total)}</p>
           {accounts.length ? <p className="mt-1 text-xs text-black/38 dark:text-white/38">{accounts.length} 個帳戶 · 可分帳戶檢視</p> : null}
         </div>
-        <div className="flex flex-wrap items-start gap-2">
-          <div className="flex flex-col items-end gap-1">
-            <GhostButton type="button" disabled={refreshing} onClick={refreshTaiwanPrices}>
-              <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-              {refreshing ? "同步中" : "同步最新資料"}
-            </GhostButton>
-            {latestOfficialPriceDate ? (
-              <span className="px-1 text-[11px] text-black/38 dark:text-white/38">
-                {closingPriceStatusLabel(latestOfficialPriceDate)}
-              </span>
-            ) : null}
-          </div>
-          {state.holdings.length ? (
-            <Modal
-              title="快速校正目前庫存"
-              trigger={<GhostButton type="button"><ListChecks size={16} />快速校正</GhostButton>}
-            >
-              <QuickCorrectionForm holdings={state.holdings} onSave={quickCorrect} />
-            </Modal>
-          ) : null}
+
+        <div className="grid w-full grid-cols-2 items-start gap-2 sm:w-auto sm:flex sm:flex-wrap sm:items-center sm:justify-end">
           <Modal
             title="新增投資部位"
             open={addOpen}
@@ -891,15 +942,58 @@ export function HoldingsPanel({
               setAddOpen(open);
               if (!open) setAddCandidate(undefined);
             }}
-            trigger={<Button onClick={() => setAddCandidate(undefined)}><Plus size={16} />新增部位</Button>}
+            trigger={<Button className="col-span-2 w-full sm:w-auto" onClick={() => setAddCandidate(undefined)}><Plus size={16} />新增部位</Button>}
           >
             <HoldingForm candidate={addCandidate} onSave={upsert} />
           </Modal>
+          <div className="flex min-w-0 flex-col gap-1">
+            <GhostButton className="w-full whitespace-nowrap sm:w-auto" type="button" disabled={refreshing} onClick={refreshTaiwanPrices}>
+              <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+              {refreshing ? "同步中" : "同步資料"}
+            </GhostButton>
+            {latestOfficialPriceDate ? (
+              <span className="px-1 text-center text-[11px] text-black/38 dark:text-white/38">
+                {closingPriceStatusLabel(latestOfficialPriceDate)}
+              </span>
+            ) : null}
+          </div>
+          {state.holdings.length ? (
+            <Modal
+              title="快速校正目前庫存"
+              trigger={<GhostButton type="button" className="w-full whitespace-nowrap sm:w-auto"><ListChecks size={16} />快速校正</GhostButton>}
+            >
+              <QuickCorrectionForm holdings={state.holdings} onSave={quickCorrect} />
+            </Modal>
+          ) : null}
         </div>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-[1fr_180px_180px]">
-        <div className="relative">
+      {refreshFeedback ? (
+        <section
+          role="status"
+          aria-live="polite"
+          aria-label="最新資料同步結果"
+          className={`rounded-2xl border px-4 py-3 text-sm ${refreshFeedback.tone === "warn"
+            ? "border-[#b98b57]/25 bg-[#f8f1e8] text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]"
+            : "border-[#87b49c]/30 bg-[#edf5ef] text-[#245238] dark:border-[#87b49c]/20 dark:bg-[#17281e] dark:text-[#a8dab8]"}`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <strong className="font-semibold">{refreshFeedback.title}</strong>
+            <button type="button" aria-label="關閉同步結果" onClick={() => setRefreshFeedback(null)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-black/5 dark:hover:bg-white/10"><X size={16} /></button>
+          </div>
+          <div className="mt-1 space-y-1 break-words text-xs leading-5">
+            {refreshFeedback.details.map((detail, index) => <p key={`${index}:${detail}`}>{detail}</p>)}
+          </div>
+          {refreshFeedback.needsEtfHelp && onOpenEtfLookthrough ? (
+            <button type="button" onClick={onOpenEtfLookthrough} className="mt-3 min-h-10 rounded-xl border border-current/20 px-3 text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/10">
+              前往 ETF 穿透／匯入成份 CSV
+            </button>
+          ) : null}
+        </section>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-[minmax(0,1fr)_180px_180px]">
+        <div className="relative col-span-2 md:col-span-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 dark:text-white/30" size={17} />
           <input className="field pl-11" placeholder="搜尋代號、名稱、產業、帳戶" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
