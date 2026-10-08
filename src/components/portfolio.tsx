@@ -95,7 +95,7 @@ export function Portfolio({
         </div>
       ) : null}
 
-      {tab === "holdings" ? <HoldingsPanel state={state} onChange={onChange} onResearch={onResearch} requestedCandidate={requestedHoldingCandidate} /> : null}
+      {tab === "holdings" ? <HoldingsPanel state={state} onChange={onChange} onResearch={onResearch} onOpenEtfLookthrough={() => setTab("lookthrough")} requestedCandidate={requestedHoldingCandidate} /> : null}
       {tab === "lookthrough" ? <EtfLookThrough state={state} onChange={onChange} /> : null}
       {tab === "risk" ? <PortfolioRisk state={state} /> : null}
       {tab === "targets" ? <AllocationTargets state={state} onChange={onChange} /> : null}
