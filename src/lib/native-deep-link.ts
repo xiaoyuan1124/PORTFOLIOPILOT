@@ -7,10 +7,12 @@ export type NativeDeepLinkTarget =
       researchType: "stock" | "etf";
     }
   | {
+      section: "portfolio";
+      tab: "risk" | "targets";
+    }
+  | {
       section: "settings";
     };
-
-let pendingDeepLink: string | null = null;
 
 export function buildResearchDeepLink(
   researchKey: string,
@@ -21,6 +23,11 @@ export function buildResearchDeepLink(
     type: researchType
   });
   return `portfoliopilot://research?${params.toString()}`;
+}
+
+export function buildPortfolioDeepLink(tab: "risk" | "targets") {
+  const params = new URLSearchParams({ tab });
+  return `portfoliopilot://portfolio?${params.toString()}`;
 }
 
 export function buildNotificationSettingsDeepLink() {
@@ -35,6 +42,12 @@ export function parseNativeDeepLink(value: string): NativeDeepLinkTarget | null 
     const route = url.hostname || url.pathname.replace(/^\/+/, "");
     if (route === "settings") {
       return { section: "settings" };
+    }
+
+    if (route === "portfolio") {
+      const tab = url.searchParams.get("tab");
+      if (tab !== "risk" && tab !== "targets") return null;
+      return { section: "portfolio", tab };
     }
 
     if (route !== "research") return null;
@@ -54,6 +67,8 @@ export function parseNativeDeepLink(value: string): NativeDeepLinkTarget | null 
     return null;
   }
 }
+
+let pendingDeepLink: string | null = null;
 
 export function publishNativeDeepLink(value: string) {
   if (!parseNativeDeepLink(value)) return false;
