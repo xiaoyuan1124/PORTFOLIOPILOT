@@ -125,20 +125,13 @@ export async function saveNativeSmartAlertSettings(
   }
 
   const settings = normalizeLocalSmartAlertSettings(input);
-  const serialized = JSON.stringify(settings);
-  const previous = await Preferences.get({ key: SMART_ALERT_SETTINGS_KEY });
-
+  // Keep the daily delivery ledger when thresholds change: clearing it would
+  // send the same condition more than once per day after a settings edit.
+  // Monthly reminders are reconciled using their own settings fingerprint.
   await Preferences.set({
     key: SMART_ALERT_SETTINGS_KEY,
-    value: serialized
+    value: JSON.stringify(settings)
   });
-
-  if (previous.value !== serialized) {
-    await Promise.all([
-      Preferences.remove({ key: SMART_ALERT_LEDGER_KEY }),
-      Preferences.remove({ key: SMART_ALERT_MONTHLY_SCHEDULE_KEY })
-    ]);
-  }
 
   return settings;
 }
