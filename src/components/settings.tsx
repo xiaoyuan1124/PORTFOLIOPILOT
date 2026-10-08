@@ -147,8 +147,8 @@ export function Settings({
         `自選清單：${parsed.watchlist?.length ?? 0} 筆`,
         `筆記：${parsed.journal.length} 筆`,
         `淨值快照：${parsed.snapshots.length} 筆`
-      ].join("\\n");
-      if (!window.confirm(`確定要以這份 JSON 備份覆蓋目前所有本機資料嗎？\\n\\n${details}\\n\\n建議先匯出目前的 JSON 備份再執行還原。`)) return;
+      ].join("\n");
+      if (!window.confirm(`確定要以這份 JSON 備份覆蓋目前所有本機資料嗎？\n\n${details}\n\n建議先匯出目前的 JSON 備份再執行還原。`)) return;
       if (!onChange(parsed)) return;
       toast.success("JSON 備份已匯入");
     } catch (error) {
