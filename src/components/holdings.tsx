@@ -837,9 +837,23 @@ export function HoldingsPanel({
       }
 
       if (compositionLoad.status === "fulfilled") {
-        const result = applyHeldEtfCompositions(currentState.etfCompositions, currentState.holdings, compositionLoad.value);
+        const cache = compositionLoad.value;
+        const result = applyHeldEtfCompositions(currentState.etfCompositions, currentState.holdings, cache);
         nextCompositions = result.compositions;
         if (result.heldTwEtfCount > 0) {
+          const generatedAt = new Date(cache.generatedAt);
+          const cacheTime = Number.isFinite(generatedAt.getTime())
+            ? generatedAt.toLocaleString("zh-TW", {
+                timeZone: "Asia/Taipei",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+              })
+            : "時間未知";
+          details.push(`ETF 官方快取時間：${cacheTime}（台灣時間）`);
           if (result.matched > 0) {
             details.push(`ETF 成份：${result.updated} 檔更新、${result.unchanged} 檔未變更。`);
           } else if (result.supported > 0) {
