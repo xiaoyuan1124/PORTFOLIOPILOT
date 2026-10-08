@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chooseStockTable, normalizeDate, parseIssuerComposition, parseNomuraFundAssetsPayload } from "./etf-composition-data.mjs";
+import { chooseStockTable, decodeHtmlEntities, normalizeDate, parseIssuerComposition, parseNomuraFundAssetsPayload } from "./etf-composition-data.mjs";
 
 const fixture = `
 <html><body>
@@ -21,6 +21,30 @@ describe("ETF issuer composition parser", () => {
     const table = chooseStockTable(fixture);
     expect(table?.stockRows).toHaveLength(5);
     expect(table?.totalWeight).toBeCloseTo(55.2, 8);
+  });
+
+  it("decodes official issuer hexadecimal names, decimal references and simple HTML entities", () => {
+    expect(decodeHtmlEntities("&#x806F;&#x767C;&#x79D1;")).toBe("聯發科");
+    expect(decodeHtmlEntities("&#x53F0;&#x7A4D;&#x96FB;")).toBe("台積電");
+    expect(decodeHtmlEntities("&#21488;&#31309;&#38651;")).toBe("台積電");
+    expect(decodeHtmlEntities("&amp;#x806F;&amp;#x767C;&amp;#x79D1;")).toBe("聯發科");
+    expect(decodeHtmlEntities("&#x110000; &#xD800;")).toBe("&#x110000; &#xD800;");
+  });
+
+  it("decodes encoded Chinese names when parsing the issuer HTML holdings table", () => {
+    const encoded = fixture
+      .replace("台積電", "&#x53F0;&#x7A4D;&#x96FB;")
+      .replace("聯發科", "&#x806F;&#x767C;&#x79D1;");
+    const parsed = parseIssuerComposition({
+      html: encoded,
+      etfSymbol: "009816",
+      etfName: "凱基台灣TOP50",
+      sourceName: "凱基投信",
+      sourceUrl: "https://www.kgifund.com.tw/Fund/Detail?fundID=J023",
+      datePatterns: [/持股比重\\s*\\((20\\d{2}[\\/-]\\d{2}[\\/-]\\d{2})\\)/]
+    });
+    expect(parsed.constituents.find((row) => row.symbol === "2330")?.name).toBe("台積電");
+    expect(parsed.constituents.find((row) => row.symbol === "2454")?.name).toBe("聯發科");
   });
 
   it("normalizes issuer dates", () => {
