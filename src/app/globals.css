@@ -179,6 +179,15 @@ button {
   }
 }
 
+/* Keep full-screen mobile sheets below the Dynamic Island/notch.
+   The remaining scrollable area follows the software-keyboard viewport. */
+@media (max-width: 767px) {
+  .app-modal-sheet {
+    max-height: calc(100dvh - var(--safe-area-top) - .75rem);
+    scroll-padding-bottom: calc(1rem + var(--safe-area-bottom));
+  }
+}
+
 @media (max-width: 420px) {
   .mini-metric {
     padding: .65rem;
