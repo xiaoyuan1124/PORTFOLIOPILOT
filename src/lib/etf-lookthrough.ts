@@ -1,5 +1,6 @@
 import { holdingValueTwd, portfolioSummary } from "./calc";
 import { ETF_WEIGHT_EPSILON } from "./schema";
+import { normalizeEtfCompositionNames } from "./etf-composition-data";
 import type { EtfComposition, Holding, Market } from "./types";
 
 export type LookThroughContribution = {
@@ -66,7 +67,7 @@ export function calculateEtfLookThrough(
   const compositionByEtf = new Map(
     compositions.map((composition) => [
       positionKey(composition.etfMarket, composition.etfSymbol),
-      composition
+      normalizeEtfCompositionNames(composition)
     ])
   );
   const exposureByCompany = new Map<string, Omit<CompanyExposure, "portfolioPct">>();
