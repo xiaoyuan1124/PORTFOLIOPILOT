@@ -92,6 +92,7 @@ describe("official Taiwan quote cache", () => {
     expect(result.holdings[0]?.price).toBe(1215);
     expect(cacheMarketFreshness(badCache, now).TWSE).toBeNull();
     expect(cacheFreshnessLabel(badCache, now)).toBe("尚無有效收盤日期");
+    expect(shouldRejectStaleClosingCache(badCache, now)).toBe(true);
   });
 
   it("does not apply an impossible calendar date", () => {
