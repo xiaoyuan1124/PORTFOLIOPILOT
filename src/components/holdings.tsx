@@ -843,41 +843,41 @@ export function HoldingsPanel({
         if (cache.offlineFallback) {
           warnings.push(`離線狀態：ETF 成份僅取得 ${cache.generatedAt.slice(0, 10)} 的舊快取，沒有覆寫本機成份。`);
         } else {
-        const result = applyHeldEtfCompositions(currentState.etfCompositions, currentState.holdings, cache);
-        nextCompositions = result.compositions;
-        if (result.heldTwEtfCount > 0) {
-          const generatedAt = new Date(cache.generatedAt);
-          const cacheTime = Number.isFinite(generatedAt.getTime())
-            ? generatedAt.toLocaleString("zh-TW", {
-                timeZone: "Asia/Taipei",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false
-              })
-            : "時間未知";
-          details.push(`ETF 官方快取時間：${cacheTime}（台灣時間）`);
-          if (result.matched > 0) {
-            details.push(`ETF 成份：${result.updated} 檔更新、${result.unchanged} 檔未變更。`);
-          } else if (result.supported > 0) {
-            warnings.push("ETF 官方來源已收錄，但這次沒有可安全套用的成份資料。");
+          const result = applyHeldEtfCompositions(currentState.etfCompositions, currentState.holdings, cache);
+          nextCompositions = result.compositions;
+          if (result.heldTwEtfCount > 0) {
+            const generatedAt = new Date(cache.generatedAt);
+            const cacheTime = Number.isFinite(generatedAt.getTime())
+              ? generatedAt.toLocaleString("zh-TW", {
+                  timeZone: "Asia/Taipei",
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false
+                })
+              : "時間未知";
+            details.push(`ETF 官方快取時間：${cacheTime}（台灣時間）`);
+            if (result.matched > 0) {
+              details.push(`ETF 成份：${result.updated} 檔更新、${result.unchanged} 檔未變更。`);
+            } else if (result.supported > 0) {
+              warnings.push("ETF 官方來源已收錄，但這次沒有可安全套用的成份資料。");
+            }
+            if (result.sourceIssueSymbols.length) {
+              warnings.push(`ETF ${result.sourceIssueSymbols.join("、")}：官方成份來源本次異常，已保留可用本機資料。`);
+              needsEtfHelp = true;
+            }
+            if (result.unsupportedSymbols.length) {
+              warnings.push(`ETF ${result.unsupportedSymbols.join("、")}：尚未支援官方自動成份；未推估或覆寫成份。`);
+              needsEtfHelp = true;
+            }
+            if (result.preservedNewer > 0) {
+              details.push(`${result.preservedNewer} 檔 ETF 的本機成份日期較新，已保留。`);
+            }
+          } else {
+            details.push("目前沒有需要同步成份的台灣 ETF。");
           }
-          if (result.sourceIssueSymbols.length) {
-            warnings.push(`ETF ${result.sourceIssueSymbols.join("、")}：官方成份來源本次異常，已保留可用本機資料。`);
-            needsEtfHelp = true;
-          }
-          if (result.unsupportedSymbols.length) {
-            warnings.push(`ETF ${result.unsupportedSymbols.join("、")}：尚未支援官方自動成份；未推估或覆寫成份。`);
-            needsEtfHelp = true;
-          }
-          if (result.preservedNewer > 0) {
-            details.push(`${result.preservedNewer} 檔 ETF 的本機成份日期較新，已保留。`);
-          }
-        } else {
-          details.push("目前沒有需要同步成份的台灣 ETF。");
-        }
         }
       } else {
         warnings.push(
