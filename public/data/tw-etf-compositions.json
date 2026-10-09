@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-09T07:10:35.434Z",
+  "generatedAt": "2026-10-09T17:10:11.447Z",
   "sources": [
     {
       "symbol": "00935",
       "name": "野村臺灣新科技50",
       "sourceName": "野村投信官方持股比重",
       "sourceUrl": "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00935&tab=Shareholding",
-      "fetchedAt": "2026-10-09T07:10:29.264Z",
+      "fetchedAt": "2026-10-09T17:10:07.595Z",
       "status": "ok"
     },
     {
@@ -14,7 +14,7 @@
       "name": "野村趨勢動能高息",
       "sourceName": "野村投信官方持股比重",
       "sourceUrl": "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00944&tab=Shareholding",
-      "fetchedAt": "2026-10-09T07:10:33.197Z",
+      "fetchedAt": "2026-10-09T17:10:10.307Z",
       "status": "ok"
     },
     {
@@ -22,7 +22,7 @@
       "name": "凱基台灣TOP50",
       "sourceName": "凱基投信",
       "sourceUrl": "https://www.kgifund.com.tw/Fund/Detail?fundID=J023",
-      "fetchedAt": "2026-10-09T07:10:33.779Z",
+      "fetchedAt": "2026-10-09T17:10:10.860Z",
       "status": "ok"
     }
   ],
