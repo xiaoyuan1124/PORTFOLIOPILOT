@@ -171,6 +171,7 @@ export function PortfolioReportView({ state }: { state: AppState }) {
             </div>
             <p className="mt-3 text-xs leading-5 text-black/50 dark:text-white/50">
               目前持股、市值、風險與最新交易日影響一律使用現有持倉；月份只篩選該月交易及現金流。
+              未標記帳戶的舊交易紀錄歸入「預設帳戶」。
               {report.scope.account
                 ? " 單一帳戶沒有完整的個別淨值／現金流邊界，因此不顯示全組合的 TWR、TWR Proxy 或 XIRR。"
                 : " 績效指標為截至報告日的全組合結果，不是所選月份的單月報酬。"}
