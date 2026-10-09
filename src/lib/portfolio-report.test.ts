@@ -133,6 +133,83 @@ describe("portfolio report", () => {
     expect(markdown).toContain("最大推升：2330 台積電");
   });
 
+  it("filters report holdings and quoted drivers by account, never exporting global TWR as account TWR", () => {
+    const perAccount = buildPortfolioReport(state, "2026-10-06", quotes, {
+      account: "台股",
+      month: "2026-10"
+    });
+    expect(perAccount.scope.account).toBe("台股");
+    expect(perAccount.summary.totalTwd).toBe(2000);
+    expect(perAccount.summary.cashTwd).toBe(0);
+    expect(perAccount.topHoldings).toHaveLength(1);
+    expect(perAccount.topHoldings[0]?.symbol).toBe("2330");
+    expect(perAccount.topHoldings[0]?.portfolioPct).toBeCloseTo(100);
+    expect(perAccount.daily?.totalImpactTwd).toBe(40);
+    // Unassigned historical activities belong to the default account,
+    // not the stock brokerage account.
+    expect(perAccount.month.activityCount).toBe(0);
+    expect(perAccount.performance).toMatchObject({
+      exactTwrStatus: "insufficient",
+      exactTwrPct: null,
+      twrProxyPct: null,
+      xirrPct: null
+    });
+    expect(portfolioReportToCsv(perAccount)).toContain("台股");
+    expect(portfolioReportToMarkdown(perAccount)).toContain("帳戶級資料不足");
+  });
+
+  it("filters earlier month activities without presenting today's holdings as historical month-end NAV", () => {
+    const monthly: AppState = {
+      ...state,
+      activities: [
+        ...state.activities,
+        { ...state.activities[0]!, id: "older", date: "2026-09-25", amount: 750, account: "台股" },
+        { ...state.activities[1]!, id: "older-dividend", date: "2026-09-29", amount: 50, account: "台股" },
+        { ...state.activities[0]!, id: "future", date: "2026-10-09", amount: 9999, account: "台股" }
+      ]
+    };
+    const older = buildPortfolioReport(monthly, "2026-10-06", quotes, {
+      account: "台股",
+      month: "2026-09"
+    });
+    expect(older.scope.historicalMonth).toBe(true);
+    expect(older.month).toMatchObject({
+      depositsTwd: 750, dividendsTwd: 50, activityCount: 2
+    });
+    expect(older.summary.totalTwd).toBe(2000); // Current holdings, NOT 2026-09 NAV.
+    expect(older.scope.valuationAsOf).toBe("2026-10-06");
+    expect(portfolioReportToCsv(older)).toContain("不是歷史月底庫存");
+    expect(portfolioReportToMarkdown(older)).toContain("活動月份：2026-09");
+    expect(portfolioReportToMarkdown(older)).toContain("非歷史月底庫存");
+  });
+
+  it("keeps whole-portfolio performance untouched when only the monthly activity view changes", () => {
+    const baseline = buildPortfolioReport(state, "2026-10-06", quotes);
+    const selected = buildPortfolioReport(state, "2026-10-06", quotes, { month: "2026-09" });
+    expect(selected.summary).toEqual(baseline.summary);
+    expect(selected.performance).toEqual(baseline.performance);
+    expect(selected.month.activityCount).toBe(0);
+    expect(selected.scope.performanceIsPortfolioWide).toBe(true);
+  });
+
+  it("maps an absent account to empty current holdings without borrowing other accounts' figures", () => {
+    const report = buildPortfolioReport(state, "2026-10-06", quotes, {
+      account: "尚未使用的新帳戶",
+      month: "2026-10"
+    });
+    expect(report.summary.totalTwd).toBe(0);
+    expect(report.topHoldings).toEqual([]);
+    expect(report.month.activityCount).toBe(0);
+    expect(report.daily?.totalImpactTwd ?? 0).toBe(0);
+    expect(report.performance.exactTwrPct).toBeNull();
+  });
+
+  it("rejects malformed and future activity month requests", () => {
+    expect(() => buildPortfolioReport(state, "2026-10-06", null, { month: "2026-11" })).toThrow(/月份/);
+    expect(() => buildPortfolioReport(state, "2026-10-06", null, { month: "2026-13" })).toThrow(/月份/);
+    expect(() => buildPortfolioReport(state, "2026-10-06", null, { month: "test" })).toThrow(/月份/);
+  });
+
   it("still generates a report when the optional closing-quote cache is unavailable", () => {
     const report = buildPortfolioReport(state, "2026-10-06", null);
     expect(report.daily).toBeNull();
