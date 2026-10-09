@@ -210,6 +210,57 @@ describe("portfolio report", () => {
     expect(() => buildPortfolioReport(state, "2026-10-06", null, { month: "test" })).toThrow(/月份/);
   });
 
+  it("reports verified USD remaining-share price/FX attribution while preserving original portfolio summary", () => {
+    const us = {
+      id: "qqqm", symbol: "QQQM", name: "QQQM", market: "US" as const,
+      currency: "USD" as const, type: "etf" as const, sector: "ETF",
+      quantity: 10, price: 120, averageCost: 100, account: "美股"
+    };
+    const usState: AppState = {
+      ...state,
+      holdings: [...state.holdings, us],
+      activities: [...state.activities, {
+        id: "qqqm-open", date: "2026-10-01", type: "buy", symbol: "QQQM",
+        currency: "USD", quantity: 10, price: 100, amount: 1000, fxRate: 30,
+        note: "", account: "美股",
+        inventoryImpact: {
+          kind: "trade", holdingId: "qqqm", before: null,
+          after: { ...us, price: 100 }, fee: 0, tax: 0,
+          realizedPnl: 0, method: "average_cost"
+        }
+      }]
+    };
+    const report = buildPortfolioReport(usState, "2026-10-06", null, { account: "美股", month: "2026-09" });
+    expect(report.scope.historicalMonth).toBe(true);
+    expect(report.summary.totalTwd).toBe(38400);
+    expect(report.summary.unrealizedGainTwd).toBe(6400); // Legacy current-FX convention.
+    expect(report.usdFxAttribution).toMatchObject({
+      eligibleCount: 1, explainedCount: 1, unknownCount: 0,
+      priceImpactTwd: 6400, fxImpactTwd: 2000, combinedGainTwd: 8400
+    });
+    const csv = portfolioReportToCsv(report);
+    const md = portfolioReportToMarkdown(report);
+    expect(csv).toContain("已核對匯率影響");
+    expect(csv).toContain("2000");
+    expect(md).toContain("交易紀錄的參考 FX");
+    expect(md).toContain("並非所選活動月份的單月報酬");
+  });
+
+  it("never turns unknown FX provenance into zero-gain claims", () => {
+    const us = {
+      id: "qqqm-import", symbol: "QQQM", name: "QQQM", market: "US" as const,
+      currency: "USD" as const, type: "etf" as const, sector: "ETF",
+      quantity: 3, price: 120, averageCost: 100, account: "美股"
+    };
+    const report = buildPortfolioReport({ ...state, holdings: [us] }, "2026-10-06", null);
+    expect(report.usdFxAttribution).toMatchObject({
+      eligibleCount: 1, explainedCount: 0, unknownCount: 1, unknownValueTwd: 11520
+    });
+    expect(report.usdFxAttribution.rows[0]?.combinedGainTwd).toBeNull();
+    expect(portfolioReportToCsv(report)).toContain("資料不足");
+    expect(portfolioReportToMarkdown(report)).toContain("缺少可銜接到目前持股");
+  });
+
   it("still generates a report when the optional closing-quote cache is unavailable", () => {
     const report = buildPortfolioReport(state, "2026-10-06", null);
     expect(report.daily).toBeNull();
