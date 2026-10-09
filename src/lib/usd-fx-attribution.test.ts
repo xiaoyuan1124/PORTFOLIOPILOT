@@ -81,6 +81,69 @@ describe("USD holding attribution with complete cost provenance", () => {
     expect(gap.rows[0]?.status).toBe("incomplete_chain");
   });
 
+  it("rejects cost-basis rewriting during a partial sale even when the final holding matches that rewrite", () => {
+    const first = holding("us-a", 10, 100, 100);
+    // A sale is supposed to leave the USD average cost/share unchanged.
+    // Without this check, two conflicting cost histories were both marked
+    // verified and an invented price/FX split was emitted.
+    const rewritten = holding("us-a", 8, 80, 120);
+    const result = analyzeUsdFxAttribution([rewritten], [
+      trade("open", "buy", null, first, 1000, 10, 30, "2026-10-01"),
+      trade("sell", "sell", first, rewritten, 240, 2, 31, "2026-10-02")
+    ], 32, "2026-10-09");
+    expect(result).toMatchObject({ eligibleCount: 1, explainedCount: 0, unknownCount: 1 });
+    expect(result.rows[0]).toMatchObject({
+      status: "incomplete_chain",
+      recordedCostTwd: null, priceImpactTwd: null, fxImpactTwd: null,
+      combinedGainTwd: null
+    });
+    expect(result.rows[0]?.reason).toContain("每股平均成本");
+  });
+
+  it("rejects linked activity whose recorded money disagrees with quantity, price, fee or tax", () => {
+    const first = holding("us-a", 10, 100, 100);
+    const opening = trade("open", "buy", null, first, 1000, 10, 30);
+    const corrupted = { ...opening, amount: 950 };
+    const result = analyzeUsdFxAttribution([first], [corrupted], 32, "2026-10-09");
+    expect(result.rows[0]?.status).toBe("incomplete_chain");
+    expect(result.rows[0]?.reason).toContain("交易金額");
+    const mismatchedAccount = analyzeUsdFxAttribution(
+      [first], [{ ...opening, account: "另一帳戶" }], 32, "2026-10-09"
+    );
+    expect(mismatchedAccount.rows[0]?.status).toBe("incomplete_chain");
+    const mismatchedSymbol = analyzeUsdFxAttribution(
+      [first], [{ ...opening, symbol: "AAPL" }], 32, "2026-10-09"
+    );
+    expect(mismatchedSymbol.rows[0]?.status).toBe("incomplete_chain");
+  });
+
+  it("accepts valid fees in recorded USD opening basis and preserves a normal partial sale", () => {
+    const first = holding("us-a", 10, 100.5, 110);
+    const afterSell = holding("us-a", 8, 100.5, 120);
+    const opening = {
+      ...trade("open", "buy", null, first, 1005, 10, 30, "2026-10-01"),
+      price: 100,
+      inventoryImpact: {
+        kind: "trade" as const, holdingId: "us-a", before: null, after: first,
+        fee: 5, tax: 0, realizedPnl: 0, method: "average_cost" as const
+      }
+    };
+    const sale = {
+      ...trade("sell", "sell", first, afterSell, 237, 2, 31, "2026-10-02"),
+      price: 120,
+      inventoryImpact: {
+        kind: "trade" as const, holdingId: "us-a", before: first, after: afterSell,
+        fee: 2, tax: 1, realizedPnl: 0, method: "average_cost" as const
+      }
+    };
+    const result = analyzeUsdFxAttribution([afterSell], [opening, sale], 32, "2026-10-09");
+    expect(result.rows[0]?.status).toBe("verified_chain");
+    expect(result.rows[0]?.recordedCostTwd).toBeCloseTo(24120);
+    expect(result.rows[0]?.priceImpactTwd).toBeCloseTo(4992);
+    expect(result.rows[0]?.fxImpactTwd).toBeCloseTo(1608);
+    expect(result.rows[0]?.combinedGainTwd).toBeCloseTo(6600);
+  });
+
   it("does not borrow purchase history across accounts with the same symbol", () => {
     const current = holding("us-b", 10, 100, 120, "第二帳戶");
     const unrelated = trade("open", "buy", null, holding(), 1000, 10, 30);
