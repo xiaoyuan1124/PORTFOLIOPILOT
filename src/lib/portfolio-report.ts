@@ -250,9 +250,9 @@ export function portfolioReportToCsv(report: PortfolioReport) {
     { section: "外幣成本完整度", metric: "美元證券部位", value: String(report.usdFxAttribution.eligibleCount), detail: "不含現金" },
     { section: "外幣成本完整度", metric: "可拆分部位", value: String(report.usdFxAttribution.explainedCount), detail: "完整連動交易鏈" },
     { section: "外幣成本完整度", metric: "缺資料部位", value: String(report.usdFxAttribution.unknownCount), detail: "不納入股價／匯率估算" },
-    { section: "外幣損益參考估算", metric: "已核對股價影響", value: String(report.usdFxAttribution.priceImpactTwd), detail: "TWD，使用目前參考匯率" },
-    { section: "外幣損益參考估算", metric: "已核對匯率影響", value: String(report.usdFxAttribution.fxImpactTwd), detail: "TWD，買進時記錄的參考匯率，不代表實際換匯損益" },
-    { section: "外幣損益參考估算", metric: "已核對損益合計", value: String(report.usdFxAttribution.combinedGainTwd), detail: "TWD，僅持有部位，未涵蓋未核對部位" }
+    { section: "外幣損益參考估算", metric: "已核對股價影響", value: report.usdFxAttribution.explainedCount ? String(report.usdFxAttribution.priceImpactTwd) : "資料不足", detail: "TWD，使用目前參考匯率" },
+    { section: "外幣損益參考估算", metric: "已核對匯率影響", value: report.usdFxAttribution.explainedCount ? String(report.usdFxAttribution.fxImpactTwd) : "資料不足", detail: "TWD，買進時記錄的參考匯率，不代表實際換匯損益" },
+    { section: "外幣損益參考估算", metric: "已核對損益合計", value: report.usdFxAttribution.explainedCount ? String(report.usdFxAttribution.combinedGainTwd) : "資料不足", detail: "TWD，僅持有部位，未涵蓋未核對部位" }
   );
   report.usdFxAttribution.rows.forEach((item) => {
     rows.push({
@@ -330,9 +330,9 @@ export function portfolioReportToMarkdown(report: PortfolioReport) {
   lines.push(
     "## 美元證券成本與匯率參考拆分",
     `- 可完整核對：${report.usdFxAttribution.explainedCount}/${report.usdFxAttribution.eligibleCount} 筆；資料不足 ${report.usdFxAttribution.unknownCount} 筆`,
-    `- 已核對股價影響：${twd(report.usdFxAttribution.priceImpactTwd)}`,
-    `- 已核對匯率影響：${twd(report.usdFxAttribution.fxImpactTwd)}`,
-    `- 已核對台幣損益參考合計：${twd(report.usdFxAttribution.combinedGainTwd)}`,
+    `- 已核對股價影響：${(report.usdFxAttribution.explainedCount ? twd(report.usdFxAttribution.priceImpactTwd) : "資料不足")}`,
+    `- 已核對匯率影響：${(report.usdFxAttribution.explainedCount ? twd(report.usdFxAttribution.fxImpactTwd) : "資料不足")}`,
+    `- 已核對台幣損益參考合計：${(report.usdFxAttribution.explainedCount ? twd(report.usdFxAttribution.combinedGainTwd) : "資料不足")}`,
     "- 僅計算目前持有且連動買賣成本鏈完整的美元證券；沒有推估資料不足的部位。",
     "- 成本匯率來自交易紀錄的參考 FX，不等於實際換匯成交；不含已實現損益、現金匯兌、股息及稅務。",
     "- 本拆分以目前持股／參考匯率估值，並非所選活動月份的單月報酬；舊版未實現損益採現價 FX 換算成本，定義不同。",
