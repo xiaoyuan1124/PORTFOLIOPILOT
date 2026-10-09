@@ -153,10 +153,29 @@ export function analyzeUsdFxAttribution(
         continue;
       }
       if (activity.currency !== "USD" || !["buy", "sell"].includes(activity.type) ||
+        activity.symbol.trim().toUpperCase() !== holding.symbol.trim().toUpperCase() ||
+        accountName(activity.account) !== accountName(holding.account) ||
         (impact.before && !identityMatches(impact.before, holding)) ||
         (impact.after && !identityMatches(impact.after, holding))) {
         status = "incomplete_chain";
-        reason = "交易幣別、標的或帳戶與目前持股不一致";
+        reason = "交易幣別、代號或帳戶與目前持股不一致";
+        break;
+      }
+
+      // A linked snapshot by itself is not sufficient evidence of a trade.
+      // Validate the cash amount against quantity, price, fee and tax so
+      // corrupted or manually edited activity rows cannot certify FX basis.
+      const gross = activity.quantity * activity.price;
+      const charges = impact.fee + impact.tax;
+      const expectedAmount = activity.type === "buy" ? gross + charges : gross - charges;
+      if (!Number.isFinite(activity.quantity) || activity.quantity <= 0 ||
+        !Number.isFinite(activity.price) || activity.price <= 0 ||
+        !Number.isFinite(impact.fee) || impact.fee < 0 ||
+        !Number.isFinite(impact.tax) || impact.tax < 0 ||
+        !Number.isFinite(activity.amount) || activity.amount <= 0 ||
+        !closeTo(activity.amount, expectedAmount)) {
+        status = "incomplete_chain";
+        reason = "交易金額與股數、價格、費用或稅額不一致";
         break;
       }
 
@@ -194,10 +213,11 @@ export function analyzeUsdFxAttribution(
         tracked = impact.after;
       } else {
         if (!tracked || !impact.before ||
-          activity.quantity <= 0 || activity.quantity > tracked.quantity ||
-          !closeTo(tracked.quantity - (impact.after?.quantity ?? 0), activity.quantity)) {
+          activity.quantity > tracked.quantity ||
+          !closeTo(tracked.quantity - (impact.after?.quantity ?? 0), activity.quantity) ||
+          (impact.after !== null && !closeTo(impact.after.averageCost, tracked.averageCost))) {
           status = "incomplete_chain";
-          reason = "賣出紀錄與庫存扣減不一致";
+          reason = "賣出紀錄與庫存股數或每股平均成本不一致";
           break;
         }
         // App uses USD average-cost method. A partial sale removes that
