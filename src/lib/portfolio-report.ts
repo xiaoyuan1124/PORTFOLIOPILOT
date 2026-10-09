@@ -11,7 +11,18 @@ import {
 import { buildPortfolioRiskNotices, calculatePortfolioRisk } from "./portfolio-risk";
 import type { AppState } from "./types";
 
+export type PortfolioReportFilters = {
+  account?: string | null;
+  month?: string;
+};
+
 export type PortfolioReport = {
+  scope: {
+    account: string | null;
+    historicalMonth: boolean;
+    valuationAsOf: string;
+    performanceIsPortfolioWide: boolean;
+  };
   asOf: string;
   monthKey: string;
   summary: {
@@ -73,16 +84,30 @@ function accountName(value?: string) {
 export function buildPortfolioReport(
   state: AppState,
   asOf: string,
-  quotes?: TwQuoteCache | null
+  quotes?: TwQuoteCache | null,
+  filters: PortfolioReportFilters = {}
 ): PortfolioReport {
-  const summary = portfolioSummary(state.holdings, state.usdTwd);
-  const cash = portfolioCashSummary(state.holdings, state.usdTwd);
-  const exactTwr = exactTimeWeightedReturn(state, asOf);
-  const twrProxy = modifiedDietzReturn(state, asOf);
-  const xirr = portfolioXirr(state, asOf);
-  const risk = calculatePortfolioRisk(state.holdings, state.etfCompositions, state.usdTwd);
-  const reportMonth = monthKey(asOf);
-  const monthActivities = state.activities.filter((activity) =>
+  const account = filters.account?.trim() || null;
+  const reportMonth = filters.month ?? monthKey(asOf);
+  if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(reportMonth) || reportMonth > monthKey(asOf)) {
+    throw new Error("報告月份格式無效，或晚於估值日。");
+  }
+  const scopedHoldings = account === null
+    ? state.holdings
+    : state.holdings.filter((holding) => accountName(holding.account) === account);
+  const scopedActivities = account === null
+    ? state.activities
+    : state.activities.filter((activity) => accountName(activity.account) === account);
+  // Today/current stored values are NOT a historical month-end snapshot.
+  // Individual account NAV boundaries are not stored, so TWR/XIRR must
+  // remain unavailable rather than reuse all-portfolio performance.
+  const summary = portfolioSummary(scopedHoldings, state.usdTwd);
+  const cash = portfolioCashSummary(scopedHoldings, state.usdTwd);
+  const exactTwr = account === null ? exactTimeWeightedReturn(state, asOf) : null;
+  const twrProxy = account === null ? modifiedDietzReturn(state, asOf) : null;
+  const xirr = account === null ? portfolioXirr(state, asOf) : null;
+  const risk = calculatePortfolioRisk(scopedHoldings, state.etfCompositions, state.usdTwd);
+  const monthActivities = scopedActivities.filter((activity) =>
     activity.date <= asOf && monthKey(activity.date) === reportMonth
   );
 
@@ -106,7 +131,7 @@ export function buildPortfolioReport(
     sellCount: 0
   });
 
-  const driverResult = quotes ? buildDailyHoldingDrivers(state.holdings, quotes) : null;
+  const driverResult = quotes ? buildDailyHoldingDrivers(scopedHoldings, quotes) : null;
   const driverSummary = driverResult ? summarizeDailyHoldingDrivers(driverResult.rows) : null;
   const daily = driverResult?.latestDate && driverSummary
     ? {
@@ -134,6 +159,12 @@ export function buildPortfolioReport(
   return {
     asOf,
     monthKey: reportMonth,
+    scope: {
+      account,
+      historicalMonth: reportMonth !== monthKey(asOf),
+      valuationAsOf: asOf,
+      performanceIsPortfolioWide: account === null
+    },
     summary: {
       totalTwd: summary.total,
       costTwd: summary.cost,
@@ -143,9 +174,9 @@ export function buildPortfolioReport(
       cashPct: cash.cashPct
     },
     performance: {
-      exactTwrStatus: exactTwr.status,
-      exactTwrPct: exactTwr.value === null ? null : exactTwr.value * 100,
-      exactTwrStartDate: exactTwr.startDate,
+      exactTwrStatus: exactTwr?.status ?? "insufficient",
+      exactTwrPct: exactTwr?.value == null ? null : exactTwr.value * 100,
+      exactTwrStartDate: exactTwr?.startDate ?? null,
       twrProxyPct: twrProxy === null ? null : twrProxy * 100,
       xirrPct: xirr === null ? null : xirr * 100
     },
@@ -169,7 +200,7 @@ export function buildPortfolioReport(
       top5CompanyPct: risk.top5CompanyPct,
       notices: buildPortfolioRiskNotices(risk)
     },
-    topHoldings: topHoldings(state.holdings, state.usdTwd, 10).map((row) => ({
+    topHoldings: topHoldings(scopedHoldings, state.usdTwd, 10).map((row) => ({
       symbol: row.holding.symbol,
       name: row.holding.name,
       account: accountName(row.holding.account),
@@ -189,6 +220,10 @@ function twd(value: number) {
 
 export function portfolioReportToCsv(report: PortfolioReport) {
   const rows: Array<{ section: string; metric: string; value: string; detail: string }> = [
+    { section: "篩選條件", metric: "帳戶", value: report.scope.account ?? "全部帳戶", detail: "" },
+    { section: "篩選條件", metric: "活動月份", value: report.monthKey, detail: "" },
+    { section: "篩選條件", metric: "持股估值日期", value: report.scope.valuationAsOf, detail: "現在的持股，不是歷史月底庫存" },
+    { section: "篩選條件", metric: "績效範圍", value: report.scope.performanceIsPortfolioWide ? "全組合、截至估值日" : "帳戶級無完整淨值邊界，無法計算", detail: "" },
     { section: "總覽", metric: "資料日", value: report.asOf, detail: "" },
     { section: "總覽", metric: "總資產淨值", value: String(report.summary.totalTwd), detail: "TWD" },
     { section: "總覽", metric: "未實現損益", value: String(report.summary.unrealizedGainTwd), detail: pct(report.summary.unrealizedGainPct) },
@@ -196,10 +231,10 @@ export function portfolioReportToCsv(report: PortfolioReport) {
     { section: "績效", metric: "Exact TWR", value: pct(report.performance.exactTwrPct), detail: report.performance.exactTwrStatus },
     { section: "績效", metric: "TWR Proxy", value: pct(report.performance.twrProxyPct), detail: "Modified Dietz" },
     { section: "績效", metric: "XIRR", value: pct(report.performance.xirrPct), detail: "" },
-    { section: "本月", metric: "入金", value: String(report.month.depositsTwd), detail: "TWD" },
-    { section: "本月", metric: "出金", value: String(report.month.withdrawalsTwd), detail: "TWD" },
-    { section: "本月", metric: "股息", value: String(report.month.dividendsTwd), detail: "TWD" },
-    { section: "本月", metric: "獨立費用", value: String(report.month.standaloneFeesTwd), detail: "TWD" },
+    { section: report.monthKey, metric: "入金", value: String(report.month.depositsTwd), detail: "TWD" },
+    { section: report.monthKey, metric: "出金", value: String(report.month.withdrawalsTwd), detail: "TWD" },
+    { section: report.monthKey, metric: "股息", value: String(report.month.dividendsTwd), detail: "TWD" },
+    { section: report.monthKey, metric: "獨立費用", value: String(report.month.standaloneFeesTwd), detail: "TWD" },
     { section: "風險", metric: "曝險覆蓋率", value: pct(report.risk.riskCoveragePct), detail: "" },
     { section: "風險", metric: "最大單一公司", value: report.risk.largestCompany ? pct(report.risk.largestCompany.portfolioPct) : "—", detail: report.risk.largestCompany ? `${report.risk.largestCompany.symbol} ${report.risk.largestCompany.name}` : "" },
     { section: "風險", metric: "最大產業", value: report.risk.largestSector ? pct(report.risk.largestSector.portfolioPct) : "—", detail: report.risk.largestSector?.label ?? "" }
@@ -238,7 +273,11 @@ export function portfolioReportToMarkdown(report: PortfolioReport) {
   const lines = [
     "# PortfolioPilot 投資報告",
     "",
-    `資料日：${report.asOf}`,
+    `報告估值日：${report.asOf}`,
+    `帳戶：${report.scope.account ?? "全部帳戶"}`,
+    `活動月份：${report.monthKey}`,
+    `持股估值：${report.scope.valuationAsOf} 的目前部位，非歷史月底庫存`,
+    `績效範圍：${report.scope.performanceIsPortfolioWide ? "全組合，截至報告估值日" : "帳戶級資料不足，TWR／XIRR 不計算"}`,
     "",
     "## 總覽",
     `- 總資產淨值：${twd(report.summary.totalTwd)}`,
