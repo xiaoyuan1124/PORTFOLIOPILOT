@@ -204,6 +204,67 @@ export function PortfolioReportView({ state }: { state: AppState }) {
           <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">證券曝險覆蓋</p><strong className="mt-2 block text-xl">{pct(report.risk.riskCoveragePct)}</strong><p className="mt-1 text-xs text-black/35 dark:text-white/35">未解析 ETF 不硬猜</p></CardContent></Card>
         </section>
 
+        <Card>
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-semibold">美元持股 · 股價／匯率成本來源</h3>
+              <Badge tone={report.usdFxAttribution.unknownCount === 0 && report.usdFxAttribution.eligibleCount > 0 ? "good" : "warn"}>
+                可核對 {report.usdFxAttribution.explainedCount}/{report.usdFxAttribution.eligibleCount} 筆
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="text-xs leading-5 text-black/50 dark:text-white/50">
+              只拆分完整連動買賣鏈的美元證券目前持倉；其他資料不足的部位不估算。
+              買入時記錄的是參考匯率，不一定是實際換匯成交匯率。與上方採「現價匯率換算成本」的未實現損益不同。
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <div className="mini-metric">
+                <span>可核對股價影響</span>
+                <strong>{report.usdFxAttribution.explainedCount ? money(report.usdFxAttribution.priceImpactTwd) : "—"}</strong>
+              </div>
+              <div className="mini-metric">
+                <span>可核對匯率影響</span>
+                <strong>{report.usdFxAttribution.explainedCount ? money(report.usdFxAttribution.fxImpactTwd) : "—"}</strong>
+              </div>
+              <div className="mini-metric">
+                <span>已核對台幣合計</span>
+                <strong>{report.usdFxAttribution.explainedCount ? money(report.usdFxAttribution.combinedGainTwd) : "—"}</strong>
+              </div>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-black/45 dark:text-white/45">
+              未核對 {report.usdFxAttribution.unknownCount} 筆，持股現值 {money(report.usdFxAttribution.unknownValueTwd)}。
+              這是未核對的資產現值，<strong>不是</strong>無法歸因的損益金額。
+              此區不含美元現金、已實現損益、股息、現金換匯、手續費稅務的獨立歸因。
+            </p>
+            {report.usdFxAttribution.rows.length ? (
+              <InfoDisclosure summary={`逐筆查看 ${report.usdFxAttribution.rows.length} 個美元部位的成本完整度`} className="mt-3">
+                <div className="space-y-2">
+                  {report.usdFxAttribution.rows.map((row) => (
+                    <div key={row.holdingId} className="min-w-0 rounded-xl border border-black/7 p-3 text-xs dark:border-white/8">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <strong className="min-w-0 break-words">{row.symbol} · {row.name} · {row.account}</strong>
+                        <Badge tone={row.status === "verified_chain" ? "good" : "warn"}>
+                          {row.status === "verified_chain" ? "交易鏈完整" : "成本來源不足"}
+                        </Badge>
+                      </div>
+                      {row.status === "verified_chain" ? (
+                        <div className="mt-2 space-y-1 text-black/60 dark:text-white/60">
+                          <p>台幣歷史參考成本 {money(row.recordedCostTwd!)} · 平均記錄 FX {row.averageRecordedFx!.toFixed(4)}</p>
+                          <p>股價影響 {money(row.priceImpactTwd!)} · 匯率影響 {money(row.fxImpactTwd!)}</p>
+                          <p>目前持倉台幣參考損益 {money(row.combinedGainTwd!)} · 買進 {row.buyCount} 筆／賣出 {row.saleCount} 筆</p>
+                        </div>
+                      ) : (
+                        <p className="mt-2 leading-5 text-black/50 dark:text-white/50">{row.reason}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </InfoDisclosure>
+            ) : <p className="mt-3 text-xs text-black/45 dark:text-white/45">目前沒有美元證券持股，因此沒有外幣證券成本可分析。</p>}
+          </CardContent>
+        </Card>
+
         <section className="grid gap-4 lg:grid-cols-2">
           <Card>
             <CardHeader><h3 className="font-semibold">{report.scope.performanceIsPortfolioWide ? "全組合績效（截至報告日）" : "帳戶績效（資料不足）"}</h3></CardHeader>

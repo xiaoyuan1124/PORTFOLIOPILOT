@@ -10,6 +10,7 @@ import {
 } from "./performance";
 import { buildPortfolioRiskNotices, calculatePortfolioRisk } from "./portfolio-risk";
 import type { AppState } from "./types";
+import { analyzeUsdFxAttribution } from "./usd-fx-attribution";
 
 export type PortfolioReportFilters = {
   account?: string | null;
@@ -64,6 +65,7 @@ export type PortfolioReport = {
     top5CompanyPct: number;
     notices: ReturnType<typeof buildPortfolioRiskNotices>;
   };
+  usdFxAttribution: ReturnType<typeof analyzeUsdFxAttribution>;
   topHoldings: Array<{
     symbol: string;
     name: string;
@@ -107,6 +109,9 @@ export function buildPortfolioReport(
   const twrProxy = account === null ? modifiedDietzReturn(state, asOf) : null;
   const xirr = account === null ? portfolioXirr(state, asOf) : null;
   const risk = calculatePortfolioRisk(scopedHoldings, state.etfCompositions, state.usdTwd);
+  // Retain all activity records to detect cross-account transfers; only
+  // holdings within the selected account enter the attributed total.
+  const usdFxAttribution = analyzeUsdFxAttribution(scopedHoldings, state.activities, state.usdTwd, asOf);
   const monthActivities = scopedActivities.filter((activity) =>
     activity.date <= asOf && monthKey(activity.date) === reportMonth
   );
@@ -200,6 +205,7 @@ export function buildPortfolioReport(
       top5CompanyPct: risk.top5CompanyPct,
       notices: buildPortfolioRiskNotices(risk)
     },
+    usdFxAttribution,
     topHoldings: topHoldings(scopedHoldings, state.usdTwd, 10).map((row) => ({
       symbol: row.holding.symbol,
       name: row.holding.name,
@@ -239,6 +245,24 @@ export function portfolioReportToCsv(report: PortfolioReport) {
     { section: "風險", metric: "最大單一公司", value: report.risk.largestCompany ? pct(report.risk.largestCompany.portfolioPct) : "—", detail: report.risk.largestCompany ? `${report.risk.largestCompany.symbol} ${report.risk.largestCompany.name}` : "" },
     { section: "風險", metric: "最大產業", value: report.risk.largestSector ? pct(report.risk.largestSector.portfolioPct) : "—", detail: report.risk.largestSector?.label ?? "" }
   ];
+
+  rows.push(
+    { section: "外幣成本完整度", metric: "美元證券部位", value: String(report.usdFxAttribution.eligibleCount), detail: "不含現金" },
+    { section: "外幣成本完整度", metric: "可拆分部位", value: String(report.usdFxAttribution.explainedCount), detail: "完整連動交易鏈" },
+    { section: "外幣成本完整度", metric: "缺資料部位", value: String(report.usdFxAttribution.unknownCount), detail: "不納入股價／匯率估算" },
+    { section: "外幣損益參考估算", metric: "已核對股價影響", value: report.usdFxAttribution.explainedCount ? String(report.usdFxAttribution.priceImpactTwd) : "資料不足", detail: "TWD，使用目前參考匯率" },
+    { section: "外幣損益參考估算", metric: "已核對匯率影響", value: report.usdFxAttribution.explainedCount ? String(report.usdFxAttribution.fxImpactTwd) : "資料不足", detail: "TWD，買進時記錄的參考匯率，不代表實際換匯損益" },
+    { section: "外幣損益參考估算", metric: "已核對損益合計", value: report.usdFxAttribution.explainedCount ? String(report.usdFxAttribution.combinedGainTwd) : "資料不足", detail: "TWD，僅持有部位，未涵蓋未核對部位" }
+  );
+  report.usdFxAttribution.rows.forEach((item) => {
+    rows.push({
+      section: "美元部位來源",
+      metric: `${item.symbol} ${item.name} · ${item.account}`,
+      value: item.combinedGainTwd === null ? "資料不足" : String(item.combinedGainTwd),
+      detail: item.combinedGainTwd === null ? item.reason
+        : `股價 ${item.priceImpactTwd}／匯率 ${item.fxImpactTwd}／買進參考 FX ${item.averageRecordedFx}`
+    });
+  });
 
   if (report.daily) {
     rows.push(
@@ -302,6 +326,24 @@ export function portfolioReportToMarkdown(report: PortfolioReport) {
     `- 最大產業：${report.risk.largestSector ? `${report.risk.largestSector.label} · ${pct(report.risk.largestSector.portfolioPct)}` : "—"}`,
     ""
   ];
+
+  lines.push(
+    "## 美元證券成本與匯率參考拆分",
+    `- 可完整核對：${report.usdFxAttribution.explainedCount}/${report.usdFxAttribution.eligibleCount} 筆；資料不足 ${report.usdFxAttribution.unknownCount} 筆`,
+    `- 已核對股價影響：${(report.usdFxAttribution.explainedCount ? twd(report.usdFxAttribution.priceImpactTwd) : "資料不足")}`,
+    `- 已核對匯率影響：${(report.usdFxAttribution.explainedCount ? twd(report.usdFxAttribution.fxImpactTwd) : "資料不足")}`,
+    `- 已核對台幣損益參考合計：${(report.usdFxAttribution.explainedCount ? twd(report.usdFxAttribution.combinedGainTwd) : "資料不足")}`,
+    "- 僅計算目前持有且連動買賣成本鏈完整的美元證券；沒有推估資料不足的部位。",
+    "- 成本匯率來自交易紀錄的參考 FX，不等於實際換匯成交；不含已實現損益、現金匯兌、股息及稅務。",
+    "- 本拆分以目前持股／參考匯率估值，並非所選活動月份的單月報酬；舊版未實現損益採現價 FX 換算成本，定義不同。",
+    ""
+  );
+  report.usdFxAttribution.rows.forEach((row) => {
+    lines.push(row.combinedGainTwd === null
+      ? `- ${row.symbol}（${row.account}）：資料不足｜${row.reason}`
+      : `- ${row.symbol}（${row.account}）：股價 ${twd(row.priceImpactTwd!)}／匯率 ${twd(row.fxImpactTwd!)}／合計 ${twd(row.combinedGainTwd)}`);
+  });
+  lines.push("");
 
   if (report.daily) {
     lines.push(
