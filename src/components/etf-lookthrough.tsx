@@ -6,6 +6,7 @@ import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recha
 import { toast } from "sonner";
 import type { AppState, EtfComposition } from "@/lib/types";
 import { calculateEtfLookThrough } from "@/lib/etf-lookthrough";
+import { groupEtfCoverageByFund } from "@/lib/etf-coverage-presentation";
 import { EtfCompanyComparison } from "./etf-company-comparison";
 import { localDateKey } from "@/lib/calc";
 import {
@@ -120,7 +121,7 @@ export function EtfLookThrough({ state, onChange }: { state: AppState; onChange:
     () => calculateEtfLookThrough(state.holdings, state.etfCompositions, state.usdTwd),
     [state.holdings, state.etfCompositions, state.usdTwd]
   );
-  const heldEtfs = state.holdings.filter((holding) => holding.type === "etf");
+  const etfCards = useMemo(() => groupEtfCoverageByFund(result.etfs), [result.etfs]);
 
   async function importComposition(file?: File) {
     if (!file) return;
@@ -174,7 +175,7 @@ export function EtfLookThrough({ state, onChange }: { state: AppState; onChange:
       </Card>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">ETF 市值</p><p className="mt-2 text-xl font-semibold">{money(result.etfValueTwd)}</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">{heldEtfs.length} 檔持有 ETF</p></CardContent></Card>
+        <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">ETF 市值</p><p className="mt-2 text-xl font-semibold">{money(result.etfValueTwd)}</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">{etfCards.length} 檔持有 ETF</p></CardContent></Card>
         <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">已穿透 ETF 市值</p><p className="mt-2 text-xl font-semibold">{money(result.coveredEtfValueTwd)}</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">依實際成分權重計算</p></CardContent></Card>
         <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">ETF 資料覆蓋</p><p className="mt-2 text-xl font-semibold">{result.etfCoveragePct.toFixed(1)}%</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">不將缺失權重正規化</p></CardContent></Card>
         <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">未解析 ETF 曝險</p><p className="mt-2 text-xl font-semibold">{money(result.unresolvedEtfValueTwd)}</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">缺資料或成分未滿 100%</p></CardContent></Card>
@@ -223,7 +224,7 @@ export function EtfLookThrough({ state, onChange }: { state: AppState; onChange:
             <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">ETF Data Coverage</p>
             <h3 className="mt-1 font-semibold">持有 ETF 的成分資料</h3>
             <div className="mt-4 space-y-3">
-              {result.etfs.map((etf) => (
+              {etfCards.map((etf) => (
                 <div key={`${etf.market}:${etf.symbol}`} className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
                   <div className="flex items-start justify-between gap-3">
                     <div>
