@@ -71,6 +71,7 @@ try {
     await page.getByRole("button", { name: "績效", exact: true }).click();
     await page.getByRole("button", { name: "報告", exact: true }).click();
     await page.getByRole("heading", { name: "投資組合報告" }).waitFor();
+    await page.getByRole("heading", { name: "美元持股 · 股價／匯率成本來源" }).waitFor();
     await checkLayout(page, viewport.name, "portfolio-report");
     const accountFilter = page.getByLabel("帳戶範圍");
     const accountChoices = await accountFilter.locator("option").count();
