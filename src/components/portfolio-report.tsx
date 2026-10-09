@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Download, FileText, Printer, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { localDateKey } from "@/lib/calc";
-import { downloadText } from "@/lib/local-data";
+import { accountName, downloadText } from "@/lib/local-data";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import {
   buildPortfolioReport,
@@ -25,6 +25,15 @@ export function PortfolioReportView({ state }: { state: AppState }) {
   const [quoteError, setQuoteError] = useState("");
   const [loading, setLoading] = useState(true);
   const asOf = localDateKey();
+  const [selectedAccount, setSelectedAccount] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(() => localDateKey().slice(0, 7));
+  const accountOptions = useMemo(
+    () => [...new Set([
+      ...state.holdings.map((holding) => accountName(holding.account)),
+      ...state.activities.map((activity) => accountName(activity.account))
+    ])].sort((a, b) => a.localeCompare(b, "zh-TW")),
+    [state.activities, state.holdings]
+  );
 
   async function reloadQuotes() {
     setLoading(true);
@@ -60,13 +69,16 @@ export function PortfolioReportView({ state }: { state: AppState }) {
   }, []);
 
   const report = useMemo(
-    () => buildPortfolioReport(state, asOf, quotes),
-    [asOf, quotes, state]
+    () => buildPortfolioReport(state, asOf, quotes, {
+      account: selectedAccount || null,
+      month: selectedMonth
+    }),
+    [asOf, quotes, state, selectedAccount, selectedMonth]
   );
 
   function exportCsv() {
     downloadText(
-      `portfoliopilot-report-${report.asOf}.csv`,
+      `portfoliopilot-report-${report.asOf}-${report.monthKey}.csv`,
       portfolioReportToCsv(report),
       "text/csv;charset=utf-8"
     );
@@ -75,7 +87,7 @@ export function PortfolioReportView({ state }: { state: AppState }) {
 
   function exportMarkdown() {
     downloadText(
-      `portfoliopilot-report-${report.asOf}.md`,
+      `portfoliopilot-report-${report.asOf}-${report.monthKey}.md`,
       portfolioReportToMarkdown(report),
       "text/markdown;charset=utf-8"
     );
@@ -99,7 +111,7 @@ export function PortfolioReportView({ state }: { state: AppState }) {
             background: white !important;
             color: black !important;
           }
-          #portfolio-report-actions { display: none !important; }
+          #portfolio-report-actions, #portfolio-report-filters { display: none !important; }
           #portfolio-report-print .dark\\:text-white\\/45,
           #portfolio-report-print .dark\\:text-white\\/40,
           #portfolio-report-print .dark\\:text-white\\/35 { color: rgba(0,0,0,.55) !important; }
@@ -127,8 +139,46 @@ export function PortfolioReportView({ state }: { state: AppState }) {
                 <GhostButton onClick={printReport}><Printer size={15} />列印／另存 PDF</GhostButton>
               </div>
             </div>
+            <div id="portfolio-report-filters" className="mt-4 grid gap-3 sm:grid-cols-2">
+              <label className="min-w-0 text-xs font-semibold">
+                帳戶範圍
+                <select
+                  value={selectedAccount}
+                  onChange={(event) => setSelectedAccount(event.target.value)}
+                  className="field mt-2 min-h-11 w-full min-w-0"
+                >
+                  <option value="">全部帳戶</option>
+                  {accountOptions.map((account) => (
+                    <option key={account} value={account}>{account}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="min-w-0 text-xs font-semibold">
+                活動月份
+                <input
+                  type="month"
+                  max={asOf.slice(0, 7)}
+                  value={selectedMonth}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    if (/^20\d{2}-(0[1-9]|1[0-2])$/.test(next) && next <= asOf.slice(0, 7)) {
+                      setSelectedMonth(next);
+                    }
+                  }}
+                  className="field mt-2 min-h-11 w-full min-w-0"
+                />
+              </label>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-black/50 dark:text-white/50">
+              目前持股、市值、風險與最新交易日影響一律使用現有持倉；月份只篩選該月交易及現金流。
+              {report.scope.account
+                ? " 單一帳戶沒有完整的個別淨值／現金流邊界，因此不顯示全組合的 TWR、TWR Proxy 或 XIRR。"
+                : " 績效指標為截至報告日的全組合結果，不是所選月份的單月報酬。"}
+            </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Badge>資料日 {report.asOf}</Badge>
+              <Badge>帳戶 {report.scope.account ?? "全部"}</Badge>
+              <Badge>活動 {report.monthKey}</Badge>
+              <Badge>持倉估值 {report.scope.valuationAsOf}</Badge>
               <Badge tone={report.performance.exactTwrStatus === "exact" ? "good" : "warn"}>
                 Exact TWR {report.performance.exactTwrStatus === "exact" ? "可用" : "資料不足"}
               </Badge>
@@ -155,7 +205,7 @@ export function PortfolioReportView({ state }: { state: AppState }) {
 
         <section className="grid gap-4 lg:grid-cols-2">
           <Card>
-            <CardHeader><h3 className="font-semibold">績效摘要</h3></CardHeader>
+            <CardHeader><h3 className="font-semibold">{report.scope.performanceIsPortfolioWide ? "全組合績效（截至報告日）" : "帳戶績效（資料不足）"}</h3></CardHeader>
             <CardContent className="grid gap-3 pt-4 sm:grid-cols-3">
               <div className="mini-metric"><span>Exact TWR</span><strong>{pct(report.performance.exactTwrPct)}</strong><small className="mt-1 block font-normal text-black/35 dark:text-white/35">{report.performance.exactTwrStartDate ? `${report.performance.exactTwrStartDate} 起` : report.performance.exactTwrStatus}</small></div>
               <div className="mini-metric"><span>TWR Proxy</span><strong>{pct(report.performance.twrProxyPct)}</strong><small className="mt-1 block font-normal text-black/35 dark:text-white/35">Modified Dietz</small></div>
@@ -169,7 +219,7 @@ export function PortfolioReportView({ state }: { state: AppState }) {
               <div className="mini-metric"><span>入金 / 出金</span><strong>{money(report.month.depositsTwd)} / {money(report.month.withdrawalsTwd)}</strong></div>
               <div className="mini-metric"><span>股息 / 獨立費用</span><strong>{money(report.month.dividendsTwd)} / {money(report.month.standaloneFeesTwd)}</strong></div>
               <div className="mini-metric"><span>買進 / 賣出</span><strong>{report.month.buyCount} / {report.month.sellCount} 筆</strong></div>
-              <div className="mini-metric"><span>本月活動總數</span><strong>{report.month.activityCount} 筆</strong></div>
+              <div className="mini-metric"><span>該月活動總數</span><strong>{report.month.activityCount} 筆</strong></div>
             </CardContent>
           </Card>
         </section>
