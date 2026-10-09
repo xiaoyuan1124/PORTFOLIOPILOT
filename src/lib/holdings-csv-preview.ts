@@ -1,5 +1,6 @@
 import type { AppState, Holding } from "./types";
 import { accountName, holdingIdentityKey, mergeHoldings } from "./local-data";
+import { emptyState } from "./demo-data";
 
 export type HoldingsImportChange = {
   key: string;
@@ -102,7 +103,7 @@ export function commitHoldingsImport(state: AppState, preview: HoldingsCsvImport
   if (csvImportStateSignature(state) !== preview.beforeSignature) {
     throw new Error("預覽後本機資料已有變動，為避免覆蓋較新的修改，請重新選擇 CSV 並檢查預覽。");
   }
-  const base = state.dataMode === "demo" ? { ...state, holdings: [] } : state;
+  const base = state.dataMode === "demo" ? emptyState : state;
   // Normal merge preserves existing IDs for replaced rows; other app state
   // (transactions, journal, FX, watchlist, targets) remains untouched.
   return {
