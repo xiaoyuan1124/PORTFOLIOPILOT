@@ -179,6 +179,42 @@ button {
   }
 }
 
+/* A landscape iPhone may report a CSS viewport wider than Tailwind's
+   tablet breakpoint while still having very little height. Keep the bottom
+   touch navigation in that configuration rather than a 248px desktop rail.
+   Desktop windows and large tablets are unaffected. */
+@media (min-width: 768px) and (max-width: 900px) and (max-height: 500px) and (pointer: coarse) {
+  .app-desktop-sidebar {
+    display: none !important;
+  }
+
+  .app-mobile-nav {
+    display: block !important;
+  }
+
+  .app-mobile-main {
+    margin-left: 0 !important;
+    padding-bottom: calc(7rem + var(--safe-area-bottom));
+  }
+
+  .app-topbar {
+    padding-top: calc(.75rem + var(--safe-area-top));
+    padding-right: calc(1rem + var(--safe-area-right));
+    padding-bottom: .75rem;
+    padding-left: calc(1rem + var(--safe-area-left));
+  }
+
+  .app-page-content {
+    padding-right: calc(1rem + var(--safe-area-right));
+    padding-left: calc(1rem + var(--safe-area-left));
+  }
+
+  .app-modal-sheet {
+    max-height: calc(100dvh - var(--safe-area-top) - .75rem);
+    scroll-padding-bottom: calc(1rem + var(--safe-area-bottom));
+  }
+}
+
 /* Keep full-screen mobile sheets below the Dynamic Island/notch.
    The remaining scrollable area follows the software-keyboard viewport. */
 @media (max-width: 767px) {

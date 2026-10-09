@@ -6,6 +6,7 @@ import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recha
 import { toast } from "sonner";
 import type { AppState, EtfComposition } from "@/lib/types";
 import { calculateEtfLookThrough } from "@/lib/etf-lookthrough";
+import { EtfCompanyComparison } from "./etf-company-comparison";
 import { localDateKey } from "@/lib/calc";
 import {
   downloadText,
@@ -178,6 +179,8 @@ export function EtfLookThrough({ state, onChange }: { state: AppState; onChange:
         <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">ETF 資料覆蓋</p><p className="mt-2 text-xl font-semibold">{result.etfCoveragePct.toFixed(1)}%</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">不將缺失權重正規化</p></CardContent></Card>
         <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">未解析 ETF 曝險</p><p className="mt-2 text-xl font-semibold">{money(result.unresolvedEtfValueTwd)}</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">缺資料或成分未滿 100%</p></CardContent></Card>
       </section>
+
+      <EtfCompanyComparison exposures={result.exposures} />
 
       <section className="grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
         <Card>

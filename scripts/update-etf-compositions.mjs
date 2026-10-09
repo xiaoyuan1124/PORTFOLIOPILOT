@@ -14,6 +14,13 @@ const SOURCES = [
     sourceUrl: "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00935&tab=Shareholding"
   },
   {
+    adapter: "nomura_fund_assets",
+    etfSymbol: "00944",
+    etfName: "野村趨勢動能高息",
+    sourceName: "野村投信官方持股比重",
+    sourceUrl: "https://www.nomurafunds.com.tw/ETFWEB/product-description?fundNo=00944&tab=Shareholding"
+  },
+  {
     adapter: "issuer_html",
     etfSymbol: "009816",
     etfName: "凱基台灣TOP50",
