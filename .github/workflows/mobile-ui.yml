@@ -1,0 +1,52 @@
+name: Mobile UI Layout Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/components/**"
+      - "src/app/**"
+      - "scripts/mobile-layout-smoke.mjs"
+      - ".github/workflows/mobile-ui.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-layout-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Install application and temporary browser test dependencies
+        run: |
+          npm install --legacy-peer-deps
+          npm install --no-save --legacy-peer-deps playwright@1.56.1
+      - name: Install headless Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build GitHub Pages static preview
+        run: |
+          npm run build
+          mkdir -p mobile-preview/PORTFOLIOPILOT
+          cp -a out/. mobile-preview/PORTFOLIOPILOT/
+      - name: Check iPhone-scale layouts and capture screenshots
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory mobile-preview >/tmp/portfoliopilot-preview.log 2>&1 &
+          sleep 2
+          node scripts/mobile-layout-smoke.mjs
+      - name: Upload viewport screenshots for visual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-layout-screenshots
+          path: mobile-artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
