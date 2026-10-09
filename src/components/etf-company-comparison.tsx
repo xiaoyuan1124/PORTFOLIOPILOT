@@ -9,6 +9,64 @@ import { Badge, Card, CardContent } from "./ui";
 
 type Props = { exposures: CompanyExposure[] };
 
+type ComparisonRow = {
+  exposure: CompanyExposure;
+  breakdown: ReturnType<typeof compareCompanyEtfSources>;
+};
+
+// Reuse the same drill-down for every match, not just the first ten.
+function CompanyExposureDetail({ exposure, breakdown }: ComparisonRow) {
+  return (
+      <details
+                className="min-w-0 rounded-xl border border-black/7 dark:border-white/9"
+      >
+        <summary className="flex min-h-12 cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-3 py-3">
+          <span className="min-w-0 break-words text-sm font-semibold">
+            {exposure.symbol} · {exposure.name}
+          </span>
+          <span className="flex flex-wrap items-center gap-2">
+            {breakdown.distinctEtfCount >= 2 ? <Badge tone="warn">{breakdown.distinctEtfCount} 檔 ETF</Badge> : null}
+            <strong className="text-sm tabular-nums">{money(exposure.totalValueTwd)}</strong>
+          </span>
+        </summary>
+        <div className="space-y-2 border-t border-black/6 px-3 py-3 text-xs dark:border-white/8">
+          <div className="flex flex-wrap justify-between gap-2">
+            <span>直接持股</span><strong className="tabular-nums">{money(breakdown.directValueTwd)}</strong>
+          </div>
+          <div className="flex flex-wrap justify-between gap-2">
+            <span>ETF 隱含合計</span><strong className="tabular-nums">{money(breakdown.etfTotalValueTwd)}</strong>
+          </div>
+          <p className="text-[11px] leading-5 text-black/45 dark:text-white/45">
+            下方比例為該公司已辨識 ETF 隱含金額的來源分攤，不是此公司占整體 ETF 的比例。
+          </p>
+          {breakdown.funds.map((fund) => (
+            <div key={fund.sourceKey} className="rounded-lg bg-black/[.025] p-3 dark:bg-white/[.035]">
+              <div className="flex flex-wrap justify-between gap-2">
+                <span className="min-w-0 break-words font-semibold">{fund.etfSymbol} · {fund.etfName}</span>
+                <strong className="shrink-0 tabular-nums">{money(fund.valueTwd)}</strong>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                <div className="h-full rounded-full bg-[#456b58]" style={{ width: `${Math.min(100, fund.etfValueSharePct)}%` }} />
+              </div>
+              <p className="mt-2 text-[11px] leading-5 text-black/45 dark:text-white/45">
+                來源占比 {fund.etfValueSharePct.toFixed(1)}% · ETF 成份權重 {fund.weightPct.toFixed(2)}% · 資料日 {fund.asOf}
+              </p>
+              <a href={fund.sourceUrl} target="_blank" rel="noopener noreferrer"
+                 className="mt-1 inline-flex min-h-10 items-center break-all underline underline-offset-2">
+                查看官方／匯入來源：{fund.sourceName}
+              </a>
+            </div>
+          ))}
+          {!breakdown.funds.length ? (
+            <p className="text-xs text-black/45 dark:text-white/45">
+              此公司目前只有直接持股，沒有可辨識的 ETF 隱含來源。
+            </p>
+          ) : null}
+        </div>
+      </details>
+  );
+}
+
 export function EtfCompanyComparison({ exposures }: Props) {
   const [query, setQuery] = useState("");
   const [overlapOnly, setOverlapOnly] = useState(false);
@@ -68,54 +126,7 @@ export function EtfCompanyComparison({ exposures }: Props) {
 
         <div className="mt-3 space-y-2">
           {filtered.slice(0, 10).map(({ exposure, breakdown }) => (
-            <details
-              key={breakdown.companyKey}
-              className="min-w-0 rounded-xl border border-black/7 dark:border-white/9"
-            >
-              <summary className="flex min-h-12 cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-3 py-3">
-                <span className="min-w-0 break-words text-sm font-semibold">
-                  {exposure.symbol} · {exposure.name}
-                </span>
-                <span className="flex flex-wrap items-center gap-2">
-                  {breakdown.distinctEtfCount >= 2 ? <Badge tone="warn">{breakdown.distinctEtfCount} 檔 ETF</Badge> : null}
-                  <strong className="text-sm tabular-nums">{money(exposure.totalValueTwd)}</strong>
-                </span>
-              </summary>
-              <div className="space-y-2 border-t border-black/6 px-3 py-3 text-xs dark:border-white/8">
-                <div className="flex flex-wrap justify-between gap-2">
-                  <span>直接持股</span><strong className="tabular-nums">{money(breakdown.directValueTwd)}</strong>
-                </div>
-                <div className="flex flex-wrap justify-between gap-2">
-                  <span>ETF 隱含合計</span><strong className="tabular-nums">{money(breakdown.etfTotalValueTwd)}</strong>
-                </div>
-                <p className="text-[11px] leading-5 text-black/45 dark:text-white/45">
-                  下方比例為該公司已辨識 ETF 隱含金額的來源分攤，不是此公司占整體 ETF 的比例。
-                </p>
-                {breakdown.funds.map((fund) => (
-                  <div key={fund.sourceKey} className="rounded-lg bg-black/[.025] p-3 dark:bg-white/[.035]">
-                    <div className="flex flex-wrap justify-between gap-2">
-                      <span className="min-w-0 break-words font-semibold">{fund.etfSymbol} · {fund.etfName}</span>
-                      <strong className="shrink-0 tabular-nums">{money(fund.valueTwd)}</strong>
-                    </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-                      <div className="h-full rounded-full bg-[#456b58]" style={{ width: `${Math.min(100, fund.etfValueSharePct)}%` }} />
-                    </div>
-                    <p className="mt-2 text-[11px] leading-5 text-black/45 dark:text-white/45">
-                      來源占比 {fund.etfValueSharePct.toFixed(1)}% · ETF 成份權重 {fund.weightPct.toFixed(2)}% · 資料日 {fund.asOf}
-                    </p>
-                    <a href={fund.sourceUrl} target="_blank" rel="noopener noreferrer"
-                       className="mt-1 inline-flex min-h-10 items-center break-all underline underline-offset-2">
-                      查看官方／匯入來源：{fund.sourceName}
-                    </a>
-                  </div>
-                ))}
-                {!breakdown.funds.length ? (
-                  <p className="text-xs text-black/45 dark:text-white/45">
-                    此公司目前只有直接持股，沒有可辨識的 ETF 隱含來源。
-                  </p>
-                ) : null}
-              </div>
-            </details>
+            <CompanyExposureDetail key={breakdown.companyKey} exposure={exposure} breakdown={breakdown} />
           ))}
         </div>
         {filtered.length > 10 ? (
@@ -123,10 +134,7 @@ export function EtfCompanyComparison({ exposures }: Props) {
             <summary className="min-h-11 cursor-pointer text-xs font-semibold">查看其餘 {filtered.length - 10} 家公司</summary>
             <div className="mt-2 space-y-2">
               {filtered.slice(10).map(({ exposure, breakdown }) => (
-                <div key={breakdown.companyKey} className="flex flex-wrap justify-between gap-2 border-t border-black/6 py-2 text-xs dark:border-white/8">
-                  <span>{exposure.symbol} · {exposure.name} · {breakdown.distinctEtfCount} 檔 ETF</span>
-                  <span className="tabular-nums">{money(exposure.totalValueTwd)}</span>
-                </div>
+                <CompanyExposureDetail key={breakdown.companyKey} exposure={exposure} breakdown={breakdown} />
               ))}
             </div>
           </details>
