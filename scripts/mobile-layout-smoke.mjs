@@ -78,6 +78,32 @@ try {
 
     await page.getByRole("button", { name: "切換深色模式" }).click();
     await checkLayout(page, viewport.name, "settings-dark");
+
+    // End-to-end CSV interaction with demo-only data in a fresh browser context:
+    // preview -> confirm -> guarded undo. No personal portfolio is involved.
+    const csv = [
+      "symbol,name,market,type,quantity,price,averageCost,currency,sector,account",
+      "2330,台積電,TW,stock,2,1000,900,TWD,半導體,測試券商"
+    ].join("\n");
+    await page.locator('input[type="file"][accept=".csv,text/csv"]').first().setInputFiles({
+      name: "mobile-smoke-holdings.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(csv, "utf8")
+    });
+    const preview = page.locator("#holding-csv-import-preview");
+    await preview.getByText("mobile-smoke-holdings.csv", { exact: false }).waitFor();
+    await preview.getByRole("button", { name: /確認套用 1 筆/ }).waitFor();
+    await checkLayout(page, viewport.name, "csv-import-preview");
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await preview.getByRole("button", { name: /確認套用 1 筆/ }).click();
+    const undoHeading = page.getByRole("heading", { name: "最近一次持股 CSV 匯入 · 一步撤銷" });
+    await undoHeading.waitFor();
+    await checkLayout(page, viewport.name, "csv-import-undo");
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "撤銷這次匯入" }).click();
+    await undoHeading.waitFor({ state: "detached" });
     await context.close();
     console.log(`PASS ${viewport.name}: home, portfolio, cross-ETF, ETF research, settings, dark mode`);
   }
