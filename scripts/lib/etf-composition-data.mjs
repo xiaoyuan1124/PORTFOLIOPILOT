@@ -85,7 +85,28 @@ export function chooseStockTable(html) {
 
 export function normalizeDate(value) {
   const match = String(value ?? "").match(/(20\d{2})[\/-](\d{2})[\/-](\d{2})/);
-  return match ? `${match[1]}-${match[2]}-${match[3]}` : "";
+  if (!match) return "";
+  const iso = `${match[1]}-${match[2]}-${match[3]}`;
+  // A well-shaped ISO string is not necessarily a calendar date: Date.parse
+  // can normalize 2026-02-30 into March, so compare the round-trip date.
+  const utc = new Date(`${iso}T00:00:00.000Z`);
+  return Number.isFinite(utc.getTime()) && utc.toISOString().slice(0, 10) === iso
+    ? iso
+    : "";
+}
+
+/**
+ * Fail closed on official holdings with a date after the Taiwan calendar day
+ * when this update job runs. The current bundle can retain its previous
+ * verified snapshot, and the source status becomes stale instead of "ok".
+ */
+export function validateOfficialEtfAsOf(composition, taipeiToday) {
+  const date = normalizeDate(composition?.asOf);
+  const today = normalizeDate(taipeiToday);
+  if (!today || !date || date !== composition?.asOf || date > today) {
+    throw new Error(`${composition?.etfSymbol ?? "ETF"} 官方成份日期無效或晚於台灣今天：${composition?.asOf ?? "未知"}。`);
+  }
+  return composition;
 }
 
 export function parseIssuerComposition({ html, etfSymbol, etfName, sourceName, sourceUrl, datePatterns }) {

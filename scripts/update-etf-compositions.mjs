@@ -1,5 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { applySectorMap, normalizeDate, parseIssuerComposition, parseNomuraFundAssetsPayload } from "./lib/etf-composition-data.mjs";
+import { applySectorMap, normalizeDate, parseIssuerComposition, parseNomuraFundAssetsPayload, validateOfficialEtfAsOf } from "./lib/etf-composition-data.mjs";
 import { mergeEtfCompositionHistory } from "./lib/etf-composition-history.mjs";
 
 const OUTPUT = "public/data/tw-etf-compositions.json";
@@ -175,7 +175,10 @@ for (const source of SOURCES) {
     const rawComposition = source.adapter === "nomura_fund_assets"
       ? await fetchNomuraComposition(source)
       : parseIssuerComposition({ html: await fetchHtml(source), ...source });
-    const parsed = applySectorMap(rawComposition, sectors);
+    const parsed = validateOfficialEtfAsOf(
+      applySectorMap(rawComposition, sectors),
+      taipeiDateKey()
+    );
     compositions.push(parsed);
     sources.push({
       symbol: source.etfSymbol,

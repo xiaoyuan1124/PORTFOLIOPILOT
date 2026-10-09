@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chooseStockTable, decodeHtmlEntities, normalizeDate, parseIssuerComposition, parseNomuraFundAssetsPayload } from "./etf-composition-data.mjs";
+import { chooseStockTable, decodeHtmlEntities, normalizeDate, parseIssuerComposition, parseNomuraFundAssetsPayload, validateOfficialEtfAsOf } from "./etf-composition-data.mjs";
 
 const fixture = `
 <html><body>
@@ -50,6 +50,22 @@ describe("ETF issuer composition parser", () => {
   it("normalizes issuer dates", () => {
     expect(normalizeDate("2026/09/30")).toBe("2026-09-30");
     expect(normalizeDate("2026-09-30")).toBe("2026-09-30");
+  });
+
+  it("rejects impossible issuer calendar dates even when formatted correctly", () => {
+    expect(normalizeDate("2026/02/30")).toBe("");
+    expect(normalizeDate("2026-13-01")).toBe("");
+    expect(normalizeDate("2026-02-29")).toBe("");
+    expect(normalizeDate("2028-02-29")).toBe("2028-02-29");
+  });
+
+  it("accepts a valid latest issuer date but refuses future as-of data", () => {
+    const current = { etfSymbol: "00944", asOf: "2026-10-08" };
+    expect(validateOfficialEtfAsOf(current, "2026-10-09")).toBe(current);
+    expect(validateOfficialEtfAsOf({ ...current, asOf: "2026-10-09" }, "2026-10-09").asOf).toBe("2026-10-09");
+    expect(() => validateOfficialEtfAsOf({ ...current, asOf: "2026-10-10" }, "2026-10-09")).toThrow(/晚於台灣今天/);
+    expect(() => validateOfficialEtfAsOf({ ...current, asOf: "2026-02-30" }, "2026-10-09")).toThrow();
+    expect(() => validateOfficialEtfAsOf({ ...current, asOf: "2026/10/08" }, "2026-10-09")).toThrow();
   });
 
   it("builds a traceable official issuer composition", () => {
