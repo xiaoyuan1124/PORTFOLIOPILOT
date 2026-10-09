@@ -25,19 +25,30 @@ import {
   csvTemplate,
   downloadText,
   holdingsToCsv,
-  holdingMergeConflictCount,
-  mergeHoldings,
   parseBackup,
   parseHoldingsCsv,
   serializeBackup
 } from "@/lib/local-data";
 import { clearRecoveryBackup, getRecoveryBackupRaw } from "@/lib/storage";
+import {
+  commitHoldingsImport,
+  createHoldingsImportUndo,
+  csvImportStateSignature,
+  previewHoldingsImport,
+  undoHoldingsImport,
+  type HoldingsCsvImportPreview,
+  type HoldingsImportUndo
+} from "@/lib/holdings-csv-preview";
 import { saveDurableState } from "@/lib/durable-storage";
 import { NativeNotificationSettings } from "./native-notification-settings";
 import { NativePrivacySettings } from "./native-privacy-settings";
-import { Button, Card, CardContent, GhostButton } from "./ui";
+import { Badge, Button, Card, CardContent, GhostButton } from "./ui";
 
 const appBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+type PendingHoldingsCsv = {
+  preview: HoldingsCsvImportPreview;
+};
 
 type PendingHistoricalTradeCsv = {
   fileName: string;
@@ -69,6 +80,8 @@ export function Settings({
   const brokerCsvRef = useRef<HTMLInputElement>(null);
   const tradeCsvRef = useRef<HTMLInputElement>(null);
   const [brokerAccount, setBrokerAccount] = useState("");
+  const [pendingHoldingsCsv, setPendingHoldingsCsv] = useState<PendingHoldingsCsv | null>(null);
+  const [holdingsImportUndo, setHoldingsImportUndo] = useState<HoldingsImportUndo | null>(null);
   const [tradeAccount, setTradeAccount] = useState("");
   const [tradeMarket, setTradeMarket] = useState<"" | Market>("");
   const [pendingTradeCsv, setPendingTradeCsv] = useState<PendingHistoricalTradeCsv | null>(null);
@@ -167,86 +180,89 @@ export function Settings({
     toast.success("持股 CSV 已匯出");
   }
 
-  async function importCsv(file?: File) {
+  async function prepareHoldingsCsvFile(file?: File) {
     if (!file) return;
     try {
       const incoming = parseHoldingsCsv(await file.text());
-      const base = state.dataMode === "demo" ? emptyState : state;
-      const conflictCount = holdingMergeConflictCount(base.holdings, incoming);
-      if (
-        conflictCount > 0 &&
-        !window.confirm(
-          `CSV 有 ${conflictCount} 筆與現有持股的「市場＋代號＋帳戶」相同，繼續會以 CSV 的股數、價格、平均成本等欄位覆蓋現有資料。確定繼續？`
-        )
-      ) return;
-
-      const merged = mergeHoldings(base.holdings, incoming);
-      if (!onChange({ ...base, dataMode: "personal", holdings: merged })) return;
-      toast.success(conflictCount > 0
-        ? `已匯入 ${incoming.length} 筆持股，其中覆蓋 ${conflictCount} 筆既有資料`
-        : `已匯入 ${incoming.length} 筆持股`);
+      const preview = previewHoldingsImport(state, "holdings", file.name, incoming);
+      setPendingHoldingsCsv({ preview });
+      toast.success(`已驗證 ${preview.importedCount} 筆持股，請先確認預覽`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "CSV 格式不正確");
+      setPendingHoldingsCsv(null);
+      toast.error(error instanceof Error ? error.message : "持股 CSV 格式不正確");
     } finally {
       if (csvRef.current) csvRef.current.value = "";
     }
   }
 
-
-  async function importBrokerInventoryCsv(file?: File) {
+  async function prepareBrokerInventoryCsvFile(file?: File) {
     if (!file) return;
-    if (!brokerAccount.trim()) {
+    const account = brokerAccount.trim();
+    if (!account) {
       toast.error("請先填寫預設匯入帳戶名稱");
       if (brokerCsvRef.current) brokerCsvRef.current.value = "";
       return;
     }
-
     try {
-      const [quotes, revenue] = await Promise.all([
+      const [text, quotes, revenue] = await Promise.all([
+        file.text(),
         loadBundledTwQuotes(),
         loadBundledRevenue()
       ]);
       const catalog = buildHoldingLookupCatalog(quotes, revenue);
-      const incoming = parseTaiwanBrokerInventoryCsv(
-        await file.text(),
-        brokerAccount,
-        catalog
-      );
-      const base = state.dataMode === "demo" ? emptyState : state;
-      const conflictCount = holdingMergeConflictCount(base.holdings, incoming);
-
-      if (
-        conflictCount > 0 &&
-        !window.confirm(
-          `券商庫存 CSV 有 ${conflictCount} 筆與現有持股的「市場＋代號＋帳戶」相同。繼續會用這次庫存的股數、官方收盤價與平均成本覆蓋既有資料，確定繼續？`
-        )
-      ) return;
-
-      const merged = mergeHoldings(base.holdings, incoming);
-      if (!onChange({ ...base, dataMode: "personal", holdings: merged })) return;
-
-      const dates = [...new Set(
-        incoming
-          .map((holding) => holding.priceAsOf)
-          .filter((value): value is string => Boolean(value))
-      )].sort();
-      const dateLabel = dates.length === 1
-        ? dates[0]
-        : dates.length > 1
-          ? `${dates[0]}～${dates.at(-1)}`
-          : "日期未提供";
-
-      toast.success(
-        conflictCount > 0
-          ? `已匯入 ${incoming.length} 筆券商庫存，覆蓋 ${conflictCount} 筆既有部位 · 官方價格日 ${dateLabel}`
-          : `已匯入 ${incoming.length} 筆券商庫存 · 官方價格日 ${dateLabel}`
-      );
+      const incoming = parseTaiwanBrokerInventoryCsv(text, account, catalog);
+      const preview = previewHoldingsImport(state, "broker", file.name, incoming);
+      setPendingHoldingsCsv({ preview });
+      toast.success(`已驗證 ${preview.importedCount} 筆券商庫存，請先確認預覽`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "無法匯入券商庫存 CSV");
+      setPendingHoldingsCsv(null);
+      toast.error(error instanceof Error ? error.message : "無法驗證券商庫存 CSV");
     } finally {
       if (brokerCsvRef.current) brokerCsvRef.current.value = "";
     }
   }
+
+  function confirmHoldingsCsvImport() {
+    const pending = pendingHoldingsCsv;
+    if (!pending) return;
+    const preview = pending.preview;
+    if (!window.confirm(
+      `確認套用「${preview.fileName}」？\n新增 ${preview.newCount} 筆、覆蓋 ${preview.replacedCount} 筆、資料相同 ${preview.unchangedCount} 筆。\n\n持股將從 ${preview.beforeCount} 筆變為 ${preview.afterCount} 筆。原始交易紀錄不變。\n\n建議先下載 JSON 備份。`
+    )) return;
+    try {
+      const before = state;
+      const next = commitHoldingsImport(before, preview);
+      if (!onChange(next)) return;
+      setHoldingsImportUndo(createHoldingsImportUndo(before, next, preview));
+      setPendingHoldingsCsv(null);
+      toast.success(`已匯入 ${preview.importedCount} 筆，新增 ${preview.newCount}、覆蓋 ${preview.replacedCount}`);
+    } catch (error) {
+      setPendingHoldingsCsv(null);
+      toast.error(error instanceof Error ? error.message : "匯入前重新驗證失敗，請重新選擇檔案");
+    }
+  }
+
+  function undoLatestHoldingsCsvImport() {
+    const checkpoint = holdingsImportUndo;
+    if (!checkpoint) return;
+    if (csvImportStateSignature(state) !== checkpoint.afterSignature) {
+      toast.error("匯入後已有其他修改，無法安全撤銷；請先匯出目前資料後手動比對備份。");
+      setHoldingsImportUndo(null);
+      return;
+    }
+    if (!window.confirm(
+      `確定撤銷「${checkpoint.fileName}」的這次持股／庫存 CSV 匯入？\n\n僅在匯入後沒有其他資料變更時才能撤銷；原始交易紀錄不會被修改。`
+    )) return;
+    try {
+      const restored = undoHoldingsImport(state, checkpoint);
+      if (!onChange(restored)) return;
+      setHoldingsImportUndo(null);
+      toast.success("已撤銷最近一次持股／庫存 CSV 匯入");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "無法安全撤銷 CSV 匯入");
+    }
+  }
+
 
   async function prepareHistoricalTradeCsvFile(file?: File) {
     if (!file) return;
@@ -537,9 +553,9 @@ export function Settings({
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={exportCsv}><FileSpreadsheet size={16} />匯出 CSV</Button>
-            <GhostButton onClick={() => csvRef.current?.click()}><Upload size={16} />匯入 CSV</GhostButton>
+            <GhostButton onClick={() => csvRef.current?.click()}><Upload size={16} />選擇 CSV 預覽</GhostButton>
             <GhostButton onClick={() => downloadText("portfoliopilot-holdings-template.csv", csvTemplate(), "text/csv;charset=utf-8")}>下載範本</GhostButton>
-            <input ref={csvRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => importCsv(e.target.files?.[0])} />
+            <input ref={csvRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => void prepareHoldingsCsvFile(e.target.files?.[0])} />
           </div>
         </CardContent>
       </Card>
@@ -558,7 +574,7 @@ export function Settings({
           <input
             className="field mt-2"
             value={brokerAccount}
-            onChange={(event) => setBrokerAccount(event.target.value)}
+            onChange={(event) => { setBrokerAccount(event.target.value); setPendingHoldingsCsv(null); }}
             placeholder="例如：永豐證券、國泰證券-A"
           />
           <p className="mt-2 text-xs leading-5 text-black/35 dark:text-white/35">
@@ -566,18 +582,123 @@ export function Settings({
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button disabled={!brokerAccount.trim()} onClick={() => brokerCsvRef.current?.click()}>
-              <Upload size={16} />匯入券商庫存 CSV
+              <Upload size={16} />選擇券商 CSV 預覽
             </Button>
             <input
               ref={brokerCsvRef}
               type="file"
               accept=".csv,text/csv"
               className="hidden"
-              onChange={(event) => void importBrokerInventoryCsv(event.target.files?.[0])}
+              onChange={(event) => void prepareBrokerInventoryCsvFile(event.target.files?.[0])}
             />
           </div>
         </CardContent>
       </Card>
+
+      {pendingHoldingsCsv ? (
+        <Card className="lg:col-span-2" id="holding-csv-import-preview">
+          <CardContent>
+            <p className="text-xs font-semibold uppercase tracking-[.12em] text-black/45 dark:text-white/45">CSV import preview · 匯入前預覽</p>
+            <h3 className="mt-1 break-all text-lg font-semibold">
+              {pendingHoldingsCsv.preview.fileName} · {pendingHoldingsCsv.preview.source === "broker" ? "券商庫存" : "一般持股"}
+            </h3>
+            <p className="mt-2 text-xs leading-5 text-black/50 dark:text-white/50">
+              以下為在本機驗證後的預估變動，目前尚未寫入。以「市場＋代號＋帳戶」合併；既有交易／現金流不會被改動。
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {([
+                ["新增", pendingHoldingsCsv.preview.newCount],
+                ["覆蓋", pendingHoldingsCsv.preview.replacedCount],
+                ["相同", pendingHoldingsCsv.preview.unchangedCount],
+                ["匯入後總筆數", pendingHoldingsCsv.preview.afterCount]
+              ] as const).map(([label, count]) => (
+                <div key={label} className="rounded-xl bg-black/[.025] p-3 dark:bg-white/[.035]">
+                  <p className="text-xs text-black/45 dark:text-white/45">{label}</p>
+                  <strong className="mt-1 block text-lg tabular-nums">{count}</strong>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-sm font-semibold">數量、價格與成本差異</p>
+            <div className="mt-2 space-y-2">
+              {pendingHoldingsCsv.preview.changes.slice(0, 8).map((row) => (
+                <div key={row.key} className="min-w-0 rounded-xl border border-black/7 p-3 text-xs dark:border-white/8">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <strong className="min-w-0 break-words">{row.label} · {row.account}</strong>
+                    <Badge tone={row.kind === "replace" ? "warn" : row.kind === "new" ? "good" : "neutral"}>
+                      {row.kind === "replace" ? "覆蓋" : row.kind === "new" ? "新增" : "相同"}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 break-words leading-5 text-black/50 dark:text-white/50">
+                    股數 {row.beforeQuantity === null ? "—" : row.beforeQuantity} → {row.afterQuantity}
+                    {" · "}價格 {row.beforePrice === null ? "—" : row.beforePrice} → {row.afterPrice}
+                    {" · "}均價 {row.beforeAverageCost === null ? "—" : row.beforeAverageCost} → {row.afterAverageCost}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {pendingHoldingsCsv.preview.changes.length > 8 ? (
+              <details className="mt-3 rounded-xl border border-black/7 p-3 dark:border-white/8">
+                <summary className="min-h-11 cursor-pointer text-xs font-semibold">
+                  展開其餘 {pendingHoldingsCsv.preview.changes.length - 8} 筆
+                </summary>
+                <div className="mt-2 space-y-2">
+                  {pendingHoldingsCsv.preview.changes.slice(8).map((row) => (
+                    <div key={row.key} className="rounded-lg bg-black/[.025] p-3 text-xs dark:bg-white/[.035]">
+                      <strong className="break-words">{row.label} · {row.account}</strong>
+                      <p className="mt-1 leading-5">
+                        {row.kind === "replace" ? "覆蓋" : row.kind === "new" ? "新增" : "相同"}
+                        {" · "}股數 {row.beforeQuantity ?? "—"} → {row.afterQuantity}
+                        {" · "}現價 {row.beforePrice ?? "—"} → {row.afterPrice}
+                        {" · "}均價 {row.beforeAverageCost ?? "—"} → {row.afterAverageCost}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            ) : null}
+            <p className="mt-3 text-xs leading-5 text-black/50 dark:text-white/50">
+              注意：覆蓋會取代該部位的名稱、類別、價格、成本和價格來源；CSV 不會自動還原交易造成的庫存差異。
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button type="button" onClick={confirmHoldingsCsvImport}>
+                <Upload size={16} />確認套用 {pendingHoldingsCsv.preview.importedCount} 筆
+              </Button>
+              <GhostButton type="button" onClick={exportJson}><DatabaseBackup size={16} />先匯出 JSON 備份</GhostButton>
+              <GhostButton type="button" onClick={() => setPendingHoldingsCsv(null)}>取消預覽</GhostButton>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {holdingsImportUndo ? (
+        <Card className="lg:col-span-2">
+          <CardContent>
+            <h3 className="font-semibold">最近一次持股 CSV 匯入 · 一步撤銷</h3>
+            <p className="mt-2 text-xs leading-5 text-black/50 dark:text-white/50">
+              {holdingsImportUndo.fileName}，共 {holdingsImportUndo.importedCount} 筆。
+              這是目前頁面保留的一次性復原點；離開或重新整理頁面後，請使用下載的 JSON 備份還原。
+              若匯入後有其他持股、交易或設定異動，為保護新資料將拒絕撤銷。
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <GhostButton onClick={() => downloadText(
+                `portfoliopilot-before-csv-${localDateKey()}.json`,
+                serializeBackup(holdingsImportUndo.before),
+                "application/json;charset=utf-8"
+              )}>
+                <Download size={16} />匯出匯入前 JSON
+              </GhostButton>
+              <Button onClick={undoLatestHoldingsCsvImport} disabled={csvImportStateSignature(state) !== holdingsImportUndo.afterSignature}>
+                <RotateCcw size={16} />撤銷這次匯入
+              </Button>
+            </div>
+            {csvImportStateSignature(state) !== holdingsImportUndo.afterSignature ? (
+              <p role="status" className="mt-2 text-xs text-[#8b6538] dark:text-[#d4ad7c]">
+                本機資料已變動，安全撤銷已停用；先備份並人工核對差異。
+              </p>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card id="historical-trade-csv" className="scroll-mt-24 lg:col-span-2">
         <CardContent>
