@@ -11,6 +11,7 @@ import {
   targetsFromCurrentAllocation
 } from "@/lib/allocation-targets";
 import { money } from "@/lib/utils";
+import { ContributionPlanner } from "./contribution-planner";
 import { Badge, Button, Card, CardContent, CardHeader, GhostButton, Modal } from "./ui";
 
 type DraftRow = {
@@ -239,6 +240,7 @@ export function AllocationTargets({
           )}
         </CardContent>
       </Card>
+      <ContributionPlanner state={state} />
     </div>
   );
 }
