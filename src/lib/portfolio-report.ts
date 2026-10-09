@@ -273,7 +273,7 @@ export function portfolioReportToMarkdown(report: PortfolioReport) {
   const lines = [
     "# PortfolioPilot 投資報告",
     "",
-    `報告估值日：${report.asOf}`,
+    `資料日：${report.asOf}`,
     `帳戶：${report.scope.account ?? "全部帳戶"}`,
     `活動月份：${report.monthKey}`,
     `持股估值：${report.scope.valuationAsOf} 的目前部位，非歷史月底庫存`,
