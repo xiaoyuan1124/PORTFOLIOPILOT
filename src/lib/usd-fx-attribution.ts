@@ -226,7 +226,7 @@ export function analyzeUsdFxAttribution(
 
     return {
       ...base, status: "verified_chain", reason: "完整連動買賣及成交時紀錄的參考匯率",
-      buyCount, saleCount, recordedCostTwd, priceImpactTwd, fxImpactTwd,
+      buyCount, saleCount, recordedCostTwd: recordedTwdCost, priceImpactTwd, fxImpactTwd,
       combinedGainTwd, averageRecordedFx
     };
   });
