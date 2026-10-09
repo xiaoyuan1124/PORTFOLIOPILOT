@@ -17,9 +17,7 @@ type ComparisonRow = {
 // Reuse the same drill-down for every match, not just the first ten.
 function CompanyExposureDetail({ exposure, breakdown }: ComparisonRow) {
   return (
-      <details
-                className="min-w-0 rounded-xl border border-black/7 dark:border-white/9"
-      >
+    <details className="min-w-0 rounded-xl border border-black/7 dark:border-white/9">
         <summary className="flex min-h-12 cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-3 py-3">
           <span className="min-w-0 break-words text-sm font-semibold">
             {exposure.symbol} · {exposure.name}
@@ -63,7 +61,7 @@ function CompanyExposureDetail({ exposure, breakdown }: ComparisonRow) {
             </p>
           ) : null}
         </div>
-      </details>
+    </details>
   );
 }
 
