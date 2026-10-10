@@ -232,6 +232,12 @@ export function AppShell() {
       setPortfolioRequestId((value) => value + 1);
     }
     setSection(next);
+    // A tab switch replaces the page content without a browser navigation.
+    // Reset the document scroll after React commits, or a long report can
+    // leave the destination tab opening halfway down on an iPhone.
+    window.requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
   }
 
   function navigatePortfolioTab(tab: PortfolioTab) {
