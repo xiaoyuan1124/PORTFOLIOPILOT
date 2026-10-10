@@ -177,7 +177,8 @@ for (const source of SOURCES) {
       : parseIssuerComposition({ html: await fetchHtml(source), ...source });
     const parsed = validateOfficialEtfAsOf(
       applySectorMap(rawComposition, sectors),
-      taipeiDateKey()
+      taipeiDateKey(),
+      previousBySymbol.get(source.etfSymbol)
     );
     compositions.push(parsed);
     sources.push({

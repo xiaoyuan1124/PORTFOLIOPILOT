@@ -100,11 +100,21 @@ export function normalizeDate(value) {
  * when this update job runs. The current bundle can retain its previous
  * verified snapshot, and the source status becomes stale instead of "ok".
  */
-export function validateOfficialEtfAsOf(composition, taipeiToday) {
+export function validateOfficialEtfAsOf(composition, taipeiToday, previousComposition = null) {
   const date = normalizeDate(composition?.asOf);
   const today = normalizeDate(taipeiToday);
   if (!today || !date || date !== composition?.asOf || date > today) {
     throw new Error(`${composition?.etfSymbol ?? "ETF"} 官方成份日期無效或晚於台灣今天：${composition?.asOf ?? "未知"}。`);
+  }
+  // Issuers can temporarily serve older holdings. Never replace a newer
+  // cached ETF snapshot with older data and report the refresh as successful.
+  const previousDate = normalizeDate(previousComposition?.asOf);
+  if (
+    previousComposition?.etfSymbol === composition?.etfSymbol &&
+    previousDate && previousDate === previousComposition?.asOf &&
+    date < previousDate
+  ) {
+    throw new Error(`${composition.etfSymbol} 官方成份日期 ${date} 早於已保存快照 ${previousDate}，保留原快照。`);
   }
   return composition;
 }
