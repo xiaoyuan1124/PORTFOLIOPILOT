@@ -250,6 +250,9 @@ export function portfolioReportToCsv(report: PortfolioReport) {
     { section: "外幣成本完整度", metric: "美元證券部位", value: String(report.usdFxAttribution.eligibleCount), detail: "不含現金" },
     { section: "外幣成本完整度", metric: "可拆分部位", value: String(report.usdFxAttribution.explainedCount), detail: "完整連動交易鏈" },
     { section: "外幣成本完整度", metric: "缺資料部位", value: String(report.usdFxAttribution.unknownCount), detail: "不納入股價／匯率估算" },
+    { section: "外幣成本完整度", metric: "按現值加權可核對比例", value: report.usdFxAttribution.verifiedValueCoveragePct === null
+      ? "資料不足" : report.usdFxAttribution.verifiedValueCoveragePct.toFixed(2) + "%",
+      detail: "已核對美元證券現值／全部美元證券現值；不是可核對損益比例" },
     { section: "外幣成本完整度", metric: "已核對部位現值", value: String(report.usdFxAttribution.explainedValueTwd), detail: "TWD，目前參考匯率估值；不是損益" },
     { section: "外幣成本完整度", metric: "未核對部位現值", value: String(report.usdFxAttribution.unknownValueTwd), detail: "TWD，目前參考匯率估值；不是未知損益額" },
     { section: "外幣成本完整度", metric: "全部美元證券現值", value: String(report.usdFxAttribution.eligibleValueTwd), detail: "TWD，不含美元現金" },
@@ -344,6 +347,7 @@ export function portfolioReportToMarkdown(report: PortfolioReport) {
   lines.push(
     "## 美元證券成本與匯率參考拆分",
     `- 可完整核對：${report.usdFxAttribution.explainedCount}/${report.usdFxAttribution.eligibleCount} 筆；資料不足 ${report.usdFxAttribution.unknownCount} 筆`,
+    `- 按美元證券現值加權的核對覆蓋率：${pct(report.usdFxAttribution.verifiedValueCoveragePct)}（不是可核對損益比例）`,
     `- 已核對股價影響：${(report.usdFxAttribution.explainedCount ? twd(report.usdFxAttribution.priceImpactTwd) : "資料不足")}`,
     `- 已核對匯率影響：${(report.usdFxAttribution.explainedCount ? twd(report.usdFxAttribution.fxImpactTwd) : "資料不足")}`,
     `- 已核對台幣損益參考合計：${(report.usdFxAttribution.explainedCount ? twd(report.usdFxAttribution.combinedGainTwd) : "資料不足")}`,
