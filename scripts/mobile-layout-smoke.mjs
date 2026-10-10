@@ -83,8 +83,14 @@ try {
     await page.getByText("活動 2026-09").waitFor();
     await checkLayout(page, viewport.name, "account-month-report");
 
+    // Regression: switching bottom tabs must not carry a long report's
+    // document scroll position into a different section on iPhone.
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForFunction(() => window.scrollY > 100);
     await nav.getByRole("button", { name: "研究", exact: true }).click();
     await page.getByRole("heading", { name: "研究中心" }).waitFor();
+    await page.waitForFunction(() => window.scrollY <= 2);
+    await checkLayout(page, viewport.name, "research-tab-at-top");
     await page.getByRole("button", { name: "ETF 深度", exact: true }).click();
     await page.getByText("ETF Research · Look-through + Attribution").waitFor();
     await checkLayout(page, viewport.name, "etf-research");
