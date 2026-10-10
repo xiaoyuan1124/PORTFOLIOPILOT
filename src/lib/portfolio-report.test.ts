@@ -242,6 +242,13 @@ describe("portfolio report", () => {
     const md = portfolioReportToMarkdown(report);
     expect(csv).toContain("已核對匯率影響");
     expect(csv).toContain("2000");
+    expect(csv).toContain("已核對歷史參考成本");
+    expect(csv).toContain("30000");
+    expect(csv).toContain("已核對台幣參考成本");
+    expect(csv).toContain("平均買進參考 FX");
+    expect(csv).toContain("買進／賣出事件");
+    expect(csv).toContain("1／0");
+    expect(csv).toContain("已核對部位現值");
     expect(md).toContain("交易紀錄的參考 FX");
     expect(md).toContain("並非所選活動月份的單月報酬");
   });
@@ -257,7 +264,13 @@ describe("portfolio report", () => {
       eligibleCount: 1, explainedCount: 0, unknownCount: 1, unknownValueTwd: 11520
     });
     expect(report.usdFxAttribution.rows[0]?.combinedGainTwd).toBeNull();
-    expect(portfolioReportToCsv(report)).toContain("資料不足");
+    const auditCsv = portfolioReportToCsv(report);
+    expect(auditCsv).toContain("資料不足");
+    expect(auditCsv).toContain("未核對部位現值");
+    expect(auditCsv).toContain("11520");
+    expect(auditCsv).toContain("不是未知損益額");
+    expect(auditCsv).toContain("已核對台幣參考成本");
+    expect(auditCsv).not.toContain(",0,不完整時不以今天匯率填入");
     expect(portfolioReportToMarkdown(report)).toContain("缺少可銜接到目前持股");
   });
 
