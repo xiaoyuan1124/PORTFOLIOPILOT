@@ -249,6 +249,9 @@ describe("portfolio report", () => {
     expect(csv).toContain("買進／賣出事件");
     expect(csv).toContain("1／0");
     expect(csv).toContain("已核對部位現值");
+    expect(csv).toContain("按現值加權可核對比例");
+    expect(csv).toContain("100.00%");
+    expect(md).toContain("按美元證券現值加權的核對覆蓋率：100.00%");
     expect(md).toContain("交易紀錄的參考 FX");
     expect(md).toContain("並非所選活動月份的單月報酬");
   });
@@ -267,6 +270,9 @@ describe("portfolio report", () => {
     const auditCsv = portfolioReportToCsv(report);
     expect(auditCsv).toContain("資料不足");
     expect(auditCsv).toContain("未核對部位現值");
+    expect(auditCsv).toContain("按現值加權可核對比例");
+    expect(auditCsv).toContain("0.00%");
+    expect(portfolioReportToMarkdown(report)).toContain("核對覆蓋率：0.00%");
     expect(auditCsv).toContain("11520");
     expect(auditCsv).toContain("不是未知損益額");
     expect(auditCsv).toContain("已核對台幣參考成本");
