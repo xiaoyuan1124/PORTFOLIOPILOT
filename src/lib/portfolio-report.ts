@@ -250,6 +250,10 @@ export function portfolioReportToCsv(report: PortfolioReport) {
     { section: "外幣成本完整度", metric: "美元證券部位", value: String(report.usdFxAttribution.eligibleCount), detail: "不含現金" },
     { section: "外幣成本完整度", metric: "可拆分部位", value: String(report.usdFxAttribution.explainedCount), detail: "完整連動交易鏈" },
     { section: "外幣成本完整度", metric: "缺資料部位", value: String(report.usdFxAttribution.unknownCount), detail: "不納入股價／匯率估算" },
+    { section: "外幣成本完整度", metric: "已核對部位現值", value: String(report.usdFxAttribution.explainedValueTwd), detail: "TWD，目前參考匯率估值；不是損益" },
+    { section: "外幣成本完整度", metric: "未核對部位現值", value: String(report.usdFxAttribution.unknownValueTwd), detail: "TWD，目前參考匯率估值；不是未知損益額" },
+    { section: "外幣成本完整度", metric: "全部美元證券現值", value: String(report.usdFxAttribution.eligibleValueTwd), detail: "TWD，不含美元現金" },
+    { section: "外幣成本完整度", metric: "已核對歷史參考成本", value: report.usdFxAttribution.explainedCount ? String(report.usdFxAttribution.recordedCostTwd) : "資料不足", detail: "TWD；只含完整交易鏈的持股" },
     { section: "外幣損益參考估算", metric: "已核對股價影響", value: report.usdFxAttribution.explainedCount ? String(report.usdFxAttribution.priceImpactTwd) : "資料不足", detail: "TWD，使用目前參考匯率" },
     { section: "外幣損益參考估算", metric: "已核對匯率影響", value: report.usdFxAttribution.explainedCount ? String(report.usdFxAttribution.fxImpactTwd) : "資料不足", detail: "TWD，買進時記錄的參考匯率，不代表實際換匯損益" },
     { section: "外幣損益參考估算", metric: "已核對損益合計", value: report.usdFxAttribution.explainedCount ? String(report.usdFxAttribution.combinedGainTwd) : "資料不足", detail: "TWD，僅持有部位，未涵蓋未核對部位" }
@@ -262,6 +266,16 @@ export function portfolioReportToCsv(report: PortfolioReport) {
       detail: item.combinedGainTwd === null ? item.reason
         : `股價 ${item.priceImpactTwd}／匯率 ${item.fxImpactTwd}／買進參考 FX ${item.averageRecordedFx}`
     });
+    const label = `${item.symbol} ${item.name} · ${item.account}`;
+    const verified = item.status === "verified_chain";
+    rows.push(
+      { section: "美元成本明細", metric: `${label}｜核對狀態`, value: verified ? "完整" : "資料不足", detail: item.reason },
+      { section: "美元成本明細", metric: `${label}｜目前股數`, value: String(item.quantity), detail: "股，不等於交易筆數" },
+      { section: "美元成本明細", metric: `${label}｜目前部位現值`, value: String(item.marketValueTwd), detail: "TWD，不是損益" },
+      { section: "美元成本明細", metric: `${label}｜已核對台幣參考成本`, value: verified ? String(item.recordedCostTwd) : "資料不足", detail: "不完整時不以今天匯率填入" },
+      { section: "美元成本明細", metric: `${label}｜買進／賣出事件`, value: verified ? `${item.buyCount}／${item.saleCount}` : "資料不足", detail: "只統計通過完整來源核對的事件" },
+      { section: "美元成本明細", metric: `${label}｜平均買進參考 FX`, value: verified ? String(item.averageRecordedFx) : "資料不足", detail: "TWD/USD，非實際換匯執行率" }
+    );
   });
 
   if (report.daily) {
