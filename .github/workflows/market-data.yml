@@ -71,7 +71,18 @@ jobs:
             echo "MOPS quarterly refresh failed after retries. The workflow will preserve the previously committed public/data/tw-quarterly-margins.json cache and continue publishing other official-data updates."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Fetch official TWSE benchmark history
+        id: benchmarks
+        continue-on-error: true
         run: node scripts/update-benchmarks.mjs
+      - name: Report benchmark cache fallback
+        if: steps.benchmarks.outcome == 'failure'
+        run: |
+          echo "::warning::TWSE benchmark source unavailable or invalid after retries. Retaining the previously verified TAIEX index cache; no new benchmark date or values are invented."
+          {
+            echo "### TWSE benchmark cache fallback"
+            echo ""
+            echo "The official TWSE benchmark history request failed. The existing public/data/tw-benchmarks.json is preserved, and any independent verified market-data updates can still be published. Benchmark dates in the UI reflect the previous successful data source, not this failed attempt."
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Commit changed caches
         run: |
           if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-material-events.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json public/data/tw-etf-compositions.json; then
