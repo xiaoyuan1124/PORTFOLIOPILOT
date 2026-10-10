@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-10-10T05:41:06.089Z",
+  "generatedAt": "2026-10-10T06:19:41.340Z",
   "sources": [
     {
       "name": "TWSE",
       "url": "https://openapi.twse.com.tw/v1/exchangeReport/BWIBBU_ALL",
-      "fetchedAt": "2026-10-10T05:41:06.089Z",
+      "fetchedAt": "2026-10-10T06:19:41.340Z",
       "asOf": "2026-10-08",
       "rowCount": 1082
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_peratio_analysis",
-      "fetchedAt": "2026-10-10T05:41:06.089Z",
+      "fetchedAt": "2026-10-10T06:19:41.340Z",
       "asOf": "2026-10-08",
       "rowCount": 885
     }
