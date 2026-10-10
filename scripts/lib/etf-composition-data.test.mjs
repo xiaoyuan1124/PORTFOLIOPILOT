@@ -68,6 +68,27 @@ describe("ETF issuer composition parser", () => {
     expect(() => validateOfficialEtfAsOf({ ...current, asOf: "2026/10/08" }, "2026-10-09")).toThrow();
   });
 
+  it("rejects older issuer snapshots but accepts same-day corrections and newer data", () => {
+    const previous = { etfSymbol: "00935", asOf: "2026-10-08" };
+    const older = { etfSymbol: "00935", asOf: "2026-10-07" };
+    const revised = { etfSymbol: "00935", asOf: "2026-10-08" };
+    const newer = { etfSymbol: "00935", asOf: "2026-10-09" };
+    expect(() => validateOfficialEtfAsOf(older, "2026-10-09", previous)).toThrow(/早於已保存快照/);
+    expect(validateOfficialEtfAsOf(revised, "2026-10-09", previous)).toBe(revised);
+    expect(validateOfficialEtfAsOf(newer, "2026-10-09", previous)).toBe(newer);
+    expect(validateOfficialEtfAsOf(older, "2026-10-09")).toBe(older);
+  });
+
+  it("does not let invalid legacy dates or unrelated ETFs block a valid refresh", () => {
+    const current = { etfSymbol: "00935", asOf: "2026-10-07" };
+    expect(validateOfficialEtfAsOf(current, "2026-10-09", {
+      etfSymbol: "00935", asOf: "2026-02-30"
+    })).toBe(current);
+    expect(validateOfficialEtfAsOf(current, "2026-10-09", {
+      etfSymbol: "00944", asOf: "2026-10-08"
+    })).toBe(current);
+  });
+
   it("builds a traceable official issuer composition", () => {
     const result = parseIssuerComposition({
       html: fixture,
