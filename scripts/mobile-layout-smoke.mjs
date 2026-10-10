@@ -72,7 +72,15 @@ try {
     await page.getByRole("button", { name: "報告", exact: true }).click();
     await page.getByRole("heading", { name: "投資組合報告" }).waitFor();
     await page.getByRole("heading", { name: "美元持股 · 股價／匯率成本來源" }).waitFor();
+    await page.getByRole("progressbar", { name: "美元證券成本核對覆蓋率" }).waitFor();
     await checkLayout(page, viewport.name, "portfolio-report");
+    const missingFxFilter = page.getByRole("button", { name: /只看資料不足（.*筆）/ });
+    if (await missingFxFilter.count()) {
+      await missingFxFilter.click();
+      await page.getByRole("button", { name: "顯示所有美元部位" }).waitFor();
+      await checkLayout(page, viewport.name, "fx-missing-only");
+      await page.getByRole("button", { name: "顯示所有美元部位" }).click();
+    }
     const accountFilter = page.getByLabel("帳戶範圍");
     const accountChoices = await accountFilter.locator("option").count();
     if (accountChoices > 1) {

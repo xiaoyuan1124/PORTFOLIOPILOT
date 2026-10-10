@@ -23,6 +23,10 @@ export type UsdFxAttributionSummary = {
   eligibleCount: number;
   explainedCount: number;
   unknownCount: number;
+  /** Share of current USD securities value with verified trade-date cost basis.
+   * Null when no positive/finite USD securities valuation exists.
+   */
+  verifiedValueCoveragePct: number | null;
   eligibleValueTwd: number;
   explainedValueTwd: number;
   unknownValueTwd: number;
@@ -252,12 +256,20 @@ export function analyzeUsdFxAttribution(
   });
 
   const explained = rows.filter((row) => row.status === "verified_chain");
+  const eligibleValueTwd = rows.reduce((sum, row) => sum + row.marketValueTwd, 0);
+  const explainedValueTwd = explained.reduce((sum, row) => sum + row.marketValueTwd, 0);
+  const valuationIsAvailable = rows.length > 0 && Number.isFinite(currentUsdTwd) &&
+    currentUsdTwd > 0 && rows.every((row) => Number.isFinite(row.marketValueTwd) && row.marketValueTwd > 0);
+  const verifiedValueCoveragePct = valuationIsAvailable && eligibleValueTwd > 0
+    ? Math.max(0, Math.min(100, explainedValueTwd / eligibleValueTwd * 100))
+    : null;
   return {
     eligibleCount: rows.length,
     explainedCount: explained.length,
     unknownCount: rows.length - explained.length,
-    eligibleValueTwd: rows.reduce((sum, row) => sum + row.marketValueTwd, 0),
-    explainedValueTwd: explained.reduce((sum, row) => sum + row.marketValueTwd, 0),
+    verifiedValueCoveragePct,
+    eligibleValueTwd,
+    explainedValueTwd,
     unknownValueTwd: rows.filter((row) => row.status !== "verified_chain").reduce((sum, row) => sum + row.marketValueTwd, 0),
     recordedCostTwd: explained.reduce((sum, row) => sum + row.recordedCostTwd!, 0),
     priceImpactTwd: explained.reduce((sum, row) => sum + row.priceImpactTwd!, 0),

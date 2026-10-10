@@ -174,6 +174,32 @@ describe("USD holding attribution with complete cost provenance", () => {
     expect(result.rows[0]?.status).toBe("incomplete_chain");
   });
 
+  it("reports value-weighted verified FX basis coverage rather than only holding counts", () => {
+    const verified = holding("us-a", 10, 100, 120);
+    const imported = holding("us-b", 10, 100, 200, "第二帳戶");
+    const result = analyzeUsdFxAttribution(
+      [verified, imported],
+      [trade("open", "buy", null, verified, 1000, 10, 30)],
+      32, "2026-10-09"
+    );
+    expect(result).toMatchObject({
+      eligibleCount: 2, explainedCount: 1, unknownCount: 1,
+      eligibleValueTwd: 102400, explainedValueTwd: 38400,
+      unknownValueTwd: 64000
+    });
+    expect(result.verifiedValueCoveragePct).toBeCloseTo(37.5);
+    expect(result.combinedGainTwd).toBeCloseTo(8400);
+    expect(result.rows.find((row) => row.holdingId === "us-b")?.combinedGainTwd).toBeNull();
+  });
+
+  it("reports unavailable value coverage rather than a fictional 0% for empty or invalid valuations", () => {
+    expect(analyzeUsdFxAttribution([], [], 32, "2026-10-09").verifiedValueCoveragePct).toBeNull();
+    const invalid = analyzeUsdFxAttribution([holding()], [], 0, "2026-10-09");
+    expect(invalid.verifiedValueCoveragePct).toBeNull();
+    const allUnknown = analyzeUsdFxAttribution([holding()], [], 32, "2026-10-09");
+    expect(allUnknown.verifiedValueCoveragePct).toBe(0);
+  });
+
   it("never fabricates gains for US holdings when spot FX is invalid", () => {
     const first = holding();
     const row = analyzeUsdFxAttribution([first], [trade("open", "buy", null, first, 1000, 10, 30)], 0, "2026-10-09").rows[0];
