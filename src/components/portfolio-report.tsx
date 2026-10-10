@@ -26,6 +26,7 @@ export function PortfolioReportView({ state }: { state: AppState }) {
   const [loading, setLoading] = useState(true);
   const asOf = localDateKey();
   const [selectedAccount, setSelectedAccount] = useState("");
+  const [onlyMissingFxBasis, setOnlyMissingFxBasis] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(() => localDateKey().slice(0, 7));
   const accountOptions = useMemo(
     () => [...new Set([
@@ -75,6 +76,18 @@ export function PortfolioReportView({ state }: { state: AppState }) {
     }),
     [asOf, quotes, state, selectedAccount, selectedMonth]
   );
+
+  const missingBasisFirst = useMemo(
+    () => [...report.usdFxAttribution.rows].sort((a, b) =>
+      Number(a.status === "verified_chain") - Number(b.status === "verified_chain") ||
+      b.marketValueTwd - a.marketValueTwd ||
+      a.symbol.localeCompare(b.symbol)
+    ),
+    [report.usdFxAttribution.rows]
+  );
+  const fxReviewRows = onlyMissingFxBasis
+    ? missingBasisFirst.filter((row) => row.status !== "verified_chain")
+    : missingBasisFirst;
 
   function exportCsv() {
     downloadText(
@@ -218,6 +231,25 @@ export function PortfolioReportView({ state }: { state: AppState }) {
               只拆分完整連動買賣鏈的美元證券目前持倉；其他資料不足的部位不估算。
               買入時記錄的是參考匯率，不一定是實際換匯成交匯率。與上方採「現價匯率換算成本」的未實現損益不同。
             </p>
+            <div className="mt-3 rounded-xl border border-black/7 p-3 dark:border-white/8">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+                <span className="font-semibold">按資產現值計算的成本核對覆蓋率</span>
+                <strong className="tabular-nums">{pct(report.usdFxAttribution.verifiedValueCoveragePct)}</strong>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-black/10 dark:bg-white/10"
+                role="progressbar"
+                aria-label="美元證券成本核對覆蓋率"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={report.usdFxAttribution.verifiedValueCoveragePct ?? undefined}>
+                <div className="h-full rounded-full bg-[#456b58]"
+                  style={{ width: `${report.usdFxAttribution.verifiedValueCoveragePct ?? 0}%` }} />
+              </div>
+              <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
+                已核對現值 {money(report.usdFxAttribution.explainedValueTwd)}／全部美元證券現值 {money(report.usdFxAttribution.eligibleValueTwd)}。
+                按現值加權，不能解讀為已核對損益的占比；報價或匯率無效時不計算百分比。
+              </p>
+            </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
               <div className="mini-metric">
                 <span>可核對股價影響</span>
@@ -238,9 +270,23 @@ export function PortfolioReportView({ state }: { state: AppState }) {
               此區不含美元現金、已實現損益、股息、現金換匯、手續費稅務的獨立歸因。
             </p>
             {report.usdFxAttribution.rows.length ? (
-              <InfoDisclosure summary={`逐筆查看 ${report.usdFxAttribution.rows.length} 個美元部位的成本完整度`} className="mt-3">
+              <div className="mt-3 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setOnlyMissingFxBasis((value) => !value)}
+                  aria-pressed={onlyMissingFxBasis}
+                  className={`min-h-11 max-w-full rounded-xl border px-3 text-left text-xs font-semibold transition ${onlyMissingFxBasis
+                    ? "border-[#315f49]/30 bg-[#e7f1e9] text-[#245238] dark:bg-[#173426] dark:text-[#a9d7b7]"
+                    : "border-black/8 bg-white/60 text-black/60 dark:border-white/10 dark:bg-white/5"}`}
+                >
+                  {onlyMissingFxBasis ? "顯示所有美元部位" : `只看資料不足（${report.usdFxAttribution.unknownCount} 筆）`}
+                </button>
+                <p role="status" className="text-xs text-black/45 dark:text-white/45">
+                  顯示 {fxReviewRows.length} 筆，資料不足的部位按現值由大到小排列，方便優先核對。
+                </p>
+                <InfoDisclosure summary={`逐筆查看 ${fxReviewRows.length} 個美元部位的成本完整度`}>
                 <div className="space-y-2">
-                  {report.usdFxAttribution.rows.map((row) => (
+                  {fxReviewRows.map((row) => (
                     <div key={row.holdingId} className="min-w-0 rounded-xl border border-black/7 p-3 text-xs dark:border-white/8">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <strong className="min-w-0 break-words">{row.symbol} · {row.name} · {row.account}</strong>
@@ -259,8 +305,10 @@ export function PortfolioReportView({ state }: { state: AppState }) {
                       )}
                     </div>
                   ))}
+                  {!fxReviewRows.length ? <p className="text-xs text-black/45 dark:text-white/45">所有美元部位皆已核對，沒有待補的成本資料。</p> : null}
                 </div>
-              </InfoDisclosure>
+                </InfoDisclosure>
+              </div>
             ) : <p className="mt-3 text-xs text-black/45 dark:text-white/45">目前沒有美元證券持股，因此沒有外幣證券成本可分析。</p>}
           </CardContent>
         </Card>
