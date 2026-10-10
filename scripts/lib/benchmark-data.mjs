@@ -65,6 +65,25 @@ export function twsePriceMonthUrl(monthStart) {
   return `https://www.twse.com.tw/rwd/zh/afterTrading/FMTQIK?date=${monthStart.replaceAll("-", "")}&response=json`;
 }
 
+/**
+ * TWSE sometimes returns an HTTP 200 HTML protection/error page even when a
+ * response=json URL was requested. Treat that as a transient *source outage*,
+ * not as a parsed benchmark. Never silently accept non-JSON price data.
+ */
+export function parseTwseBenchmarkJsonText(body, label = "TWSE benchmark") {
+  const raw = String(body ?? "");
+  if (/^\s*</.test(raw)) {
+    const error = new Error(`${label} returned HTML instead of official JSON`);
+    error.status = 503;
+    throw error;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new Error(`${label} returned malformed JSON; refusing benchmark update`);
+  }
+}
+
 export function isTransientTwseRequestError(error) {
   const status = Number(error?.status);
   if (status === 429 || status >= 500) return true;

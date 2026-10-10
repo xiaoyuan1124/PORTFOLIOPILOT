@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isTransientTwseRequestError,
+  parseTwseBenchmarkJsonText,
   parseTwseTaiexPrice,
   parseTwseTaiexTotalReturn,
   retryTransientTwseRequest,
@@ -54,6 +55,48 @@ describe("TWSE TAIEX total-return benchmark parser", () => {
     ]);
     expect(twseMonthUrl("2026-09-01")).toContain("date=20260901");
     expect(twsePriceMonthUrl("2026-09-01")).toContain("FMTQIK");
+  });
+});
+
+describe("TWSE benchmark response integrity", () => {
+  it("parses genuine JSON but rejects an HTTP 200 HTML error page with bounded retry classification", () => {
+    const payload = { stat: "OK", data: [["115/10/08", "42,000"]] };
+    expect(parseTwseBenchmarkJsonText(JSON.stringify(payload), "TWSE test")).toEqual(payload);
+    let error = null;
+    try {
+      parseTwseBenchmarkJsonText("<!DOCTYPE html><html><body>TWSE unavailable</body></html>", "MFI94U");
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error?.message).toMatch(/HTML instead of official JSON/);
+    expect(isTransientTwseRequestError(error)).toBe(true);
+    expect(() => parseTwseBenchmarkJsonText("{broken-json", "MFI94U")).toThrow(/malformed JSON/);
+  });
+
+  it("retries HTML source outages a finite number of times and never invents values", async () => {
+    let calls = 0;
+    const delays = [];
+    const result = await retryTransientTwseRequest(
+      async () => {
+        calls++;
+        if (calls < 3) return parseTwseBenchmarkJsonText("<html>temporarily blocked</html>", "FMTQIK");
+        return parseTwseBenchmarkJsonText('{"stat":"OK","data":[]}', "FMTQIK");
+      },
+      { attempts: 4, baseDelayMs: 1, sleepImpl: async (ms) => { delays.push(ms); } }
+    );
+    expect(result).toEqual({ stat: "OK", data: [] });
+    expect(calls).toBe(3);
+    expect(delays).toEqual([1, 2]);
+
+    calls = 0;
+    await expect(retryTransientTwseRequest(
+      async () => {
+        calls++;
+        return parseTwseBenchmarkJsonText("<html>blocked</html>", "FMTQIK");
+      },
+      { attempts: 3, baseDelayMs: 1, sleepImpl: async () => {} }
+    )).rejects.toThrow(/HTML instead of official JSON/);
+    expect(calls).toBe(3);
   });
 });
 

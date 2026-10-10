@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import {
+  parseTwseBenchmarkJsonText,
   parseTwseTaiexPrice,
   parseTwseTaiexTotalReturn,
   retryTransientTwseRequest,
@@ -31,7 +32,7 @@ async function fetchJsonWithRetry(url, label) {
         throw error;
       }
 
-      return response.json();
+      return parseTwseBenchmarkJsonText(await response.text(), label);
     },
     {
       attempts: 4,
