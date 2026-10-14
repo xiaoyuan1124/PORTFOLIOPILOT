@@ -1,18 +1,70 @@
 {
-  "generatedAt": "2026-10-13T17:45:04.758Z",
+  "generatedAt": "2026-10-14T15:23:08.954Z",
   "sources": [
     {
       "name": "TWSE",
       "url": "https://openapi.twse.com.tw/v1/opendata/t187ap05_L",
-      "fetchedAt": "2026-10-13T17:45:04.758Z"
+      "fetchedAt": "2026-10-14T15:23:08.954Z"
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap05_O",
-      "fetchedAt": "2026-10-13T17:45:04.758Z"
+      "fetchedAt": "2026-10-14T15:23:08.954Z"
     }
   ],
   "rows": [
+    {
+      "code": "1101",
+      "name": "台泥",
+      "market": "TWSE",
+      "industry": "水泥工業",
+      "period": "2026-09",
+      "revenue": 14321556,
+      "lastYearRevenue": 13306676,
+      "momPct": 5.963671135746468,
+      "yoyPct": 7.626848357921993,
+      "cumulativeRevenue": 113048525,
+      "cumulativeYoyPct": 3.298870778298021
+    },
+    {
+      "code": "1102",
+      "name": "亞泥",
+      "market": "TWSE",
+      "industry": "水泥工業",
+      "period": "2026-09",
+      "revenue": 6719168,
+      "lastYearRevenue": 6388217,
+      "momPct": 20.19290487843272,
+      "yoyPct": 5.18064743260913,
+      "cumulativeRevenue": 50414167,
+      "cumulativeYoyPct": -5.145623112676688
+    },
+    {
+      "code": "1103",
+      "name": "嘉泥",
+      "market": "TWSE",
+      "industry": "水泥工業",
+      "period": "2026-09",
+      "revenue": 249084,
+      "lastYearRevenue": 234910,
+      "momPct": 7.8883537198101115,
+      "yoyPct": 6.033800178791878,
+      "cumulativeRevenue": 2077991,
+      "cumulativeYoyPct": -7.425999507279654
+    },
+    {
+      "code": "1104",
+      "name": "環泥",
+      "market": "TWSE",
+      "industry": "水泥工業",
+      "period": "2026-09",
+      "revenue": 616147,
+      "lastYearRevenue": 707407,
+      "momPct": 19.05739090780857,
+      "yoyPct": -12.900635701936793,
+      "cumulativeRevenue": 5356185,
+      "cumulativeYoyPct": -7.380784113205961
+    },
     {
       "code": "1108",
       "name": "幸福",
@@ -53,6 +105,32 @@
       "cumulativeYoyPct": -11.564032677197147
     },
     {
+      "code": "1201",
+      "name": "味全",
+      "market": "TWSE",
+      "industry": "食品工業",
+      "period": "2026-09",
+      "revenue": 1894004,
+      "lastYearRevenue": 2160653,
+      "momPct": -5.326829190266179,
+      "yoyPct": -12.341130204618697,
+      "cumulativeRevenue": 16331681,
+      "cumulativeYoyPct": -2.3095696261288126
+    },
+    {
+      "code": "1203",
+      "name": "味王",
+      "market": "TWSE",
+      "industry": "食品工業",
+      "period": "2026-09",
+      "revenue": 451487,
+      "lastYearRevenue": 448993,
+      "momPct": -1.9533879717339657,
+      "yoyPct": 0.5554652299701777,
+      "cumulativeRevenue": 3953776,
+      "cumulativeYoyPct": -8.113007417378363
+    },
+    {
       "code": "1210",
       "name": "大成",
       "market": "TWSE",
@@ -90,6 +168,32 @@
       "yoyPct": 6.245092507797576,
       "cumulativeRevenue": 21866426,
       "cumulativeYoyPct": 4.864146603225078
+    },
+    {
+      "code": "1216",
+      "name": "統一",
+      "market": "TWSE",
+      "industry": "食品工業",
+      "period": "2026-09",
+      "revenue": 61805124,
+      "lastYearRevenue": 58415036,
+      "momPct": -2.054029301039748,
+      "yoyPct": 5.80345101559126,
+      "cumulativeRevenue": 537052993,
+      "cumulativeYoyPct": 4.248855292123125
+    },
+    {
+      "code": "1217",
+      "name": "愛之味",
+      "market": "TWSE",
+      "industry": "食品工業",
+      "period": "2026-09",
+      "revenue": 537523,
+      "lastYearRevenue": 525593,
+      "momPct": -20.958660574984595,
+      "yoyPct": 2.2698171398781946,
+      "cumulativeRevenue": 4077031,
+      "cumulativeYoyPct": 1.1102199657562104
     },
     {
       "code": "1218",
@@ -142,6 +246,32 @@
       "yoyPct": -9.763936678265715,
       "cumulativeRevenue": 8883503,
       "cumulativeYoyPct": -2.4183457622158824
+    },
+    {
+      "code": "1227",
+      "name": "佳格",
+      "market": "TWSE",
+      "industry": "食品工業",
+      "period": "2026-09",
+      "revenue": 3240403,
+      "lastYearRevenue": 2981999,
+      "momPct": 23.469464350149384,
+      "yoyPct": 8.665462329128882,
+      "cumulativeRevenue": 21876505,
+      "cumulativeYoyPct": 7.5733245556261135
+    },
+    {
+      "code": "1229",
+      "name": "聯華",
+      "market": "TWSE",
+      "industry": "食品工業",
+      "period": "2026-09",
+      "revenue": 1261817,
+      "lastYearRevenue": 1235489,
+      "momPct": 42.75659751056122,
+      "yoyPct": 2.1309780985504525,
+      "cumulativeRevenue": 9284341,
+      "cumulativeYoyPct": -4.90844496501847
     },
     {
       "code": "1231",
@@ -235,6 +365,19 @@
       "cumulativeYoyPct": 8.431298538491475
     },
     {
+      "code": "1256",
+      "name": "鮮活果汁-KY",
+      "market": "TWSE",
+      "industry": "食品工業",
+      "period": "2026-09",
+      "revenue": 561575,
+      "lastYearRevenue": 419697,
+      "momPct": -13.451787602218051,
+      "yoyPct": 33.80486398520838,
+      "cumulativeRevenue": 4477467,
+      "cumulativeYoyPct": 38.12815610894975
+    },
+    {
       "code": "1259",
       "name": "安心",
       "market": "TPEx",
@@ -298,6 +441,32 @@
       "yoyPct": 10.772374676787054,
       "cumulativeRevenue": 744071,
       "cumulativeYoyPct": -1.3460210043979035
+    },
+    {
+      "code": "1301",
+      "name": "台塑",
+      "market": "TWSE",
+      "industry": "塑膠工業",
+      "period": "2026-09",
+      "revenue": 15018323,
+      "lastYearRevenue": 14017714,
+      "momPct": 7.332116719201194,
+      "yoyPct": 7.138175311609297,
+      "cumulativeRevenue": 133543722,
+      "cumulativeYoyPct": -0.5684994328452451
+    },
+    {
+      "code": "1303",
+      "name": "南亞",
+      "market": "TWSE",
+      "industry": "塑膠工業",
+      "period": "2026-09",
+      "revenue": 34423266,
+      "lastYearRevenue": 22171572,
+      "momPct": 12.49006532791354,
+      "yoyPct": 55.25857165202359,
+      "cumulativeRevenue": 247840286,
+      "cumulativeYoyPct": 26.808140706895525
     },
     {
       "code": "1304",
@@ -430,6 +599,19 @@
       "cumulativeYoyPct": -8.915208545967989
     },
     {
+      "code": "1316",
+      "name": "上曜",
+      "market": "TWSE",
+      "industry": "建材營造",
+      "period": "2026-09",
+      "revenue": 734220,
+      "lastYearRevenue": 420365,
+      "momPct": 6.371850909612467,
+      "yoyPct": 74.66249568827091,
+      "cumulativeRevenue": 6096648,
+      "cumulativeYoyPct": 115.02921243693271
+    },
+    {
       "code": "1319",
       "name": "東陽",
       "market": "TWSE",
@@ -456,6 +638,32 @@
       "cumulativeYoyPct": 2.4485224464860718
     },
     {
+      "code": "1323",
+      "name": "永裕",
+      "market": "TWSE",
+      "industry": "塑膠工業",
+      "period": "2026-09",
+      "revenue": 192798,
+      "lastYearRevenue": 179208,
+      "momPct": -9.868728612300615,
+      "yoyPct": 7.5833668139815185,
+      "cumulativeRevenue": 1677252,
+      "cumulativeYoyPct": 9.530747263612065
+    },
+    {
+      "code": "1324",
+      "name": "地球",
+      "market": "TWSE",
+      "industry": "塑膠工業",
+      "period": "2026-09",
+      "revenue": 58139,
+      "lastYearRevenue": 59976,
+      "momPct": 45.23857107169623,
+      "yoyPct": -3.062891823396025,
+      "cumulativeRevenue": 486981,
+      "cumulativeYoyPct": -11.817144719687093
+    },
+    {
       "code": "1325",
       "name": "恆大",
       "market": "TWSE",
@@ -467,6 +675,19 @@
       "yoyPct": -30.270042982620073,
       "cumulativeRevenue": 173881,
       "cumulativeYoyPct": -23.722017748961427
+    },
+    {
+      "code": "1326",
+      "name": "台化",
+      "market": "TWSE",
+      "industry": "塑膠工業",
+      "period": "2026-09",
+      "revenue": 33399645,
+      "lastYearRevenue": 23069398,
+      "momPct": 9.298480535353574,
+      "yoyPct": 44.779005503307886,
+      "cumulativeRevenue": 264128951,
+      "cumulativeYoyPct": 18.959356637788893
     },
     {
       "code": "1336",
@@ -558,6 +779,32 @@
       "yoyPct": 28.054767315947835,
       "cumulativeRevenue": 2856146,
       "cumulativeYoyPct": 36.03733405222405
+    },
+    {
+      "code": "1402",
+      "name": "遠東新",
+      "market": "TWSE",
+      "industry": "紡織纖維",
+      "period": "2026-09",
+      "revenue": 23703741,
+      "lastYearRevenue": 22210407,
+      "momPct": 3.816347994939467,
+      "yoyPct": 6.723577825476139,
+      "cumulativeRevenue": 200416707,
+      "cumulativeYoyPct": 8.157972014093946
+    },
+    {
+      "code": "1409",
+      "name": "新纖",
+      "market": "TWSE",
+      "industry": "紡織纖維",
+      "period": "2026-09",
+      "revenue": 3444596,
+      "lastYearRevenue": 3084765,
+      "momPct": 0.5481025121292163,
+      "yoyPct": 11.664778354266856,
+      "cumulativeRevenue": 33566775,
+      "cumulativeYoyPct": 11.978011236907122
     },
     {
       "code": "1410",
@@ -664,6 +911,19 @@
       "cumulativeYoyPct": -1.3369819009235437
     },
     {
+      "code": "1432",
+      "name": "大魯閣",
+      "market": "TWSE",
+      "industry": "運動休閒",
+      "period": "2026-09",
+      "revenue": 67640,
+      "lastYearRevenue": 100887,
+      "momPct": -17.641758696684484,
+      "yoyPct": -32.95469188299781,
+      "cumulativeRevenue": 616351,
+      "cumulativeYoyPct": -38.905525009193646
+    },
+    {
       "code": "1434",
       "name": "福懋",
       "market": "TWSE",
@@ -727,6 +987,19 @@
       "yoyPct": 1566.053201360965,
       "cumulativeRevenue": 1160734,
       "cumulativeYoyPct": 5529.984963864772
+    },
+    {
+      "code": "1439",
+      "name": "雋揚",
+      "market": "TWSE",
+      "industry": "建材營造",
+      "period": "2026-09",
+      "revenue": 966592,
+      "lastYearRevenue": 8088,
+      "momPct": 2590.5831593597773,
+      "yoyPct": 11850.939663699308,
+      "cumulativeRevenue": 1140156,
+      "cumulativeYoyPct": 120.98616118153274
     },
     {
       "code": "1440",
@@ -1002,6 +1275,32 @@
       "cumulativeYoyPct": 0.7247938396115278
     },
     {
+      "code": "1466",
+      "name": "聚隆",
+      "market": "TWSE",
+      "industry": "紡織纖維",
+      "period": "2026-09",
+      "revenue": 171661,
+      "lastYearRevenue": 206793,
+      "momPct": -6.670472462349807,
+      "yoyPct": -16.98896964597448,
+      "cumulativeRevenue": 1674522,
+      "cumulativeYoyPct": -13.868682971992902
+    },
+    {
+      "code": "1467",
+      "name": "南緯",
+      "market": "TWSE",
+      "industry": "紡織纖維",
+      "period": "2026-09",
+      "revenue": 451139,
+      "lastYearRevenue": 369967,
+      "momPct": -11.374199961495998,
+      "yoyPct": 21.940335219087107,
+      "cumulativeRevenue": 3945807,
+      "cumulativeYoyPct": 2.140578818020902
+    },
+    {
       "code": "1468",
       "name": "昶和",
       "market": "TWSE",
@@ -1026,6 +1325,32 @@
       "yoyPct": -38.63834590323739,
       "cumulativeRevenue": 506070,
       "cumulativeYoyPct": -14.571193204453838
+    },
+    {
+      "code": "1471",
+      "name": "首利",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 8469,
+      "lastYearRevenue": 17269,
+      "momPct": 47.64644351464435,
+      "yoyPct": -50.958364699751,
+      "cumulativeRevenue": 70307,
+      "cumulativeYoyPct": -52.70617516480559
+    },
+    {
+      "code": "1472",
+      "name": "三洋實業",
+      "market": "TWSE",
+      "industry": "建材營造",
+      "period": "2026-09",
+      "revenue": 338770,
+      "lastYearRevenue": 283394,
+      "momPct": -5.263805499548369,
+      "yoyPct": 19.54028666803108,
+      "cumulativeRevenue": 2967184,
+      "cumulativeYoyPct": 8.77495904237048
     },
     {
       "code": "1473",
@@ -1093,6 +1418,19 @@
       "cumulativeYoyPct": 0.1690214546765049
     },
     {
+      "code": "1503",
+      "name": "士電",
+      "market": "TWSE",
+      "industry": "電機機械",
+      "period": "2026-09",
+      "revenue": 3139479,
+      "lastYearRevenue": 2900356,
+      "momPct": 10.293961106143936,
+      "yoyPct": 8.244608592876185,
+      "cumulativeRevenue": 30078957,
+      "cumulativeYoyPct": 9.400963853002779
+    },
+    {
       "code": "1504",
       "name": "東元",
       "market": "TWSE",
@@ -1117,6 +1455,19 @@
       "yoyPct": 14.700443035402186,
       "cumulativeRevenue": 968765,
       "cumulativeYoyPct": 18.142073170731706
+    },
+    {
+      "code": "1512",
+      "name": "瑞利",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 90851,
+      "lastYearRevenue": 82722,
+      "momPct": 0.4178042067799233,
+      "yoyPct": 9.82689006552066,
+      "cumulativeRevenue": 808557,
+      "cumulativeYoyPct": -2.2748945767296487
     },
     {
       "code": "1513",
@@ -1171,6 +1522,32 @@
       "cumulativeYoyPct": 48.70117100205596
     },
     {
+      "code": "1517",
+      "name": "利奇",
+      "market": "TWSE",
+      "industry": "電機機械",
+      "period": "2026-09",
+      "revenue": 170478,
+      "lastYearRevenue": 179234,
+      "momPct": 8.154163362410785,
+      "yoyPct": -4.885233828403093,
+      "cumulativeRevenue": 1512557,
+      "cumulativeYoyPct": -0.8251040395609324
+    },
+    {
+      "code": "1519",
+      "name": "華城",
+      "market": "TWSE",
+      "industry": "電機機械",
+      "period": "2026-09",
+      "revenue": 2028540,
+      "lastYearRevenue": 1892504,
+      "momPct": 5.85010543057471,
+      "yoyPct": 7.188148611574929,
+      "cumulativeRevenue": 16207036,
+      "cumulativeYoyPct": -0.7314022008951365
+    },
+    {
       "code": "1521",
       "name": "大億",
       "market": "TWSE",
@@ -1182,6 +1559,19 @@
       "yoyPct": -13.022761380690346,
       "cumulativeRevenue": 2832332,
       "cumulativeYoyPct": 6.709878096747991
+    },
+    {
+      "code": "1522",
+      "name": "堤維西",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 2333537,
+      "lastYearRevenue": 2440028,
+      "momPct": 7.890366446928583,
+      "yoyPct": -4.364335163366977,
+      "cumulativeRevenue": 20196174,
+      "cumulativeYoyPct": 25.20181148027983
     },
     {
       "code": "1524",
@@ -1327,6 +1717,19 @@
       "cumulativeYoyPct": -27.771408529282784
     },
     {
+      "code": "1536",
+      "name": "和大",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 334558,
+      "lastYearRevenue": 388120,
+      "momPct": -27.28122398499362,
+      "yoyPct": -13.80037101927239,
+      "cumulativeRevenue": 3589560,
+      "cumulativeYoyPct": 0.8540774485679494
+    },
+    {
       "code": "1537",
       "name": "廣隆",
       "market": "TWSE",
@@ -1444,6 +1847,19 @@
       "cumulativeYoyPct": -15.309489967187334
     },
     {
+      "code": "1568",
+      "name": "倉佑",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 86357,
+      "lastYearRevenue": 87441,
+      "momPct": -2.3398095582747156,
+      "yoyPct": -1.2396930501709724,
+      "cumulativeRevenue": 824346,
+      "cumulativeYoyPct": 4.036801453884598
+    },
+    {
       "code": "1569",
       "name": "濱川",
       "market": "TPEx",
@@ -1546,6 +1962,32 @@
       "yoyPct": 0.3793499321617047,
       "cumulativeRevenue": 2022392,
       "cumulativeYoyPct": 7.913568488088854
+    },
+    {
+      "code": "1589",
+      "name": "永冠-KY",
+      "market": "TWSE",
+      "industry": "電機機械",
+      "period": "2026-09",
+      "revenue": 643899,
+      "lastYearRevenue": 676968,
+      "momPct": 0.8672181815048805,
+      "yoyPct": -4.884869004147906,
+      "cumulativeRevenue": 5989939,
+      "cumulativeYoyPct": 2.471925143752981
+    },
+    {
+      "code": "1590",
+      "name": "亞德客-KY",
+      "market": "TWSE",
+      "industry": "電機機械",
+      "period": "2026-09",
+      "revenue": 3810653,
+      "lastYearRevenue": 3009936,
+      "momPct": 2.7809207646345335,
+      "yoyPct": 26.60245932139421,
+      "cumulativeRevenue": 33690370,
+      "cumulativeYoyPct": 33.190861396604504
     },
     {
       "code": "1591",
@@ -1756,6 +2198,19 @@
       "cumulativeYoyPct": 5.095251808778394
     },
     {
+      "code": "1617",
+      "name": "榮星",
+      "market": "TWSE",
+      "industry": "電器電纜",
+      "period": "2026-09",
+      "revenue": 360543,
+      "lastYearRevenue": 295645,
+      "momPct": -3.6442451340134,
+      "yoyPct": 21.95132676013462,
+      "cumulativeRevenue": 3175892,
+      "cumulativeYoyPct": 29.454353356369058
+    },
+    {
       "code": "1618",
       "name": "合機",
       "market": "TWSE",
@@ -1767,6 +2222,58 @@
       "yoyPct": -13.428631490435148,
       "cumulativeRevenue": 3838593,
       "cumulativeYoyPct": 0.2719829600533517
+    },
+    {
+      "code": "1623",
+      "name": "大東電",
+      "market": "TWSE",
+      "industry": "電器電纜",
+      "period": "2026-09",
+      "revenue": 519300,
+      "lastYearRevenue": 537249,
+      "momPct": 7.67715515006998,
+      "yoyPct": -3.340908963999933,
+      "cumulativeRevenue": 4918828,
+      "cumulativeYoyPct": 1.6959356797749916
+    },
+    {
+      "code": "1626",
+      "name": "艾美特-KY",
+      "market": "TWSE",
+      "industry": "電器電纜",
+      "period": "2026-09",
+      "revenue": 476752,
+      "lastYearRevenue": 346813,
+      "momPct": 26.737431979434994,
+      "yoyPct": 37.466588622687155,
+      "cumulativeRevenue": 6410993,
+      "cumulativeYoyPct": 0.9809703193434135
+    },
+    {
+      "code": "1702",
+      "name": "南僑",
+      "market": "TWSE",
+      "industry": "食品工業",
+      "period": "2026-09",
+      "revenue": 2192233,
+      "lastYearRevenue": 1981241,
+      "momPct": 11.195518972240595,
+      "yoyPct": 10.64948686202234,
+      "cumulativeRevenue": 17559113,
+      "cumulativeYoyPct": 1.7263297203792405
+    },
+    {
+      "code": "1707",
+      "name": "葡萄王",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 726307,
+      "lastYearRevenue": 788737,
+      "momPct": 2.8678947055341064,
+      "yoyPct": -7.915185923825052,
+      "cumulativeRevenue": 6840697,
+      "cumulativeYoyPct": -5.635054826102713
     },
     {
       "code": "1708",
@@ -1793,6 +2300,19 @@
       "yoyPct": 6.608093372269249,
       "cumulativeRevenue": 8374585,
       "cumulativeYoyPct": 20.309579430021824
+    },
+    {
+      "code": "1710",
+      "name": "東聯",
+      "market": "TWSE",
+      "industry": "化學工業",
+      "period": "2026-09",
+      "revenue": 3025744,
+      "lastYearRevenue": 1739235,
+      "momPct": 26.60970282280674,
+      "yoyPct": 73.96982006456862,
+      "cumulativeRevenue": 18242498,
+      "cumulativeYoyPct": 5.222812827442413
     },
     {
       "code": "1711",
@@ -1860,6 +2380,19 @@
       "cumulativeYoyPct": 13.753340822661455
     },
     {
+      "code": "1718",
+      "name": "中纖",
+      "market": "TWSE",
+      "industry": "化學工業",
+      "period": "2026-09",
+      "revenue": 3378198,
+      "lastYearRevenue": 2557160,
+      "momPct": -19.179178446364602,
+      "yoyPct": 32.107416039669005,
+      "cumulativeRevenue": 36219502,
+      "cumulativeYoyPct": 5.401088521282422
+    },
+    {
       "code": "1720",
       "name": "生達",
       "market": "TWSE",
@@ -1925,6 +2458,19 @@
       "cumulativeYoyPct": 15.876251802603765
     },
     {
+      "code": "1726",
+      "name": "永記",
+      "market": "TWSE",
+      "industry": "化學工業",
+      "period": "2026-09",
+      "revenue": 831092,
+      "lastYearRevenue": 760895,
+      "momPct": 11.414648533068792,
+      "yoyPct": 9.225583030510123,
+      "cumulativeRevenue": 7596664,
+      "cumulativeYoyPct": 4.368790249432795
+    },
+    {
       "code": "1727",
       "name": "中華化",
       "market": "TWSE",
@@ -1962,6 +2508,19 @@
       "yoyPct": 9.676325262662935,
       "cumulativeRevenue": 1277496,
       "cumulativeYoyPct": 9.258663747391468
+    },
+    {
+      "code": "1732",
+      "name": "毛寶",
+      "market": "TWSE",
+      "industry": "化學工業",
+      "period": "2026-09",
+      "revenue": 55645,
+      "lastYearRevenue": 57472,
+      "momPct": 0.07193597698048737,
+      "yoyPct": -3.1789393095768372,
+      "cumulativeRevenue": 525086,
+      "cumulativeYoyPct": 3.246725157007633
     },
     {
       "code": "1733",
@@ -2068,6 +2627,19 @@
       "cumulativeYoyPct": 0.36322221804801175
     },
     {
+      "code": "1762",
+      "name": "中化生",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 69112,
+      "lastYearRevenue": 36272,
+      "momPct": 16.95067264573991,
+      "yoyPct": 90.53815615350683,
+      "cumulativeRevenue": 884379,
+      "cumulativeYoyPct": 27.89987013024577
+    },
+    {
       "code": "1773",
       "name": "勝一",
       "market": "TWSE",
@@ -2079,6 +2651,19 @@
       "yoyPct": 35.23440622086053,
       "cumulativeRevenue": 10672806,
       "cumulativeYoyPct": 25.24896221491789
+    },
+    {
+      "code": "1776",
+      "name": "展宇",
+      "market": "TWSE",
+      "industry": "化學工業",
+      "period": "2026-09",
+      "revenue": 88899,
+      "lastYearRevenue": 92547,
+      "momPct": 16.294493936658686,
+      "yoyPct": -3.9417809329313753,
+      "cumulativeRevenue": 777990,
+      "cumulativeYoyPct": 1.2119572146319506
     },
     {
       "code": "1777",
@@ -2198,6 +2783,19 @@
       "cumulativeYoyPct": -5.7103129330730855
     },
     {
+      "code": "1795",
+      "name": "美時",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 2766433,
+      "lastYearRevenue": 1213533,
+      "momPct": 31.284660891551926,
+      "yoyPct": 127.96520572576107,
+      "cumulativeRevenue": 24818419,
+      "cumulativeYoyPct": 74.19480655845219
+    },
+    {
       "code": "1796",
       "name": "金穎生技",
       "market": "TPEx",
@@ -2222,6 +2820,19 @@
       "yoyPct": 80.63901681691868,
       "cumulativeRevenue": 777243,
       "cumulativeYoyPct": 78.58500125223162
+    },
+    {
+      "code": "1802",
+      "name": "台玻",
+      "market": "TWSE",
+      "industry": "玻璃陶瓷",
+      "period": "2026-09",
+      "revenue": 4967803,
+      "lastYearRevenue": 3704375,
+      "momPct": 8.180164571899436,
+      "yoyPct": 34.10637421967269,
+      "cumulativeRevenue": 36441740,
+      "cumulativeYoyPct": 18.69300101053601
     },
     {
       "code": "1805",
@@ -2276,6 +2887,19 @@
       "cumulativeYoyPct": -0.9169130200896491
     },
     {
+      "code": "1810",
+      "name": "和成",
+      "market": "TWSE",
+      "industry": "玻璃陶瓷",
+      "period": "2026-09",
+      "revenue": 351684,
+      "lastYearRevenue": 335789,
+      "momPct": 2.4281557724401264,
+      "yoyPct": 4.7336273671859415,
+      "cumulativeRevenue": 3268137,
+      "cumulativeYoyPct": -5.234996049207305
+    },
+    {
       "code": "1813",
       "name": "寶利徠",
       "market": "TPEx",
@@ -2315,6 +2939,19 @@
       "cumulativeYoyPct": 4.199883975995672
     },
     {
+      "code": "1903",
+      "name": "士紙",
+      "market": "TWSE",
+      "industry": "造紙工業",
+      "period": "2026-09",
+      "revenue": 11500,
+      "lastYearRevenue": 11966,
+      "momPct": -16.56993615786419,
+      "yoyPct": -3.8943673742269764,
+      "cumulativeRevenue": 113107,
+      "cumulativeYoyPct": -1.041147186715312
+    },
+    {
       "code": "1904",
       "name": "正隆",
       "market": "TWSE",
@@ -2326,6 +2963,19 @@
       "yoyPct": 17.076941398998212,
       "cumulativeRevenue": 34883889,
       "cumulativeYoyPct": 10.349782148325776
+    },
+    {
+      "code": "1905",
+      "name": "華紙",
+      "market": "TWSE",
+      "industry": "造紙工業",
+      "period": "2026-09",
+      "revenue": 1520476,
+      "lastYearRevenue": 1535308,
+      "momPct": 0.1078456030202036,
+      "yoyPct": -0.9660602302599869,
+      "cumulativeRevenue": 13639565,
+      "cumulativeYoyPct": -3.222790936539514
     },
     {
       "code": "1906",
@@ -2341,6 +2991,19 @@
       "cumulativeYoyPct": 11.542787714380863
     },
     {
+      "code": "1907",
+      "name": "永豐餘",
+      "market": "TWSE",
+      "industry": "造紙工業",
+      "period": "2026-09",
+      "revenue": 6652784,
+      "lastYearRevenue": 6400132,
+      "momPct": 3.1073308856235538,
+      "yoyPct": 3.947606080624587,
+      "cumulativeRevenue": 57415236,
+      "cumulativeYoyPct": 4.873221098838152
+    },
+    {
       "code": "1909",
       "name": "榮成",
       "market": "TWSE",
@@ -2352,6 +3015,19 @@
       "yoyPct": 25.293580244394978,
       "cumulativeRevenue": 37921926,
       "cumulativeYoyPct": 16.27895339170964
+    },
+    {
+      "code": "2002",
+      "name": "中鋼",
+      "market": "TWSE",
+      "industry": "鋼鐵工業",
+      "period": "2026-09",
+      "revenue": 31001054,
+      "lastYearRevenue": 24384779,
+      "momPct": 10.922464255556669,
+      "yoyPct": 27.132806903847683,
+      "cumulativeRevenue": 256671858,
+      "cumulativeYoyPct": 6.1581277373922285
     },
     {
       "code": "2006",
@@ -2419,6 +3095,19 @@
       "cumulativeYoyPct": 3.8319144083389807
     },
     {
+      "code": "2012",
+      "name": "春雨",
+      "market": "TWSE",
+      "industry": "鋼鐵工業",
+      "period": "2026-09",
+      "revenue": 678816,
+      "lastYearRevenue": 710608,
+      "momPct": 8.091547624924164,
+      "yoyPct": -4.473915295071263,
+      "cumulativeRevenue": 5722978,
+      "cumulativeYoyPct": -10.314976954950614
+    },
+    {
       "code": "2013",
       "name": "中鋼構",
       "market": "TWSE",
@@ -2458,6 +3147,19 @@
       "cumulativeYoyPct": -7.048650571391916
     },
     {
+      "code": "2017",
+      "name": "官田鋼",
+      "market": "TWSE",
+      "industry": "鋼鐵工業",
+      "period": "2026-09",
+      "revenue": 214544,
+      "lastYearRevenue": 209961,
+      "momPct": -2.0995231467749664,
+      "yoyPct": 2.182786326984535,
+      "cumulativeRevenue": 2023404,
+      "cumulativeYoyPct": -4.689579935957403
+    },
+    {
       "code": "2020",
       "name": "美亞",
       "market": "TWSE",
@@ -2471,6 +3173,19 @@
       "cumulativeYoyPct": -22.430858821992388
     },
     {
+      "code": "2022",
+      "name": "聚亨",
+      "market": "TWSE",
+      "industry": "鋼鐵工業",
+      "period": "2026-09",
+      "revenue": 973903,
+      "lastYearRevenue": 979177,
+      "momPct": 34.4226702810735,
+      "yoyPct": -0.5386155924822581,
+      "cumulativeRevenue": 8827348,
+      "cumulativeYoyPct": 30.67686972916447
+    },
+    {
       "code": "2023",
       "name": "燁輝",
       "market": "TWSE",
@@ -2482,6 +3197,19 @@
       "yoyPct": 0.11917828025436399,
       "cumulativeRevenue": 49437980,
       "cumulativeYoyPct": -6.040908008808037
+    },
+    {
+      "code": "2024",
+      "name": "志聯",
+      "market": "TWSE",
+      "industry": "鋼鐵工業",
+      "period": "2026-09",
+      "revenue": 89651,
+      "lastYearRevenue": 75437,
+      "momPct": 2.4255095512293208,
+      "yoyPct": 18.842212707292177,
+      "cumulativeRevenue": 787660,
+      "cumulativeYoyPct": 5.975822238965617
     },
     {
       "code": "2025",
@@ -2521,6 +3249,19 @@
       "yoyPct": 8.96654912490699,
       "cumulativeRevenue": 6720613,
       "cumulativeYoyPct": 6.295319668249669
+    },
+    {
+      "code": "2029",
+      "name": "盛餘",
+      "market": "TWSE",
+      "industry": "鋼鐵工業",
+      "period": "2026-09",
+      "revenue": 993828,
+      "lastYearRevenue": 1115983,
+      "momPct": 15.865069612682543,
+      "yoyPct": -10.945955269927946,
+      "cumulativeRevenue": 9587541,
+      "cumulativeYoyPct": -7.681697289892867
     },
     {
       "code": "2030",
@@ -2822,6 +3563,45 @@
       "cumulativeYoyPct": 17.48967892380357
     },
     {
+      "code": "2104",
+      "name": "國際中橡",
+      "market": "TWSE",
+      "industry": "橡膠工業",
+      "period": "2026-09",
+      "revenue": 1045254,
+      "lastYearRevenue": 978808,
+      "momPct": -13.734575033507419,
+      "yoyPct": 6.788461066930389,
+      "cumulativeRevenue": 10563533,
+      "cumulativeYoyPct": -12.141377460206327
+    },
+    {
+      "code": "2105",
+      "name": "正新",
+      "market": "TWSE",
+      "industry": "橡膠工業",
+      "period": "2026-09",
+      "revenue": 8962945,
+      "lastYearRevenue": 7965454,
+      "momPct": 7.488000917185402,
+      "yoyPct": 12.522713708471608,
+      "cumulativeRevenue": 74276255,
+      "cumulativeYoyPct": 6.576011173310529
+    },
+    {
+      "code": "2106",
+      "name": "建大",
+      "market": "TWSE",
+      "industry": "橡膠工業",
+      "period": "2026-09",
+      "revenue": 3003422,
+      "lastYearRevenue": 2962527,
+      "momPct": 3.513376957017138,
+      "yoyPct": 1.3804093599822045,
+      "cumulativeRevenue": 27350407,
+      "cumulativeYoyPct": 5.355050095099333
+    },
+    {
       "code": "2107",
       "name": "厚生",
       "market": "TWSE",
@@ -2887,6 +3667,19 @@
       "cumulativeYoyPct": 21.082570849751775
     },
     {
+      "code": "2201",
+      "name": "裕隆",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 5995059,
+      "lastYearRevenue": 5853679,
+      "momPct": 3.233421469757382,
+      "yoyPct": 2.4152332234138565,
+      "cumulativeRevenue": 52259787,
+      "cumulativeYoyPct": -2.820216779859447
+    },
+    {
       "code": "2204",
       "name": "中華",
       "market": "TWSE",
@@ -2898,6 +3691,45 @@
       "yoyPct": 4.1655446662352755,
       "cumulativeRevenue": 26004361,
       "cumulativeYoyPct": 8.532092524286035
+    },
+    {
+      "code": "2206",
+      "name": "三陽工業",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 4914944,
+      "lastYearRevenue": 5072751,
+      "momPct": 0.6495502459952184,
+      "yoyPct": -3.1108761301313628,
+      "cumulativeRevenue": 45771089,
+      "cumulativeYoyPct": -4.651128927105116
+    },
+    {
+      "code": "2207",
+      "name": "和泰車",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 26758784,
+      "lastYearRevenue": 21210341,
+      "momPct": -0.1645717809427594,
+      "yoyPct": 26.159140958648425,
+      "cumulativeRevenue": 241190881,
+      "cumulativeYoyPct": 14.441634028492745
+    },
+    {
+      "code": "2208",
+      "name": "台船",
+      "market": "TWSE",
+      "industry": "航運業",
+      "period": "2026-09",
+      "revenue": 1731762,
+      "lastYearRevenue": 1511055,
+      "momPct": -17.65509193988376,
+      "yoyPct": 14.606152654933142,
+      "cumulativeRevenue": 14914793,
+      "cumulativeYoyPct": -16.868892927989013
     },
     {
       "code": "2211",
@@ -2937,6 +3769,19 @@
       "yoyPct": 10.835941891381786,
       "cumulativeRevenue": 10350016,
       "cumulativeYoyPct": -11.7902879126461
+    },
+    {
+      "code": "2228",
+      "name": "劍麟",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 431189,
+      "lastYearRevenue": 415767,
+      "momPct": 9.544206228834335,
+      "yoyPct": 3.709289097018282,
+      "cumulativeRevenue": 3699665,
+      "cumulativeYoyPct": -1.764965471241612
     },
     {
       "code": "2230",
@@ -3017,6 +3862,19 @@
       "cumulativeYoyPct": 85.08358029755624
     },
     {
+      "code": "2239",
+      "name": "英利-KY",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 1284241,
+      "lastYearRevenue": 1407213,
+      "momPct": 20.123224796862416,
+      "yoyPct": -8.738691299753484,
+      "cumulativeRevenue": 11985205,
+      "cumulativeYoyPct": -14.048390681355475
+    },
+    {
       "code": "2241",
       "name": "艾姆勒",
       "market": "TWSE",
@@ -3041,6 +3899,32 @@
       "yoyPct": 62.49950646855218,
       "cumulativeRevenue": 1526195,
       "cumulativeYoyPct": 37.99668163097385
+    },
+    {
+      "code": "2247",
+      "name": "汎德永業",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 3858710,
+      "lastYearRevenue": 3856472,
+      "momPct": 16.443308457636377,
+      "yoyPct": 0.058032315546437264,
+      "cumulativeRevenue": 31926293,
+      "cumulativeYoyPct": -18.599846063691327
+    },
+    {
+      "code": "2248",
+      "name": "華勝-KY",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 255466,
+      "lastYearRevenue": 209933,
+      "momPct": 3.6263923480687636,
+      "yoyPct": 21.68930087218303,
+      "cumulativeRevenue": 2060568,
+      "cumulativeYoyPct": 46.31639939330936
     },
     {
       "code": "2250",
@@ -3134,6 +4018,32 @@
       "cumulativeYoyPct": 125.06233304493848
     },
     {
+      "code": "2308",
+      "name": "台達電",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 65399563,
+      "lastYearRevenue": 57060781,
+      "momPct": 1.2595816164571392,
+      "yoyPct": 14.613858860431652,
+      "cumulativeRevenue": 539667536,
+      "cumulativeYoyPct": 37.22498456914315
+    },
+    {
+      "code": "2312",
+      "name": "金寶",
+      "market": "TWSE",
+      "industry": "其他電子業",
+      "period": "2026-09",
+      "revenue": 22182665,
+      "lastYearRevenue": 19558025,
+      "momPct": 64.89720808598007,
+      "yoyPct": 13.419759919521526,
+      "cumulativeRevenue": 126623885,
+      "cumulativeYoyPct": 5.1305985515238035
+    },
+    {
       "code": "2313",
       "name": "華通",
       "market": "TWSE",
@@ -3197,6 +4107,19 @@
       "yoyPct": 4.283450957799222,
       "cumulativeRevenue": 568307,
       "cumulativeYoyPct": 1.9046594403650807
+    },
+    {
+      "code": "2323",
+      "name": "中環",
+      "market": "TWSE",
+      "industry": "光電業",
+      "period": "2026-09",
+      "revenue": 860351,
+      "lastYearRevenue": 639840,
+      "momPct": 21.16954139138836,
+      "yoyPct": 34.463459614903726,
+      "cumulativeRevenue": 6170760,
+      "cumulativeYoyPct": 17.17159441974924
     },
     {
       "code": "2324",
@@ -3277,6 +4200,19 @@
       "cumulativeYoyPct": 4.000225810946652
     },
     {
+      "code": "2332",
+      "name": "友訊",
+      "market": "TWSE",
+      "industry": "通信網路業",
+      "period": "2026-09",
+      "revenue": 1254623,
+      "lastYearRevenue": 1223017,
+      "momPct": 6.723381740479625,
+      "yoyPct": 2.5842649775105335,
+      "cumulativeRevenue": 10713552,
+      "cumulativeYoyPct": 7.873612833730954
+    },
+    {
       "code": "2337",
       "name": "旺宏",
       "market": "TWSE",
@@ -3288,6 +4224,19 @@
       "yoyPct": 188.23580475843863,
       "cumulativeRevenue": 53830664,
       "cumulativeYoyPct": 154.50791645548554
+    },
+    {
+      "code": "2338",
+      "name": "光罩",
+      "market": "TWSE",
+      "industry": "半導體業",
+      "period": "2026-09",
+      "revenue": 488678,
+      "lastYearRevenue": 423405,
+      "momPct": -1.1597614944621086,
+      "yoyPct": 15.416209066968978,
+      "cumulativeRevenue": 4540861,
+      "cumulativeYoyPct": -2.7288384298184543
     },
     {
       "code": "2340",
@@ -3589,6 +4538,32 @@
       "cumulativeYoyPct": 34.81484691707091
     },
     {
+      "code": "2371",
+      "name": "大同",
+      "market": "TWSE",
+      "industry": "電機機械",
+      "period": "2026-09",
+      "revenue": 3687103,
+      "lastYearRevenue": 4252427,
+      "momPct": -15.878144214645053,
+      "yoyPct": -13.294149435134337,
+      "cumulativeRevenue": 36249750,
+      "cumulativeYoyPct": -2.134444928121101
+    },
+    {
+      "code": "2373",
+      "name": "震旦行",
+      "market": "TWSE",
+      "industry": "其他電子業",
+      "period": "2026-09",
+      "revenue": 888872,
+      "lastYearRevenue": 869878,
+      "momPct": -6.493779731159833,
+      "yoyPct": 2.1835245862063415,
+      "cumulativeRevenue": 7893428,
+      "cumulativeYoyPct": -1.3954664361147098
+    },
+    {
       "code": "2374",
       "name": "佳能",
       "market": "TWSE",
@@ -3745,6 +4720,19 @@
       "cumulativeYoyPct": -1.5342292651436218
     },
     {
+      "code": "2392",
+      "name": "正崴",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 6636635,
+      "lastYearRevenue": 12841827,
+      "momPct": 30.828439728377575,
+      "yoyPct": -48.32016503570715,
+      "cumulativeRevenue": 49597275,
+      "cumulativeYoyPct": -28.347309674328
+    },
+    {
       "code": "2393",
       "name": "億光",
       "market": "TWSE",
@@ -3784,6 +4772,32 @@
       "cumulativeYoyPct": 31.73909023287921
     },
     {
+      "code": "2399",
+      "name": "映泰",
+      "market": "TWSE",
+      "industry": "電腦及週邊設備業",
+      "period": "2026-09",
+      "revenue": 204237,
+      "lastYearRevenue": 148985,
+      "momPct": 2.925435413642961,
+      "yoyPct": 37.08561264556835,
+      "cumulativeRevenue": 1558638,
+      "cumulativeYoyPct": 10.098963741549937
+    },
+    {
+      "code": "2401",
+      "name": "凌陽",
+      "market": "TWSE",
+      "industry": "半導體業",
+      "period": "2026-09",
+      "revenue": 637700,
+      "lastYearRevenue": 528225,
+      "momPct": -7.324786150890421,
+      "yoyPct": 20.725069809266884,
+      "cumulativeRevenue": 5953897,
+      "cumulativeYoyPct": 23.87765403206477
+    },
+    {
       "code": "2402",
       "name": "毅嘉",
       "market": "TWSE",
@@ -3797,6 +4811,19 @@
       "cumulativeYoyPct": 16.910643139757248
     },
     {
+      "code": "2404",
+      "name": "漢唐",
+      "market": "TWSE",
+      "industry": "其他電子業",
+      "period": "2026-09",
+      "revenue": 8168573,
+      "lastYearRevenue": 7257026,
+      "momPct": -13.029758068697626,
+      "yoyPct": 12.56088926786262,
+      "cumulativeRevenue": 73862820,
+      "cumulativeYoyPct": 62.20139426385887
+    },
+    {
       "code": "2405",
       "name": "輔信",
       "market": "TWSE",
@@ -3808,6 +4835,19 @@
       "yoyPct": 3.8452136961058985,
       "cumulativeRevenue": 1386164,
       "cumulativeYoyPct": 7.847086878211786
+    },
+    {
+      "code": "2406",
+      "name": "國碩",
+      "market": "TWSE",
+      "industry": "光電業",
+      "period": "2026-09",
+      "revenue": 866590,
+      "lastYearRevenue": 533981,
+      "momPct": -10.732238951107156,
+      "yoyPct": 62.28854584713688,
+      "cumulativeRevenue": 8377955,
+      "cumulativeYoyPct": 107.88805150926841
     },
     {
       "code": "2408",
@@ -3834,6 +4874,19 @@
       "yoyPct": -4.261365704978919,
       "cumulativeRevenue": 206797987,
       "cumulativeYoyPct": -2.1056897143548765
+    },
+    {
+      "code": "2412",
+      "name": "中華電",
+      "market": "TWSE",
+      "industry": "通信網路業",
+      "period": "2026-09",
+      "revenue": 24398810,
+      "lastYearRevenue": 20188526,
+      "momPct": 4.673262776681229,
+      "yoyPct": 20.854836058858382,
+      "cumulativeRevenue": 188945075,
+      "cumulativeYoyPct": 10.842187221915692
     },
     {
       "code": "2413",
@@ -3901,6 +4954,19 @@
       "cumulativeYoyPct": 19.463144168355527
     },
     {
+      "code": "2420",
+      "name": "新巨",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 186928,
+      "lastYearRevenue": 167746,
+      "momPct": -9.692255664524856,
+      "yoyPct": 11.435145994539363,
+      "cumulativeRevenue": 1772856,
+      "cumulativeYoyPct": 7.605988064658668
+    },
+    {
       "code": "2421",
       "name": "建準",
       "market": "TWSE",
@@ -3925,6 +4991,19 @@
       "yoyPct": 33.56619555321086,
       "cumulativeRevenue": 2602849,
       "cumulativeYoyPct": 24.76806557534214
+    },
+    {
+      "code": "2424",
+      "name": "隴華",
+      "market": "TWSE",
+      "industry": "通信網路業",
+      "period": "2026-09",
+      "revenue": 5612,
+      "lastYearRevenue": 12961,
+      "momPct": -27.829218106995885,
+      "yoyPct": -56.700871846308154,
+      "cumulativeRevenue": 112025,
+      "cumulativeYoyPct": -15.175630551159639
     },
     {
       "code": "2425",
@@ -3992,6 +5071,19 @@
       "cumulativeYoyPct": -8.579291279998257
     },
     {
+      "code": "2430",
+      "name": "燦坤",
+      "market": "TWSE",
+      "industry": "電子通路業",
+      "period": "2026-09",
+      "revenue": 1644812,
+      "lastYearRevenue": 1481230,
+      "momPct": 11.333864457694727,
+      "yoyPct": 11.043659661227494,
+      "cumulativeRevenue": 13386657,
+      "cumulativeYoyPct": 0.12570821662172724
+    },
+    {
       "code": "2431",
       "name": "聯昌",
       "market": "TWSE",
@@ -4016,6 +5108,19 @@
       "yoyPct": 98.87686452859533,
       "cumulativeRevenue": 3855495,
       "cumulativeYoyPct": 66.26826344206586
+    },
+    {
+      "code": "2433",
+      "name": "互盛電",
+      "market": "TWSE",
+      "industry": "其他電子業",
+      "period": "2026-09",
+      "revenue": 222467,
+      "lastYearRevenue": 224875,
+      "momPct": -2.65219141636911,
+      "yoyPct": -1.070817120622568,
+      "cumulativeRevenue": 2053045,
+      "cumulativeYoyPct": 1.3415990988545146
     },
     {
       "code": "2434",
@@ -4265,6 +5370,32 @@
       "cumulativeYoyPct": -0.848323161217067
     },
     {
+      "code": "2462",
+      "name": "良得電",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 347881,
+      "lastYearRevenue": 364742,
+      "momPct": -0.896792002939928,
+      "yoyPct": -4.622719620992373,
+      "cumulativeRevenue": 3093360,
+      "cumulativeYoyPct": -1.6113754929195787
+    },
+    {
+      "code": "2464",
+      "name": "盟立",
+      "market": "TWSE",
+      "industry": "其他電子業",
+      "period": "2026-09",
+      "revenue": 997942,
+      "lastYearRevenue": 560724,
+      "momPct": 7.50997595428729,
+      "yoyPct": 77.97383382912092,
+      "cumulativeRevenue": 6822670,
+      "cumulativeYoyPct": 36.66345172530179
+    },
+    {
       "code": "2465",
       "name": "麗臺",
       "market": "TWSE",
@@ -4276,6 +5407,19 @@
       "yoyPct": -25.428458447032693,
       "cumulativeRevenue": 7389719,
       "cumulativeYoyPct": 109.33965134415898
+    },
+    {
+      "code": "2466",
+      "name": "冠西電",
+      "market": "TWSE",
+      "industry": "光電業",
+      "period": "2026-09",
+      "revenue": 116057,
+      "lastYearRevenue": 28434,
+      "momPct": -48.40948088087554,
+      "yoyPct": 308.1627628894985,
+      "cumulativeRevenue": 930451,
+      "cumulativeYoyPct": 11.879848782904388
     },
     {
       "code": "2467",
@@ -4395,6 +5539,19 @@
       "cumulativeYoyPct": 20.005024578212605
     },
     {
+      "code": "2481",
+      "name": "強茂",
+      "market": "TWSE",
+      "industry": "半導體業",
+      "period": "2026-09",
+      "revenue": 1525122,
+      "lastYearRevenue": 1103820,
+      "momPct": 10.76643515307423,
+      "yoyPct": 38.1676360276132,
+      "cumulativeRevenue": 11726386,
+      "cumulativeYoyPct": 20.37606272571052
+    },
+    {
       "code": "2482",
       "name": "連宇",
       "market": "TWSE",
@@ -4484,6 +5641,19 @@
       "yoyPct": 32.484742867667954,
       "cumulativeRevenue": 22041056,
       "cumulativeYoyPct": 18.852994140407517
+    },
+    {
+      "code": "2491",
+      "name": "吉祥全",
+      "market": "TWSE",
+      "industry": "光電業",
+      "period": "2026-09",
+      "revenue": 15637,
+      "lastYearRevenue": 14329,
+      "momPct": 3.2213347415671003,
+      "yoyPct": 9.128341126387047,
+      "cumulativeRevenue": 128687,
+      "cumulativeYoyPct": -1.8809948610030955
     },
     {
       "code": "2492",
@@ -4759,6 +5929,19 @@
       "cumulativeYoyPct": -80.47361399939216
     },
     {
+      "code": "2535",
+      "name": "達欣工",
+      "market": "TWSE",
+      "industry": "建材營造",
+      "period": "2026-09",
+      "revenue": 2156829,
+      "lastYearRevenue": 1774176,
+      "momPct": -15.872659254916691,
+      "yoyPct": 21.567927871868406,
+      "cumulativeRevenue": 20543203,
+      "cumulativeYoyPct": 24.38162785927184
+    },
+    {
       "code": "2536",
       "name": "宏普",
       "market": "TWSE",
@@ -4928,6 +6111,19 @@
       "cumulativeYoyPct": 13.90467075782751
     },
     {
+      "code": "2601",
+      "name": "益航",
+      "market": "TWSE",
+      "industry": "航運業",
+      "period": "2026-09",
+      "revenue": 142491,
+      "lastYearRevenue": 319255,
+      "momPct": 0.3111602334405733,
+      "yoyPct": -55.367652816713914,
+      "cumulativeRevenue": 1405923,
+      "cumulativeYoyPct": -55.32270468152178
+    },
+    {
       "code": "2603",
       "name": "長榮",
       "market": "TWSE",
@@ -4941,6 +6137,19 @@
       "cumulativeYoyPct": 15.363767827979071
     },
     {
+      "code": "2605",
+      "name": "新興",
+      "market": "TWSE",
+      "industry": "航運業",
+      "period": "2026-09",
+      "revenue": 593657,
+      "lastYearRevenue": 370771,
+      "momPct": 16.89359883905242,
+      "yoyPct": 60.11419447583549,
+      "cumulativeRevenue": 4289177,
+      "cumulativeYoyPct": 41.76866714526904
+    },
+    {
       "code": "2606",
       "name": "裕民",
       "market": "TWSE",
@@ -4952,6 +6161,32 @@
       "yoyPct": 25.678479217108457,
       "cumulativeRevenue": 14200501,
       "cumulativeYoyPct": 25.175038333503018
+    },
+    {
+      "code": "2607",
+      "name": "榮運",
+      "market": "TWSE",
+      "industry": "航運業",
+      "period": "2026-09",
+      "revenue": 2183586,
+      "lastYearRevenue": 1325825,
+      "momPct": 5.333672934822563,
+      "yoyPct": 64.69639658325949,
+      "cumulativeRevenue": 15324998,
+      "cumulativeYoyPct": 18.06024640197389
+    },
+    {
+      "code": "2608",
+      "name": "嘉里大榮",
+      "market": "TWSE",
+      "industry": "航運業",
+      "period": "2026-09",
+      "revenue": 1607953,
+      "lastYearRevenue": 1300505,
+      "momPct": 2.7654163814651276,
+      "yoyPct": 23.6406626656568,
+      "cumulativeRevenue": 12701169,
+      "cumulativeYoyPct": 10.894223719767625
     },
     {
       "code": "2609",
@@ -5123,6 +6358,19 @@
       "cumulativeYoyPct": 7.2152593998102565
     },
     {
+      "code": "2636",
+      "name": "台驊控股",
+      "market": "TWSE",
+      "industry": "航運業",
+      "period": "2026-09",
+      "revenue": 2995962,
+      "lastYearRevenue": 1504192,
+      "momPct": 2.9978389431655117,
+      "yoyPct": 99.17417457345871,
+      "cumulativeRevenue": 20139293,
+      "cumulativeYoyPct": 25.531630157122002
+    },
+    {
       "code": "2637",
       "name": "慧洋-KY",
       "market": "TWSE",
@@ -5199,6 +6447,19 @@
       "yoyPct": 8.73533487651564,
       "cumulativeRevenue": 15235760,
       "cumulativeYoyPct": 14.147124145418955
+    },
+    {
+      "code": "2646",
+      "name": "星宇航空",
+      "market": "TWSE",
+      "industry": "航運業",
+      "period": "2026-09",
+      "revenue": 4974650,
+      "lastYearRevenue": 2945566,
+      "momPct": -10.828510713431067,
+      "yoyPct": 68.88604770696023,
+      "cumulativeRevenue": 44835107,
+      "cumulativeYoyPct": 37.12374134942713
     },
     {
       "code": "2701",
@@ -5331,6 +6592,19 @@
       "cumulativeYoyPct": 3.1029312179549193
     },
     {
+      "code": "2723",
+      "name": "美食-KY",
+      "market": "TWSE",
+      "industry": "觀光餐旅",
+      "period": "2026-09",
+      "revenue": 1398636,
+      "lastYearRevenue": 1449190,
+      "momPct": -2.7630408953412138,
+      "yoyPct": -3.488431468613501,
+      "cumulativeRevenue": 12483003,
+      "cumulativeYoyPct": -9.392318970317227
+    },
+    {
       "code": "2724",
       "name": "藝舍-KY",
       "market": "TPEx",
@@ -5435,6 +6709,19 @@
       "cumulativeYoyPct": 17.51140388427341
     },
     {
+      "code": "2739",
+      "name": "寒舍",
+      "market": "TWSE",
+      "industry": "觀光餐旅",
+      "period": "2026-09",
+      "revenue": 348008,
+      "lastYearRevenue": 351786,
+      "momPct": -15.918974814929355,
+      "yoyPct": -1.0739483663363523,
+      "cumulativeRevenue": 3834867,
+      "cumulativeYoyPct": 4.004290495278285
+    },
+    {
       "code": "2740",
       "name": "華軒",
       "market": "TPEx",
@@ -5472,6 +6759,19 @@
       "yoyPct": 19.568050933130387,
       "cumulativeRevenue": 7614451,
       "cumulativeYoyPct": 15.94933798280811
+    },
+    {
+      "code": "2748",
+      "name": "雲品",
+      "market": "TWSE",
+      "industry": "觀光餐旅",
+      "period": "2026-09",
+      "revenue": 187193,
+      "lastYearRevenue": 146037,
+      "momPct": 6.8831435782069,
+      "yoyPct": 28.181899107760362,
+      "cumulativeRevenue": 1845641,
+      "cumulativeYoyPct": 5.9891497913399325
     },
     {
       "code": "2751",
@@ -5669,6 +6969,19 @@
       "cumulativeYoyPct": 17.914814389041705
     },
     {
+      "code": "2852",
+      "name": "第一保",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-09",
+      "revenue": 794988,
+      "lastYearRevenue": 794979,
+      "momPct": -4.392595184921944,
+      "yoyPct": 0.0011321053763684323,
+      "cumulativeRevenue": 7323963,
+      "cumulativeYoyPct": -0.062168086075781476
+    },
+    {
       "code": "2855",
       "name": "統一證",
       "market": "TWSE",
@@ -5708,6 +7021,19 @@
       "cumulativeYoyPct": 51.09027550386513
     },
     {
+      "code": "2897",
+      "name": "王道銀行",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-09",
+      "revenue": 970851,
+      "lastYearRevenue": 678760,
+      "momPct": -14.900038217587804,
+      "yoyPct": 43.033030820908714,
+      "cumulativeRevenue": 9710788,
+      "cumulativeYoyPct": 26.72385263538125
+    },
+    {
       "code": "2901",
       "name": "欣欣",
       "market": "TWSE",
@@ -5721,6 +7047,19 @@
       "cumulativeYoyPct": 4.458368974863704
     },
     {
+      "code": "2903",
+      "name": "遠百",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 2633920,
+      "lastYearRevenue": 2531530,
+      "momPct": 0.7203983356538478,
+      "yoyPct": 4.044589635516862,
+      "cumulativeRevenue": 23629401,
+      "cumulativeYoyPct": -0.01434870666148968
+    },
+    {
       "code": "2904",
       "name": "匯僑",
       "market": "TWSE",
@@ -5732,6 +7071,32 @@
       "yoyPct": -3.937653814602133,
       "cumulativeRevenue": 314111,
       "cumulativeYoyPct": -16.328547454782772
+    },
+    {
+      "code": "2905",
+      "name": "三商",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 3153911,
+      "lastYearRevenue": 16819199,
+      "momPct": -79.60734562328247,
+      "yoyPct": -81.24814980784757,
+      "cumulativeRevenue": 111152097,
+      "cumulativeYoyPct": 25.084251065677456
+    },
+    {
+      "code": "2906",
+      "name": "高林",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 793660,
+      "lastYearRevenue": 723686,
+      "momPct": 5.491075938262613,
+      "yoyPct": 9.669110636380973,
+      "cumulativeRevenue": 6637685,
+      "cumulativeYoyPct": 3.293407815595555
     },
     {
       "code": "2908",
@@ -5760,6 +7125,45 @@
       "cumulativeYoyPct": 6.634089353445836
     },
     {
+      "code": "2911",
+      "name": "麗嬰房",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 144156,
+      "lastYearRevenue": 184196,
+      "momPct": 3.8924723433389787,
+      "yoyPct": -21.73771417403201,
+      "cumulativeRevenue": 1278082,
+      "cumulativeYoyPct": -26.407524146341743
+    },
+    {
+      "code": "2912",
+      "name": "統一超",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 31448583,
+      "lastYearRevenue": 29168113,
+      "momPct": -0.24794181931401685,
+      "yoyPct": 7.818366584084476,
+      "cumulativeRevenue": 275878618,
+      "cumulativeYoyPct": 5.720861620294595
+    },
+    {
+      "code": "2913",
+      "name": "農林",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 57589,
+      "lastYearRevenue": 42953,
+      "momPct": 75.4050925925926,
+      "yoyPct": 34.074453472400066,
+      "cumulativeRevenue": 340425,
+      "cumulativeYoyPct": -6.7249547221818835
+    },
+    {
       "code": "2915",
       "name": "潤泰全",
       "market": "TWSE",
@@ -5786,6 +7190,19 @@
       "cumulativeYoyPct": 0.5430671354752042
     },
     {
+      "code": "2923",
+      "name": "鼎固-KY",
+      "market": "TWSE",
+      "industry": "建材營造",
+      "period": "2026-09",
+      "revenue": 574459,
+      "lastYearRevenue": 248408,
+      "momPct": -25.68361080530045,
+      "yoyPct": 131.25623973463013,
+      "cumulativeRevenue": 6262977,
+      "cumulativeYoyPct": 156.50340708874322
+    },
+    {
       "code": "2924",
       "name": "宏太-KY",
       "market": "TPEx",
@@ -5810,6 +7227,19 @@
       "yoyPct": 10.664169822855255,
       "cumulativeRevenue": 5319293,
       "cumulativeYoyPct": 4.943102230534611
+    },
+    {
+      "code": "2929",
+      "name": "淘帝-KY",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 192744,
+      "lastYearRevenue": 124147,
+      "momPct": -14.505089933243141,
+      "yoyPct": 55.25465778472295,
+      "cumulativeRevenue": 1384439,
+      "cumulativeYoyPct": 15.807669657973808
     },
     {
       "code": "2937",
@@ -5864,6 +7294,19 @@
       "cumulativeYoyPct": -5.8332241769131326
     },
     {
+      "code": "2945",
+      "name": "三商家購",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 1690216,
+      "lastYearRevenue": 1258885,
+      "momPct": -5.885471130577522,
+      "yoyPct": 34.262939029379176,
+      "cumulativeRevenue": 14206235,
+      "cumulativeYoyPct": 29.510644566896804
+    },
+    {
       "code": "2947",
       "name": "振宇五金",
       "market": "TPEx",
@@ -5916,6 +7359,19 @@
       "cumulativeYoyPct": 26.59499616385037
     },
     {
+      "code": "3003",
+      "name": "健和興",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 546951,
+      "lastYearRevenue": 353346,
+      "momPct": -0.23984708152612053,
+      "yoyPct": 54.79190368647162,
+      "cumulativeRevenue": 4629898,
+      "cumulativeYoyPct": 43.51844934663569
+    },
+    {
       "code": "3004",
       "name": "豐達科",
       "market": "TWSE",
@@ -5966,6 +7422,19 @@
       "yoyPct": -7.314368249667054,
       "cumulativeRevenue": 44859658,
       "cumulativeYoyPct": 2.1179738838233697
+    },
+    {
+      "code": "3010",
+      "name": "華立",
+      "market": "TWSE",
+      "industry": "電子通路業",
+      "period": "2026-09",
+      "revenue": 9012014,
+      "lastYearRevenue": 6379096,
+      "momPct": 12.846626871555019,
+      "yoyPct": 41.27415546027211,
+      "cumulativeRevenue": 71221439,
+      "cumulativeYoyPct": 22.4561297571341
     },
     {
       "code": "3011",
@@ -6044,6 +7513,19 @@
       "yoyPct": 44.91953525916051,
       "cumulativeRevenue": 157248258,
       "cumulativeYoyPct": 71.1743901552245
+    },
+    {
+      "code": "3018",
+      "name": "隆銘綠能",
+      "market": "TWSE",
+      "industry": "其他電子業",
+      "period": "2026-09",
+      "revenue": 25788,
+      "lastYearRevenue": 59032,
+      "momPct": -34.98222524771197,
+      "yoyPct": -56.315218864344764,
+      "cumulativeRevenue": 233403,
+      "cumulativeYoyPct": -40.86796802756419
     },
     {
       "code": "3019",
@@ -6202,6 +7684,32 @@
       "cumulativeYoyPct": 21.49149159953611
     },
     {
+      "code": "3032",
+      "name": "偉訓",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 1120285,
+      "lastYearRevenue": 988441,
+      "momPct": 3.8345039549028006,
+      "yoyPct": 13.338580653777008,
+      "cumulativeRevenue": 8869015,
+      "cumulativeYoyPct": 10.082218332301276
+    },
+    {
+      "code": "3033",
+      "name": "威健",
+      "market": "TWSE",
+      "industry": "電子通路業",
+      "period": "2026-09",
+      "revenue": 18838975,
+      "lastYearRevenue": 10473795,
+      "momPct": 52.2620715072583,
+      "yoyPct": 79.8677079320342,
+      "cumulativeRevenue": 114109496,
+      "cumulativeYoyPct": 41.40595239529184
+    },
+    {
       "code": "3034",
       "name": "聯詠",
       "market": "TWSE",
@@ -6280,6 +7788,19 @@
       "cumulativeYoyPct": 6.249277190769069
     },
     {
+      "code": "3041",
+      "name": "揚智",
+      "market": "TWSE",
+      "industry": "半導體業",
+      "period": "2026-09",
+      "revenue": 224002,
+      "lastYearRevenue": 161126,
+      "momPct": 29.25827187849831,
+      "yoyPct": 39.02287650658491,
+      "cumulativeRevenue": 1405159,
+      "cumulativeYoyPct": 57.91248704814606
+    },
+    {
       "code": "3042",
       "name": "晶技",
       "market": "TWSE",
@@ -6317,6 +7838,19 @@
       "yoyPct": 53.500059681732026,
       "cumulativeRevenue": 76515848,
       "cumulativeYoyPct": 40.60068600026104
+    },
+    {
+      "code": "3045",
+      "name": "台灣大",
+      "market": "TWSE",
+      "industry": "通信網路業",
+      "period": "2026-09",
+      "revenue": 17411550,
+      "lastYearRevenue": 15778960,
+      "momPct": 3.745999490909299,
+      "yoyPct": 10.346626140125839,
+      "cumulativeRevenue": 149576161,
+      "cumulativeYoyPct": 5.351517621292974
     },
     {
       "code": "3046",
@@ -7125,6 +8659,19 @@
       "cumulativeYoyPct": -10.966560132103824
     },
     {
+      "code": "3209",
+      "name": "全科",
+      "market": "TWSE",
+      "industry": "電子通路業",
+      "period": "2026-09",
+      "revenue": 5702675,
+      "lastYearRevenue": 2993846,
+      "momPct": 6.162484958061287,
+      "yoyPct": 90.47990444398276,
+      "cumulativeRevenue": 52007771,
+      "cumulativeYoyPct": 46.685682375869504
+    },
+    {
       "code": "3211",
       "name": "順達",
       "market": "TPEx",
@@ -7632,6 +9179,19 @@
       "cumulativeYoyPct": 6.888512566092193
     },
     {
+      "code": "3308",
+      "name": "聯德",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 405,
+      "lastYearRevenue": 499,
+      "momPct": -29.6875,
+      "yoyPct": -18.837675350701403,
+      "cumulativeRevenue": 4578,
+      "cumulativeYoyPct": -6.571428571428571
+    },
+    {
       "code": "3310",
       "name": "佳穎",
       "market": "TPEx",
@@ -8087,6 +9647,19 @@
       "cumulativeYoyPct": 17.227281813457
     },
     {
+      "code": "3432",
+      "name": "台端",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 29764,
+      "lastYearRevenue": 14631,
+      "momPct": 0.25937278943645364,
+      "yoyPct": 103.43107101360125,
+      "cumulativeRevenue": 228752,
+      "cumulativeYoyPct": 126.26534387085925
+    },
+    {
       "code": "3434",
       "name": "哲固",
       "market": "TPEx",
@@ -8256,6 +9829,19 @@
       "cumulativeYoyPct": 17.011640784375107
     },
     {
+      "code": "3481",
+      "name": "群創",
+      "market": "TWSE",
+      "industry": "光電業",
+      "period": "2026-09",
+      "revenue": 19994593,
+      "lastYearRevenue": 19861192,
+      "momPct": 6.942384132561407,
+      "yoyPct": 0.6716666351143477,
+      "cumulativeRevenue": 187925640,
+      "cumulativeYoyPct": 10.556208523436075
+    },
+    {
       "code": "3483",
       "name": "力致",
       "market": "TPEx",
@@ -8352,12 +9938,12 @@
       "market": "TWSE",
       "industry": "電腦及週邊設備業",
       "period": "2026-09",
-      "revenue": 87673,
+      "revenue": 87669,
       "lastYearRevenue": 80400,
-      "momPct": -13.660088237611282,
-      "yoyPct": 9.046019900497512,
-      "cumulativeRevenue": 786272,
-      "cumulativeYoyPct": 8.397933707126285
+      "momPct": -13.664027416686363,
+      "yoyPct": 9.041044776119403,
+      "cumulativeRevenue": 786268,
+      "cumulativeYoyPct": 8.397382254531218
     },
     {
       "code": "3498",
@@ -8384,6 +9970,19 @@
       "yoyPct": -11.934507312497335,
       "cumulativeRevenue": 216124,
       "cumulativeYoyPct": -13.82615629984051
+    },
+    {
+      "code": "3501",
+      "name": "維熹",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 541007,
+      "lastYearRevenue": 464805,
+      "momPct": 21.668387093872354,
+      "yoyPct": 16.394401953507383,
+      "cumulativeRevenue": 4112831,
+      "cumulativeYoyPct": -4.095408585970585
     },
     {
       "code": "3504",
@@ -8605,6 +10204,19 @@
       "yoyPct": -10.381583427179635,
       "cumulativeRevenue": 754672,
       "cumulativeYoyPct": -24.528347172483176
+    },
+    {
+      "code": "3532",
+      "name": "台勝科",
+      "market": "TWSE",
+      "industry": "半導體業",
+      "period": "2026-09",
+      "revenue": 1349479,
+      "lastYearRevenue": 1046332,
+      "momPct": 1.3226585617289466,
+      "yoyPct": 28.97235294342522,
+      "cumulativeRevenue": 10903288,
+      "cumulativeYoyPct": 20.2716525448922
     },
     {
       "code": "3533",
@@ -8984,6 +10596,19 @@
       "cumulativeYoyPct": 10.05863344467307
     },
     {
+      "code": "3593",
+      "name": "力銘",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 58289,
+      "lastYearRevenue": 93262,
+      "momPct": 11.124032485606437,
+      "yoyPct": -37.499731937981174,
+      "cumulativeRevenue": 501002,
+      "cumulativeYoyPct": -44.035879448627156
+    },
+    {
       "code": "3594",
       "name": "磐儀",
       "market": "TPEx",
@@ -9270,6 +10895,19 @@
       "cumulativeYoyPct": 47.12157912350618
     },
     {
+      "code": "3661",
+      "name": "世芯-KY",
+      "market": "TWSE",
+      "industry": "半導體業",
+      "period": "2026-09",
+      "revenue": 9978701,
+      "lastYearRevenue": 1674283,
+      "momPct": 13.700727164087406,
+      "yoyPct": 495.99846620911757,
+      "cumulativeRevenue": 37877514,
+      "cumulativeYoyPct": 44.59053152341543
+    },
+    {
       "code": "3663",
       "name": "鑫科",
       "market": "TPEx",
@@ -9504,6 +11142,71 @@
       "cumulativeYoyPct": -0.6042852252465722
     },
     {
+      "code": "3701",
+      "name": "大眾控",
+      "market": "TWSE",
+      "industry": "電腦及週邊設備業",
+      "period": "2026-09",
+      "revenue": 1003507,
+      "lastYearRevenue": 672059,
+      "momPct": 22.340559117447338,
+      "yoyPct": 49.31828901926765,
+      "cumulativeRevenue": 6751785,
+      "cumulativeYoyPct": -11.756518129633436
+    },
+    {
+      "code": "3702",
+      "name": "大聯大",
+      "market": "TWSE",
+      "industry": "電子通路業",
+      "period": "2026-09",
+      "revenue": 219594834,
+      "lastYearRevenue": 89089863,
+      "momPct": 54.38577380648606,
+      "yoyPct": 146.48689155577668,
+      "cumulativeRevenue": 1282706824,
+      "cumulativeYoyPct": 72.46425018776883
+    },
+    {
+      "code": "3703",
+      "name": "欣陸",
+      "market": "TWSE",
+      "industry": "建材營造",
+      "period": "2026-09",
+      "revenue": 4305288,
+      "lastYearRevenue": 2274110,
+      "momPct": 75.47099909070938,
+      "yoyPct": 89.3174912383306,
+      "cumulativeRevenue": 22881779,
+      "cumulativeYoyPct": 3.4475931972039313
+    },
+    {
+      "code": "3704",
+      "name": "合勤控",
+      "market": "TWSE",
+      "industry": "通信網路業",
+      "period": "2026-09",
+      "revenue": 3220898,
+      "lastYearRevenue": 2203855,
+      "momPct": 23.138828228702156,
+      "yoyPct": 46.14836275526294,
+      "cumulativeRevenue": 22814657,
+      "cumulativeYoyPct": 16.168458661457517
+    },
+    {
+      "code": "3705",
+      "name": "永信",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 659228,
+      "lastYearRevenue": 606235,
+      "momPct": 4.158253148156926,
+      "yoyPct": 8.741329682383894,
+      "cumulativeRevenue": 5782149,
+      "cumulativeYoyPct": -6.9849569498801465
+    },
+    {
       "code": "3706",
       "name": "神達",
       "market": "TWSE",
@@ -9569,6 +11272,32 @@
       "cumulativeYoyPct": 14.736967628232577
     },
     {
+      "code": "3711",
+      "name": "日月光投控",
+      "market": "TWSE",
+      "industry": "半導體業",
+      "period": "2026-09",
+      "revenue": 88130084,
+      "lastYearRevenue": 60561227,
+      "momPct": 7.15245935997908,
+      "yoyPct": 45.52228936841058,
+      "cumulativeRevenue": 608886833,
+      "cumulativeYoyPct": 30.250842170978483
+    },
+    {
+      "code": "3712",
+      "name": "永崴投控",
+      "market": "TWSE",
+      "industry": "電腦及週邊設備業",
+      "period": "2026-09",
+      "revenue": 753200,
+      "lastYearRevenue": 6567752,
+      "momPct": 78.60318649710588,
+      "yoyPct": -88.53184468597475,
+      "cumulativeRevenue": 5056198,
+      "cumulativeYoyPct": -80.4795088812054
+    },
+    {
       "code": "3713",
       "name": "新晶投控",
       "market": "TPEx",
@@ -9606,6 +11335,19 @@
       "yoyPct": 84.69522628124143,
       "cumulativeRevenue": 21197896,
       "cumulativeYoyPct": 51.25937713911443
+    },
+    {
+      "code": "3716",
+      "name": "中化控股",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 674886,
+      "lastYearRevenue": 758711,
+      "momPct": 6.82632645308345,
+      "yoyPct": -11.048343835795185,
+      "cumulativeRevenue": 6204772,
+      "cumulativeYoyPct": -3.2018811818322366
     },
     {
       "code": "3717",
@@ -9894,6 +11636,32 @@
       "cumulativeYoyPct": 15.105724947053485
     },
     {
+      "code": "4133",
+      "name": "亞諾法",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 24410,
+      "lastYearRevenue": 25951,
+      "momPct": -8.696465307649149,
+      "yoyPct": -5.9381141381835,
+      "cumulativeRevenue": 253687,
+      "cumulativeYoyPct": -5.114078396169958
+    },
+    {
+      "code": "4137",
+      "name": "麗豐-KY",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 478825,
+      "lastYearRevenue": 392425,
+      "momPct": 66.23443803334236,
+      "yoyPct": 22.01694591323183,
+      "cumulativeRevenue": 2986846,
+      "cumulativeYoyPct": 7.610861655448067
+    },
+    {
       "code": "4138",
       "name": "曜亞",
       "market": "TPEx",
@@ -10063,6 +11831,19 @@
       "cumulativeYoyPct": 13.939512361723892
     },
     {
+      "code": "4164",
+      "name": "承業醫",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 506352,
+      "lastYearRevenue": 527939,
+      "momPct": 54.56410256410256,
+      "yoyPct": -4.088919363790135,
+      "cumulativeRevenue": 3498730,
+      "cumulativeYoyPct": 9.71809149169164
+    },
+    {
       "code": "4166",
       "name": "友霖",
       "market": "TPEx",
@@ -10206,6 +11987,19 @@
       "cumulativeYoyPct": -16.85322402648589
     },
     {
+      "code": "4190",
+      "name": "佐登-KY",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 193979,
+      "lastYearRevenue": 215159,
+      "momPct": 19.072728165590394,
+      "yoyPct": -9.843882895904889,
+      "cumulativeRevenue": 1588115,
+      "cumulativeYoyPct": -5.104732767867013
+    },
+    {
       "code": "4192",
       "name": "杏國",
       "market": "TPEx",
@@ -10217,6 +12011,19 @@
       "yoyPct": 6.98782424563261,
       "cumulativeRevenue": 18444,
       "cumulativeYoyPct": -6.2376086624980935
+    },
+    {
+      "code": "4195",
+      "name": "基米-創",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 98063,
+      "lastYearRevenue": 57982,
+      "momPct": 94.48840760794114,
+      "yoyPct": 69.1266255044669,
+      "cumulativeRevenue": 520673,
+      "cumulativeYoyPct": 6.626460379058599
     },
     {
       "code": "4198",
@@ -10362,6 +12169,19 @@
       "cumulativeYoyPct": -45.9617680415448
     },
     {
+      "code": "4414",
+      "name": "如興",
+      "market": "TWSE",
+      "industry": "紡織纖維",
+      "period": "2026-09",
+      "revenue": 1480496,
+      "lastYearRevenue": 1099103,
+      "momPct": -1.7971078324397431,
+      "yoyPct": 34.700387497805025,
+      "cumulativeRevenue": 11685172,
+      "cumulativeYoyPct": 13.205736796709418
+    },
+    {
       "code": "4416",
       "name": "三圓",
       "market": "TPEx",
@@ -10412,6 +12232,19 @@
       "yoyPct": 28.86869535336566,
       "cumulativeRevenue": 748388,
       "cumulativeYoyPct": -2.7389231191103405
+    },
+    {
+      "code": "4426",
+      "name": "利勤",
+      "market": "TWSE",
+      "industry": "紡織纖維",
+      "period": "2026-09",
+      "revenue": 118949,
+      "lastYearRevenue": 67562,
+      "momPct": 26.070735869254168,
+      "yoyPct": 76.05902726384654,
+      "cumulativeRevenue": 754369,
+      "cumulativeYoyPct": 15.779432958283005
     },
     {
       "code": "4430",
@@ -10594,6 +12427,19 @@
       "yoyPct": 122.59011298893131,
       "cumulativeRevenue": 898469,
       "cumulativeYoyPct": 95.41025607565258
+    },
+    {
+      "code": "4526",
+      "name": "東台",
+      "market": "TWSE",
+      "industry": "電機機械",
+      "period": "2026-09",
+      "revenue": 706541,
+      "lastYearRevenue": 390279,
+      "momPct": 66.51881565209604,
+      "yoyPct": 81.03484942822955,
+      "cumulativeRevenue": 4421994,
+      "cumulativeYoyPct": 11.010961782504076
     },
     {
       "code": "4527",
@@ -10815,6 +12661,19 @@
       "yoyPct": 24.63342700536991,
       "cumulativeRevenue": 597012,
       "cumulativeYoyPct": 1.8100334585042923
+    },
+    {
+      "code": "4551",
+      "name": "智伸科",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 790145,
+      "lastYearRevenue": 669284,
+      "momPct": -1.4408204606234782,
+      "yoyPct": 18.058253297553804,
+      "cumulativeRevenue": 6971403,
+      "cumulativeYoyPct": 20.711061505059234
     },
     {
       "code": "4552",
@@ -11062,6 +12921,19 @@
       "yoyPct": 12.242039359559747,
       "cumulativeRevenue": 1811074,
       "cumulativeYoyPct": 5.461838175392583
+    },
+    {
+      "code": "4581",
+      "name": "光隆精密-KY",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 114527,
+      "lastYearRevenue": 84465,
+      "momPct": 5.383893407928153,
+      "yoyPct": 35.5910732255964,
+      "cumulativeRevenue": 918797,
+      "cumulativeYoyPct": 10.859781465072057
     },
     {
       "code": "4582",
@@ -11623,6 +13495,19 @@
       "cumulativeYoyPct": 161.77093729754338
     },
     {
+      "code": "4807",
+      "name": "日成-KY",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 388775,
+      "lastYearRevenue": 277739,
+      "momPct": 13.313436141965683,
+      "yoyPct": 39.97854100432421,
+      "cumulativeRevenue": 2235811,
+      "cumulativeYoyPct": 39.16863984144887
+    },
+    {
       "code": "4903",
       "name": "聯光通",
       "market": "TPEx",
@@ -11634,6 +13519,19 @@
       "yoyPct": 93.82719454922866,
       "cumulativeRevenue": 1256139,
       "cumulativeYoyPct": 22.27529533614198
+    },
+    {
+      "code": "4904",
+      "name": "遠傳",
+      "market": "TWSE",
+      "industry": "通信網路業",
+      "period": "2026-09",
+      "revenue": 10962073,
+      "lastYearRevenue": 10084215,
+      "momPct": 14.822523290371365,
+      "yoyPct": 8.705268580648072,
+      "cumulativeRevenue": 86229828,
+      "cumulativeYoyPct": 11.03262140545818
     },
     {
       "code": "4905",
@@ -11805,6 +13703,19 @@
       "cumulativeYoyPct": 9.689995303484743
     },
     {
+      "code": "4930",
+      "name": "燦星網",
+      "market": "TWSE",
+      "industry": "電器電纜",
+      "period": "2026-09",
+      "revenue": 548381,
+      "lastYearRevenue": 706055,
+      "momPct": -14.92613955451028,
+      "yoyPct": -22.3316880412999,
+      "cumulativeRevenue": 4453049,
+      "cumulativeYoyPct": -5.226328444941423
+    },
+    {
       "code": "4931",
       "name": "新盛力",
       "market": "TPEx",
@@ -11894,6 +13805,19 @@
       "yoyPct": -27.640201087300316,
       "cumulativeRevenue": 3953620,
       "cumulativeYoyPct": -10.387259896257731
+    },
+    {
+      "code": "4943",
+      "name": "康控-KY",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 189287,
+      "lastYearRevenue": 173518,
+      "momPct": 4.203091625745932,
+      "yoyPct": 9.087817978538249,
+      "cumulativeRevenue": 1688816,
+      "cumulativeYoyPct": 41.17572315509036
     },
     {
       "code": "4946",
@@ -12130,6 +14054,19 @@
       "cumulativeYoyPct": 4.075631106456958
     },
     {
+      "code": "4977",
+      "name": "眾達-KY",
+      "market": "TWSE",
+      "industry": "通信網路業",
+      "period": "2026-09",
+      "revenue": 231772,
+      "lastYearRevenue": 102660,
+      "momPct": 11.433667802933781,
+      "yoyPct": 125.76660822131308,
+      "cumulativeRevenue": 1051555,
+      "cumulativeYoyPct": 27.66392696281368
+    },
+    {
       "code": "4979",
       "name": "華星光",
       "market": "TPEx",
@@ -12206,6 +14143,19 @@
       "yoyPct": -48.658813827534715,
       "cumulativeRevenue": 1168770,
       "cumulativeYoyPct": -18.86173025831206
+    },
+    {
+      "code": "5007",
+      "name": "三星",
+      "market": "TWSE",
+      "industry": "鋼鐵工業",
+      "period": "2026-09",
+      "revenue": 575544,
+      "lastYearRevenue": 519740,
+      "momPct": 15.813408779011507,
+      "yoyPct": 10.73690691499596,
+      "cumulativeRevenue": 4742834,
+      "cumulativeYoyPct": 0.9591776871343747
     },
     {
       "code": "5009",
@@ -12414,6 +14364,19 @@
       "yoyPct": 424.53350974040785,
       "cumulativeRevenue": 5241938,
       "cumulativeYoyPct": -52.302939063599716
+    },
+    {
+      "code": "5215",
+      "name": "科嘉-KY",
+      "market": "TWSE",
+      "industry": "電腦及週邊設備業",
+      "period": "2026-09",
+      "revenue": 195763,
+      "lastYearRevenue": 267983,
+      "momPct": -12.038372537125655,
+      "yoyPct": -26.949470675378663,
+      "cumulativeRevenue": 2296736,
+      "cumulativeYoyPct": 19.33761827317271
     },
     {
       "code": "5220",
@@ -12676,6 +14639,19 @@
       "cumulativeYoyPct": 19.454514584235497
     },
     {
+      "code": "5283",
+      "name": "禾聯碩",
+      "market": "TWSE",
+      "industry": "電器電纜",
+      "period": "2026-09",
+      "revenue": 605774,
+      "lastYearRevenue": 467928,
+      "momPct": 11.224457945692667,
+      "yoyPct": 29.458805628216307,
+      "cumulativeRevenue": 5183949,
+      "cumulativeYoyPct": 3.3182546457298985
+    },
+    {
       "code": "5284",
       "name": "jpp-KY",
       "market": "TWSE",
@@ -12804,6 +14780,19 @@
       "yoyPct": -9.23994038748137,
       "cumulativeRevenue": 20661,
       "cumulativeYoyPct": 50.48069919883467
+    },
+    {
+      "code": "5306",
+      "name": "桂盟",
+      "market": "TWSE",
+      "industry": "運動休閒",
+      "period": "2026-09",
+      "revenue": 458524,
+      "lastYearRevenue": 368091,
+      "momPct": 15.084721514571196,
+      "yoyPct": 24.56810951639676,
+      "cumulativeRevenue": 4096695,
+      "cumulativeYoyPct": 12.378985403085728
     },
     {
       "code": "5309",
@@ -13168,6 +15157,19 @@
       "yoyPct": 44.05875475007308,
       "cumulativeRevenue": 153084,
       "cumulativeYoyPct": 8.106352176829914
+    },
+    {
+      "code": "5434",
+      "name": "崇越",
+      "market": "TWSE",
+      "industry": "電子通路業",
+      "period": "2026-09",
+      "revenue": 7701235,
+      "lastYearRevenue": 6092008,
+      "momPct": -1.1618169499808837,
+      "yoyPct": 26.415378968642194,
+      "cumulativeRevenue": 63028872,
+      "cumulativeYoyPct": 25.343561455538634
     },
     {
       "code": "5438",
@@ -13599,6 +15601,19 @@
       "cumulativeYoyPct": -3.3519286610371704
     },
     {
+      "code": "5521",
+      "name": "工信",
+      "market": "TWSE",
+      "industry": "建材營造",
+      "period": "2026-09",
+      "revenue": 1069508,
+      "lastYearRevenue": 756922,
+      "momPct": 76.08577181627946,
+      "yoyPct": 41.29698965018853,
+      "cumulativeRevenue": 7892923,
+      "cumulativeYoyPct": 12.418898580300535
+    },
+    {
       "code": "5522",
       "name": "遠雄",
       "market": "TWSE",
@@ -13740,6 +15755,19 @@
       "yoyPct": -22.873615316278986,
       "cumulativeRevenue": 2354528,
       "cumulativeYoyPct": 1.2745080749813862
+    },
+    {
+      "code": "5546",
+      "name": "永固-KY",
+      "market": "TWSE",
+      "industry": "建材營造",
+      "period": "2026-09",
+      "revenue": 171467,
+      "lastYearRevenue": 123059,
+      "momPct": 2.2798174714426316,
+      "yoyPct": 39.33722848389797,
+      "cumulativeRevenue": 1052004,
+      "cumulativeYoyPct": -34.03313129488959
     },
     {
       "code": "5547",
@@ -13885,6 +15913,19 @@
       "cumulativeYoyPct": -38.528802243039735
     },
     {
+      "code": "5706",
+      "name": "鳳凰",
+      "market": "TWSE",
+      "industry": "觀光餐旅",
+      "period": "2026-09",
+      "revenue": 303164,
+      "lastYearRevenue": 277635,
+      "momPct": 41.67005462795512,
+      "yoyPct": 9.19516631548616,
+      "cumulativeRevenue": 2347403,
+      "cumulativeYoyPct": -2.1734029851368275
+    },
+    {
       "code": "5864",
       "name": "致和證",
       "market": "TPEx",
@@ -13896,6 +15937,19 @@
       "yoyPct": 59.010827232318874,
       "cumulativeRevenue": 5410830,
       "cumulativeYoyPct": 653.0217145942727
+    },
+    {
+      "code": "5871",
+      "name": "中租-KY",
+      "market": "TWSE",
+      "industry": "其他",
+      "period": "2026-09",
+      "revenue": 8192220,
+      "lastYearRevenue": 7990193,
+      "momPct": 0.2839875182105665,
+      "yoyPct": 2.52843704776593,
+      "cumulativeRevenue": 73119111,
+      "cumulativeYoyPct": -0.40832266929861394
     },
     {
       "code": "5876",
@@ -13987,6 +16041,32 @@
       "yoyPct": 8.147451212550479,
       "cumulativeRevenue": 1185704,
       "cumulativeYoyPct": -0.9308640634334437
+    },
+    {
+      "code": "5907",
+      "name": "大洋-KY",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 229526,
+      "lastYearRevenue": 205038,
+      "momPct": -0.061828378354842645,
+      "yoyPct": 11.94315200109248,
+      "cumulativeRevenue": 2082905,
+      "cumulativeYoyPct": 1.8270552599519343
+    },
+    {
+      "code": "6005",
+      "name": "群益證",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-09",
+      "revenue": 2507354,
+      "lastYearRevenue": 1772220,
+      "momPct": -17.26406097903021,
+      "yoyPct": 41.48096737425376,
+      "cumulativeRevenue": 26804791,
+      "cumulativeYoyPct": 92.31378133957045
     },
     {
       "code": "6015",
@@ -14236,6 +16316,19 @@
       "cumulativeYoyPct": -0.19259198901809016
     },
     {
+      "code": "6117",
+      "name": "迎廣",
+      "market": "TWSE",
+      "industry": "電腦及週邊設備業",
+      "period": "2026-09",
+      "revenue": 382748,
+      "lastYearRevenue": 281384,
+      "momPct": 35.78113137935193,
+      "yoyPct": 36.02337019873198,
+      "cumulativeRevenue": 2586304,
+      "cumulativeYoyPct": 8.273627962626964
+    },
+    {
       "code": "6118",
       "name": "建達",
       "market": "TPEx",
@@ -14392,6 +16485,19 @@
       "cumulativeYoyPct": 15.11854429141394
     },
     {
+      "code": "6133",
+      "name": "金橋",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 113295,
+      "lastYearRevenue": 116019,
+      "momPct": -6.693954193192393,
+      "yoyPct": -2.3478912936674163,
+      "cumulativeRevenue": 1063747,
+      "cumulativeYoyPct": 5.617213345883325
+    },
+    {
       "code": "6134",
       "name": "萬旭",
       "market": "TPEx",
@@ -14455,6 +16561,19 @@
       "yoyPct": -11.073904162341359,
       "cumulativeRevenue": 1620499,
       "cumulativeYoyPct": -13.868072700600345
+    },
+    {
+      "code": "6141",
+      "name": "柏承",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 265648,
+      "lastYearRevenue": 152462,
+      "momPct": -2.578489726014838,
+      "yoyPct": 74.23882672403616,
+      "cumulativeRevenue": 1884207,
+      "cumulativeYoyPct": 36.85944974599527
     },
     {
       "code": "6142",
@@ -15406,6 +17525,19 @@
       "cumulativeYoyPct": 14.640213943653212
     },
     {
+      "code": "6226",
+      "name": "光鼎",
+      "market": "TWSE",
+      "industry": "光電業",
+      "period": "2026-09",
+      "revenue": 66696,
+      "lastYearRevenue": 53788,
+      "momPct": 25.417928129524814,
+      "yoyPct": 23.997917751171265,
+      "cumulativeRevenue": 506832,
+      "cumulativeYoyPct": 9.09396168176623
+    },
+    {
       "code": "6227",
       "name": "茂綸",
       "market": "TPEx",
@@ -16160,6 +18292,19 @@
       "cumulativeYoyPct": 66.44893470632094
     },
     {
+      "code": "6431",
+      "name": "光麗-KY",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 54033,
+      "lastYearRevenue": 37822,
+      "momPct": 28.990904533409726,
+      "yoyPct": 42.86129765744805,
+      "cumulativeRevenue": 316504,
+      "cumulativeYoyPct": 17.51008012118422
+    },
+    {
       "code": "6432",
       "name": "今展科",
       "market": "TPEx",
@@ -16262,6 +18407,19 @@
       "yoyPct": 25.554223271567547,
       "cumulativeRevenue": 3975531,
       "cumulativeYoyPct": 24.04222551015887
+    },
+    {
+      "code": "6451",
+      "name": "訊芯-KY",
+      "market": "TWSE",
+      "industry": "半導體業",
+      "period": "2026-09",
+      "revenue": 716714,
+      "lastYearRevenue": 512183,
+      "momPct": 3.594890748334521,
+      "yoyPct": 39.933187942590834,
+      "cumulativeRevenue": 5754308,
+      "cumulativeYoyPct": 5.343854950337809
     },
     {
       "code": "6456",
@@ -16537,6 +18695,19 @@
       "cumulativeYoyPct": 1.7514622356433889
     },
     {
+      "code": "6505",
+      "name": "台塑化",
+      "market": "TWSE",
+      "industry": "油電燃氣業",
+      "period": "2026-09",
+      "revenue": 86928034,
+      "lastYearRevenue": 52495202,
+      "momPct": 6.131884173639596,
+      "yoyPct": 65.59234118196173,
+      "cumulativeRevenue": 588626860,
+      "cumulativeYoyPct": 22.034652067664958
+    },
+    {
       "code": "6506",
       "name": "雙邦",
       "market": "TPEx",
@@ -16784,6 +18955,19 @@
       "cumulativeYoyPct": 4.664014552536598
     },
     {
+      "code": "6541",
+      "name": "泰福-KY",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 31869,
+      "lastYearRevenue": 84860,
+      "momPct": -56.45181126248617,
+      "yoyPct": -62.445203865189725,
+      "cumulativeRevenue": 512107,
+      "cumulativeYoyPct": 130.66012665639724
+    },
+    {
       "code": "6542",
       "name": "隆中",
       "market": "TPEx",
@@ -16951,6 +19135,19 @@
       "yoyPct": 26.533229580955673,
       "cumulativeRevenue": 848956,
       "cumulativeYoyPct": 27.417875748374925
+    },
+    {
+      "code": "6573",
+      "name": "虹揚-KY",
+      "market": "TWSE",
+      "industry": "半導體業",
+      "period": "2026-09",
+      "revenue": 74297,
+      "lastYearRevenue": 63129,
+      "momPct": 16.298035532597638,
+      "yoyPct": 17.690760189453343,
+      "cumulativeRevenue": 594397,
+      "cumulativeYoyPct": -7.492463492488394
     },
     {
       "code": "6574",
@@ -17356,6 +19553,19 @@
       "cumulativeYoyPct": -36.32303377730655
     },
     {
+      "code": "6625",
+      "name": "必應",
+      "market": "TWSE",
+      "industry": "其他",
+      "period": "2026-09",
+      "revenue": 340962,
+      "lastYearRevenue": 447817,
+      "momPct": -9.669608250918637,
+      "yoyPct": -23.86130941880277,
+      "cumulativeRevenue": 3243098,
+      "cumulativeYoyPct": 9.31045489369433
+    },
+    {
       "code": "6629",
       "name": "泰金-KY",
       "market": "TPEx",
@@ -17564,6 +19774,19 @@
       "cumulativeYoyPct": 19.374233447329313
     },
     {
+      "code": "6666",
+      "name": "羅麗芬-KY",
+      "market": "TWSE",
+      "industry": "生技醫療業",
+      "period": "2026-09",
+      "revenue": 77280,
+      "lastYearRevenue": 103691,
+      "momPct": -4.106019431932398,
+      "yoyPct": -25.470870181597245,
+      "cumulativeRevenue": 919926,
+      "cumulativeYoyPct": 7.760050604441945
+    },
+    {
       "code": "6667",
       "name": "信紘科",
       "market": "TPEx",
@@ -17614,6 +19837,19 @@
       "yoyPct": 9.145694495497471,
       "cumulativeRevenue": 23940136,
       "cumulativeYoyPct": 14.293314700223323
+    },
+    {
+      "code": "6671",
+      "name": "三能-KY",
+      "market": "TWSE",
+      "industry": "居家生活",
+      "period": "2026-09",
+      "revenue": 158658,
+      "lastYearRevenue": 192186,
+      "momPct": 11.852290512245675,
+      "yoyPct": -17.445599575411322,
+      "cumulativeRevenue": 1270329,
+      "cumulativeYoyPct": -13.202391713863454
     },
     {
       "code": "6672",
@@ -18227,6 +20463,19 @@
       "cumulativeYoyPct": 52.4919956613828
     },
     {
+      "code": "6771",
+      "name": "平和環保-創",
+      "market": "TWSE",
+      "industry": "綠能環保",
+      "period": "2026-09",
+      "revenue": 50071,
+      "lastYearRevenue": 49955,
+      "momPct": -1.6904892798240791,
+      "yoyPct": 0.23220898808928037,
+      "cumulativeRevenue": 430715,
+      "cumulativeYoyPct": -9.860389970512587
+    },
+    {
       "code": "6776",
       "name": "展碁國際",
       "market": "TWSE",
@@ -18303,6 +20552,19 @@
       "yoyPct": 18.030323616019242,
       "cumulativeRevenue": 7501322,
       "cumulativeYoyPct": 12.812623884028607
+    },
+    {
+      "code": "6790",
+      "name": "永豐實",
+      "market": "TWSE",
+      "industry": "造紙工業",
+      "period": "2026-09",
+      "revenue": 977748,
+      "lastYearRevenue": 883538,
+      "momPct": 16.286299774860225,
+      "yoyPct": 10.66281246533822,
+      "cumulativeRevenue": 8016254,
+      "cumulativeYoyPct": -1.0007914992804383
     },
     {
       "code": "6791",
@@ -18513,6 +20775,19 @@
       "cumulativeYoyPct": 61.246616653427154
     },
     {
+      "code": "6835",
+      "name": "圓裕",
+      "market": "TWSE",
+      "industry": "電子零組件業",
+      "period": "2026-09",
+      "revenue": 162671,
+      "lastYearRevenue": 192343,
+      "momPct": -2.979715746091956,
+      "yoyPct": -15.426607674830901,
+      "cumulativeRevenue": 1718276,
+      "cumulativeYoyPct": -7.5178892922595
+    },
+    {
       "code": "6838",
       "name": "台新藥",
       "market": "TWSE",
@@ -18695,6 +20970,19 @@
       "cumulativeYoyPct": -45.8944587991894
     },
     {
+      "code": "6869",
+      "name": "雲豹能源",
+      "market": "TWSE",
+      "industry": "綠能環保",
+      "period": "2026-09",
+      "revenue": 581868,
+      "lastYearRevenue": 838657,
+      "momPct": 10.630547041957882,
+      "yoyPct": -30.619073113322848,
+      "cumulativeRevenue": 5186556,
+      "cumulativeYoyPct": -5.5405131481487215
+    },
+    {
       "code": "6870",
       "name": "騰雲",
       "market": "TPEx",
@@ -18719,6 +21007,19 @@
       "yoyPct": 22.55639097744361,
       "cumulativeRevenue": 23967,
       "cumulativeYoyPct": 183.2643895520624
+    },
+    {
+      "code": "6873",
+      "name": "泓德能源",
+      "market": "TWSE",
+      "industry": "綠能環保",
+      "period": "2026-09",
+      "revenue": 1061626,
+      "lastYearRevenue": 1117540,
+      "momPct": 129.50254768395317,
+      "yoyPct": -5.003310843459742,
+      "cumulativeRevenue": 4950157,
+      "cumulativeYoyPct": -8.426764361419034
     },
     {
       "code": "6874",
@@ -18797,6 +21098,32 @@
       "yoyPct": 209.54773869346732,
       "cumulativeRevenue": 9963,
       "cumulativeYoyPct": 242.960413080895
+    },
+    {
+      "code": "6887",
+      "name": "寶綠特-KY",
+      "market": "TWSE",
+      "industry": "綠能環保",
+      "period": "2026-09",
+      "revenue": 310128,
+      "lastYearRevenue": 388717,
+      "momPct": 11.874348420517224,
+      "yoyPct": -20.217536150978734,
+      "cumulativeRevenue": 3253186,
+      "cumulativeYoyPct": -2.9082002215106475
+    },
+    {
+      "code": "6890",
+      "name": "來億-KY",
+      "market": "TWSE",
+      "industry": "運動休閒",
+      "period": "2026-09",
+      "revenue": 2886556,
+      "lastYearRevenue": 2533083,
+      "momPct": 6.214797367881696,
+      "yoyPct": 13.954260480213241,
+      "cumulativeRevenue": 26592109,
+      "cumulativeYoyPct": -8.389606328063977
     },
     {
       "code": "6894",
@@ -19046,6 +21373,19 @@
       "cumulativeYoyPct": 49.502046073219006
     },
     {
+      "code": "6923",
+      "name": "中台",
+      "market": "TWSE",
+      "industry": "綠能環保",
+      "period": "2026-09",
+      "revenue": 108896,
+      "lastYearRevenue": 93123,
+      "momPct": -7.950837686598705,
+      "yoyPct": 16.937813429550165,
+      "cumulativeRevenue": 1007914,
+      "cumulativeYoyPct": 17.204481128235898
+    },
+    {
       "code": "6924",
       "name": "榮惠-KY創",
       "market": "TWSE",
@@ -19072,6 +21412,19 @@
       "cumulativeYoyPct": 5.42529580763313
     },
     {
+      "code": "6928",
+      "name": "攸泰科技",
+      "market": "TWSE",
+      "industry": "電腦及週邊設備業",
+      "period": "2026-09",
+      "revenue": 142138,
+      "lastYearRevenue": 133162,
+      "momPct": 32.44439474836702,
+      "yoyPct": 6.740661750349199,
+      "cumulativeRevenue": 1373259,
+      "cumulativeYoyPct": -15.720320337398821
+    },
+    {
       "code": "6929",
       "name": "佑全",
       "market": "TPEx",
@@ -19096,6 +21449,19 @@
       "yoyPct": 10.875172455161659,
       "cumulativeRevenue": 965735,
       "cumulativeYoyPct": 17.0695724697063
+    },
+    {
+      "code": "6933",
+      "name": "AMAX-KY",
+      "market": "TWSE",
+      "industry": "電腦及週邊設備業",
+      "period": "2026-09",
+      "revenue": 1427585,
+      "lastYearRevenue": 434102,
+      "momPct": 5.228222924602847,
+      "yoyPct": 228.85934642088725,
+      "cumulativeRevenue": 8710726,
+      "cumulativeYoyPct": 66.27349729727872
     },
     {
       "code": "6934",
@@ -19254,6 +21620,19 @@
       "cumulativeYoyPct": 12.458524882826131
     },
     {
+      "code": "6958",
+      "name": "日盛台駿",
+      "market": "TWSE",
+      "industry": "其他",
+      "period": "2026-09",
+      "revenue": 808386,
+      "lastYearRevenue": 821078,
+      "momPct": -1.6247290799854455,
+      "yoyPct": -1.5457727524059834,
+      "cumulativeRevenue": 7566652,
+      "cumulativeYoyPct": -8.332584243527924
+    },
+    {
       "code": "6961",
       "name": "旅天下",
       "market": "TPEx",
@@ -19278,6 +21657,19 @@
       "yoyPct": 1.3145277946474188,
       "cumulativeRevenue": 14351875,
       "cumulativeYoyPct": -0.023329486185656178
+    },
+    {
+      "code": "6965",
+      "name": "中傑-KY",
+      "market": "TWSE",
+      "industry": "運動休閒",
+      "period": "2026-09",
+      "revenue": 1663678,
+      "lastYearRevenue": 1738221,
+      "momPct": -11.879221505631499,
+      "yoyPct": -4.288465045583962,
+      "cumulativeRevenue": 15869141,
+      "cumulativeYoyPct": -5.1031552247786625
     },
     {
       "code": "6967",
@@ -19488,6 +21880,19 @@
       "cumulativeYoyPct": 586.8750281164245
     },
     {
+      "code": "7631",
+      "name": "聚賢研發-創",
+      "market": "TWSE",
+      "industry": "其他電子業",
+      "period": "2026-09",
+      "revenue": 172902,
+      "lastYearRevenue": 72138,
+      "momPct": 9.350670705869705,
+      "yoyPct": 139.6822756383598,
+      "cumulativeRevenue": 1397625,
+      "cumulativeYoyPct": 120.61539481493642
+    },
+    {
       "code": "7642",
       "name": "昶瑞機電",
       "market": "TPEx",
@@ -19499,6 +21904,19 @@
       "yoyPct": 19.859324945447792,
       "cumulativeRevenue": 502522,
       "cumulativeYoyPct": -23.35490995168139
+    },
+    {
+      "code": "7689",
+      "name": "大鵬科CLMX",
+      "market": "TWSE",
+      "industry": "通信網路業",
+      "period": "2026-09",
+      "revenue": 348807,
+      "lastYearRevenue": 404500,
+      "momPct": -19.205646226043612,
+      "yoyPct": -13.768355995055623,
+      "cumulativeRevenue": 4257034,
+      "cumulativeYoyPct": 27.141527669263834
     },
     {
       "code": "7703",
@@ -19683,6 +22101,19 @@
       "cumulativeYoyPct": 38.46371334973561
     },
     {
+      "code": "7722",
+      "name": "LINEPAY",
+      "market": "TWSE",
+      "industry": "數位雲端",
+      "period": "2026-09",
+      "revenue": 725195,
+      "lastYearRevenue": 678742,
+      "momPct": -4.105305054870074,
+      "yoyPct": 6.843984901479502,
+      "cumulativeRevenue": 6433390,
+      "cumulativeYoyPct": 12.990860466415139
+    },
+    {
       "code": "7723",
       "name": "築間",
       "market": "TPEx",
@@ -19722,6 +22153,19 @@
       "cumulativeYoyPct": 4.127187690715445
     },
     {
+      "code": "7732",
+      "name": "金興精密",
+      "market": "TWSE",
+      "industry": "汽車工業",
+      "period": "2026-09",
+      "revenue": 72976,
+      "lastYearRevenue": 75542,
+      "momPct": -16.799489231681317,
+      "yoyPct": -3.396785893939795,
+      "cumulativeRevenue": 750440,
+      "cumulativeYoyPct": -14.41335098806025
+    },
+    {
       "code": "7734",
       "name": "印能科技",
       "market": "TPEx",
@@ -19759,6 +22203,19 @@
       "yoyPct": 19.923049880864028,
       "cumulativeRevenue": 486584,
       "cumulativeYoyPct": 14.83783873084203
+    },
+    {
+      "code": "7740",
+      "name": "熙特爾-創",
+      "market": "TWSE",
+      "industry": "綠能環保",
+      "period": "2026-09",
+      "revenue": 279686,
+      "lastYearRevenue": 590877,
+      "momPct": -51.29347801479206,
+      "yoyPct": -52.665952474034356,
+      "cumulativeRevenue": 9052249,
+      "cumulativeYoyPct": 680.995802651275
     },
     {
       "code": "7743",
@@ -19863,6 +22320,19 @@
       "yoyPct": -4.521933948932978,
       "cumulativeRevenue": 1734590,
       "cumulativeYoyPct": 1.7990709739514712
+    },
+    {
+      "code": "7760",
+      "name": "享溫馨",
+      "market": "TWSE",
+      "industry": "觀光餐旅",
+      "period": "2026-09",
+      "revenue": 95778,
+      "lastYearRevenue": 84627,
+      "momPct": -2.9053971858399903,
+      "yoyPct": 13.17664575135595,
+      "cumulativeRevenue": 936735,
+      "cumulativeYoyPct": -4.304062047307803
     },
     {
       "code": "7765",
@@ -20006,6 +22476,19 @@
       "yoyPct": 73.30205267005157,
       "cumulativeRevenue": 6852465,
       "cumulativeYoyPct": 44.00412313072132
+    },
+    {
+      "code": "7791",
+      "name": "皇家可口",
+      "market": "TWSE",
+      "industry": "食品工業",
+      "period": "2026-09",
+      "revenue": 216933,
+      "lastYearRevenue": 239334,
+      "momPct": -19.168858848340772,
+      "yoyPct": -9.359723231968713,
+      "cumulativeRevenue": 1911157,
+      "cumulativeYoyPct": -7.681201214778876
     },
     {
       "code": "7792",
@@ -20253,6 +22736,19 @@
       "yoyPct": 102.30458325776615,
       "cumulativeRevenue": 954288,
       "cumulativeYoyPct": 196.48887880868568
+    },
+    {
+      "code": "7835",
+      "name": "永悅健康-創",
+      "market": "TWSE",
+      "industry": "數位雲端",
+      "period": "2026-09",
+      "revenue": 40349,
+      "lastYearRevenue": 47029,
+      "momPct": 63.309993119358886,
+      "yoyPct": -14.204001786131961,
+      "cumulativeRevenue": 299071,
+      "cumulativeYoyPct": -2.126204314587915
     },
     {
       "code": "7839",
@@ -21750,6 +24246,19 @@
       "cumulativeYoyPct": -6.71290394943457
     },
     {
+      "code": "8429",
+      "name": "金麗-KY",
+      "market": "TWSE",
+      "industry": "貿易百貨",
+      "period": "2026-09",
+      "revenue": 12529,
+      "lastYearRevenue": 11824,
+      "momPct": 5.214981525025193,
+      "yoyPct": 5.9624492557510145,
+      "cumulativeRevenue": 102622,
+      "cumulativeYoyPct": -3.652170647438786
+    },
+    {
       "code": "8431",
       "name": "匯鑽科",
       "market": "TPEx",
@@ -21919,6 +24428,19 @@
       "cumulativeYoyPct": 33.104971741687464
     },
     {
+      "code": "8454",
+      "name": "富邦媒",
+      "market": "TWSE",
+      "industry": "數位雲端",
+      "period": "2026-09",
+      "revenue": 8592184,
+      "lastYearRevenue": 7938035,
+      "momPct": -6.094122669357295,
+      "yoyPct": 8.240691808489128,
+      "cumulativeRevenue": 79982944,
+      "cumulativeYoyPct": 3.884875999429758
+    },
+    {
       "code": "8455",
       "name": "大拓-KY",
       "market": "TPEx",
@@ -21984,6 +24506,19 @@
       "cumulativeYoyPct": -21.49043525493227
     },
     {
+      "code": "8467",
+      "name": "波力-KY",
+      "market": "TWSE",
+      "industry": "運動休閒",
+      "period": "2026-09",
+      "revenue": 252885,
+      "lastYearRevenue": 202605,
+      "momPct": 28.60957127600061,
+      "yoyPct": 24.81676167912934,
+      "cumulativeRevenue": 1869660,
+      "cumulativeYoyPct": -6.739240390150272
+    },
+    {
       "code": "8472",
       "name": "納維康",
       "market": "TPEx",
@@ -22008,6 +24543,19 @@
       "yoyPct": -36.47146748957304,
       "cumulativeRevenue": 3697229,
       "cumulativeYoyPct": 2.586877129232591
+    },
+    {
+      "code": "8476",
+      "name": "台境*",
+      "market": "TWSE",
+      "industry": "綠能環保",
+      "period": "2026-09",
+      "revenue": -59037,
+      "lastYearRevenue": 101129,
+      "momPct": -1109.8699965788574,
+      "yoyPct": -158.37791335818608,
+      "cumulativeRevenue": 613891,
+      "cumulativeYoyPct": -33.22706502597972
     },
     {
       "code": "8477",
@@ -22047,6 +24595,19 @@
       "yoyPct": 5.966123209964695,
       "cumulativeRevenue": 917149,
       "cumulativeYoyPct": 3.381502564391591
+    },
+    {
+      "code": "8482",
+      "name": "商億-KY",
+      "market": "TWSE",
+      "industry": "居家生活",
+      "period": "2026-09",
+      "revenue": 276071,
+      "lastYearRevenue": 279883,
+      "momPct": 16.20470339642973,
+      "yoyPct": -1.3619976918926837,
+      "cumulativeRevenue": 2596503,
+      "cumulativeYoyPct": 1.1181595386851968
     },
     {
       "code": "8487",
@@ -22426,6 +24987,19 @@
       "cumulativeYoyPct": 12.373575711487563
     },
     {
+      "code": "912000",
+      "name": "晨訊科-DR",
+      "market": "TWSE",
+      "industry": "存託憑證",
+      "period": "2026-09",
+      "revenue": 115551,
+      "lastYearRevenue": 84626,
+      "momPct": -6.724194993582551,
+      "yoyPct": 36.54314276936166,
+      "cumulativeRevenue": 1080263,
+      "cumulativeYoyPct": -0.7755989444359226
+    },
+    {
       "code": "9802",
       "name": "鈺齊-KY",
       "market": "TWSE",
@@ -22450,6 +25024,19 @@
       "yoyPct": 504.1391721655669,
       "cumulativeRevenue": 87432,
       "cumulativeYoyPct": -34.743473003836336
+    },
+    {
+      "code": "9904",
+      "name": "寶成",
+      "market": "TWSE",
+      "industry": "運動休閒",
+      "period": "2026-09",
+      "revenue": 21396297,
+      "lastYearRevenue": 19380257,
+      "momPct": 3.7557498634696866,
+      "yoyPct": 10.40254522940537,
+      "cumulativeRevenue": 187671106,
+      "cumulativeYoyPct": -0.5154116288279713
     },
     {
       "code": "9905",
@@ -22541,6 +25128,19 @@
       "yoyPct": -9.989213426111968,
       "cumulativeRevenue": 352293,
       "cumulativeYoyPct": -2.8462773086532787
+    },
+    {
+      "code": "9914",
+      "name": "美利達",
+      "market": "TWSE",
+      "industry": "運動休閒",
+      "period": "2026-09",
+      "revenue": 1689798,
+      "lastYearRevenue": 2269282,
+      "momPct": -13.726745557417374,
+      "yoyPct": -25.536006543038724,
+      "cumulativeRevenue": 18459594,
+      "cumulativeYoyPct": -15.349185639879536
     },
     {
       "code": "9917",
@@ -22712,6 +25312,32 @@
       "cumulativeYoyPct": -11.950529540340135
     },
     {
+      "code": "9934",
+      "name": "成霖",
+      "market": "TWSE",
+      "industry": "居家生活",
+      "period": "2026-09",
+      "revenue": 1255725,
+      "lastYearRevenue": 1521379,
+      "momPct": 5.433180942305513,
+      "yoyPct": -17.461395221046168,
+      "cumulativeRevenue": 13439234,
+      "cumulativeYoyPct": 3.1846486274162342
+    },
+    {
+      "code": "9935",
+      "name": "慶豐富",
+      "market": "TWSE",
+      "industry": "居家生活",
+      "period": "2026-09",
+      "revenue": 476553,
+      "lastYearRevenue": 423233,
+      "momPct": 9.977660747995698,
+      "yoyPct": 12.59826147772031,
+      "cumulativeRevenue": 3941970,
+      "cumulativeYoyPct": 7.114383924568292
+    },
+    {
       "code": "9937",
       "name": "全國",
       "market": "TWSE",
@@ -22814,6 +25440,19 @@
       "yoyPct": 12.753766452486866,
       "cumulativeRevenue": 1946987,
       "cumulativeYoyPct": 10.489852968633043
+    },
+    {
+      "code": "9945",
+      "name": "潤泰新",
+      "market": "TWSE",
+      "industry": "其他",
+      "period": "2026-09",
+      "revenue": 3108067,
+      "lastYearRevenue": 3330320,
+      "momPct": -10.261627336236774,
+      "yoyPct": -6.6736229551514565,
+      "cumulativeRevenue": 32400617,
+      "cumulativeYoyPct": 28.96225294994541
     },
     {
       "code": "9946",
