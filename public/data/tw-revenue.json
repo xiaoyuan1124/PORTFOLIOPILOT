@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-14T15:23:08.954Z",
+  "generatedAt": "2026-10-15T15:17:18.781Z",
   "sources": [
     {
       "name": "TWSE",
       "url": "https://openapi.twse.com.tw/v1/opendata/t187ap05_L",
-      "fetchedAt": "2026-10-14T15:23:08.954Z"
+      "fetchedAt": "2026-10-15T15:17:18.781Z"
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap05_O",
-      "fetchedAt": "2026-10-14T15:23:08.954Z"
+      "fetchedAt": "2026-10-15T15:17:18.781Z"
     }
   ],
   "rows": [
@@ -6902,6 +6902,19 @@
       "yoyPct": -5.201390571982549,
       "cumulativeRevenue": 3169447,
       "cumulativeYoyPct": 40.58613800604316
+    },
+    {
+      "code": "2832",
+      "name": "台產",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-09",
+      "revenue": 868102,
+      "lastYearRevenue": 863855,
+      "momPct": -6.358462560730405,
+      "yoyPct": 0.49163343385174596,
+      "cumulativeRevenue": 8082937,
+      "cumulativeYoyPct": 5.795001379547205
     },
     {
       "code": "2834",
@@ -22567,6 +22580,19 @@
       "yoyPct": 19.063779719187572,
       "cumulativeRevenue": 5208554,
       "cumulativeYoyPct": 13.317477535807168
+    },
+    {
+      "code": "7806",
+      "name": "精華生醫",
+      "market": "TPEx",
+      "industry": "食品工業",
+      "period": "2026-09",
+      "revenue": 47722,
+      "lastYearRevenue": 33723,
+      "momPct": 4.429077858987264,
+      "yoyPct": 41.51172790083919,
+      "cumulativeRevenue": 419626,
+      "cumulativeYoyPct": 4.245065062180465
     },
     {
       "code": "7810",

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-14T15:27:07.070Z",
+  "generatedAt": "2026-10-15T15:23:04.491Z",
   "benchmarks": [
     {
       "id": "TWSE:TAIEX-TR",
@@ -12,8 +12,8 @@
       "sourceName": "TWSE MFI94U",
       "sourceUrl": "https://www.twse.com.tw/zh/indices/taiex/mfi94u.html",
       "sourceUrlTemplate": "https://www.twse.com.tw/indicesReport/MFI94U?response=json&date=YYYYMM01",
-      "fetchedAt": "2026-10-14T15:27:07.070Z",
-      "asOf": "2026-10-14",
+      "fetchedAt": "2026-10-15T15:23:04.491Z",
+      "asOf": "2026-10-15",
       "points": [
         {
           "date": "2024-11-01",
@@ -1910,6 +1910,10 @@
         {
           "date": "2026-10-14",
           "value": 112441.07
+        },
+        {
+          "date": "2026-10-15",
+          "value": 108611.89
         }
       ]
     },
@@ -1924,8 +1928,8 @@
       "sourceName": "TWSE FMTQIK",
       "sourceUrl": "https://www.twse.com.tw/exchangeReport/FMTQIK?response=html",
       "sourceUrlTemplate": "https://www.twse.com.tw/rwd/zh/afterTrading/FMTQIK?date=YYYYMM01&response=json",
-      "fetchedAt": "2026-10-14T15:27:07.070Z",
-      "asOf": "2026-10-14",
+      "fetchedAt": "2026-10-15T15:23:04.491Z",
+      "asOf": "2026-10-15",
       "points": [
         {
           "date": "2024-11-01",
@@ -3822,6 +3826,10 @@
         {
           "date": "2026-10-14",
           "value": 48625.83
+        },
+        {
+          "date": "2026-10-15",
+          "value": 46969.87
         }
       ]
     }
