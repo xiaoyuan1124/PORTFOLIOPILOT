@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-15T15:17:18.781Z",
+  "generatedAt": "2026-10-16T14:58:33.848Z",
   "sources": [
     {
       "name": "TWSE",
       "url": "https://openapi.twse.com.tw/v1/opendata/t187ap05_L",
-      "fetchedAt": "2026-10-15T15:17:18.781Z"
+      "fetchedAt": "2026-10-16T14:58:33.848Z"
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap05_O",
-      "fetchedAt": "2026-10-15T15:17:18.781Z"
+      "fetchedAt": "2026-10-16T14:58:33.848Z"
     }
   ],
   "rows": [
@@ -2242,12 +2242,12 @@
       "market": "TWSE",
       "industry": "電器電纜",
       "period": "2026-09",
-      "revenue": 476752,
+      "revenue": 472607,
       "lastYearRevenue": 346813,
-      "momPct": 26.737431979434994,
-      "yoyPct": 37.466588622687155,
-      "cumulativeRevenue": 6410993,
-      "cumulativeYoyPct": 0.9809703193434135
+      "momPct": 25.635545347486396,
+      "yoyPct": 36.27142004480801,
+      "cumulativeRevenue": 6406848,
+      "cumulativeYoyPct": 0.9156815065224233
     },
     {
       "code": "1702",
@@ -6891,6 +6891,19 @@
       "cumulativeYoyPct": 14.762361486048793
     },
     {
+      "code": "2816",
+      "name": "旺旺保",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-09",
+      "revenue": 1366606,
+      "lastYearRevenue": 1231558,
+      "momPct": -16.286098628337882,
+      "yoyPct": 10.96562240674008,
+      "cumulativeRevenue": 12550265,
+      "cumulativeYoyPct": 15.736993926472135
+    },
+    {
       "code": "2820",
       "name": "華票",
       "market": "TWSE",
@@ -7008,6 +7021,45 @@
       "cumulativeYoyPct": 200.7813566087566
     },
     {
+      "code": "2880",
+      "name": "華南金",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-09",
+      "revenue": 6206398,
+      "lastYearRevenue": 5825918,
+      "momPct": -12.69931159817814,
+      "yoyPct": 6.530816259343163,
+      "cumulativeRevenue": 61798762,
+      "cumulativeYoyPct": 25.189836059004975
+    },
+    {
+      "code": "2886",
+      "name": "兆豐金",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-09",
+      "revenue": 8344036,
+      "lastYearRevenue": 7165221,
+      "momPct": 7.030915690171978,
+      "yoyPct": 16.451900087938668,
+      "cumulativeRevenue": 71076533,
+      "cumulativeYoyPct": 16.560593211500034
+    },
+    {
+      "code": "2887",
+      "name": "台新新光金",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-09",
+      "revenue": 13620078,
+      "lastYearRevenue": 16729152,
+      "momPct": -13.695085723671117,
+      "yoyPct": -18.584767476558287,
+      "cumulativeRevenue": 145250158,
+      "cumulativeYoyPct": 63.01702307760743
+    },
+    {
       "code": "2889",
       "name": "國票金",
       "market": "TWSE",
@@ -7032,6 +7084,19 @@
       "yoyPct": 29.842291836236242,
       "cumulativeRevenue": 83780768,
       "cumulativeYoyPct": 51.09027550386513
+    },
+    {
+      "code": "2892",
+      "name": "第一金",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-09",
+      "revenue": 6110987,
+      "lastYearRevenue": 6190318,
+      "momPct": -19.404371850634394,
+      "yoyPct": -1.2815335173411124,
+      "cumulativeRevenue": 62616993,
+      "cumulativeYoyPct": 15.782235219596398
     },
     {
       "code": "2897",
@@ -15991,6 +16056,19 @@
       "cumulativeYoyPct": 0.4728832012759747
     },
     {
+      "code": "5880",
+      "name": "合庫金",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-09",
+      "revenue": 5448285,
+      "lastYearRevenue": 5660070,
+      "momPct": -13.223335967714654,
+      "yoyPct": -3.741738176382978,
+      "cumulativeRevenue": 53568863,
+      "cumulativeYoyPct": 15.614799655932377
+    },
+    {
       "code": "5902",
       "name": "德記",
       "market": "TPEx",
@@ -24712,19 +24790,6 @@
       "yoyPct": -16.55283678408174,
       "cumulativeRevenue": 149562,
       "cumulativeYoyPct": -2.9637319146175307
-    },
-    {
-      "code": "8908",
-      "name": "欣雄",
-      "market": "TPEx",
-      "industry": "油電燃氣業",
-      "period": "2026-09",
-      "revenue": 1057830,
-      "lastYearRevenue": 846775,
-      "momPct": 3.285656120658596,
-      "yoyPct": 24.924566738507867,
-      "cumulativeRevenue": 8227396,
-      "cumulativeYoyPct": 4.189384313053072
     },
     {
       "code": "8916",
