@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T17:07:13.366Z",
+  "generatedAt": "2026-10-20T15:18:59.014Z",
   "periods": [
     "2026-09",
     "2026-08",
@@ -22918,15 +22918,15 @@
       "market": "TWSE",
       "industry": "光電業",
       "period": "2026-09",
-      "revenue": 96562,
+      "revenue": 88430,
       "previousMonthRevenue": 66546,
       "lastYearRevenue": 186260,
-      "momPct": 45.1,
-      "yoyPct": -48.15,
-      "cumulativeRevenue": 904467,
+      "momPct": 32.88,
+      "yoyPct": -52.52,
+      "cumulativeRevenue": 896335,
       "lastYearCumulativeRevenue": 1452394,
-      "cumulativeYoyPct": -37.72,
-      "note": "-"
+      "cumulativeYoyPct": -38.28,
+      "note": "月營收相較同期減少，主要受政府綠能政策速度及市場淡旺季影響所致。"
     },
     {
       "code": "6446",
@@ -23055,6 +23055,22 @@
       "lastYearCumulativeRevenue": 132789,
       "cumulativeYoyPct": 98.86,
       "note": "本月因增加其他電子產品銷售、致本月較上期營收增加"
+    },
+    {
+      "code": "6467",
+      "name": "泰合",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-09",
+      "revenue": 1185,
+      "previousMonthRevenue": 1725,
+      "lastYearRevenue": 0,
+      "momPct": -31.3,
+      "yoyPct": null,
+      "cumulativeRevenue": 5932,
+      "lastYearCumulativeRevenue": 7837,
+      "cumulativeYoyPct": -24.3,
+      "note": "主係認列委託開發之專案收入"
     },
     {
       "code": "6469",
@@ -54785,6 +54801,22 @@
       "note": "本月因增加其他電子產品銷售、致本月較上期營收增加"
     },
     {
+      "code": "6467",
+      "name": "泰合",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-08",
+      "revenue": 1725,
+      "previousMonthRevenue": 1671,
+      "lastYearRevenue": 58,
+      "momPct": 3.23,
+      "yoyPct": 2874.13,
+      "cumulativeRevenue": 4747,
+      "lastYearCumulativeRevenue": 7837,
+      "cumulativeYoyPct": -39.42,
+      "note": "主係認列委託開發之專案收入"
+    },
+    {
       "code": "6469",
       "name": "大樹",
       "market": "TPEx",
@@ -86495,6 +86527,22 @@
       "lastYearCumulativeRevenue": 108119,
       "cumulativeYoyPct": 85.68,
       "note": "本月因增加其他電子產品銷售、致本月較上期營收增加"
+    },
+    {
+      "code": "6467",
+      "name": "泰合",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-07",
+      "revenue": 1671,
+      "previousMonthRevenue": 1318,
+      "lastYearRevenue": 0,
+      "momPct": 26.78,
+      "yoyPct": null,
+      "cumulativeRevenue": 3022,
+      "lastYearCumulativeRevenue": 7779,
+      "cumulativeYoyPct": -61.15,
+      "note": "主係認列委託開發之專案收入"
     },
     {
       "code": "6469",
