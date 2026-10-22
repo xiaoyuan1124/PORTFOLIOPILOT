@@ -6,7 +6,7 @@ import type { AppState, EtfComposition } from "@/lib/types";
 import { loadBundledEtfCompositions, normalizeEtfCompositionNames, type EtfCompositionCache } from "@/lib/etf-composition-data";
 import { chooseCurrentEtfCompositions } from "@/lib/etf-composition-catalog";
 import { analyzeEtf } from "@/lib/etf-research";
-import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
+import { cacheMarketFreshness, loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { Badge, Card, CardContent, GhostButton, InfoDisclosure } from "./ui";
 import { EtfDeepAnalysis } from "./etf-deep-analysis";
 import { EtfCompositionTracker } from "./etf-composition-tracker";
@@ -40,6 +40,7 @@ export function EtfResearch({
   const [compositionHistory, setCompositionHistory] = useState<EtfComposition[]>([]);
   const [officialCache, setOfficialCache] = useState<EtfCompositionCache | null>(null);
   const [historyError, setHistoryError] = useState("");
+  const quoteDates = useMemo(() => quotes ? cacheMarketFreshness(quotes) : null, [quotes]);
   const heldEtfKeys = useMemo(
     () => new Set(
       state.holdings
@@ -142,7 +143,7 @@ export function EtfResearch({
           <div>
             <p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">ETF Research · Look-through + Attribution</p>
             <h3 className="mt-2 text-xl font-semibold">從 ETF 一路看到是哪幾家公司在拉抬／拖累</h3>
-            <p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">先看今日影響、成份結構與異動，再展開完整資料。</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">先看最近交易日影響、成份結構與異動，再展開完整資料。</p>
             <InfoDisclosure summary="資料來源與同步方式" className="mt-3 border-white/15 bg-white/[.06] dark:border-black/10 dark:bg-black/[.04]">
               成份權重使用目前保存的可追溯資料；支援的持有台灣 ETF 會在「同步最新資料」時同步官方發行人成份。當日歸因只使用同一最新交易日、可唯一匹配的官方台股收盤漲跌，缺資料不補猜。
             </InfoDisclosure>
@@ -161,7 +162,7 @@ export function EtfResearch({
         </div>
       ) : null}
 
-      <div role="status" className="rounded-xl border border-black/6 bg-white/50 px-3 py-2 text-xs leading-5 text-black/55 dark:border-white/8 dark:bg-white/4 dark:text-white/55">
+      <div role="status" aria-label="ETF 官方資料狀態" className="rounded-xl border border-black/6 bg-white/50 px-3 py-2 text-xs leading-5 text-black/55 dark:border-white/8 dark:bg-white/4 dark:text-white/55">
         {officialCache
           ? `官方成份目錄 ${officialCache.compositions.length} 檔 · 快取產生 ${officialCache.generatedAt.slice(0, 10)}${officialCache.offlineFallback ? " · 離線舊快取（非最新更新）" : ""}。`
           : loading ? "正在讀取官方 ETF 成份目錄…" : "官方 ETF 目錄未載入，僅能查看本機已有的資料。"}
@@ -169,6 +170,11 @@ export function EtfResearch({
           ? ` · ${officialCache.sources.filter((source) => source.status !== "ok").length} 檔來源本次異常，部分官方資料可能是保留的舊快取。`
           : ""}
         {" "}瀏覽不會修改持股或覆寫本機成份。
+        <p className="mt-1 border-t border-black/5 pt-1 dark:border-white/8">
+          {quoteDates
+            ? `官方收盤交易日：上市 ${quoteDates.TWSE ?? "無有效資料"} · 上櫃 ${quoteDates.TPEx ?? "無有效資料"}。${quotes?.offlineFallback ? " 目前讀取的是離線快取，可能不是最新資料。" : ""} 非盤中即時行情。`
+            : loading ? "正在確認官方台股收盤資料日…" : "台股官方收盤行情未載入；當日歸因暫時不可用。"}
+        </p>
       </div>
 
       <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
@@ -239,7 +245,7 @@ export function EtfResearch({
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Daily attribution</p>
-                  <h3 className="mt-1 text-lg font-semibold">今天哪些成份股在拉抬／拖累 {selected.etfSymbol}？</h3>
+                  <h3 className="mt-1 text-lg font-semibold">最近交易日哪些成份股在拉抬／拖累 {selected.etfSymbol}？</h3>
                   <p className="mt-2 max-w-3xl text-xs leading-5 text-black/45 dark:text-white/45">先看正負貢獻最大的成份，點成份股可直接進一步研究。</p>
                 </div>
                 <div className="text-right">
