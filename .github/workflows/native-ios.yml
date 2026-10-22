@@ -38,7 +38,7 @@ on:
       - "scripts/archive-ios-unsigned.mjs"
       - "scripts/verify-ios-archive.mjs"
       - "scripts/widget-signing-contract.mjs"
-      - "scripts/widget-signing-contract.test.mjs"
+      - "scripts/widget-signing-contract.check.mjs"
       - "scripts/verify-ios-signed-widget.mjs"
       - "scripts/create-testflight-export-options.mjs"
       - "scripts/archive-ios-signed.mjs"
