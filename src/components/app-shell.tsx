@@ -21,6 +21,7 @@ import {
   parseNativeDeepLink
 } from "@/lib/native-deep-link";
 import { syncNativeSmartAlerts } from "@/lib/native-notifications";
+import { syncNativeWidgetSnapshot } from "@/lib/native-widget-sync";
 import { Overview } from "./overview";
 import { Portfolio, type PortfolioTab } from "./portfolio";
 import { Research } from "./research";
@@ -139,6 +140,25 @@ export function AppShell() {
       window.removeEventListener(NATIVE_RESUME_EVENT, syncAlerts);
     };
   }, [state, storageReady]);
+
+  useEffect(() => {
+    if (!storageReady || !Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "ios") return;
+    if (storageWriteBlocked || nativeStorageDegraded) return;
+
+    let disposed = false;
+    const syncWidget = () => {
+      if (disposed) return;
+      // The native bridge checks the saved opt-in flag before every write.
+      // A failed/offline quote download never invents stock prices.
+      void syncNativeWidgetSnapshot(state).catch(() => undefined);
+    };
+    syncWidget();
+    window.addEventListener(NATIVE_RESUME_EVENT, syncWidget);
+    return () => {
+      disposed = true;
+      window.removeEventListener(NATIVE_RESUME_EVENT, syncWidget);
+    };
+  }, [state, storageReady, storageWriteBlocked, nativeStorageDegraded]);
 
   useEffect(() => {
     function openNativeDeepLink(value: string) {
