@@ -19,6 +19,26 @@ for (const name of ['PortfolioPilotWidgets.swift', 'Info.plist', 'PortfolioPilot
   copyFileSync(join(sourceDir, name), join(widgetDir, name));
 }
 copyFileSync(join(root, 'native', 'ios', 'App.entitlements'), join(iosRoot, 'App', 'App.entitlements'));
+for (const name of ['PortfolioWidgetSyncPlugin.swift', 'PortfolioWidgetBridgeViewController.swift']) {
+  copyFileSync(join(sourceDir, name), join(iosRoot, 'App', name));
+}
+
+function patchGeneratedFile(file, original, replacement) {
+  const path = join(iosRoot, 'App', file);
+  const source = readFileSync(path, 'utf8');
+  const count = source.split(original).length - 1;
+  if (count !== 1) {
+    throw new Error('Capacitor native entrypoint changed (' + file + '): ' + original);
+  }
+  writeFileSync(path, source.replace(original, replacement));
+}
+
+patchGeneratedFile('SceneDelegate.swift',
+  'window?.rootViewController = CAPBridgeViewController()',
+  'window?.rootViewController = PortfolioWidgetBridgeViewController()');
+patchGeneratedFile('Base.lproj/Main.storyboard',
+  'customClass="CAPBridgeViewController" customModule="Capacitor"',
+  'customClass="PortfolioWidgetBridgeViewController" customModule="App"');
 
 let pbx = readFileSync(projectPath, 'utf8');
 const signature = '/* PortfolioPilot WidgetKit V1 generated target */';
@@ -32,7 +52,8 @@ const ids = {
   group: id(5), target: id(6), sources: id(7), frameworks: id(8),
   resources: id(9), embed: id(10), buildSwift: id(11), buildEmbed: id(12),
   debug: id(13), release: id(14), configList: id(15), proxy: id(16),
-  dependency: id(17)
+  dependency: id(17), bridgeSwift: id(18), pluginSwift: id(19),
+  buildBridge: id(20), buildPlugin: id(21)
 };
 for (const name of Object.values(ids)) {
   if (pbx.includes(name)) throw new Error('Widget PBX ID collision: ' + name);
@@ -52,6 +73,14 @@ function replaceOnce(before, after) {
 // Explicit host + project anchors are stable in the official Capacitor 8 SPM template.
 replaceOnce('\t\t\t\t504EC3061FED79650016851F /* App */,\n',
   '\t\t\t\t504EC3061FED79650016851F /* App */,\n\t\t\t\t' + ids.group + ' /* PortfolioPilotWidgets */,\n');
+replaceOnce('\t\t\t\t9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,\n',
+  '\t\t\t\t9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,\n' +
+  '\t\t\t\t' + ids.bridgeSwift + ' /* PortfolioWidgetBridgeViewController.swift */,\n' +
+  '\t\t\t\t' + ids.pluginSwift + ' /* PortfolioWidgetSyncPlugin.swift */,\n');
+replaceOnce('\t\t\t\t9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,\n',
+  '\t\t\t\t9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,\n' +
+  '\t\t\t\t' + ids.buildBridge + ' /* PortfolioWidgetBridgeViewController.swift in Sources */,\n' +
+  '\t\t\t\t' + ids.buildPlugin + ' /* PortfolioWidgetSyncPlugin.swift in Sources */,\n');
 replaceOnce('\t\t\t\t504EC3041FED79650016851F /* App.app */,\n',
   '\t\t\t\t504EC3041FED79650016851F /* App.app */,\n\t\t\t\t' + ids.product + ' /* PortfolioPilotWidgets.appex */,\n');
 replaceOnce('\t\t\t\t' + hostResources + ' /* Resources */,\n',
@@ -127,6 +156,16 @@ const buildConfig = (key, mode) => obj(key, mode, [
 ]);
 
 const entries = [
+  obj('buildBridge', 'PortfolioWidgetBridgeViewController.swift in Sources', [
+    'isa = PBXBuildFile;', 'fileRef = ' + ids.bridgeSwift + ' /* PortfolioWidgetBridgeViewController.swift */;']),
+  obj('buildPlugin', 'PortfolioWidgetSyncPlugin.swift in Sources', [
+    'isa = PBXBuildFile;', 'fileRef = ' + ids.pluginSwift + ' /* PortfolioWidgetSyncPlugin.swift */;']),
+  obj('bridgeSwift', 'PortfolioWidgetBridgeViewController.swift', [
+    'isa = PBXFileReference;', 'lastKnownFileType = sourcecode.swift;',
+    'path = PortfolioWidgetBridgeViewController.swift;', 'sourceTree = "<group>";']),
+  obj('pluginSwift', 'PortfolioWidgetSyncPlugin.swift', [
+    'isa = PBXFileReference;', 'lastKnownFileType = sourcecode.swift;',
+    'path = PortfolioWidgetSyncPlugin.swift;', 'sourceTree = "<group>";']),
   obj('buildSwift', 'PortfolioPilotWidgets.swift in Sources', [
     'isa = PBXBuildFile;', 'fileRef = ' + ids.swift + ' /* PortfolioPilotWidgets.swift */;']),
   obj('buildEmbed', 'PortfolioPilotWidgets.appex in Embed App Extensions', [
