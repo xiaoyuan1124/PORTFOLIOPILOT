@@ -102,6 +102,9 @@ jobs:
           test "$(plutil -extract CFBundleIdentifier raw -o - "$APP_PATH/Info.plist")" = "com.sy1124.portfoliopilot"
           test "$(plutil -extract CFBundleShortVersionString raw -o - "$APP_PATH/Info.plist")" = "$(node -p "require('./native/app-store.json').version")"
           test "$(plutil -extract CFBundleVersion raw -o - "$APP_PATH/Info.plist")" = "$(node -p "require('./native/app-store.json').buildNumber")"
+          test -f "$APP_PATH/PlugIns/PortfolioPilotWidgets.appex/Info.plist"
+          test "$(plutil -extract CFBundleIdentifier raw -o - "$APP_PATH/PlugIns/PortfolioPilotWidgets.appex/Info.plist")" = "com.sy1124.portfoliopilot.widgets"
+          test "$(plutil -extract NSExtension.NSExtensionPointIdentifier raw -o - "$APP_PATH/PlugIns/PortfolioPilotWidgets.appex/Info.plist")" = "com.apple.widgetkit-extension"
           codesign --verify --deep --strict "$APP_PATH"
           codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -q "Authority="
 
