@@ -103,6 +103,20 @@ try {
     await page.getByText("ETF Research · Look-through + Attribution").waitFor();
     await checkLayout(page, viewport.name, "etf-research");
 
+    // ETF historical holdings were previously only checked while collapsed.
+    // Open the actual chart and full change list: narrow-screen long names
+    // and percentage-point strings must not widen the document viewport.
+    const historySummary = page.getByText("展開進階歷史成份異動圖表", { exact: true });
+    await historySummary.waitFor({ timeout: 20000 });
+    await historySummary.click();
+    await page.getByText("歷史快照與成份異動／調倉線索", { exact: true }).waitFor();
+    await checkLayout(page, viewport.name, "etf-history-expanded");
+    const fullChanges = page.locator("summary").filter({ hasText: /^查看全部 \d+ 筆成份變化$/ });
+    if (await fullChanges.count()) {
+      await fullChanges.click();
+      await checkLayout(page, viewport.name, "etf-history-full-changes");
+    }
+
     await nav.getByRole("button", { name: "我的", exact: true }).click();
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
     await checkLayout(page, viewport.name, "settings");

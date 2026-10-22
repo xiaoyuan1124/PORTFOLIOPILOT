@@ -83,10 +83,10 @@ function coverageLabel(value: number) {
 
 function NumberCard({ label, value, helper }: { label: string; value: string; helper: string }) {
   return (
-    <div className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
+    <div className="min-w-0 rounded-2xl border border-black/6 p-4 dark:border-white/8">
       <p className="text-xs text-black/42 dark:text-white/42">{label}</p>
-      <p className="mt-1 text-lg font-semibold tabular-nums">{value}</p>
-      <p className="mt-1 text-[11px] leading-5 text-black/38 dark:text-white/38">{helper}</p>
+      <p className="mt-1 break-words text-lg font-semibold tabular-nums">{value}</p>
+      <p className="mt-1 break-words text-[11px] leading-5 text-black/38 dark:text-white/38">{helper}</p>
     </div>
   );
 }
@@ -110,7 +110,7 @@ function TopHoldingsChart({ rows }: { rows: Array<{ symbol: string; name: string
   }));
 
   return (
-    <div className="mt-4 h-[220px] w-full" aria-label="前八大成份股權重圖">
+    <div className="mt-4 h-[220px] min-w-0 max-w-full" aria-label="前八大成份股權重圖">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: 0 }}>
           <XAxis type="number" hide domain={[0, "dataMax"]} />
@@ -137,7 +137,7 @@ function WeightChangeChart({ rows }: { rows: Array<{ symbol: string; name: strin
   if (!data.length) return null;
 
   return (
-    <div className="mt-3 h-[230px] w-full" aria-label="ETF 成份權重變化圖">
+    <div className="mt-3 h-[230px] min-w-0 max-w-full" aria-label="ETF 成份權重變化圖">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: 0 }}>
           <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(value) => (Number(value) >= 0 ? "+" : "") + Number(value).toFixed(1)} />
@@ -354,8 +354,8 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
                         <p className="text-xs font-semibold">新增成份股</p>
                         <div className="mt-2 space-y-1">
                           {addedRows.length ? addedRows.map((row) => (
-                            <div key={row.market + ":" + row.symbol} className="flex justify-between gap-3 text-xs">
-                              <span className="truncate">{row.symbol} · {row.name}</span>
+                            <div key={row.market + ":" + row.symbol} className="flex min-w-0 flex-col gap-1 text-xs sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                              <span className="min-w-0 break-words">{row.symbol} · {row.name}</span>
                               <strong className="shrink-0 tabular-nums">{row.currentWeightPct.toFixed(2)}%</strong>
                             </div>
                           )) : <p className="text-[11px] text-black/38 dark:text-white/38">本期沒有新增成份。</p>}
@@ -365,8 +365,8 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
                         <p className="text-xs font-semibold">刪除成份股</p>
                         <div className="mt-2 space-y-1">
                           {removedRows.length ? removedRows.map((row) => (
-                            <div key={row.market + ":" + row.symbol} className="flex justify-between gap-3 text-xs">
-                              <span className="truncate">{row.symbol} · {row.name}</span>
+                            <div key={row.market + ":" + row.symbol} className="flex min-w-0 flex-col gap-1 text-xs sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                              <span className="min-w-0 break-words">{row.symbol} · {row.name}</span>
                               <strong className="shrink-0 tabular-nums">{row.previousWeightPct.toFixed(2)}% → 0%</strong>
                             </div>
                           )) : <p className="text-[11px] text-black/38 dark:text-white/38">本期沒有刪除成份。</p>}
@@ -388,9 +388,9 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
                       <summary className="cursor-pointer font-semibold">查看全部 {changedRows.length} 筆成份變化</summary>
                       <div className="mt-2 space-y-1">
                         {changedRows.map((row) => (
-                          <div key={row.market + ":" + row.symbol} className="flex justify-between gap-3">
-                            <span className="truncate">{row.symbol} · {row.name} · {row.changeType}</span>
-                            <span className="shrink-0 tabular-nums">{row.previousWeightPct.toFixed(2)}% → {row.currentWeightPct.toFixed(2)}% · {point(row.changePctPoints)}</span>
+                          <div key={row.market + ":" + row.symbol} className="flex min-w-0 flex-col gap-1 border-b border-black/5 py-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3 dark:border-white/7">
+                            <span className="min-w-0 break-words">{row.symbol} · {row.name} · {row.changeType}</span>
+                            <span className="break-words tabular-nums sm:shrink-0 sm:text-right">{row.previousWeightPct.toFixed(2)}% → {row.currentWeightPct.toFixed(2)}% · {point(row.changePctPoints)}</span>
                           </div>
                         ))}
                       </div>
