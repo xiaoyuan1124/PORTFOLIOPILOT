@@ -52,6 +52,20 @@ for (const [key, expected] of Object.entries(checks)) {
   assert(actual === expected, `${key} mismatch: expected ${expected}, got ${actual}.`);
 }
 
+// The WidgetKit .appex must be embedded in the archived App, not merely
+// compiled into an unshipped extension target.
+const widgetPath = join(appPath, "PlugIns", "PortfolioPilotWidgets.appex");
+const widgetInfo = join(widgetPath, "Info.plist");
+assert(existsSync(widgetInfo), "Archived App is missing embedded PortfolioPilotWidgets.appex.");
+assert(
+  plistValue(widgetInfo, "CFBundleIdentifier") === metadata.bundleId + ".widgets",
+  "Unexpected archived WidgetKit bundle ID."
+);
+assert(
+  plistValue(widgetInfo, "NSExtension.NSExtensionPointIdentifier") === "com.apple.widgetkit-extension",
+  "Archived extension is not a WidgetKit extension."
+);
+
 const archiveApplicationPath = plistValue(
   archiveInfo,
   "ApplicationProperties.ApplicationPath"
