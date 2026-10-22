@@ -44,7 +44,7 @@ describe("opt-in WidgetKit minimal snapshot", () => {
       version: 1, enabled: true, isDemo: false,
       generatedAt: "2026-10-23T02:00:00.000Z",
       totalTwd: 2200,
-      gainPct: (2200 / 1800 - 1) * 100,
+      gainPct: ((2200 - 1800) / 1800) * 100,
       quoteDate: "2026-10-22",
       watchlist: [{
         symbol: "2330", name: "台積電", close: 1100,
@@ -103,7 +103,7 @@ describe("opt-in WidgetKit minimal snapshot", () => {
 
   it("does not pass non-finite totals to native App Groups", () => {
     const result = buildPortfolioWidgetSnapshot({
-      ...ownState, usdTwd: Number.POSITIVE_INFINITY
+      ...ownState, holdings: ownState.holdings.map((holding) => ({ ...holding, price: Number.POSITIVE_INFINITY }))
     }, cache, today);
     // The native contract refuses NaN/Infinity even if a corrupted AppState
     // bypassed its usual Zod checks.
