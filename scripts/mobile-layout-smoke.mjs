@@ -117,6 +117,23 @@ try {
       await checkLayout(page, viewport.name, "etf-history-full-changes");
     }
 
+    // Short-range history is readable without trying to land a fingertip
+    // on a tiny Recharts tooltip target. Verify each range changes visible
+    // dates and does not introduce horizontal overflow.
+    const chartRanges = page.getByRole("group", { name: "ETF 歷史價格圖表期間" });
+    await chartRanges.waitFor({ timeout: 20000 });
+    const chartSummary = page.getByRole("status", { name: "歷史價格區間摘要" });
+    assert.match(await chartSummary.innerText(), /^全部 · /);
+    const oneMonth = chartRanges.getByRole("button", { name: "1M", exact: true });
+    assert.equal(await oneMonth.isDisabled(), false, `${viewport.name}: expected verified one-month ETF close history`);
+    await oneMonth.click();
+    assert.equal(await oneMonth.getAttribute("aria-pressed"), "true");
+    assert.match(await chartSummary.innerText(), /^1M · \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2} · 價格報酬 /);
+    await checkLayout(page, viewport.name, "etf-price-chart-1m");
+    await chartRanges.getByRole("button", { name: "全部", exact: true }).click();
+    assert.equal(await chartRanges.getByRole("button", { name: "全部", exact: true }).getAttribute("aria-pressed"), "true");
+    assert.match(await chartSummary.innerText(), /^全部 · /);
+
     await nav.getByRole("button", { name: "我的", exact: true }).click();
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
     await checkLayout(page, viewport.name, "settings");

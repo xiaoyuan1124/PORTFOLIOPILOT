@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { annualizedVolatilityPct, maxDrawdownPct, priceHistoryMetrics, relativePerformancePct, trailingPriceReturn } from "./price-history";
+import { annualizedVolatilityPct, maxDrawdownPct, priceHistoryChartWindow, priceHistoryMetrics, relativePerformancePct, trailingPriceReturn } from "./price-history";
 import type { TwPriceHistoryPoint } from "./price-history-data";
 
 const points: TwPriceHistoryPoint[] = [
@@ -19,6 +19,23 @@ describe("Taiwan price-history analytics", () => {
       returnPct: (125 / 130 - 1) * 100
     });
     expect(trailingPriceReturn(points, 12)?.startDate).toBe("2025-10-01");
+  });
+
+  it("restricts a touch-selected chart to the actual inclusive price-return dates", () => {
+    const window = trailingPriceReturn(points, 3)!;
+    expect(window).toMatchObject({ startDate: "2026-07-01", endDate: "2026-10-01" });
+    expect(priceHistoryChartWindow([...points].reverse(), window)).toEqual([
+      ["2026-07-01", 90],
+      ["2026-09-01", 130],
+      ["2026-10-01", 125]
+    ]);
+    expect(priceHistoryChartWindow(points, null)).toEqual([]);
+    expect(priceHistoryChartWindow(points, {
+      startDate: "2026-10-01", endDate: "2026-09-01"
+    })).toEqual([]);
+    expect(priceHistoryChartWindow(points, {
+      startDate: "2026-10-02", endDate: "2026-10-15"
+    })).toEqual([]);
   });
 
   it("calculates max drawdown on raw official closing prices", () => {
