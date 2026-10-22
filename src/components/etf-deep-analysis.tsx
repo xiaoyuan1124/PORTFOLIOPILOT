@@ -15,7 +15,7 @@ import {
 import { benchmarkById, benchmarkWindow, loadBundledBenchmarks, type BenchmarkCache } from "@/lib/benchmark";
 import type { TwQuoteCache } from "@/lib/market-data";
 import { loadTwPriceHistory, type TwPriceHistorySeries } from "@/lib/price-history-data";
-import { priceHistoryMetrics, relativePerformancePct } from "@/lib/price-history";
+import { priceHistoryChartWindow, priceHistoryMetrics, relativePerformancePct } from "@/lib/price-history";
 import { loadBundledQuarterlyMargins, type QuarterlyMarginCache } from "@/lib/quarterly-financials";
 import { loadBundledRevenueHistory, type RevenueHistoryCache } from "@/lib/revenue-history";
 import type { EtfComposition } from "@/lib/types";
@@ -34,6 +34,16 @@ type SourceData = {
   revenueHistory: RevenueHistoryCache | null;
   quarterlyMargins: QuarterlyMarginCache | null;
 };
+
+const CHART_RANGES = [
+  { key: "oneMonth", label: "1M" },
+  { key: "threeMonth", label: "3M" },
+  { key: "sixMonth", label: "6M" },
+  { key: "oneYear", label: "1Y" },
+  { key: "all", label: "全部" }
+] as const;
+
+type PriceChartRange = (typeof CHART_RANGES)[number]["key"];
 
 const exclusionLabels: Record<EtfAttributionExclusionReason, string> = {
   unsupported_market: "目前未接此市場免費日行情",
@@ -165,6 +175,7 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
   });
   const [loaded, setLoaded] = useState(false);
   const [benchmarkCache, setBenchmarkCache] = useState<BenchmarkCache | null>(null);
+  const [chartRange, setChartRange] = useState<PriceChartRange>("all");
   const [historyState, setHistoryState] = useState<{
     key: string;
     history: TwPriceHistorySeries | null;
@@ -256,6 +267,16 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
     () => priceHistory ? priceHistoryMetrics(priceHistory.points) : null,
     [priceHistory]
   );
+
+  const activeChartRange: PriceChartRange =
+    chartRange === "all" || historyMetrics?.[chartRange] ? chartRange : "all";
+  const selectedChartWindow = activeChartRange === "all" ? null : historyMetrics?.[activeChartRange] ?? null;
+  const chartPoints = historyMetrics
+    ? selectedChartWindow
+      ? priceHistoryChartWindow(historyMetrics.points, selectedChartWindow)
+      : historyMetrics.points
+    : [];
+  const chartRangeLabel = CHART_RANGES.find((range) => range.key === activeChartRange)?.label ?? "全部";
 
   const priceBenchmark = benchmarkCache ? benchmarkById(benchmarkCache, "TWSE:TAIEX-PRICE") : null;
 
@@ -507,9 +528,32 @@ export function EtfDeepAnalysis({ composition, compositions, quotes }: Props) {
                   <NumberCard label="最大回撤" value={pct(historyMetrics.maxDrawdownPct)} helper="目前快取區間 raw close" />
                   <NumberCard label="年化波動度" value={pct(historyMetrics.annualizedVolatilityPct)} helper="日對數報酬 × √252" />
                 </div>
-                <div className="mt-4 h-[210px] w-full">
+                <div role="group" aria-label="ETF 歷史價格圖表期間" className="mt-4 grid grid-cols-5 gap-1.5">
+                  {CHART_RANGES.map((range) => (
+                    <button
+                      key={range.key}
+                      type="button"
+                      aria-pressed={activeChartRange === range.key}
+                      disabled={range.key !== "all" && !historyMetrics[range.key]}
+                      onClick={() => setChartRange(range.key)}
+                      className={`min-h-11 rounded-xl border px-1 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-35 ${
+                        activeChartRange === range.key
+                          ? "border-[#315f49]/30 bg-[#e7f1e9] text-[#245238] dark:border-[#8ec7a3]/25 dark:bg-[#173426] dark:text-[#a9d7b7]"
+                          : "border-black/7 bg-white/60 text-black/55 dark:border-white/8 dark:bg-white/4 dark:text-white/55"
+                      }`}
+                    >
+                      {range.label}
+                    </button>
+                  ))}
+                </div>
+                <p role="status" aria-label="歷史價格區間摘要" className="mt-2 break-words text-xs leading-5 text-black/50 dark:text-white/50">
+                  {selectedChartWindow
+                    ? `${chartRangeLabel} · ${selectedChartWindow.startDate} → ${selectedChartWindow.endDate} · 價格報酬 ${pct(selectedChartWindow.returnPct)} · ${chartPoints.length} 個交易日`
+                    : `全部 · ${historyMetrics.firstDate ?? "—"} → ${historyMetrics.latestDate ?? "—"} · ${chartPoints.length} 個交易日`}
+                </p>
+                <div className="mt-3 h-[210px] min-w-0 max-w-full" aria-label="ETF 官方歷史收盤價走勢">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={historyMetrics.points.map(([date, close]) => ({ date, close }))} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+                    <AreaChart data={chartPoints.map(([date, close]) => ({ date, close }))} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
                       <XAxis dataKey="date" axisLine={false} tickLine={false} minTickGap={32} tick={{ fontSize: 10 }} tickFormatter={(value) => String(value).slice(5)} />
                       <YAxis hide domain={["dataMin", "dataMax"]} />
                       <Tooltip
