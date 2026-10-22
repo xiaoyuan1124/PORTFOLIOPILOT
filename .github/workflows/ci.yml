@@ -35,5 +35,9 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Check signed WidgetKit provisioning contract
+        run: |
+          npm run native:ios:widget:signing:test
+          node --check scripts/verify-ios-signed-widget.mjs
       - run: npm run build
       - run: npm run native:build
