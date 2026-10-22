@@ -8,6 +8,7 @@ import WidgetKit
 private enum SharedSnapshot {
     static let appGroup = "group.com.sy1124.portfoliopilot"
     static let key = "portfolio-widget-snapshot-v1"
+    static let consentKey = "portfolio-widget-enabled-v1"
 
     struct WatchItem: Codable, Identifiable {
         let symbol: String
@@ -31,7 +32,9 @@ private enum SharedSnapshot {
 
     static func load() -> Snapshot? {
         guard
-            let value = UserDefaults(suiteName: appGroup)?.string(forKey: key),
+            let defaults = UserDefaults(suiteName: appGroup),
+            defaults.bool(forKey: consentKey),
+            let value = defaults.string(forKey: key),
             let bytes = value.data(using: .utf8),
             let snapshot = try? JSONDecoder().decode(Snapshot.self, from: bytes),
             snapshot.version == 1,
@@ -40,7 +43,8 @@ private enum SharedSnapshot {
             snapshot.totalTwd.isFinite,
             snapshot.totalTwd >= 0,
             snapshot.gainPct == nil || snapshot.gainPct!.isFinite,
-            snapshot.watchlist.allSatisfy({ $0.close.isFinite && $0.close >= 0 &&
+            snapshot.watchlist.count <= 3,
+            snapshot.watchlist.allSatisfy({ $0.close.isFinite && $0.close > 0 &&
                 ($0.changePct == nil || $0.changePct!.isFinite) })
         else {
             return nil
