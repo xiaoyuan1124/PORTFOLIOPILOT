@@ -11,7 +11,7 @@
 - Snapshot refresh: the widget reads only the last local snapshot; WidgetKit may throttle reloads. **Never live quotes.**
 - Click: `portfoliopilot://portfolio?tab=risk`, routed by the existing native deep-link handler.
 
-## Future data contract — not populated yet
+## Data sharing contract — opt-in only
 
 ```json
 {
@@ -34,7 +34,13 @@
 }
 ```
 
-**Important:** no containing-App producer is enabled in this foundation milestone. Without an explicit opt-in and validated shared snapshot, the widgets show privacy-preserving empty states. Xcode previews are not tied to personal holdings. Future implementation must separately add a Capacitor native bridge, only write minimized permitted fields after user opt-in, clear the snapshot when the user disables sharing, and call `WidgetCenter.shared.reloadAllTimelines()` after a verified write or clear. Keep real amounts off the Lock Screen by default. The sample JSON is a contract example, **not a market quote or demo user holding**.
+**Privacy:** the containing App now has `PortfolioWidgetSyncPlugin` registered through `PortfolioWidgetBridgeViewController`. Native opt-in is stored separately as `portfolio-widget-enabled-v1` (default: false) in the same App Group. The widget checks this flag every time it reads the local snapshot; the native writer also requires it. On revoke the writer marks the flag false, removes `portfolio-widget-snapshot-v1`, and asks WidgetKit to reload both kinds. Only a minimized snapshot is passed; never holdings quantities, account labels, average cost, activity history, trade ledger, or journal text. Demo mode and a fresh empty install display the safe empty state. Snapshot values are from local portfolio calculations and official daily closing-price cache, **not live quotes**. The example JSON above is only a contract illustration.
+
+**iPhone controls:** Native App → 我的 → iPhone 主畫面小工具 → 允許小工具顯示摘要. Confirm the explicit privacy dialog. Switch off with `關閉並清除小工具資料`. The iPhone main home screen may be visible to other people: even with `.privacySensitive()` the small widget can reveal a meaningful personal financial summary while device is unlocked. The Lock Screen widgets are not enabled in this milestone.
+
+**Native bridge build:** During `npm run native:ios:add`, `install-ios-widget.mjs` injects both App-target `.swift` files, changes the generated SceneDelegate and storyboard to instantiate the custom Capacitor view controller, registers both Swift sources in the PBX App target, and preserves the existing host + widget App Groups entitlements. A bad/unsigned App Group provisioning environment fails closed rather than pretending sync succeeded. Confirm a signed install on a real device before treating the feature as released.
+
+**Safeguards:** all widget writes are guarded twice (JS + native preference); invalid/ambiguous/future market dates are omitted, not estimated; native decodes and validates the JSON contract and bounds its size; WidgetKit refreshes are only requests, not guaranteed immediate reloads.
 
 ## Build and signing
 
