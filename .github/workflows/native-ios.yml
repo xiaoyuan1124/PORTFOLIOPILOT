@@ -20,11 +20,15 @@ on:
       - "src/lib/storage.ts"
       - "src/lib/durable-storage.ts"
       - "native/ios/PrivacyInfo.xcprivacy"
+      - "native/ios/App.entitlements"
+      - "native/ios/widget/**"
       - "native/app-store.json"
       - "assets/logo.svg"
       - "src/app/privacy/page.tsx"
       - "src/app/support/page.tsx"
       - "scripts/configure-ios-native.mjs"
+      - "scripts/install-ios-widget.mjs"
+      - "scripts/verify-ios-widget.mjs"
       - "scripts/verify-ios-packaging.mjs"
       - "scripts/archive-ios-unsigned.mjs"
       - "scripts/verify-ios-archive.mjs"
@@ -86,6 +90,13 @@ jobs:
           grep -q "NSPrivacyAccessedAPICategoryUserDefaults" ios/App/App/PrivacyInfo.xcprivacy
           grep -q "CA92.1" ios/App/App/PrivacyInfo.xcprivacy
           grep -q "PrivacyInfo.xcprivacy in Resources" ios/App/App.xcodeproj/project.pbxproj
+      - name: Validate generated WidgetKit bundle and App Groups plists
+        run: |
+          plutil -lint ios/App/App/App.entitlements
+          plutil -lint ios/App/PortfolioPilotWidgets/Info.plist
+          plutil -lint ios/App/PortfolioPilotWidgets/PortfolioPilotWidgets.entitlements
+          npm run native:ios:widget:verify
+          xcodebuild -list -project ios/App/App.xcodeproj
       - name: Sync Capacitor iOS
         run: npx cap sync ios
       - name: Verify App Store packaging
