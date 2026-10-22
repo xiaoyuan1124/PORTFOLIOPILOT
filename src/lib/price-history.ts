@@ -43,6 +43,16 @@ export function trailingPriceReturn(points: TwPriceHistoryPoint[], months: numbe
   };
 }
 
+// Keep chart zoom windows aligned to the exact validated return period.
+// Do not infer missing points or extend a partial window into another date.
+export function priceHistoryChartWindow(
+  points: TwPriceHistoryPoint[],
+  period: { startDate: string; endDate: string } | null
+): TwPriceHistoryPoint[] {
+  if (!period || period.startDate >= period.endDate) return [];
+  return normalize(points).filter(([date]) => date >= period.startDate && date <= period.endDate);
+}
+
 export function maxDrawdownPct(points: TwPriceHistoryPoint[]) {
   const rows = normalize(points);
   if (rows.length < 2) return null;
