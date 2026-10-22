@@ -42,6 +42,7 @@ import {
 import { saveDurableState } from "@/lib/durable-storage";
 import { NativeNotificationSettings } from "./native-notification-settings";
 import { NativePrivacySettings } from "./native-privacy-settings";
+import { NativeWidgetSettings } from "./native-widget-settings";
 import { Badge, Button, Card, CardContent, GhostButton } from "./ui";
 
 const appBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -500,6 +501,7 @@ export function Settings({
 
       <NativeNotificationSettings state={state} />
       <NativePrivacySettings />
+      <NativeWidgetSettings state={state} />
 
       <Card className="lg:col-span-2">
         <CardContent>
