@@ -108,6 +108,12 @@ jobs:
           codesign --verify --deep --strict "$APP_PATH"
           codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -q "Authority="
 
+      - name: Verify Apple-signed App Groups profiles for host and widget
+        env:
+          APPLE_TEAM_ID: ${{ secrets.PORTFOLIOPILOT_APPLE_TEAM_ID }}
+          ARCHIVE_PATH: ${{ runner.temp }}/PortfolioPilot-signed.xcarchive
+        run: npm run native:ios:widget:signed:verify
+
       - name: Upload exact archive to App Store Connect
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.PORTFOLIOPILOT_ASC_KEY_ID }}
