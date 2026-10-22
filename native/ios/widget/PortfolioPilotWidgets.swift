@@ -100,7 +100,7 @@ private struct PortfolioSmallView: View {
                     .foregroundStyle(.white)
                     .privacySensitive()
                 if let change = snapshot.gainPct {
-                    Text(change.formatted(.number.precision(.fractionLength(2)).sign(strategy: .always)) + "%")
+                    Text(String(format: "%+.2f%%", change))
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundStyle(change >= 0 ? WidgetPalette.positive : WidgetPalette.negative)
@@ -126,6 +126,35 @@ private struct PortfolioSmallView: View {
     }
 }
 
+private struct WatchlistRow: View {
+    let item: SharedSnapshot.WatchItem
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(item.symbol)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
+                .frame(width: 64, alignment: .leading)
+            Text(item.name)
+                .font(.system(size: 12))
+                .foregroundStyle(WidgetPalette.muted)
+                .lineLimit(1)
+            Spacer(minLength: 4)
+            Text(String(format: "%.2f", item.close))
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
+                .privacySensitive()
+            if let change = item.changePct {
+                Text(String(format: "%+.2f%%", change))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(change >= 0 ? WidgetPalette.positive : WidgetPalette.negative)
+                    .privacySensitive()
+                    .frame(width: 64, alignment: .trailing)
+            }
+        }
+    }
+}
+
 private struct WatchlistMediumView: View {
     let entry: PortfolioEntry
 
@@ -143,28 +172,7 @@ private struct WatchlistMediumView: View {
 
             if let snapshot = entry.snapshot, !snapshot.watchlist.isEmpty {
                 ForEach(Array(snapshot.watchlist.prefix(3))) { item in
-                    HStack(spacing: 8) {
-                        Text(item.symbol)
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white)
-                            .frame(width: 64, alignment: .leading)
-                        Text(item.name)
-                            .font(.system(size: 12))
-                            .foregroundStyle(WidgetPalette.muted)
-                            .lineLimit(1)
-                        Spacer(minLength: 4)
-                        Text(item.close.formatted(.number.precision(.fractionLength(2))))
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white)
-                            .privacySensitive()
-                        if let change = item.changePct {
-                            Text(change.formatted(.number.precision(.fractionLength(2)).sign(strategy: .always)) + "%")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(change >= 0 ? WidgetPalette.positive : WidgetPalette.negative)
-                                .privacySensitive()
-                                .frame(width: 64, alignment: .trailing)
-                        }
-                    }
+                    WatchlistRow(item: item)
                 }
                 Spacer(minLength: 0)
                 Text("資料日：\(snapshot.quoteDate ?? "未確認")")
