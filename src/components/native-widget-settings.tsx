@@ -20,10 +20,7 @@ export function NativeWidgetSettings({ state }: { state: AppState }) {
   const [working, setWorking] = useState(false);
 
   useEffect(() => {
-    if (!nativeWidgetAvailable()) {
-      setChecked(true);
-      return;
-    }
+    if (!nativeWidgetAvailable()) return;
     let active = true;
     void nativeWidgetStatus()
       .then((result) => {
