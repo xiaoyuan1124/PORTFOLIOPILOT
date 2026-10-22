@@ -96,6 +96,12 @@ public class PortfolioWidgetSyncPlugin: CAPPlugin, CAPBridgedPlugin {
         return formatter.date(from: value) != nil
     }
 
+    private func timestamp(_ value: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: value)
+    }
+
     @objc public func sync(_ call: CAPPluginCall) {
         guard let defaults = sharedDefaults(call) else { return }
         guard defaults.bool(forKey: enabledKey) else {
@@ -109,7 +115,7 @@ public class PortfolioWidgetSyncPlugin: CAPPlugin, CAPBridgedPlugin {
               snapshot.version == 1, snapshot.enabled, !snapshot.isDemo,
               snapshot.totalTwd.isFinite, snapshot.totalTwd >= 0,
               snapshot.gainPct == nil || snapshot.gainPct!.isFinite,
-              ISO8601DateFormatter().date(from: snapshot.generatedAt) != nil,
+              let incomingTimestamp = timestamp(snapshot.generatedAt),
               snapshot.quoteDate == nil || validDate(snapshot.quoteDate!),
               snapshot.watchlist.count <= 3,
               snapshot.watchlist.allSatisfy({
@@ -129,7 +135,8 @@ public class PortfolioWidgetSyncPlugin: CAPPlugin, CAPBridgedPlugin {
         if let older = defaults.string(forKey: snapshotKey),
            let previousData = older.data(using: .utf8),
            let previous = try? JSONDecoder().decode(Snapshot.self, from: previousData),
-           snapshot.generatedAt < previous.generatedAt {
+           let previousTimestamp = timestamp(previous.generatedAt),
+           incomingTimestamp < previousTimestamp {
             call.resolve(["updated": false])
             return
         }
