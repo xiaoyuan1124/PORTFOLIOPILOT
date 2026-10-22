@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T15:31:01.006Z",
+  "generatedAt": "2026-10-22T15:30:43.803Z",
   "periods": [
     "2026-09",
     "2026-08",
@@ -4894,6 +4894,22 @@
       "cumulativeRevenue": 2060568,
       "lastYearCumulativeRevenue": 1408296,
       "cumulativeYoyPct": 46.31,
+      "note": "-"
+    },
+    {
+      "code": "2249",
+      "name": "湧盛",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-09",
+      "revenue": 145468,
+      "previousMonthRevenue": 117356,
+      "lastYearRevenue": 110455,
+      "momPct": 23.95,
+      "yoyPct": 31.69,
+      "cumulativeRevenue": 1573390,
+      "lastYearCumulativeRevenue": 1838007,
+      "cumulativeYoyPct": -14.39,
       "note": "-"
     },
     {
@@ -26353,6 +26369,22 @@
       "note": "-"
     },
     {
+      "code": "6898",
+      "name": "程曦資訊",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-09",
+      "revenue": 113044,
+      "previousMonthRevenue": 106610,
+      "lastYearRevenue": 103614,
+      "momPct": 6.03,
+      "yoyPct": 9.1,
+      "cumulativeRevenue": 945593,
+      "lastYearCumulativeRevenue": 857506,
+      "cumulativeYoyPct": 10.27,
+      "note": "-"
+    },
+    {
       "code": "6899",
       "name": "創為精密",
       "market": "TPEx",
@@ -36639,6 +36671,22 @@
       "lastYearCumulativeRevenue": 1198363,
       "cumulativeYoyPct": 51.12,
       "note": "本月增減百分比達50%以上，係受惠於本公司客户新車型上市熱銷所致"
+    },
+    {
+      "code": "2249",
+      "name": "湧盛",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-08",
+      "revenue": 117356,
+      "previousMonthRevenue": 146262,
+      "lastYearRevenue": 146214,
+      "momPct": -19.76,
+      "yoyPct": -19.73,
+      "cumulativeRevenue": 1427922,
+      "lastYearCumulativeRevenue": 1727552,
+      "cumulativeYoyPct": -17.34,
+      "note": "-"
     },
     {
       "code": "2250",
@@ -58097,6 +58145,22 @@
       "note": "-"
     },
     {
+      "code": "6898",
+      "name": "程曦資訊",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-08",
+      "revenue": 106610,
+      "previousMonthRevenue": 104430,
+      "lastYearRevenue": 96138,
+      "momPct": 2.08,
+      "yoyPct": 10.89,
+      "cumulativeRevenue": 832549,
+      "lastYearCumulativeRevenue": 753892,
+      "cumulativeYoyPct": 10.43,
+      "note": "-"
+    },
+    {
       "code": "6899",
       "name": "創為精密",
       "market": "TPEx",
@@ -68383,6 +68447,22 @@
       "lastYearCumulativeRevenue": 1046583,
       "cumulativeYoyPct": 49.48,
       "note": "本年累計增減百分比達50%以上，係受惠於本公司客戶新車型上市熱銷所致"
+    },
+    {
+      "code": "2249",
+      "name": "湧盛",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-07",
+      "revenue": 146262,
+      "previousMonthRevenue": 105455,
+      "lastYearRevenue": 130555,
+      "momPct": 38.69,
+      "yoyPct": 12.03,
+      "cumulativeRevenue": 1310566,
+      "lastYearCumulativeRevenue": 1581338,
+      "cumulativeYoyPct": -17.12,
+      "note": "-"
     },
     {
       "code": "2250",
