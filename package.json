@@ -26,6 +26,8 @@
     "native:ios:verify": "node scripts/verify-ios-packaging.mjs && node scripts/verify-ios-widget.mjs",
     "native:ios:archive:unsigned": "node scripts/archive-ios-unsigned.mjs",
     "native:ios:archive:verify": "node scripts/verify-ios-archive.mjs",
+    "native:ios:widget:signing:test": "node --test scripts/widget-signing-contract.test.mjs",
+    "native:ios:widget:signed:verify": "node scripts/verify-ios-signed-widget.mjs",
     "native:ios:testflight:options": "node scripts/create-testflight-export-options.mjs",
     "native:ios:archive:signed": "node scripts/archive-ios-signed.mjs",
     "native:ios:testflight:upload": "node scripts/upload-ios-testflight.mjs"
