@@ -1,5 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { IOS_DISTRIBUTION_SIGNING_SETTING } from './ios-signing-policy.mjs';
 
 // Capacitor 8 SPM generates a fresh Xcode project on every native:ios:add.
 // The template's host IDs are pinned and validated below: fail closed if it changes.
@@ -126,8 +127,14 @@ for (const config of ['504EC3171FED79650016851F', '504EC3181FED79650016851F']) {
   const end = pbx.indexOf('\n\t\t};', start);
   if (start < 0 || settingsStart < start || end < settingsStart) throw new Error('Cannot find App build configuration ' + config);
   if (pbx.slice(settingsStart, end).includes('CODE_SIGN_ENTITLEMENTS')) throw new Error('Host App entitlement setting already exists.');
+  // Limit Apple Distribution signing to the main App Release target.
+  // Never override the signing identity of Capacitor / SPM package targets.
+  const releaseDistribution = config === '504EC3181FED79650016851F'
+    ? '\t\t\t\t' + IOS_DISTRIBUTION_SIGNING_SETTING + '\n'
+    : '';
   pbx = pbx.slice(0, settingsStart) +
     '\t\t\tbuildSettings = {\n\t\t\t\tCODE_SIGN_ENTITLEMENTS = App/App.entitlements;\n' +
+    releaseDistribution +
     pbx.slice(settingsStart + '\t\t\tbuildSettings = {\n'.length);
 }
 
@@ -138,6 +145,7 @@ const buildConfig = (key, mode) => obj(key, mode, [
   'isa = XCBuildConfiguration;',
   'buildSettings = {',
   '\tAPPLICATION_EXTENSION_API_ONLY = YES;',
+  ...(mode === 'Release' ? ['\t' + IOS_DISTRIBUTION_SIGNING_SETTING] : []),
   '\tCODE_SIGN_ENTITLEMENTS = PortfolioPilotWidgets/PortfolioPilotWidgets.entitlements;',
   '\tCODE_SIGN_STYLE = Automatic;',
   '\tCURRENT_PROJECT_VERSION = ' + metadata.buildNumber + ';',
