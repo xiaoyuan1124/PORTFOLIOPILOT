@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T15:30:43.803Z",
+  "generatedAt": "2026-10-23T15:23:41.033Z",
   "periods": [
     "2026-09",
     "2026-08",
@@ -26814,6 +26814,22 @@
       "cumulativeRevenue": 2163776,
       "lastYearCumulativeRevenue": 1522989,
       "cumulativeYoyPct": 42.07,
+      "note": "-"
+    },
+    {
+      "code": "6938",
+      "name": "藍新資訊",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-09",
+      "revenue": 77020,
+      "previousMonthRevenue": 59250,
+      "lastYearRevenue": 57700,
+      "momPct": 29.99,
+      "yoyPct": 33.48,
+      "cumulativeRevenue": 506496,
+      "lastYearCumulativeRevenue": 397912,
+      "cumulativeYoyPct": 27.28,
       "note": "-"
     },
     {
@@ -58593,6 +58609,22 @@
       "note": "銷售產品組合差異所致"
     },
     {
+      "code": "6938",
+      "name": "藍新資訊",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-08",
+      "revenue": 59250,
+      "previousMonthRevenue": 40755,
+      "lastYearRevenue": 41222,
+      "momPct": 45.38,
+      "yoyPct": 43.73,
+      "cumulativeRevenue": 429476,
+      "lastYearCumulativeRevenue": 340212,
+      "cumulativeYoyPct": 26.23,
+      "note": "-"
+    },
+    {
       "code": "6944",
       "name": "兆聯實業",
       "market": "TWSE",
@@ -89905,6 +89937,22 @@
       "note": "-"
     },
     {
+      "code": "6898",
+      "name": "程曦資訊",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-07",
+      "revenue": 104430,
+      "previousMonthRevenue": 103501,
+      "lastYearRevenue": 99222,
+      "momPct": 0.89,
+      "yoyPct": 5.24,
+      "cumulativeRevenue": 725939,
+      "lastYearCumulativeRevenue": 657754,
+      "cumulativeYoyPct": 10.36,
+      "note": "-"
+    },
+    {
       "code": "6899",
       "name": "創為精密",
       "market": "TPEx",
@@ -90335,6 +90383,22 @@
       "lastYearCumulativeRevenue": 1101873,
       "cumulativeYoyPct": 36.88,
       "note": "銷售產品組合差異所致"
+    },
+    {
+      "code": "6938",
+      "name": "藍新資訊",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-07",
+      "revenue": 40755,
+      "previousMonthRevenue": 92204,
+      "lastYearRevenue": 29214,
+      "momPct": -55.79,
+      "yoyPct": 39.5,
+      "cumulativeRevenue": 370226,
+      "lastYearCumulativeRevenue": 298990,
+      "cumulativeYoyPct": 23.82,
+      "note": "-"
     },
     {
       "code": "6944",
