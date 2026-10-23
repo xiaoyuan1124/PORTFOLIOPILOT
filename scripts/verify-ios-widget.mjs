@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { IOS_DISTRIBUTION_SIGNING_SETTING } from "./ios-signing-policy.mjs";
 
 const root = process.cwd();
 const iosRoot = join(root, "ios", "App");
@@ -42,6 +43,10 @@ for (const needle of [
 ]) {
   assert.ok(project.includes(needle), "WidgetKit Xcode project missing: " + needle);
 }
+// The host and WidgetKit Release configs opt in independently. No global
+// identity must accidentally impose distribution signing on SwiftPM targets.
+assert.equal(project.split(IOS_DISTRIBUTION_SIGNING_SETTING).length - 1, 2,
+  "App and WidgetKit Release each require a target-scoped Apple Distribution signing identity");
 for (const entitlement of [hostEntitlements, widgetEntitlements]) {
   assert.ok(entitlement.includes("com.apple.security.application-groups"), "Missing App Group entitlement");
   assert.ok(entitlement.includes(groupId), "Mismatching App Group entitlement");
