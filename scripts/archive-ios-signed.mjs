@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { appStoreArchiveSigningSettings } from "./ios-signing-policy.mjs";
 
 const required = [
   "APPLE_TEAM_ID",
@@ -30,8 +31,7 @@ const args = [
   "-authenticationKeyPath", resolve(process.env.APP_STORE_CONNECT_KEY_PATH),
   "-authenticationKeyID", process.env.APP_STORE_CONNECT_KEY_ID,
   "-authenticationKeyIssuerID", process.env.APP_STORE_CONNECT_ISSUER_ID,
-  `DEVELOPMENT_TEAM=${process.env.APPLE_TEAM_ID}`,
-  "CODE_SIGN_STYLE=Automatic",
+  ...appStoreArchiveSigningSettings(process.env.APPLE_TEAM_ID),
   "archive"
 ];
 
