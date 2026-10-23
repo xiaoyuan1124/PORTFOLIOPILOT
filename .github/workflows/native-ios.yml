@@ -40,6 +40,8 @@ on:
       - "scripts/widget-signing-contract.mjs"
       - "scripts/widget-signing-contract.check.mjs"
       - "scripts/verify-ios-signed-widget.mjs"
+      - "scripts/ios-signing-policy.mjs"
+      - "scripts/ios-signing-policy.check.mjs"
       - "scripts/create-testflight-export-options.mjs"
       - "scripts/archive-ios-signed.mjs"
       - "scripts/upload-ios-testflight.mjs"
@@ -93,6 +95,7 @@ jobs:
       - name: Validate signed widget entitlement contract (mock profiles)
         run: |
           npm run native:ios:widget:signing:test
+          node --test scripts/ios-signing-policy.check.mjs
           node --check scripts/verify-ios-signed-widget.mjs
       - name: Generate iOS shell
         run: npm run native:ios:add
