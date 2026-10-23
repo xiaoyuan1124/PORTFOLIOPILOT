@@ -38,6 +38,7 @@ jobs:
       - name: Check signed WidgetKit provisioning contract
         run: |
           npm run native:ios:widget:signing:test
+          node --test scripts/ios-signing-policy.check.mjs
           node --check scripts/verify-ios-signed-widget.mjs
       - run: npm run build
       - run: npm run native:build

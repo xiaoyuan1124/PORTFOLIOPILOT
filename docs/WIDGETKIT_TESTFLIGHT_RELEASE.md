@@ -64,6 +64,12 @@ GitHub repo [xiaoyuan1124/PORTFOLIOPILOT](https://github.com/xiaoyuan1124/PORTFO
 
 若報錯 `App Group missing from the provisioning profile`：回 A 步確認 Apple Developer 的 **兩個** App ID 與 App Group 關聯，再重新產生 profile，不能繞過。若 Secrets 缺少，workflow 會停止，不會改成 unsigned upload。
 
+### CI signing diagnostics
+
+If `Build signed App Store archive` reports **"Your team has no devices from which to generate a provisioning profile"** and **"No iOS App Development provisioning profiles"**, the generated Release target was being signed as a development installation. TestFlight requires an **Apple Distribution** identity and App Store Connect provisioning profiles for both `com.sy1124.portfoliopilot` and `com.sy1124.portfoliopilot.widgets`; test-device UDIDs are **not** required for App Store distribution.
+
+The signed-archive script now explicitly selects `CODE_SIGN_IDENTITY=Apple Distribution` for both targets while retaining Xcode automatic provisioning, API key authentication, and the fail-closed signed entitlement verification. If the next run reports **"No signing certificate Apple Distribution found"**, **"No profiles ... App Store"**, or a cloud-signing authorization error, this indicates an Apple certificate/profile/permission problem that cannot be repaired by adding development devices. Ensure the Apple Team and both App IDs support App Groups and the Apple Developer account permits App Store distribution signing. Review [Apple distribution signing](https://developer.apple.com/help/account/provisioning-profiles/create-an-app-store-provisioning-profile). Do not create an ad-hoc profile or bypass signature verification.
+
 ## C. TestFlight 與 iPhone 驗收
 
 確認 GitHub Actions workflow 成功 **不等於** Apple 已處理完畢。到 [App Store Connect](https://appstoreconnect.apple.com/) → PortfolioPilot → TestFlight 確認版本已可供測試，並從 iPhone TestFlight 安裝。
