@@ -40,8 +40,8 @@ export function assertAppStoreProfile(profile, teamId, bundleId, now = new Date(
 // Never print any certificate DER bytes or their fingerprints to CI logs.
 function certificateDigest(data) {
   assert(typeof data === "string" && data.length > 100 &&
-    /^[A-Za-z0-9+/=\\s]+$/.test(data), "Malformed developer certificate data");
-  const der = Buffer.from(data.replace(/\\s/g, ""), "base64");
+    /^[A-Za-z0-9+/=\s]+$/.test(data), "Malformed developer certificate data");
+  const der = Buffer.from(data.replace(/\s/g, ""), "base64");
   assert(der.length > 100 && der[0] === 0x30,
     "Malformed DER certificate in signing material");
   return createHash("sha256").update(der).digest("hex");
@@ -50,7 +50,7 @@ function certificateDigest(data) {
 export function assertDistributionCertificateMatchesProfiles(pemCertificates, hostCertificates, widgetCertificates) {
   assert(typeof pemCertificates === "string", "Keychain certificate PEM missing");
   const keychainHashes = new Set();
-  for (const match of pemCertificates.matchAll(/-----BEGIN CERTIFICATE-----\\s*([A-Za-z0-9+/=\\s]+?)\\s*-----END CERTIFICATE-----/g)) {
+  for (const match of pemCertificates.matchAll(/-----BEGIN CERTIFICATE-----\s*([A-Za-z0-9+/=\s]+?)\s*-----END CERTIFICATE-----/g)) {
     keychainHashes.add(certificateDigest(match[1]));
   }
   assert(keychainHashes.size > 0, "No certificate could be read from the Apple Distribution keychain");
