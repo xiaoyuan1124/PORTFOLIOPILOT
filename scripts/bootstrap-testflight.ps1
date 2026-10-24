@@ -121,7 +121,7 @@ $SigningNames = @(
 $MissingSigning = @()
 $SecretNamesText = $SecretList -join "`n"
 foreach ($Name in $SigningNames) {
-  $Pattern = "(?m)^" + [regex]::Escape($Name) + "(?:\\s|$)"
+  $Pattern = "(?m)^" + [regex]::Escape($Name) + "(?:\s|$)"
   if ($SecretNamesText -notmatch $Pattern) {
     $MissingSigning += $Name
   }
