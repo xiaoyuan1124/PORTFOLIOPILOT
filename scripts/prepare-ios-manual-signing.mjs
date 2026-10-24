@@ -4,7 +4,8 @@ import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { provisioningProfilesDir, profileInstallPath } from "./ios-provisioning-paths.mjs";
 import {
-  APP_BUNDLE_ID, WIDGET_BUNDLE_ID, assertAppStoreProfile
+  APP_BUNDLE_ID, WIDGET_BUNDLE_ID, assertAppStoreProfile,
+  assertDistributionCertificateMatchesProfiles
 } from "./ios-manual-signing-contract.mjs";
 
 const required = [
@@ -59,7 +60,7 @@ function parseProfile(name, label, bundleId) {
   if (existsSync(installed)) throw new Error("A provisioning profile UUID is already installed on the runner");
   copyFileSync(file, installed);
   saved.push(installed);
-  return profileName;
+  return { profileName, developerCertificates: profile.DeveloperCertificates };
 }
 
 const keychainPassword = randomBytes(24).toString("hex");
@@ -67,7 +68,7 @@ try {
   decodeSecret("IOS_DISTRIBUTION_P12_BASE64", p12Path);
   const hostProfile = parseProfile("IOS_APP_PROFILE_BASE64", "app", APP_BUNDLE_ID);
   const widgetProfile = parseProfile("IOS_WIDGET_PROFILE_BASE64", "widget", WIDGET_BUNDLE_ID);
-  if (hostProfile === widgetProfile) {
+  if (hostProfile.profileName === widgetProfile.profileName) {
     throw new Error("App and WidgetKit must not share the same provisioning profile name");
   }
   checked("security", ["create-keychain", "-p", keychainPassword, keychain]);
@@ -82,13 +83,18 @@ try {
   if (!identities.includes("Apple Distribution:")) {
     throw new Error("The .p12 does not include an Apple Distribution certificate and matching private key");
   }
+  // Ensure the signing identity in the imported .p12 was explicitly selected
+  // when Apple created each distribution profile. Never log PEM/DER material.
+  const signingCertificates = checked("security", ["find-certificate", "-a", "-p", keychain]).toString("utf8");
+  assertDistributionCertificateMatchesProfiles(
+    signingCertificates, hostProfile.developerCertificates, widgetProfile.developerCertificates);
   checked("security", ["list-keychains", "-d", "user", "-s", keychain]);
   checked("security", ["default-keychain", "-d", "user", "-s", keychain]);
   writeFileSync(join(secretDir, "installed-profiles.json"), JSON.stringify(saved), { mode: 0o600 });
   appendFileSync(process.env.GITHUB_ENV,
-    "IOS_HOST_PROFILE_NAME=" + hostProfile + "\n" +
-    "IOS_WIDGET_PROFILE_NAME=" + widgetProfile + "\n", "utf8");
-  console.log("PASS: App Store distribution identity imported and both non-development profiles match Team ID, explicit App IDs, App Groups and expiry.");
+    "IOS_HOST_PROFILE_NAME=" + hostProfile.profileName + "\n" +
+    "IOS_WIDGET_PROFILE_NAME=" + widgetProfile.profileName + "\n", "utf8");
+  console.log("PASS: Apple Distribution private key and matching certificates validated for both App Store profiles, Team ID, App Groups and expiry.");
 } catch (error) {
   writeFileSync(join(secretDir, "installed-profiles.json"), JSON.stringify(saved), { mode: 0o600 });
   throw error;

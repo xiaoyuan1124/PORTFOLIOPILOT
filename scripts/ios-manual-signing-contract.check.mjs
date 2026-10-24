@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import {
   APP_BUNDLE_ID, WIDGET_BUNDLE_ID, APP_GROUP_ID,
   HOST_RELEASE_ID, WIDGET_RELEASE_ID,
-  assertAppStoreProfile, setManualReleaseSigning, appStoreExportOptions
+  assertAppStoreProfile, setManualReleaseSigning, appStoreExportOptions,
+  assertDistributionCertificateMatchesProfiles
 } from "./ios-manual-signing-contract.mjs";
 
 const team = "A1B2C3D4E5";
@@ -78,4 +79,30 @@ test("App Store export maps both profiles without XML injection", () => {
   assert(xml.includes("A&amp;B &lt;Host&gt;"));
   assert(xml.includes("Widget &quot;Private&quot;"));
   assert(xml.includes(WIDGET_BUNDLE_ID));
+});
+
+test("both App Store profiles must contain the certificate imported from .p12", () => {
+  // Fixture uses dummy DER-like data; hash matching, not trust-chain validation.
+  // The Apple-issued certificate validity is checked by macOS security tools.
+  const validDER = Buffer.concat([Buffer.from([0x30, 0x82, 0x01, 0x00]), Buffer.alloc(256, 0x11)]);
+  const extraDER = Buffer.concat([Buffer.from([0x30, 0x82, 0x01, 0x00]), Buffer.alloc(256, 0x22)]);
+  const pem = "-----BEGIN CERTIFICATE-----\n" +
+    validDER.toString("base64").match(/.{1,64}/g).join("\n") +
+    "\n-----END CERTIFICATE-----\n";
+  assert.doesNotThrow(() => assertDistributionCertificateMatchesProfiles(
+    pem, [extraDER.toString("base64"), validDER.toString("base64")],
+    [validDER.toString("base64")]
+  ));
+  assert.throws(() => assertDistributionCertificateMatchesProfiles(
+    pem, [extraDER.toString("base64")], [validDER.toString("base64")]
+  ), /main App/);
+  assert.throws(() => assertDistributionCertificateMatchesProfiles(
+    pem, [validDER.toString("base64")], [extraDER.toString("base64")]
+  ), /WidgetKit/);
+  assert.throws(() => assertDistributionCertificateMatchesProfiles(
+    "", [validDER.toString("base64")], [validDER.toString("base64")]
+  ), /keychain/i);
+  assert.throws(() => assertDistributionCertificateMatchesProfiles(
+    pem, ["not a cert"], [validDER.toString("base64")]
+  ), /certificate/);
 });

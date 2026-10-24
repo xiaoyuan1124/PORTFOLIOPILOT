@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 
 export const APP_BUNDLE_ID = "com.sy1124.portfoliopilot";
 export const WIDGET_BUNDLE_ID = APP_BUNDLE_ID + ".widgets";
@@ -31,6 +32,37 @@ export function assertAppStoreProfile(profile, teamId, bundleId, now = new Date(
     profile.Name.length < 160 && !/[\u0000-\u001f]/.test(profile.Name),
     "Provisioning profile name invalid");
   return { name: profile.Name, uuid: profile.UUID };
+}
+
+// Detect the common case where a valid Apple Distribution .p12 and valid
+// App Store profiles came from different signing identities. Xcode otherwise
+// fails late with an unhelpful "no matching provisioning profile" error.
+// Never print any certificate DER bytes or their fingerprints to CI logs.
+function certificateDigest(data) {
+  assert(typeof data === "string" && data.length > 100 &&
+    /^[A-Za-z0-9+/=\s]+$/.test(data), "Malformed developer certificate data");
+  const der = Buffer.from(data.replace(/\s/g, ""), "base64");
+  assert(der.length > 100 && der[0] === 0x30,
+    "Malformed DER certificate in signing material");
+  return createHash("sha256").update(der).digest("hex");
+}
+
+export function assertDistributionCertificateMatchesProfiles(pemCertificates, hostCertificates, widgetCertificates) {
+  assert(typeof pemCertificates === "string", "Keychain certificate PEM missing");
+  const keychainHashes = new Set();
+  for (const match of pemCertificates.matchAll(/-----BEGIN CERTIFICATE-----\s*([A-Za-z0-9+/=\s]+?)\s*-----END CERTIFICATE-----/g)) {
+    keychainHashes.add(certificateDigest(match[1]));
+  }
+  assert(keychainHashes.size > 0, "No certificate could be read from the Apple Distribution keychain");
+  for (const [label, certificates] of [
+    ["main App", hostCertificates],
+    ["WidgetKit extension", widgetCertificates]
+  ]) {
+    assert(Array.isArray(certificates) && certificates.length > 0,
+      label + " provisioning profile has no signing certificates");
+    const matches = certificates.some((der) => keychainHashes.has(certificateDigest(der)));
+    assert(matches, label + " App Store profile was created for a different distribution certificate");
+  }
 }
 
 function quotePbx(s) {
