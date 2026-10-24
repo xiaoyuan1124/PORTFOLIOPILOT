@@ -83,7 +83,7 @@ function validBars(input: StrategyCandle[]): StrategyCandle[] {
     byDate.set(bar.date, {
       date: bar.date, close: bar.close,
       ...(high !== undefined && low !== undefined && Number.isFinite(high) && Number.isFinite(low) &&
-        high >= Math.max(bar.close, low) && low > 0 ? { high, low } : {}),
+        high >= bar.close && low <= bar.close && low > 0 ? { high, low } : {}),
       ...(volume !== undefined && Number.isFinite(volume) && volume >= 0 ? { volume } : {})
     });
   }
@@ -118,13 +118,20 @@ function rsiWilder(prices: number[], period: number): number | null {
   if (losses === 0) return gains === 0 ? 50 : 100;
   return 100 - 100 / (1 + gains / losses);
 }
-function kdRawK(bars: StrategyCandle[], period: number, end: number): number | null {
+// Taiwan KD (9,3,3): RSV -> smoothed K, starting K=50.
+// Only a complete OHLC history is eligible; no close-only approximation.
+function kdSmoothedK(bars: StrategyCandle[], period: number, end: number): number | null {
   if (end + 1 < period) return null;
-  const window = bars.slice(end + 1 - period, end + 1);
-  if (window.some((bar) => bar.high === undefined || bar.low === undefined)) return null;
-  const highest = Math.max(...window.map((bar) => bar.high!));
-  const lowest = Math.min(...window.map((bar) => bar.low!));
-  return highest === lowest ? 50 : (bars[end]!.close - lowest) / (highest - lowest) * 100;
+  let k = 50;
+  for (let i = period - 1; i <= end; i++) {
+    const window = bars.slice(i + 1 - period, i + 1);
+    if (window.some((bar) => bar.high === undefined || bar.low === undefined)) return null;
+    const highest = Math.max(...window.map((bar) => bar.high!));
+    const lowest = Math.min(...window.map((bar) => bar.low!));
+    const rsv = highest === lowest ? 50 : (bars[i]!.close - lowest) / (highest - lowest) * 100;
+    k = (2 * k + rsv) / 3;
+  }
+  return k;
 }
 export function computeStrategyIndicators(input: StrategyCandle[], profile: StrategyProfile): IndicatorResult {
   const bars = validBars(input);
@@ -146,8 +153,8 @@ export function computeStrategyIndicators(input: StrategyCandle[], profile: Stra
     ema20: emaSeries(closes, 20).at(-1) ?? null,
     rsi: rsiWilder(closes, profile.rsiPeriod),
     macd, macdSignal, macdHistogram: macd !== null && macdSignal !== null ? macd - macdSignal : null,
-    kdK: last ? kdRawK(bars, profile.kdPeriod, bars.length - 1) : null,
-    kdPreviousK: bars.length >= 2 ? kdRawK(bars, profile.kdPeriod, bars.length - 2) : null,
+    kdK: last ? kdSmoothedK(bars, profile.kdPeriod, bars.length - 1) : null,
+    kdPreviousK: bars.length >= 2 ? kdSmoothedK(bars, profile.kdPeriod, bars.length - 2) : null,
     volumeRatio20
   };
 }
