@@ -250,7 +250,7 @@ export function StrategyLab({
             </div>
             <p className="mt-2 text-xs text-black/45 dark:text-white/45">資料日：{asOf ?? "資料不足"} · 來源：{isQuote ? "TWSE／TPEx 官方收盤快取" : "台股歷史快取（若有）"}</p>
             <p className="mt-1 text-xs text-black/45 dark:text-white/45">指標依據：{completeOhlcv ? "TWSE 官方未還原權息 OHLCV" : "僅有歷史收盤價／缺少完整日 K"} · 不是盤中即時資料</p>
-            <p className="mt-2 text-xs">RSI {number(metrics?.rsi)} · MACD {number(metrics?.macdHistogram, 3)} · SMA20 {number(metrics?.sma20)} · EMA20 {number(metrics?.ema20)}</p>
+            <p className="mt-2 text-xs">RSI {number(metrics?.rsi)} · KD-K {number(metrics?.kdK)} · KD-D {number(metrics?.kdD)} · MACD {number(metrics?.macdHistogram, 3)} · SMA20 {number(metrics?.sma20)} · EMA20 {number(metrics?.ema20)}</p>
             <div className="mt-3 rounded-xl bg-black/[.025] p-3 text-xs dark:bg-white/[.04]">
               <p className="font-semibold">策略 B：{signal?.status === "triggered" ? "符合實驗條件（非買進指令）" : signal?.status === "not_triggered" ? "未觸發" : "資料不足，不產生交易訊號"}</p>
               <p className="mt-1 text-black/45 dark:text-white/45">訊號資料日：{signal?.asOf ?? "—"} · 歷史來源：{signal?.source ?? "—"}</p>
