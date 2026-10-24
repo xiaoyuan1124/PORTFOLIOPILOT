@@ -142,6 +142,12 @@ try {
     await checkLayout(page, viewport.name, "strategy-lab");
     await page.getByRole("button", { name: "查看歷史回測報告" }).first().click();
     await page.getByRole("heading", { name: "歷史回測報告" }).waitFor();
+    await page.waitForFunction(() => {
+      const element = document.getElementById("strategy-backtest");
+      if (!element) return false;
+      const rect = element.getBoundingClientRect();
+      return rect.top < window.innerHeight && rect.bottom > 0;
+    });
     await checkLayout(page, viewport.name, "strategy-backtest-open");
     await page.getByRole("button", { name: "執行本機歷史回測" }).click();
     await page.locator("#strategy-backtest").getByText(/資料不足，無法產生績效|全部歷史樣本/).first().waitFor();
