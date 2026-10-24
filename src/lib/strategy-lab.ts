@@ -73,7 +73,7 @@ export type IndicatorResult = {
   asOf: string | null; close: number | null; bars: number;
   sma20: number | null; ema20: number | null; rsi: number | null;
   macd: number | null; macdSignal: number | null; macdHistogram: number | null;
-  kdK: number | null; kdPreviousK: number | null; volumeRatio20: number | null;
+  kdK: number | null; kdD: number | null; kdPreviousK: number | null; volumeRatio20: number | null;
 };
 function validBars(input: StrategyCandle[]): StrategyCandle[] {
   const byDate = new Map<string, StrategyCandle>();
@@ -120,9 +120,10 @@ function rsiWilder(prices: number[], period: number): number | null {
 }
 // Taiwan KD (9,3,3): RSV -> smoothed K, starting K=50.
 // Only a complete OHLC history is eligible; no close-only approximation.
-function kdSmoothedK(bars: StrategyCandle[], period: number, end: number): number | null {
+function kdSmoothed(bars: StrategyCandle[], period: number, end: number): { k: number; d: number } | null {
   if (end + 1 < period) return null;
   let k = 50;
+  let d = 50;
   for (let i = period - 1; i <= end; i++) {
     const window = bars.slice(i + 1 - period, i + 1);
     if (window.some((bar) => bar.high === undefined || bar.low === undefined)) return null;
@@ -130,8 +131,9 @@ function kdSmoothedK(bars: StrategyCandle[], period: number, end: number): numbe
     const lowest = Math.min(...window.map((bar) => bar.low!));
     const rsv = highest === lowest ? 50 : (bars[i]!.close - lowest) / (highest - lowest) * 100;
     k = (2 * k + rsv) / 3;
+    d = (2 * d + k) / 3;
   }
-  return k;
+  return { k, d };
 }
 export function computeStrategyIndicators(input: StrategyCandle[], profile: StrategyProfile): IndicatorResult {
   const bars = validBars(input);
@@ -153,8 +155,9 @@ export function computeStrategyIndicators(input: StrategyCandle[], profile: Stra
     ema20: emaSeries(closes, 20).at(-1) ?? null,
     rsi: rsiWilder(closes, profile.rsiPeriod),
     macd, macdSignal, macdHistogram: macd !== null && macdSignal !== null ? macd - macdSignal : null,
-    kdK: last ? kdSmoothedK(bars, profile.kdPeriod, bars.length - 1) : null,
-    kdPreviousK: bars.length >= 2 ? kdSmoothedK(bars, profile.kdPeriod, bars.length - 2) : null,
+    kdK: last ? kdSmoothed(bars, profile.kdPeriod, bars.length - 1)?.k ?? null : null,
+    kdD: last ? kdSmoothed(bars, profile.kdPeriod, bars.length - 1)?.d ?? null : null,
+    kdPreviousK: bars.length >= 2 ? kdSmoothed(bars, profile.kdPeriod, bars.length - 2)?.k ?? null : null,
     volumeRatio20
   };
 }
