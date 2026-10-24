@@ -3,6 +3,8 @@
 Prepared: 2026-10-24 · Source base: main `3683d806b5aa977b9abd2198bb528e1d72845d51`
 Release status: **candidate only; NOT an Apple-signed/TestFlight-verified build**.
 
+Release-candidate PR #179 merged to main as `17780f0b79b6b8552c3c34bcce370112fc67b3a4`, CI `40101020351` and Pages `40101020348` succeeded. A GitHub Actions [TestFlight Preflight (No Upload)](../.github/workflows/testflight-preflight.yml) is available to check the presence of eight encrypted secret entries without exposing values or triggering Apple upload. Its success would NOT prove signed archive or Apple processing.
+
 ## Launch scope freeze
 
 - Native app and GitHub Pages, local-first portfolio storage, account and holdings management, official TWSE/TPEx/MOPS research, ETF look-through, performance and portfolio risk.
