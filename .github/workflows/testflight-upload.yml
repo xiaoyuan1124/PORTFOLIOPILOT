@@ -149,4 +149,7 @@ jobs:
 
       - name: Remove temporary private signing assets
         if: always()
-        run: node scripts/cleanup-ios-manual-signing.mjs
+        run: |
+          if [ -f scripts/cleanup-ios-manual-signing.mjs ]; then
+            node scripts/cleanup-ios-manual-signing.mjs
+          fi
