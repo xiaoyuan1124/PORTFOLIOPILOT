@@ -138,7 +138,7 @@ try {
     // small-screen workspace. Check the actual six-seed view for overflow.
     await nav.getByRole("button", { name: "策略", exact: true }).click();
     await page.getByRole("heading", { name: "策略實驗室", level: 1, exact: true }).waitFor();
-    await page.getByText("2317 · 鴻海").waitFor();
+    await page.getByRole("heading", { name: "2317 · 鴻海", level: 4, exact: true }).waitFor();
     await checkLayout(page, viewport.name, "strategy-lab");
     await page.getByRole("button", { name: "複製為新策略" }).click();
     assert.equal(await page.locator("select").first().locator("option").count(), 2);
