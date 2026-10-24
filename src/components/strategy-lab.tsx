@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { AppState } from "@/lib/types";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { loadTwPriceHistory, type TwPriceHistorySeries } from "@/lib/price-history-data";
+import { loadBundledStrategyOhlcv, strategyCandlesFromCache, type StrategyOhlcvCache } from "@/lib/strategy-ohlcv-data";
 import {
   closeOnlyCandles, computeStrategyIndicators, DEFAULT_STRATEGY_LAB,
   evaluateOversoldStrategy, evaluateWatchZone, strategyLabStateSchema,
@@ -66,6 +67,8 @@ export function StrategyLab({
   const config = state.strategyLab ?? DEFAULT_STRATEGY_LAB;
   const profile = config.profiles.find((item) => item.id === config.activeProfileId) ?? config.profiles[0]!;
   const [quoteCache, setQuoteCache] = useState<TwQuoteCache | null>(null);
+  const [ohlcv, setOhlcv] = useState<StrategyOhlcvCache | null>(null);
+  const [ohlcvError, setOhlcvError] = useState("");
   const [quotesError, setQuotesError] = useState("");
   const [histories, setHistories] = useState<Record<string, TwPriceHistorySeries | null>>({});
   const [historyErrors, setHistoryErrors] = useState<Record<string, string>>({});
@@ -83,6 +86,16 @@ export function StrategyLab({
       if (active) { setQuoteCache(cache); setQuotesError(""); }
     }).catch((error) => {
       if (active) { setQuoteCache(null); setQuotesError(error instanceof Error ? error.message : "行情不可用"); }
+    });
+    return () => { active = false; };
+  }, [refreshIndex]);
+
+  useEffect(() => {
+    let active = true;
+    loadBundledStrategyOhlcv().then((cache) => {
+      if (active) { setOhlcv(cache); setOhlcvError(""); }
+    }).catch((error) => {
+      if (active) { setOhlcv(null); setOhlcvError(error instanceof Error ? error.message : "無法讀取 OHLCV"); }
     });
     return () => { active = false; };
   }, [refreshIndex]);
@@ -114,13 +127,16 @@ export function StrategyLab({
     const quote = quotes.get(key);
     const history = histories[key];
     const latestHistory = history?.points.at(-1);
+    const fullCandles = strategyCandlesFromCache(ohlcv, target.venue, target.symbol);
+    const candles = fullCandles ?? (history ? closeOnlyCandles(history.points) : []);
+    const completeOhlcv = fullCandles !== null && fullCandles.length > 0;
     // Quotes are authoritative for current display; historical fallback is
     // explicitly labelled and never represented as live data.
     const close = quote?.close ?? latestHistory?.[1] ?? null;
     const asOf = quote?.date ?? latestHistory?.[0] ?? null;
-    const signal = history ? evaluateOversoldStrategy(closeOnlyCandles(history.points), profile) : null;
-    const metrics = history ? computeStrategyIndicators(closeOnlyCandles(history.points), profile) : null;
-    return { target, close, asOf, history, signal, metrics, key, isQuote: Boolean(quote), zone: evaluateWatchZone(close, target.firstPrice, target.secondPrice) };
+    const signal = candles.length ? evaluateOversoldStrategy(candles, profile, completeOhlcv ? "TWSE · STOCK_DAY 官方日 K OHLCV（未還原權息）" : "TWSE／TPEx · 歷史收盤價快取") : null;
+    const metrics = candles.length ? computeStrategyIndicators(candles, profile) : null;
+    return { target, close, asOf, history, signal, metrics, key, isQuote: Boolean(quote), completeOhlcv, zone: evaluateWatchZone(close, target.firstPrice, target.secondPrice) };
   });
   const inZone = watched.filter((item) => item.zone === "first" || item.zone === "second").length;
 
@@ -194,7 +210,7 @@ export function StrategyLab({
             </label>
           ))}
         </div>
-        <p className="text-xs leading-5 text-[#7b592f] dark:text-[#e3c18e]">目前歷史資料只有收盤價：可計算 RSI、SMA、EMA、MACD；KD 與成交量判斷均顯示「資料不足」。保留既有官方 Scanner，不用模擬數據補齊。</p>
+        <p className="text-xs leading-5 text-[#7b592f] dark:text-[#e3c18e]">台股歷史收盤可計算 RSI、SMA、EMA、MACD；六檔上市股票另外使用 TWSE 官方 OHLCV 驗證 KD 與成交量。若來源尚未建立、缺日或期別不足，顯示資料不足，不補模擬數據；所有價格未還原權息。</p>
         <div className="flex flex-wrap gap-2">
           <button className="min-h-11 rounded-xl bg-[#1f332a] px-4 text-sm font-semibold text-white" onClick={onOpenResearch}>前往官方 Scanner</button>
           <button className="min-h-11 rounded-xl border border-black/10 px-4 text-sm dark:border-white/10" onClick={onOpenRisk}>檢查持股風險</button>
@@ -207,9 +223,11 @@ export function StrategyLab({
       </div>
       {quotesError && <p className="rounded-xl border border-amber-400/30 p-3 text-xs">官方收盤資料不可用：{quotesError}。歷史快取若存在仍會標示資料日期。</p>}
       {quoteCache?.offlineFallback && <p className="rounded-xl border border-amber-400/30 p-3 text-xs">目前使用離線快取，行情日期可能落後。</p>}
+      {ohlcvError && <p className="rounded-xl border border-amber-400/30 p-3 text-xs">官方 OHLCV 尚未取得：{ohlcvError}；KD 與量能規則將維持資料不足。</p>}
+      {ohlcv?.failed.length ? <p className="rounded-xl border border-amber-400/30 p-3 text-xs">官方日 K 部分月份失敗（{ohlcv.failed.length} 筆）：請查看資料期別，缺漏區間不補造數據。</p> : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
-        {watched.map(({ target, key, close, asOf, zone, history, signal, metrics, isQuote }) => (
+        {watched.map(({ target, key, close, asOf, zone, history, signal, metrics, isQuote, completeOhlcv }) => (
           <Card key={key}><CardContent className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0"><h4 className="font-semibold">{target.symbol} · {target.name}</h4>
@@ -224,6 +242,7 @@ export function StrategyLab({
               <div className="mini-metric"><span>第二階段</span><strong>{number(target.secondPrice)}</strong></div>
             </div>
             <p className="mt-2 text-xs text-black/45 dark:text-white/45">資料日：{asOf ?? "資料不足"} · 來源：{isQuote ? "TWSE／TPEx 官方收盤快取" : "台股歷史快取（若有）"}</p>
+            <p className="mt-1 text-xs text-black/45 dark:text-white/45">指標依據：{completeOhlcv ? "TWSE 官方未還原權息 OHLCV" : "僅有歷史收盤價／缺少完整日 K"} · 不是盤中即時資料</p>
             <p className="mt-2 text-xs">RSI {number(metrics?.rsi)} · MACD {number(metrics?.macdHistogram, 3)} · SMA20 {number(metrics?.sma20)} · EMA20 {number(metrics?.ema20)}</p>
             <div className="mt-3 rounded-xl bg-black/[.025] p-3 text-xs dark:bg-white/[.04]">
               <p className="font-semibold">策略 B：{signal?.status === "triggered" ? "符合實驗條件（非買進指令）" : signal?.status === "not_triggered" ? "未觸發" : "資料不足，不產生交易訊號"}</p>
