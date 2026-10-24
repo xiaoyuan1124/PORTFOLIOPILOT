@@ -112,6 +112,21 @@ jobs:
           node --check scripts/verify-ios-signed-widget.mjs
       - name: Generate iOS shell
         run: npm run native:ios:add
+      - name: Verify manual App Store Release signing in generated Xcode project
+        env:
+          APPLE_TEAM_ID: A1B2C3D4E5
+          IOS_HOST_PROFILE_NAME: Portfolio-CI-Host
+          IOS_WIDGET_PROFILE_NAME: Portfolio-CI-Widgets
+        run: |
+          set -e
+          PROJECT="ios/App/App.xcodeproj/project.pbxproj"
+          cp "$PROJECT" "$RUNNER_TEMP/PortfolioPilot-before-manual-signing.pbxproj"
+          trap 'cp "$RUNNER_TEMP/PortfolioPilot-before-manual-signing.pbxproj" "$PROJECT"' EXIT
+          node scripts/configure-ios-manual-signing.mjs
+          test "$(grep -c 'PROVISIONING_PROFILE_SPECIFIER = ' "$PROJECT")" = "2"
+          test "$(grep -c 'ProvisioningStyle = Manual;' "$PROJECT")" = "2"
+          xcodebuild -list -project ios/App/App.xcodeproj > /dev/null
+
       - name: Validate iOS privacy manifest
         run: |
           plutil -lint ios/App/App/PrivacyInfo.xcprivacy
