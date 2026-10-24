@@ -39,7 +39,7 @@ export function strategyCandlesFromCache(
   if (venue !== "TWSE") return null;
   const rows = cache?.securities[symbol.trim().toUpperCase()]?.points;
   if (!rows || rows.length === 0) return null;
-  return rows.map(([date, , high, low, close, volume]) => ({ date, high, low, close, volume }));
+  return rows.map(([date, open, high, low, close, volume]) => ({ date, open, high, low, close, volume }));
 }
 export async function loadBundledStrategyOhlcv(): Promise<StrategyOhlcvCache> {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
