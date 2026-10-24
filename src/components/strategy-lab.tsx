@@ -134,7 +134,12 @@ export function StrategyLab({
     // explicitly labelled and never represented as live data.
     const close = quote?.close ?? latestHistory?.[1] ?? null;
     const asOf = quote?.date ?? latestHistory?.[0] ?? null;
-    const signal = candles.length ? evaluateOversoldStrategy(candles, profile, completeOhlcv ? "TWSE · STOCK_DAY 官方日 K OHLCV（未還原權息）" : "TWSE／TPEx · 歷史收盤價快取") : null;
+    const evaluated = candles.length ? evaluateOversoldStrategy(candles, profile, completeOhlcv ? "TWSE · STOCK_DAY 官方日 K OHLCV（未還原權息）" : "TWSE／TPEx · 歷史收盤價快取") : null;
+    // Prevent a validated signal from appearing current when the official quote
+    // cache has moved beyond the final OHLCV observation.
+    const signal = evaluated && asOf && evaluated.asOf && evaluated.asOf < asOf
+      ? { ...evaluated, status: "insufficient" as const, source: evaluated.source + " · 落後於最新官方收盤資料，訊號暫停" }
+      : evaluated;
     const metrics = candles.length ? computeStrategyIndicators(candles, profile) : null;
     return { target, close, asOf, history, signal, metrics, key, isQuote: Boolean(quote), completeOhlcv, zone: evaluateWatchZone(close, target.firstPrice, target.secondPrice) };
   });
