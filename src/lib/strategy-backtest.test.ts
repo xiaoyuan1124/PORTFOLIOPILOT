@@ -35,7 +35,12 @@ describe("V0.93 deterministic next-session simulation", () => {
     expect(report.trades[0]?.reason).toBe("target");
     expect(report.trades[0]?.netReturnPct).toBeGreaterThan(0);
     expect(report.trades[0]?.netPnl).toBeGreaterThan(0);
-    expect(report.trades[0]?.netPnl).toBeCloseTo(100000 * (report.trades[0]!.netReturnPct / 100));
+    const trade = report.trades[0]!;
+    const invested = trade.shares * trade.entryPrice * (1 + DEFAULT_BACKTEST_COSTS.feeBps / 10000);
+    expect(Number.isInteger(trade.shares)).toBe(true);
+    expect(trade.shares).toBeGreaterThan(0);
+    expect(invested).toBeLessThanOrEqual(100000.001);
+    expect(trade.netPnl).toBeCloseTo(invested * trade.netReturnPct / 100);
     expect(report.benchmarkBuyHoldPct).toBeLessThan(0);
   });
   it("does not enter a signal on the final candle without a future open", () => {
@@ -61,6 +66,24 @@ describe("V0.93 deterministic next-session simulation", () => {
     expect(report.regime.bear.trades + report.regime.bull.trades + report.regime.sideways.trades + report.regime.unknown.trades).toBe(report.trades.length);
     expect(runStrategyBacktest(fixture, DEFAULT_STRATEGY_PROFILE, isoDay(129), { ...DEFAULT_BACKTEST_COSTS, feeBps: -1 }).status).toBe("insufficient");
   });
+  it("starts the holdout with independent cash and executes last training close signals at the first test open", () => {
+    const baseline = candles();
+    // Move the original valid signal from day 126 to day 90, exactly
+    // before the chronological 70/30 split on this 130-day fixture.
+    const shifted = Array.from({ length: 130 }, (_, i) => ({
+      ...baseline[Math.min(i + 36, baseline.length - 1)]!,
+      date: isoDay(i)
+    }));
+    expect(evaluateOversoldStrategy(shifted.slice(0, 91), DEFAULT_STRATEGY_PROFILE).status).toBe("triggered");
+    const report = runStrategyBacktest(shifted, DEFAULT_STRATEGY_PROFILE, isoDay(129));
+    expect(report.sampleSplitDate).toBe(isoDay(91));
+    expect(report.inSample.tradeCount).toBe(0);
+    expect(report.outOfSample.tradeCount).toBe(1);
+    expect(report.outOfSample.totalReturnPct).toBeGreaterThan(0);
+    expect(report.trades[0]?.entryDate).toBe(isoDay(91));
+    expect(report.trades[0]?.sample).toBe("out_of_sample");
+  });
+
   it("handles valid but no-signal history without inventing win rate", () => {
     const flat = candles().map((bar) => ({ ...bar, open: 100, close: 100, high: 101, low: 99, volume: 100 }));
     const report = runStrategyBacktest(flat, DEFAULT_STRATEGY_PROFILE, isoDay(129));

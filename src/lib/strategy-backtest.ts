@@ -11,6 +11,7 @@ export type BacktestTrade = {
   exitDate: string;
   entryPrice: number;
   exitPrice: number;
+  shares: number;
   netReturnPct: number;
   /** Monetary P&L in the same notional units as the starting 100,000 TWD. */
   netPnl: number;
@@ -142,86 +143,148 @@ export function runStrategyBacktest(
 ): BacktestReport {
   if (!calendarDate(asOf) || !strategyProfileSchema.safeParse(profile).success ||
     !validCosts(costs)) return EMPTY(costs, "回測參數或資料日期無效。");
-  const bars = safeCandles(input, asOf);
-  if (!bars || bars.length < 100) return EMPTY(costs, "資料不足：至少需要 100 根有效且不含未來日期的真實日 K（含成交量）。");
+  const validated = safeCandles(input, asOf);
+  if (!validated || validated.length < 100) return EMPTY(costs, "資料不足：至少需要 100 根有效且不含未來日期的真實日 K（含成交量）。");
+  // Capture a non-null, immutable array type for nested window simulations.
+  const bars: VerifiedCandle[] = validated;
   const fee = costs.feeBps / 10000;
   const slip = costs.slippageBps / 10000;
   const sellTax = costs.sellTaxBps / 10000;
   const split = Math.max(1, Math.min(bars.length - 1, Math.floor(bars.length * 0.7)));
-  const trades: BacktestTrade[] = [];
-  const equity: Array<{ date: string; value: number }> = [];
-  let cash = PRINCIPAL, quantity = 0, pending: { date: string; regime: MarketRegime } | null = null;
-  let entry: { date: string; price: number; fillPrice: number; principal: number; signalDate: string; regime: MarketRegime; index: number } | null = null;
-  let pendingLastBarSignals = 0;
-  function exit(bar: VerifiedCandle, price: number, reason: BacktestTrade["reason"], exitIndex: number) {
-    if (!entry) return;
-    const executedPrice = price * (1 - slip);
-    const proceeds = quantity * executedPrice * (1 - fee - sellTax);
-    const netReturnPct = (proceeds / entry.principal - 1) * 100;
-    const sample: BacktestTrade["sample"] = entry.index < split && exitIndex < split ? "in_sample" :
-      entry.index >= split ? "out_of_sample" : "boundary";
-    trades.push({
-      signalDate: entry.signalDate, entryDate: entry.date, exitDate: bar.date,
-      entryPrice: entry.fillPrice, exitPrice: executedPrice,
-      netReturnPct, netPnl: proceeds - entry.principal, reason, regime: entry.regime, sample
-    });
-    cash = proceeds; quantity = 0; entry = null;
+  type Entry = {
+    date: string; fillPrice: number; invested: number; signalDate: string;
+    regime: MarketRegime; index: number;
+  };
+  type Pending = { date: string; regime: MarketRegime };
+  type WindowMode = "full" | "in_sample" | "out_of_sample";
+
+  /**
+   * Each holdout window begins with independent, unleveraged cash.
+   * Previous real OHLCV is available only to warm up indicators. A position
+   * from the training interval is never carried into the test interval.
+   */
+  function simulate(from: number, to: number, mode: WindowMode) {
+    let cash = PRINCIPAL;
+    let shares = 0;
+    let position: Entry | null = null;
+    let pending: Pending | null = null;
+    let lastBarSignals = 0;
+    const trades: BacktestTrade[] = [];
+    const equity: Array<{ date: string; value: number }> = [];
+
+    // The first test session may act on a signal made at the preceding
+    // session's close (known before the test session opens).
+    if (from > 0) {
+      const previous = from - 1;
+      if (previous >= 59 &&
+          evaluateOversoldStrategy(bars.slice(0, from), profile).status === "triggered") {
+        pending = { date: bars[previous]!.date, regime: regimeAt(bars, previous) };
+      }
+    }
+    function exit(bar: VerifiedCandle, rawPrice: number,
+                  reason: BacktestTrade["reason"], index: number) {
+      if (position === null) return;
+      const holding = position;
+      const executed = rawPrice * (1 - slip);
+      const proceeds = shares * executed * (1 - fee - sellTax);
+      const pnl = proceeds - holding.invested;
+      const sample: BacktestTrade["sample"] = mode === "full"
+        ? holding.index < split && index < split
+          ? "in_sample"
+          : holding.index >= split ? "out_of_sample" : "boundary"
+        : mode;
+      trades.push({
+        signalDate: holding.signalDate, entryDate: holding.date,
+        exitDate: bar.date, entryPrice: holding.fillPrice,
+        exitPrice: executed, shares, netPnl: pnl,
+        netReturnPct: pnl / holding.invested * 100,
+        reason, regime: holding.regime, sample
+      });
+      cash += proceeds;
+      shares = 0;
+      position = null;
+    }
+
+    for (let index = from; index < to; index++) {
+      const bar = bars[index]!;
+      if (pending && !position) {
+        const fill = bar.open * (1 + slip);
+        // No margin, no fractional Taiwan shares and no negative cash.
+        const count = Math.floor(cash / (fill * (1 + fee)));
+        if (count >= 1 && Number.isFinite(count)) {
+          const invested = count * fill * (1 + fee);
+          position = {
+            date: bar.date, fillPrice: fill, invested,
+            signalDate: pending.date, regime: pending.regime, index
+          };
+          shares = count;
+          cash = Math.max(0, cash - invested);
+        }
+        pending = null;
+      }
+
+      let exited = false;
+      if (position) {
+        const stop = position.fillPrice * (1 - profile.stopLossPct / 100);
+        const take = position.fillPrice * (1 + profile.takeProfitPct / 100);
+        // A gap through stop is filled at the actual opening price.
+        // An adverse stop wins over an intraday target when both hit.
+        if (bar.open <= stop) {
+          exit(bar, bar.open, "stop", index); exited = true;
+        } else if (bar.low <= stop) {
+          exit(bar, stop, "stop", index); exited = true;
+        } else if (bar.high >= take) {
+          exit(bar, take, "target", index); exited = true;
+        } else if (index === to - 1) {
+          exit(bar, bar.close, "final_close", index); exited = true;
+        }
+      }
+      const liquidation = position
+        ? cash + shares * bar.close * (1 - slip) * (1 - fee - sellTax)
+        : cash;
+      equity.push({ date: bar.date, value: liquidation });
+
+      if (!position && !exited && index >= 59) {
+        // This signal can ONLY be executed at the next day's real open.
+        const signal = evaluateOversoldStrategy(bars.slice(0, index + 1), profile);
+        if (signal.status === "triggered") {
+          if (index === to - 1) lastBarSignals++;
+          else pending = { date: bar.date, regime: regimeAt(bars, index) };
+        }
+      }
+    }
+    return { trades, equity, pendingLastBarSignals: lastBarSignals };
   }
-  for (let i = 0; i < bars.length; i++) {
-    const bar = bars[i]!;
-    if (pending && entry === null) {
-      const fill = bar.open * (1 + slip);
-      const shares = cash / (fill * (1 + fee));
-      if (shares > 0 && Number.isFinite(shares)) {
-        entry = { date: bar.date, price: bar.open, fillPrice: fill, principal: cash, signalDate: pending.date, regime: pending.regime, index: i };
-        quantity = shares; cash = 0;
-      }
-      pending = null;
-    }
-    let exitedToday = false;
-    if (entry) {
-      const stop = entry.fillPrice * (1 - profile.stopLossPct / 100);
-      const target = entry.fillPrice * (1 + profile.takeProfitPct / 100);
-      // Gap below stop is filled at opening price, never at an impossible stop.
-      if (bar.open <= stop) {
-        exit(bar, bar.open, "stop", i); exitedToday = true;
-      } else if (bar.low <= stop) {
-        exit(bar, stop, "stop", i); exitedToday = true;
-      } else if (bar.high >= target) {
-        // A favorable gap is conservatively filled at the target limit.
-        exit(bar, target, "target", i); exitedToday = true;
-      } else if (i === bars.length - 1) {
-        exit(bar, bar.close, "final_close", i); exitedToday = true;
-      }
-    }
-    const liquidationValue = entry ? quantity * bar.close * (1 - slip) * (1 - fee - sellTax) : cash;
-    equity.push({ date: bar.date, value: liquidationValue });
-    if (!entry && !exitedToday && i >= 59) {
-      const signal = evaluateOversoldStrategy(bars.slice(0, i + 1), profile, "TWSE STOCK_DAY · genuine OHLCV");
-      if (signal.status === "triggered") {
-        if (i === bars.length - 1) pendingLastBarSignals++;
-        else pending = { date: bar.date, regime: regimeAt(bars, i) };
-      }
-    }
-  }
+
+  const full = simulate(0, bars.length, "full");
+  const inSample = simulate(0, split, "in_sample");
+  const outOfSample = simulate(split, bars.length, "out_of_sample");
   const buyFill = bars[0]!.open * (1 + slip);
-  const holdQty = PRINCIPAL / (buyFill * (1 + fee));
-  const holdProceeds = holdQty * bars.at(-1)!.close * (1 - slip) * (1 - fee - sellTax);
-  const slicedIn = equity.slice(0, split).map((x) => x.value);
-  const slicedOut = equity.slice(split - 1).map((x) => x.value);
-  const regime = Object.fromEntries((["bull", "bear", "sideways", "unknown"] as MarketRegime[]).map((r) => {
-    const samples = trades.filter((trade) => trade.regime === r);
-    return [r, { trades: samples.length, averageTradeReturnPct: average(samples.map((t) => t.netReturnPct)) }];
+  const buyShares = Math.floor(PRINCIPAL / (buyFill * (1 + fee)));
+  const unusedCash = PRINCIPAL - buyShares * buyFill * (1 + fee);
+  const buyHoldProceeds = buyShares * bars.at(-1)!.close * (1 - slip) * (1 - fee - sellTax);
+  const regimes = (["bull", "bear", "sideways", "unknown"] as MarketRegime[]);
+  const regime = Object.fromEntries(regimes.map((reg) => {
+    const transactions = full.trades.filter((trade) => trade.regime === reg);
+    return [reg, {
+      trades: transactions.length,
+      averageTradeReturnPct: average(transactions.map((trade) => trade.netReturnPct))
+    }];
   })) as BacktestReport["regime"];
   return {
-    status: trades.length ? "complete" : "no_trades",
-    reason: trades.length ? "固定參數回測，不含權息還原；勝率僅反映已涵蓋歷史。" : "資料有效，但沒有符合全部條件的已完成交易。",
-    firstDate: bars[0]!.date, lastDate: bars.at(-1)!.date, sampleSplitDate: bars[split]!.date,
+    status: full.trades.length ? "complete" : "no_trades",
+    reason: full.trades.length
+      ? "整股、無槓桿固定參數價格回測；樣本外獨立現金帳戶，不含權息還原。"
+      : "資料有效，但沒有符合全部條件的已完成交易。",
+    firstDate: bars[0]!.date, lastDate: bars.at(-1)!.date,
+    sampleSplitDate: bars[split]!.date,
     source: "official_unadjusted_ohlcv", costs,
-    all: summarize(trades, [PRINCIPAL, ...equity.map((x) => x.value)]),
-    inSample: summarize(trades.filter((t) => t.sample === "in_sample"), [PRINCIPAL, ...slicedIn]),
-    outOfSample: summarize(trades.filter((t) => t.sample === "out_of_sample"), slicedOut),
-    regime, benchmarkBuyHoldPct: (holdProceeds / PRINCIPAL - 1) * 100,
-    trades, equity, pendingLastBarSignals
+    all: summarize(full.trades, [PRINCIPAL, ...full.equity.map((x) => x.value)]),
+    inSample: summarize(inSample.trades, [PRINCIPAL, ...inSample.equity.map((x) => x.value)]),
+    outOfSample: summarize(outOfSample.trades, [PRINCIPAL, ...outOfSample.equity.map((x) => x.value)]),
+    regime,
+    benchmarkBuyHoldPct: (unusedCash + buyHoldProceeds) / PRINCIPAL * 100 - 100,
+    trades: full.trades, equity: full.equity,
+    pendingLastBarSignals: full.pendingLastBarSignals
   };
 }
