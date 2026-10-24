@@ -28,7 +28,11 @@ function pbx() {
     "\t\t\t\tCODE_SIGN_STYLE = Automatic;\n" +
     "\t\t\t};\n" +
     "\t\t\tname = Release;\n" +
-    "\t\t};").join("\n");
+    "\t\t};").join("\n") + "\n" +
+    ["504EC3031FED79650016851F", "F0B100000000000000000006"].map(id =>
+      "\t\t\t\t\t" + id + " = {\n" +
+      "\t\t\t\t\t\tProvisioningStyle = Automatic;\n" +
+      "\t\t\t\t\t};\n").join("");
 }
 test("valid App Store host and widget profiles are accepted", () => {
   assert.equal(assertAppStoreProfile(profile(APP_BUNDLE_ID), team, APP_BUNDLE_ID).name,
@@ -59,6 +63,7 @@ test("manual release patch selects only host and widget profiles", () => {
   const result = setManualReleaseSigning(pbx(), team, "Portfolio Host AppStore", "Portfolio Widgets AppStore");
   assert.equal(result.match(/CODE_SIGN_STYLE = Manual;/g)?.length, 2);
   assert.equal(result.match(/PROVISIONING_PROFILE_SPECIFIER = /g)?.length, 2);
+  assert.equal(result.match(/ProvisioningStyle = Manual;/g)?.length, 2);
   assert(result.includes('PROVISIONING_PROFILE_SPECIFIER = "Portfolio Host AppStore";'));
   assert(result.includes('PROVISIONING_PROFILE_SPECIFIER = "Portfolio Widgets AppStore";'));
 });
