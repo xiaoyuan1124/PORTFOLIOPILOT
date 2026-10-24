@@ -6,7 +6,7 @@ on:
     paths:
       - "scripts/update-strategy-ohlcv.mjs"
       - "scripts/lib/strategy-ohlcv.mjs"
-      - "scripts/lib/strategy-ohlcv.test.mjs"
+      - "scripts/lib/strategy-ohlcv.check.mjs"
       - ".github/workflows/strategy-ohlcv.yml"
   schedule:
     # Taipei time 19:45, Monday to Friday. Delayed schedule is not a realtime feed.
@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: 24
       - name: Validate official TWSE OHLCV adapter
-        run: node --test scripts/lib/strategy-ohlcv.test.mjs
+        run: node --test scripts/lib/strategy-ohlcv.check.mjs
       - name: Refresh six official Strategy Lab stocks
         run: node scripts/update-strategy-ohlcv.mjs
       - name: Commit verified OHLCV only
