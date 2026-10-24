@@ -15,6 +15,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: taiwan-market-data-writers
@@ -46,3 +48,22 @@ jobs:
             git commit -m "data: refresh official Strategy Lab OHLCV"
             git push
           fi
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Build GitHub Pages with newly refreshed OHLCV
+        run: npm run build
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./out
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: refresh-strategy-ohlcv
+    steps:
+      - name: Deploy refreshed Strategy Lab OHLCV
+        id: deployment
+        uses: actions/deploy-pages@v5
