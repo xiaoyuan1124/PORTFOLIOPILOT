@@ -10,4 +10,4 @@
 - Data and sources are dated. TWSE OHLCV is unadjusted for dividends and splits. Avoid treating an old signal as current. No intraday streaming, broker login, automatic orders, real-time push or proven strategy win rate.
 - **V0.93 / upcoming:** cost-aware historical backtesting with strict next-bar execution, out-of-sample testing, corporate-action adjustment and buy-and-hold comparison. None of these are claimed complete here.
 - **V0.94–V0.95 / upcoming:** portfolio-relative position sizing, ETF exposure and cash guardrails; app-open and after-close notification paths with clear limits. iOS TestFlight signing remains a separate release gate.
-- For manual OHLCV refresh: run `node --test scripts/lib/strategy-ohlcv.test.mjs` and `node scripts/update-strategy-ohlcv.mjs`, only after reviewing the public TWSE source and accepting its usage policies.
+- For manual OHLCV refresh: run `node --test scripts/lib/strategy-ohlcv.check.mjs` and `node scripts/update-strategy-ohlcv.mjs`, only after reviewing the public TWSE source and accepting its usage policies.
