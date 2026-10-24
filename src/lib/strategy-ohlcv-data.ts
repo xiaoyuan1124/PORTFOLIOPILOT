@@ -47,3 +47,15 @@ export async function loadBundledStrategyOhlcv(): Promise<StrategyOhlcvCache> {
   if (!response.ok) throw new Error("官方 OHLCV 資料尚未建立。");
   return parseStrategyOhlcv(await response.json());
 }
+
+
+// Missing months are not treated as valid chronological training history.
+// Expose the exact incomplete periods to block technical trade signals.
+export function strategyOhlcvMissingMonths(
+  cache: StrategyOhlcvCache | null,
+  venue: "TWSE" | "TPEx",
+  symbol: string
+): string[] {
+  if (venue !== "TWSE" || !cache) return [];
+  return cache.failed.filter((item) => item.symbol === symbol).map((item) => item.month).sort();
+}

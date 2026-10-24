@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseStrategyOhlcv, strategyCandlesFromCache } from "./strategy-ohlcv-data";
+import { parseStrategyOhlcv, strategyCandlesFromCache, strategyOhlcvMissingMonths } from "./strategy-ohlcv-data";
 const base = {
   version: 1,
   generatedAt: "2026-10-24T00:00:00.000Z",
@@ -28,6 +28,18 @@ describe("Strategy Lab official OHLCV reader", () => {
   it("rejects impossible OHLC observations and unverified volume units", () => {
     expect(() => parseStrategyOhlcv({ ...base, securities: { "2317": { market: "TWSE", points: [["2026-10-23", 205, 199, 198, 203, 1000]] } } })).toThrow();
     expect(() => parseStrategyOhlcv({ ...base, source: { ...base.source, volumeUnit: "lots" } })).toThrow();
+  });
+  it("blocks a single incomplete stock without hiding other verified symbols", () => {
+    const data = parseStrategyOhlcv({
+      ...base,
+      failed: [
+        { symbol: "3037", month: "2026-02", reason: "HTTP 307" },
+        { symbol: "3037", month: "2026-03", reason: "HTTP 307" }
+      ]
+    });
+    expect(strategyOhlcvMissingMonths(data, "TWSE", "3037")).toEqual(["2026-02", "2026-03"]);
+    expect(strategyOhlcvMissingMonths(data, "TWSE", "2317")).toEqual([]);
+    expect(strategyOhlcvMissingMonths(data, "TPEx", "3037")).toEqual([]);
   });
   it("accepts deliberately empty no-fake-price cache", () => {
     const data = parseStrategyOhlcv({ ...base, securities: {} });
