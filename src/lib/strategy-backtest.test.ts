@@ -34,6 +34,8 @@ describe("V0.93 deterministic next-session simulation", () => {
     expect(report.trades[0]?.entryPrice).toBeCloseTo(61 * (1 + DEFAULT_BACKTEST_COSTS.slippageBps / 10000));
     expect(report.trades[0]?.reason).toBe("target");
     expect(report.trades[0]?.netReturnPct).toBeGreaterThan(0);
+    expect(report.trades[0]?.netPnl).toBeGreaterThan(0);
+    expect(report.trades[0]?.netPnl).toBeCloseTo(100000 * (report.trades[0]!.netReturnPct / 100));
     expect(report.benchmarkBuyHoldPct).toBeLessThan(0);
   });
   it("does not enter a signal on the final candle without a future open", () => {
@@ -48,6 +50,7 @@ describe("V0.93 deterministic next-session simulation", () => {
     const report = runStrategyBacktest(bars, DEFAULT_STRATEGY_PROFILE, isoDay(129));
     expect(report.trades[0]?.reason).toBe("stop");
     expect(report.trades[0]?.netReturnPct).toBeLessThan(0);
+    expect(report.trades[0]?.netPnl).toBeLessThan(0);
   });
   it("enforces nonnegative finite transaction costs and preserves OOS trade labels", () => {
     const fixture = candles();
