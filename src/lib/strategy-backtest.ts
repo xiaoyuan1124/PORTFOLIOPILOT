@@ -53,7 +53,8 @@ function calendarDate(value: string): boolean {
   const parsed = new Date(value + "T00:00:00Z");
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
-function safeCandles(input: StrategyCandle[], asOf: string) {
+type VerifiedCandle = StrategyCandle & { open: number; high: number; low: number; volume: number };
+function safeCandles(input: StrategyCandle[], asOf: string): VerifiedCandle[] | null {
   const ordered = [...input].sort((a, b) => a.date.localeCompare(b.date));
   if (ordered.some((bar, i) => {
     const open = bar.open, high = bar.high, low = bar.low, volume = bar.volume;
@@ -64,7 +65,7 @@ function safeCandles(input: StrategyCandle[], asOf: string) {
       !Number.isFinite(volume) || volume === undefined || volume < 0 ||
       high < Math.max(open, bar.close) || low > Math.min(open, bar.close);
   })) return null;
-  return ordered as Array<StrategyCandle & { open: number; high: number; low: number; volume: number }>;
+  return ordered as VerifiedCandle[];
 }
 function validCosts(costs: BacktestCosts) {
   return Object.values(costs).every((v) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 500);
@@ -148,7 +149,7 @@ export function runStrategyBacktest(
   let cash = PRINCIPAL, quantity = 0, pending: { date: string; regime: MarketRegime } | null = null;
   let entry: { date: string; price: number; fillPrice: number; principal: number; signalDate: string; regime: MarketRegime; index: number } | null = null;
   let pendingLastBarSignals = 0;
-  function exit(bar: (typeof bars)[number], price: number, reason: BacktestTrade["reason"], exitIndex: number) {
+  function exit(bar: VerifiedCandle, price: number, reason: BacktestTrade["reason"], exitIndex: number) {
     if (!entry) return;
     const executedPrice = price * (1 - slip);
     const proceeds = quantity * executedPrice * (1 - fee - sellTax);
