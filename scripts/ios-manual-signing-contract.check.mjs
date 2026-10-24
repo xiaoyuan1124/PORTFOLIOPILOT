@@ -101,7 +101,7 @@ test("both App Store profiles must contain the certificate imported from .p12", 
   ), /WidgetKit/);
   assert.throws(() => assertDistributionCertificateMatchesProfiles(
     "", [validDER.toString("base64")], [validDER.toString("base64")]
-  ), /Keychain/);
+  ), /keychain/i);
   assert.throws(() => assertDistributionCertificateMatchesProfiles(
     pem, ["not a cert"], [validDER.toString("base64")]
   ), /certificate/);
