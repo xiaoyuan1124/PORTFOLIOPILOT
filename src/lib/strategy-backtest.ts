@@ -143,8 +143,10 @@ export function runStrategyBacktest(
 ): BacktestReport {
   if (!calendarDate(asOf) || !strategyProfileSchema.safeParse(profile).success ||
     !validCosts(costs)) return EMPTY(costs, "回測參數或資料日期無效。");
-  const bars = safeCandles(input, asOf);
-  if (!bars || bars.length < 100) return EMPTY(costs, "資料不足：至少需要 100 根有效且不含未來日期的真實日 K（含成交量）。");
+  const validated = safeCandles(input, asOf);
+  if (!validated || validated.length < 100) return EMPTY(costs, "資料不足：至少需要 100 根有效且不含未來日期的真實日 K（含成交量）。");
+  // Capture a non-null, immutable array type for nested window simulations.
+  const bars: VerifiedCandle[] = validated;
   const fee = costs.feeBps / 10000;
   const slip = costs.slippageBps / 10000;
   const sellTax = costs.sellTaxBps / 10000;
