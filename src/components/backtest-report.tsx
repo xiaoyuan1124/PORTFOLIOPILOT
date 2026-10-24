@@ -37,9 +37,9 @@ function Summary({ title, m }: { title: string; m: BacktestMetrics }) {
       <div>
         <p className="text-xs font-semibold">進場時市場環境（60 日歷史價格變化）</p>
         <div className="mt-1 flex flex-wrap gap-2 text-xs text-black/50 dark:text-white/50">
-          <span>多頭：{m.regimes.bull.trades} 筆</span>
-          <span>空頭：{m.regimes.bear.trades} 筆</span>
-          <span>盤整：{m.regimes.sideways.trades} 筆</span>
+          <span>多頭：{m.regimes.bull.trades} 筆 · 淨損益 {fmt(m.regimes.bull.profit)} TWD</span>
+          <span>空頭：{m.regimes.bear.trades} 筆 · 淨損益 {fmt(m.regimes.bear.profit)} TWD</span>
+          <span>盤整：{m.regimes.sideways.trades} 筆 · 淨損益 {fmt(m.regimes.sideways.profit)} TWD</span>
           {m.regimes.unknown.trades > 0 ? <span>不足判別：{m.regimes.unknown.trades} 筆</span> : null}
         </div>
       </div>
