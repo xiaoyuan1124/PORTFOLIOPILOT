@@ -8,10 +8,9 @@ import {
 test("App Store archive does not leak a signing identity into Swift Package targets", () => {
   const args = appStoreArchiveSigningSettings("A1B2C3D4E5");
   assert.deepEqual(args, [
-    "DEVELOPMENT_TEAM=A1B2C3D4E5",
-    "CODE_SIGN_STYLE=Automatic"
+    "DEVELOPMENT_TEAM=A1B2C3D4E5"
   ]);
-  assert(!args.some(s => /CODE_SIGN_IDENTITY|PROVISIONING_PROFILE/.test(s)));
+  assert(!args.some(s => /CODE_SIGN_IDENTITY|CODE_SIGN_STYLE|PROVISIONING_PROFILE/.test(s)));
 });
 
 test("Release App and WidgetKit have one explicit Apple Distribution setting", () => {

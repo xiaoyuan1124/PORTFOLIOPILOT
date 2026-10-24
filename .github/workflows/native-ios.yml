@@ -42,6 +42,11 @@ on:
       - "scripts/verify-ios-signed-widget.mjs"
       - "scripts/ios-signing-policy.mjs"
       - "scripts/ios-signing-policy.check.mjs"
+      - "scripts/ios-manual-signing-contract.mjs"
+      - "scripts/ios-manual-signing-contract.check.mjs"
+      - "scripts/prepare-ios-manual-signing.mjs"
+      - "scripts/configure-ios-manual-signing.mjs"
+      - "scripts/cleanup-ios-manual-signing.mjs"
       - "scripts/create-testflight-export-options.mjs"
       - "scripts/archive-ios-signed.mjs"
       - "scripts/upload-ios-testflight.mjs"
@@ -80,7 +85,9 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Validate TestFlight CLI contract
         env:
-          APPLE_TEAM_ID: CI_TEAM_PLACEHOLDER
+          APPLE_TEAM_ID: A1B2C3D4E5
+          IOS_HOST_PROFILE_NAME: Portfolio-CI-Host
+          IOS_WIDGET_PROFILE_NAME: Portfolio-CI-Widgets
           EXPORT_OPTIONS_PATH: ${{ runner.temp }}/ExportOptions-TestFlight.plist
         run: |
           xcodebuild -help > "$RUNNER_TEMP/xcodebuild-help.txt" 2>&1
@@ -90,15 +97,36 @@ jobs:
           plutil -lint "$EXPORT_OPTIONS_PATH"
           test "$(plutil -extract method raw -o - "$EXPORT_OPTIONS_PATH")" = "app-store-connect"
           test "$(plutil -extract destination raw -o - "$EXPORT_OPTIONS_PATH")" = "upload"
-          test "$(plutil -extract signingStyle raw -o - "$EXPORT_OPTIONS_PATH")" = "automatic"
+          test "$(plutil -extract signingStyle raw -o - "$EXPORT_OPTIONS_PATH")" = "manual"
+          grep -q "Portfolio-CI-Host" "$EXPORT_OPTIONS_PATH"
+          grep -q "Portfolio-CI-Widgets" "$EXPORT_OPTIONS_PATH"
           test "$(plutil -extract manageAppVersionAndBuildNumber raw -o - "$EXPORT_OPTIONS_PATH")" = "false"
       - name: Validate signed widget entitlement contract (mock profiles)
         run: |
           npm run native:ios:widget:signing:test
           node --test scripts/ios-signing-policy.check.mjs
+          node --test scripts/ios-manual-signing-contract.check.mjs
+          node --check scripts/prepare-ios-manual-signing.mjs
+          node --check scripts/configure-ios-manual-signing.mjs
+          node --check scripts/cleanup-ios-manual-signing.mjs
           node --check scripts/verify-ios-signed-widget.mjs
       - name: Generate iOS shell
         run: npm run native:ios:add
+      - name: Verify manual App Store Release signing in generated Xcode project
+        env:
+          APPLE_TEAM_ID: A1B2C3D4E5
+          IOS_HOST_PROFILE_NAME: Portfolio-CI-Host
+          IOS_WIDGET_PROFILE_NAME: Portfolio-CI-Widgets
+        run: |
+          set -e
+          PROJECT="ios/App/App.xcodeproj/project.pbxproj"
+          cp "$PROJECT" "$RUNNER_TEMP/PortfolioPilot-before-manual-signing.pbxproj"
+          trap 'cp "$RUNNER_TEMP/PortfolioPilot-before-manual-signing.pbxproj" "$PROJECT"' EXIT
+          node scripts/configure-ios-manual-signing.mjs
+          test "$(grep -c 'PROVISIONING_PROFILE_SPECIFIER = ' "$PROJECT")" = "2"
+          test "$(grep -c 'ProvisioningStyle = Manual;' "$PROJECT")" = "2"
+          xcodebuild -list -project ios/App/App.xcodeproj > /dev/null
+
       - name: Validate iOS privacy manifest
         run: |
           plutil -lint ios/App/App/PrivacyInfo.xcprivacy
