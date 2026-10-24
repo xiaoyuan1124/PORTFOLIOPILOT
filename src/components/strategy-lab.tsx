@@ -8,7 +8,7 @@ import { loadTwPriceHistory, type TwPriceHistorySeries } from "@/lib/price-histo
 import { loadBundledStrategyOhlcv, strategyCandlesFromCache, type StrategyOhlcvCache } from "@/lib/strategy-ohlcv-data";
 import {
   closeOnlyCandles, computeStrategyIndicators, DEFAULT_STRATEGY_LAB,
-  evaluateOversoldStrategy, evaluateWatchZone, strategyLabStateSchema,
+  evaluateOversoldStrategy, evaluateWatchZone, newestVerifiedClose, strategyLabStateSchema,
   type StrategyLabState, type StrategyLabTarget, type StrategyProfile
 } from "@/lib/strategy-lab";
 import { Badge, Card, CardContent } from "./ui";
@@ -130,10 +130,12 @@ export function StrategyLab({
     const fullCandles = strategyCandlesFromCache(ohlcv, target.venue, target.symbol);
     const candles = fullCandles ?? (history ? closeOnlyCandles(history.points) : []);
     const completeOhlcv = fullCandles !== null && fullCandles.length > 0;
-    // Quotes are authoritative for current display; historical fallback is
-    // explicitly labelled and never represented as live data.
-    const close = quote?.close ?? latestHistory?.[1] ?? null;
-    const asOf = quote?.date ?? latestHistory?.[0] ?? null;
+    const latest = newestVerifiedClose([
+      ...(quote ? [{ date: quote.date, close: quote.close, source: "quote" as const }] : []),
+      ...(latestHistory ? [{ date: latestHistory[0], close: latestHistory[1], source: "history" as const }] : [])
+    ], taipeiToday());
+    const close = latest?.close ?? null;
+    const asOf = latest?.date ?? null;
     const evaluated = candles.length ? evaluateOversoldStrategy(candles, profile, completeOhlcv ? "TWSE · STOCK_DAY 官方日 K OHLCV（未還原權息）" : "TWSE／TPEx · 歷史收盤價快取") : null;
     // Prevent a validated signal from appearing current when the official quote
     // cache has moved beyond the final OHLCV observation.
@@ -141,7 +143,7 @@ export function StrategyLab({
       ? { ...evaluated, status: "insufficient" as const, source: evaluated.source + " · 落後於最新官方收盤資料，訊號暫停" }
       : evaluated;
     const metrics = candles.length ? computeStrategyIndicators(candles, profile) : null;
-    return { target, close, asOf, history, signal, metrics, key, isQuote: Boolean(quote), completeOhlcv, zone: evaluateWatchZone(close, target.firstPrice, target.secondPrice) };
+    return { target, close, asOf, history, signal, metrics, key, isQuote: latest?.source === "quote", completeOhlcv, zone: evaluateWatchZone(close, target.firstPrice, target.secondPrice) };
   });
   const inZone = watched.filter((item) => item.zone === "first" || item.zone === "second").length;
 
