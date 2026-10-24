@@ -78,7 +78,7 @@ Apple 官方：
 
 1. 將 App Store Connect API Key 準備於 Runner 的暫存區。
 2. 從 GitHub Secrets 建立臨時 macOS Keychain，匯入並核對 `.p12` 的 Apple Distribution 身分；下載與安裝兩份 Apple 核發的 App Store Profiles。
-3. 在建立好的 Xcode Project **只對 Release 主 App 和 Release WidgetKit Target** 設定 `CODE_SIGN_STYLE=Manual`、正確的 Provisioning Profile 與 Apple Team ID，並將 TargetAttributes ProvisioningStyle 一併設為 Manual。Capacitor SwiftPM 依賴不繼承全域 Distribution identity。
+3. 在 Xcode 26 使用 `~/Library/Developer/Xcode/UserData/Provisioning Profiles` 安裝核發的兩份 Profiles（Xcode 16+ 已不使用舊的 `~/Library/MobileDevice/Provisioning Profiles` 作為主要位置）。接著在建立好的 Xcode Project **只對 Release 主 App 和 Release WidgetKit Target** 設定 `CODE_SIGN_STYLE=Manual`、正確的 Provisioning Profile 與 Apple Team ID，並將 TargetAttributes ProvisioningStyle 一併設為 Manual。Capacitor SwiftPM 依賴不繼承全域 Distribution identity。
 4. Xcode Release archive、檢查 App/Widget 兩份簽章、Bundle ID、App Group、發行 Profile 和有效期限；任何不符立即拒絕上傳。
 5. 使用手動簽署的 `ExportOptions.plist` 指定兩個 Bundle ID 與各自 Profile，再上傳 App Store Connect。
 6. `always()` 清除臨時 Keychain、已安裝的 Profiles 和私鑰暫存檔。
