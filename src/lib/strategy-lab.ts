@@ -68,7 +68,7 @@ export const DEFAULT_STRATEGY_LAB: StrategyLabState = {
     { id: "TWSE:3037", venue: "TWSE", symbol: "3037", name: "欣興", firstPrice: 950, secondPrice: 820, createdAt: "2026-10-24", note: "研究門檻，非買進價。" }
   ]
 };
-export type StrategyCandle = { date: string; close: number; high?: number; low?: number; volume?: number };
+export type StrategyCandle = { date: string; open?: number; close: number; high?: number; low?: number; volume?: number };
 export type IndicatorResult = {
   asOf: string | null; close: number | null; bars: number;
   sma20: number | null; ema20: number | null; rsi: number | null;
