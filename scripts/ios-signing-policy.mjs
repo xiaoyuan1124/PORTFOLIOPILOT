@@ -13,7 +13,6 @@ export function appStoreArchiveSigningSettings(teamId) {
     throw new Error("Valid 10-character APPLE_TEAM_ID is required for App Store signing.");
   }
   return [
-    `DEVELOPMENT_TEAM=${teamId}`,
-    "CODE_SIGN_STYLE=Automatic"
+    `DEVELOPMENT_TEAM=${teamId}` // No global signing style: Release targets use manual profiles
   ];
 }
