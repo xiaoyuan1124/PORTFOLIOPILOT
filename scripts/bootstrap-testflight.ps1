@@ -85,11 +85,40 @@ $Secrets = @{
   "PORTFOLIOPILOT_ASC_API_KEY_P8_BASE64" = $P8Base64
 }
 
-foreach ($Name in $Secrets.Keys) {
-  & gh secret set $Name --repo $Repo --env $EnvironmentName --body $Secrets[$Name]
-  if ($LASTEXITCODE -ne 0) {
-    throw "Failed to set environment secret: $Name"
+# Pass credentials through the CLI process' standard input, never --body or
+# another command-line argument. This also avoids PowerShell pipeline newlines.
+function Set-PrivateEnvironmentSecret {
+  param(
+    [string]$Name,
+    [string]$Value
+  )
+  $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+  $StartInfo.FileName = (Get-Command "gh").Source
+  $StartInfo.Arguments = "secret set $Name --repo $Repo --env $EnvironmentName"
+  $StartInfo.UseShellExecute = $false
+  $StartInfo.RedirectStandardInput = $true
+  $StartInfo.RedirectStandardError = $true
+  $StartInfo.RedirectStandardOutput = $true
+  $StartInfo.CreateNoWindow = $true
+  $Process = New-Object System.Diagnostics.Process
+  $Process.StartInfo = $StartInfo
+  try {
+    if (-not $Process.Start()) {
+      throw "GitHub CLI could not start to set encrypted secret: $Name"
+    }
+    $Process.StandardInput.Write($Value)
+    $Process.StandardInput.Close()
+    $Process.WaitForExit()
+    if ($Process.ExitCode -ne 0) {
+      throw "GitHub CLI could not update encrypted secret: $Name (exit code $($Process.ExitCode))."
+    }
+  } finally {
+    $Process.Dispose()
   }
+}
+
+foreach ($Name in $Secrets.Keys) {
+  Set-PrivateEnvironmentSecret -Name $Name -Value $Secrets[$Name]
 }
 
 $P8Base64 = $null
