@@ -141,7 +141,7 @@ try {
     await page.getByText("2317 · 鴻海").waitFor();
     await checkLayout(page, viewport.name, "strategy-lab");
     await page.getByRole("button", { name: "複製為新策略" }).click();
-    await page.getByRole("option", { name: "策略實驗 2" }).waitFor();
+    assert.equal(await page.locator("select").first().locator("option").count(), 2);
     await checkLayout(page, viewport.name, "strategy-lab-new-profile");
 
     await nav.getByRole("button", { name: "我的", exact: true }).click();
