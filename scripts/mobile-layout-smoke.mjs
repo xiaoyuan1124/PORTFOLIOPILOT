@@ -137,7 +137,7 @@ try {
     // Strategy Lab shares the original state/backup flow but has a dedicated
     // small-screen workspace. Check the actual six-seed view for overflow.
     await nav.getByRole("button", { name: "策略", exact: true }).click();
-    await page.getByRole("heading", { name: "策略實驗室", exact: true }).waitFor();
+    await page.getByRole("heading", { name: "策略實驗室", level: 1, exact: true }).waitFor();
     await page.getByText("2317 · 鴻海").waitFor();
     await checkLayout(page, viewport.name, "strategy-lab");
     await page.getByRole("button", { name: "複製為新策略" }).click();
