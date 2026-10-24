@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { BriefcaseBusiness, Home, Search, Settings, X } from "lucide-react";
+import { BriefcaseBusiness, FlaskConical, Home, Search, Settings, X } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { loadBundledRevenue } from "@/lib/revenue-data";
 import { loadBundledTwQuotes } from "@/lib/market-data";
@@ -10,7 +10,7 @@ import { buildHoldingLookupCatalog, searchHoldingLookupCatalog, type HoldingLook
 import { accountName } from "@/lib/local-data";
 import { Badge } from "./ui";
 
-export type AppSection = "home" | "portfolio" | "research" | "settings";
+export type AppSection = "home" | "portfolio" | "research" | "lab" | "settings";
 
 export function QuickSearch({
   state,
@@ -116,7 +116,8 @@ export function QuickSearch({
                   {[
                     { section: "home" as const, label: "投資總覽", detail: "淨值、資金水位、配置", icon: Home },
                     { section: "portfolio" as const, label: "投資組合", detail: "持股、帳戶、績效", icon: BriefcaseBusiness },
-                    { section: "research" as const, label: "研究中心", detail: "股票、ETF、市場與策略", icon: Search },
+                    { section: "research" as const, label: "研究中心", detail: "股票、ETF、官方 Scanner", icon: Search },
+                    { section: "lab" as const, label: "策略實驗室", detail: "指標、價位與策略參數", icon: FlaskConical },
                     { section: "settings" as const, label: "設定與資料", detail: "備份、匯入、匯率", icon: Settings }
                   ].map((item) => {
                     const Icon = item.icon;
