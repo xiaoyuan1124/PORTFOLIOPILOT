@@ -19,6 +19,9 @@ describe("V0.93 strictly historical cost-aware backtesting", () => {
   it("declines missing OHLCV instead of inventing simulated returns", () => {
     expect(backtestOversoldStrategy(fixtures().map(({ date, close }) => ({ date, close }))).status).toBe("insufficient");
     expect(backtestOversoldStrategy(fixtures(60)).status).toBe("insufficient");
+    const future = fixtures();
+    future[future.length - 1] = { ...future[future.length - 1]!, date: "2099-01-01" };
+    expect(backtestOversoldStrategy(future).status).toBe("insufficient");
     expect(validateBacktestInput(fixtures(), { ...DEFAULT_BACKTEST_CONFIG, feePct: -1 })).toMatch(/參數/);
   });
   it("rejects unsorted, duplicate and inconsistent OHLC rows", () => {
