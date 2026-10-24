@@ -94,6 +94,7 @@ jobs:
           APPLE_TEAM_ID: A1B2C3D4E5
           IOS_HOST_PROFILE_NAME: Portfolio-CI-Host
           IOS_WIDGET_PROFILE_NAME: Portfolio-CI-Widgets
+          IOS_DISTRIBUTION_IDENTITY_SHA1: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
           EXPORT_OPTIONS_PATH: ${{ runner.temp }}/ExportOptions-TestFlight.plist
         run: |
           xcodebuild -help > "$RUNNER_TEMP/xcodebuild-help.txt" 2>&1
@@ -104,6 +105,7 @@ jobs:
           test "$(plutil -extract method raw -o - "$EXPORT_OPTIONS_PATH")" = "app-store-connect"
           test "$(plutil -extract destination raw -o - "$EXPORT_OPTIONS_PATH")" = "upload"
           test "$(plutil -extract signingStyle raw -o - "$EXPORT_OPTIONS_PATH")" = "manual"
+          test "$(plutil -extract signingCertificate raw -o - "$EXPORT_OPTIONS_PATH")" = "$IOS_DISTRIBUTION_IDENTITY_SHA1"
           grep -q "Portfolio-CI-Host" "$EXPORT_OPTIONS_PATH"
           grep -q "Portfolio-CI-Widgets" "$EXPORT_OPTIONS_PATH"
           test "$(plutil -extract manageAppVersionAndBuildNumber raw -o - "$EXPORT_OPTIONS_PATH")" = "false"
@@ -124,12 +126,14 @@ jobs:
           APPLE_TEAM_ID: A1B2C3D4E5
           IOS_HOST_PROFILE_NAME: Portfolio-CI-Host
           IOS_WIDGET_PROFILE_NAME: Portfolio-CI-Widgets
+          IOS_DISTRIBUTION_IDENTITY_SHA1: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         run: |
           set -e
           PROJECT="ios/App/App.xcodeproj/project.pbxproj"
           cp "$PROJECT" "$RUNNER_TEMP/PortfolioPilot-before-manual-signing.pbxproj"
           trap 'cp "$RUNNER_TEMP/PortfolioPilot-before-manual-signing.pbxproj" "$PROJECT"' EXIT
           node scripts/configure-ios-manual-signing.mjs
+          test "$(grep -c '\"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]\" = \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\";' "$PROJECT")" = "2"
           test "$(grep -c 'PROVISIONING_PROFILE_SPECIFIER = ' "$PROJECT")" = "2"
           test "$(grep -c 'ProvisioningStyle = Manual;' "$PROJECT")" = "2"
           xcodebuild -list -project ios/App/App.xcodeproj > /dev/null

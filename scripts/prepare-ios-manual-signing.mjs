@@ -5,7 +5,7 @@ import { randomBytes } from "node:crypto";
 import { provisioningProfilesDir, profileInstallPath } from "./ios-provisioning-paths.mjs";
 import {
   APP_BUNDLE_ID, WIDGET_BUNDLE_ID, assertAppStoreProfile,
-  assertDistributionCertificateMatchesProfiles
+  assertDistributionCertificateMatchesProfiles, selectDistributionIdentity
 } from "./ios-manual-signing-contract.mjs";
 
 const required = [
@@ -80,18 +80,18 @@ try {
   ]);
   checked("security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", keychainPassword, keychain]);
   const identities = checked("security", ["find-identity", "-v", "-p", "codesigning", keychain]).toString("utf8");
-  if (!identities.includes("Apple Distribution:")) {
-    throw new Error("The .p12 does not include an Apple Distribution certificate and matching private key");
-  }
+  const selectedIdentity = selectDistributionIdentity(identities, teamId);
   // Ensure the signing identity in the imported .p12 was explicitly selected
   // when Apple created each distribution profile. Never log PEM/DER material.
   const signingCertificates = checked("security", ["find-certificate", "-a", "-p", keychain]).toString("utf8");
   assertDistributionCertificateMatchesProfiles(
-    signingCertificates, hostProfile.developerCertificates, widgetProfile.developerCertificates);
+    signingCertificates, hostProfile.developerCertificates, widgetProfile.developerCertificates, selectedIdentity);
   checked("security", ["list-keychains", "-d", "user", "-s", keychain]);
   checked("security", ["default-keychain", "-d", "user", "-s", keychain]);
   writeFileSync(join(secretDir, "installed-profiles.json"), JSON.stringify(saved), { mode: 0o600 });
+  console.log("::add-mask::" + selectedIdentity);
   appendFileSync(process.env.GITHUB_ENV,
+    "IOS_DISTRIBUTION_IDENTITY_SHA1=" + selectedIdentity + "\n" +
     "IOS_HOST_PROFILE_NAME=" + hostProfile.profileName + "\n" +
     "IOS_WIDGET_PROFILE_NAME=" + widgetProfile.profileName + "\n", "utf8");
   console.log("PASS: Apple Distribution private key and matching certificates validated for both App Store profiles, Team ID, App Groups and expiry.");

@@ -101,6 +101,14 @@ Apple 官方 Xcode Cloud：https://developer.apple.com/xcode-cloud/get-started/
 
 ## 7. 完成定義
 
+### 重用既有 iOS Distribution 身分
+
+Apple 的 [Certificates overview](https://developer.apple.com/help/account/create-certificates/certificates-overview) 亦列出舊型 iOS Distribution 可用於 App Store。已有 `.p12` 的憑證 Common Name 可能為 `iPhone Distribution:`，不必只為名稱不同而撤銷或新建憑證。
+
+上傳準備現在從臨時 Keychain 的 `security find-identity -v -p codesigning` 選出**唯一、有效、同 Team、具私鑰**的 Apple Distribution 或 iPhone Distribution 身分；遇到 Development、錯誤 Team、過期或多個候選即拒絕。兩份 PortfolioPilot App Store profiles 必須同時包含該確切憑證。Release 主 App、Widget 與 export 選用同一 SHA-1 指紋，僅作身分選擇，不用來取代簽章或信任驗證；不將 identity 套到 SwiftPM targets。
+
+Apple [TN3161](https://developer.apple.com/documentation/technotes/tn3161-inside-code-signing-certificates) 說明使用憑證名稱或 SHA-1 hash 消除身分歧義。指紋會在 workflow 中遮罩；私鑰、密碼及 profiles 不應顯示在日誌。這仍須實際 signed archive／雙方 App Group／Apple upload 成功，不能以本機 `.p12` 可解碼代替正式簽署結果。
+
 - [ ] 八組 Environment Secrets 都存在（不可在截圖展示 Value）。
 - [ ] Native iOS Smoke Gate / CI 均 PASS。
 - [ ] 新的 `TestFlight Upload` 工作流程成功完成 **Build signed App Store archive**、**Verify Apple-signed App Groups profiles** 與 **Upload exact archive**。

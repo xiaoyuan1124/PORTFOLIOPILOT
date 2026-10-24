@@ -7,6 +7,25 @@ export const APP_GROUP_ID = "group.com.sy1124.portfoliopilot";
 export const HOST_RELEASE_ID = "504EC3181FED79650016851F";
 export const WIDGET_RELEASE_ID = "F0B10000000000000000000E";
 
+function checkedIdentity(identity) {
+  assert(typeof identity === "string" && /^[A-Fa-f0-9]{40}$/.test(identity),
+    "Expected the exact validated Distribution certificate SHA-1 identity");
+  return identity.toUpperCase();
+}
+
+// Input must come from `security find-identity -v -p codesigning` on the
+// temporary imported keychain. Only trusted, valid certificate/private-key
+// pairs appear there. Never accept development or arbitrary named identities.
+export function selectDistributionIdentity(listing, teamId) {
+  assert(/^[A-Z0-9]{10}$/.test(teamId), "Invalid Apple Team ID");
+  assert(typeof listing === "string", "Missing trusted signing identity listing");
+  const matches = [...listing.matchAll(
+    /^\s*\d+\)\s+([A-Fa-f0-9]{40})\s+"(?:Apple Distribution|iPhone Distribution): [^"\r\n]+ \(([A-Z0-9]{10})\)"[ \t]*$/gm
+  )].filter(match => match[2] === teamId);
+  assert(matches.length === 1, "Expected exactly one valid Distribution private-key identity for the configured Team");
+  return checkedIdentity(matches[0][1]);
+}
+
 export function assertAppStoreProfile(profile, teamId, bundleId, now = new Date()) {
   assert(/^[A-Z0-9]{10}$/.test(teamId), "Invalid Apple Team ID");
   assert([APP_BUNDLE_ID, WIDGET_BUNDLE_ID].includes(bundleId), "Unexpected bundle ID");
@@ -47,10 +66,15 @@ function certificateDigest(data) {
   return createHash("sha256").update(der).digest("hex");
 }
 
-export function assertDistributionCertificateMatchesProfiles(pemCertificates, hostCertificates, widgetCertificates) {
+export function assertDistributionCertificateMatchesProfiles(pemCertificates, hostCertificates, widgetCertificates, selectedIdentity) {
   assert(typeof pemCertificates === "string", "Keychain certificate PEM missing");
+  if (selectedIdentity !== undefined) selectedIdentity = checkedIdentity(selectedIdentity);
   const keychainHashes = new Set();
   for (const match of pemCertificates.matchAll(/-----BEGIN CERTIFICATE-----\s*([A-Za-z0-9+/=\s]+?)\s*-----END CERTIFICATE-----/g)) {
+    if (selectedIdentity !== undefined) {
+      const der = Buffer.from(match[1].replace(/\s/g, ""), "base64");
+      if (createHash("sha1").update(der).digest("hex").toUpperCase() !== selectedIdentity) continue;
+    }
     keychainHashes.add(certificateDigest(match[1]));
   }
   assert(keychainHashes.size > 0, "No certificate could be read from the Apple Distribution keychain");
@@ -71,8 +95,9 @@ function quotePbx(s) {
   return JSON.stringify(s);
 }
 
-export function setManualReleaseSigning(pbx, teamId, hostName, widgetName) {
+export function setManualReleaseSigning(pbx, teamId, hostName, widgetName, selectedIdentity) {
   assert(/^[A-Z0-9]{10}$/.test(teamId), "Invalid Apple Team ID");
+  if (selectedIdentity !== undefined) selectedIdentity = checkedIdentity(selectedIdentity);
   for (const [target, id, profileName] of [
     ["App", HOST_RELEASE_ID, hostName],
     ["WidgetKit", WIDGET_RELEASE_ID, widgetName]
@@ -86,6 +111,10 @@ export function setManualReleaseSigning(pbx, teamId, hostName, widgetName) {
     let block = pbx.slice(begin, end);
     assert(block.includes('"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";'),
       "Apple Distribution Release identity missing from " + target);
+    if (selectedIdentity !== undefined) {
+      block = block.replace('"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";',
+        '"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "' + selectedIdentity + '";');
+    }
     assert(!block.includes("PROVISIONING_PROFILE_SPECIFIER ="),
       "Refusing to overwrite an existing provisioning profile in " + target);
     const anchor = "\t\t\tbuildSettings = {\n";
@@ -126,8 +155,9 @@ export function setManualReleaseSigning(pbx, teamId, hostName, widgetName) {
   return pbx;
 }
 
-export function appStoreExportOptions(teamId, hostName, widgetName) {
+export function appStoreExportOptions(teamId, hostName, widgetName, selectedIdentity) {
   assert(/^[A-Z0-9]{10}$/.test(teamId), "Invalid Apple Team ID");
+  const signingIdentity = selectedIdentity === undefined ? "Apple Distribution" : checkedIdentity(selectedIdentity);
   const xml = (s) => {
     quotePbx(s);
     return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
@@ -139,7 +169,7 @@ export function appStoreExportOptions(teamId, hostName, widgetName) {
     '<key>method</key><string>app-store-connect</string>\n' +
     '<key>destination</key><string>upload</string>\n' +
     '<key>signingStyle</key><string>manual</string>\n' +
-    '<key>signingCertificate</key><string>Apple Distribution</string>\n' +
+    '<key>signingCertificate</key><string>' + signingIdentity + '</string>\n' +
     '<key>teamID</key><string>' + teamId + '</string>\n' +
     '<key>provisioningProfiles</key><dict>\n' +
     '<key>' + APP_BUNDLE_ID + '</key><string>' + xml(hostName) + '</string>\n' +
