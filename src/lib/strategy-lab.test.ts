@@ -74,6 +74,7 @@ describe("Strategy Lab v0.92 contract", () => {
     expect(result.rsi).toBeNull();
     expect(result.macd).toBeNull();
     expect(result.macdSignal).toBeNull();
+    expect(result.kdD).toBeNull();
     expect(result.sma20).toBeNull();
   });
   it("uses prior 20 volumes, excluding the current day, and proper OHLC for K", () => {
@@ -84,6 +85,9 @@ describe("Strategy Lab v0.92 contract", () => {
     expect(result.indicators.volumeRatio20).toBeCloseTo(2.5);
     expect(result.rules.volume.status).toBe("pass");
     expect(result.indicators.kdK).not.toBeNull();
+    expect(result.indicators.kdD).not.toBeNull();
+    expect(result.indicators.kdD).toBeGreaterThan(0);
+    expect(result.indicators.kdD).toBeLessThan(100);
     expect(result.rules.kd.status).toBe("pass");
     expect(result.rules.rsi.status).toBe("fail");
     expect(result.status).toBe("not_triggered");
