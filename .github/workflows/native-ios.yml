@@ -44,6 +44,8 @@ on:
       - "scripts/ios-signing-policy.check.mjs"
       - "scripts/ios-manual-signing-contract.mjs"
       - "scripts/ios-manual-signing-contract.check.mjs"
+      - "scripts/ios-provisioning-paths.mjs"
+      - "scripts/ios-provisioning-paths.check.mjs"
       - "scripts/prepare-ios-manual-signing.mjs"
       - "scripts/configure-ios-manual-signing.mjs"
       - "scripts/cleanup-ios-manual-signing.mjs"
@@ -106,6 +108,7 @@ jobs:
           npm run native:ios:widget:signing:test
           node --test scripts/ios-signing-policy.check.mjs
           node --test scripts/ios-manual-signing-contract.check.mjs
+          node --test scripts/ios-provisioning-paths.check.mjs
           node --check scripts/prepare-ios-manual-signing.mjs
           node --check scripts/configure-ios-manual-signing.mjs
           node --check scripts/cleanup-ios-manual-signing.mjs

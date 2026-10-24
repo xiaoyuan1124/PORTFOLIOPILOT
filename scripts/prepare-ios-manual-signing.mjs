@@ -2,7 +2,7 @@ import { appendFileSync, copyFileSync, existsSync, mkdirSync, readFileSync, writ
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { homedir } from "node:os";
+import { provisioningProfilesDir, profileInstallPath } from "./ios-provisioning-paths.mjs";
 import {
   APP_BUNDLE_ID, WIDGET_BUNDLE_ID, assertAppStoreProfile
 } from "./ios-manual-signing-contract.mjs";
@@ -21,7 +21,7 @@ for (const name of required) {
 }
 
 const secretDir = join(process.env.RUNNER_TEMP, "portfoliopilot-manual-signing");
-const profilesDir = join(homedir(), "Library", "MobileDevice", "Provisioning Profiles");
+const profilesDir = provisioningProfilesDir();
 const keychain = join(secretDir, "distribution.keychain-db");
 const p12Path = join(secretDir, "distribution.p12");
 const teamId = process.env.APPLE_TEAM_ID;
@@ -55,7 +55,7 @@ function parseProfile(name, label, bundleId) {
   writeFileSync(plist, checked("security", ["cms", "-D", "-i", file]), { mode: 0o600 });
   const profile = JSON.parse(checked("plutil", ["-convert", "json", "-o", "-", plist]).toString("utf8"));
   const { name: profileName, uuid } = assertAppStoreProfile(profile, teamId, bundleId);
-  const installed = join(profilesDir, uuid + ".mobileprovision");
+  const installed = profileInstallPath(uuid);
   if (existsSync(installed)) throw new Error("A provisioning profile UUID is already installed on the runner");
   copyFileSync(file, installed);
   saved.push(installed);
