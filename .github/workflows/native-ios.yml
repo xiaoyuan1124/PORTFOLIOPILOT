@@ -143,11 +143,14 @@ jobs:
           plutil -lint ios/App/App/PrivacyInfo.xcprivacy
           grep -q "NSPrivacyAccessedAPICategoryUserDefaults" ios/App/App/PrivacyInfo.xcprivacy
           grep -q "CA92.1" ios/App/App/PrivacyInfo.xcprivacy
+          grep -q "1C8F.1" ios/App/App/PrivacyInfo.xcprivacy
           grep -q "PrivacyInfo.xcprivacy in Resources" ios/App/App.xcodeproj/project.pbxproj
       - name: Validate generated WidgetKit bundle and App Groups plists
         run: |
           plutil -lint ios/App/App/App.entitlements
           plutil -lint ios/App/PortfolioPilotWidgets/Info.plist
+          plutil -lint ios/App/PortfolioPilotWidgets/PrivacyInfo.xcprivacy
+          grep -q "1C8F.1" ios/App/PortfolioPilotWidgets/PrivacyInfo.xcprivacy
           plutil -lint ios/App/PortfolioPilotWidgets/PortfolioPilotWidgets.entitlements
           npm run native:ios:widget:verify
           xcodebuild -list -project ios/App/App.xcodeproj

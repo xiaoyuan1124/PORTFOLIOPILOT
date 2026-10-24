@@ -53,3 +53,10 @@ export function assertSignedWidgetContract({
   verifyEntitlementPair("Widget Extension", metadata.bundleId + WIDGET_BUNDLE_SUFFIX,
     widgetEntitlements, widgetProfile, WIDGET_GROUP_ID, teamId, now);
 }
+export function assertAppGroupPrivacyManifest(manifest) {
+  const entry = manifest?.NSPrivacyAccessedAPITypes?.find(
+    value => value.NSPrivacyAccessedAPIType === "NSPrivacyAccessedAPICategoryUserDefaults");
+  assert(Array.isArray(entry?.NSPrivacyAccessedAPITypeReasons) &&
+    entry.NSPrivacyAccessedAPITypeReasons.includes("1C8F.1"),
+    "App Group UserDefaults privacy reason 1C8F.1 is missing from shipping bundle");
+}

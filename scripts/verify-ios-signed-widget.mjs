@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { assertSignedWidgetContract } from "./widget-signing-contract.mjs";
+import { assertSignedWidgetContract, assertAppGroupPrivacyManifest } from "./widget-signing-contract.mjs";
 
 function checked(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -56,6 +56,11 @@ function readProfile(bundle, label) {
 }
 
 try {
+  for (const [label, bundle] of [["host", host], ["widget", widget]]) {
+    const path = join(bundle, "PrivacyInfo.xcprivacy");
+    if (!existsSync(path)) throw new Error(label + " has no bundled privacy manifest");
+    assertAppGroupPrivacyManifest(parsePlist(readFileSync(path), label + "-privacy.plist"));
+  }
   // Verify both signed executables, their own entitlement claims AND the
   // matching Apple-issued provisioning profiles before uploading to TestFlight.
   checked("codesign", ["--verify", "--deep", "--strict", host]);
