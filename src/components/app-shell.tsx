@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { BarChart3, BriefcaseBusiness, Home, Moon, Search, Settings as SettingsIcon, Sun } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, FlaskConical, Home, Moon, Search, Settings as SettingsIcon, Sun } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import type { AppState } from "@/lib/types";
 import type { HoldingLookupCandidate } from "@/lib/holding-autofill";
@@ -25,6 +25,7 @@ import { syncNativeWidgetSnapshot } from "@/lib/native-widget-sync";
 import { Overview } from "./overview";
 import { Portfolio, type PortfolioTab } from "./portfolio";
 import { Research } from "./research";
+import { StrategyLab } from "./strategy-lab";
 import { Settings } from "./settings";
 import { QuickSearch, type AppSection } from "./quick-search";
 import { NATIVE_RESUME_EVENT } from "./native-runtime-bridge";
@@ -36,6 +37,7 @@ const nav = [
   { key: "home" as const, label: "首頁", icon: Home },
   { key: "portfolio" as const, label: "投資組合", icon: BriefcaseBusiness },
   { key: "research" as const, label: "研究", icon: Search },
+  { key: "lab" as const, label: "策略", icon: FlaskConical },
   { key: "settings" as const, label: "我的", icon: SettingsIcon }
 ];
 
@@ -43,6 +45,7 @@ const titles: Record<Section, { title: string; eyebrow: string }> = {
   home: { title: "投資總覽", eyebrow: "Portfolio Overview" },
   portfolio: { title: "投資組合", eyebrow: "Holdings" },
   research: { title: "研究中心", eyebrow: "Research" },
+  lab: { title: "策略實驗室", eyebrow: "Strategy Lab" },
   settings: { title: "設定與資料", eyebrow: "Local Data" }
 };
 
@@ -386,6 +389,7 @@ export function AppShell() {
             />
           ) : null}
           {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} onAddHolding={addWatchlistCandidateToPortfolio} /> : null}
+          {section === "lab" ? <StrategyLab state={state} onChange={updateState} onOpenResearch={() => navigate("research")} onOpenRisk={() => navigatePortfolioTab("risk")} /> : null}
           {section === "settings" ? (
             <Settings
               state={state}
@@ -401,7 +405,7 @@ export function AppShell() {
       </main>
 
       <nav className="app-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-black/7 bg-[#f7f5f0]/94 pt-2 backdrop-blur-xl dark:border-white/8 dark:bg-[#0f1412]/94 md:hidden">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {nav.map((item) => {
             const Icon = item.icon;
             const active = section === item.key;
