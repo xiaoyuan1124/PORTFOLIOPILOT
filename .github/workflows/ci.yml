@@ -33,6 +33,10 @@ jobs:
           }
       - name: Audit zero-cost GitHub Actions and standard runners
         run: node scripts/audit-free-github-actions.mjs
+      - name: Validate App Store release identity and manual signing safeguards
+        run: |
+          node scripts/release-preflight.mjs
+          node --test scripts/release-preflight.check.mjs
       - run: npm install --legacy-peer-deps
       - run: npm run lint
       - run: npm run typecheck

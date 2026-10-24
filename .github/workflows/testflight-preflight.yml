@@ -1,0 +1,62 @@
+name: TestFlight Preflight (No Upload)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portfoliopilot-testflight-preflight
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.repository == 'xiaoyuan1124/PORTFOLIOPILOT' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: portfolio-testflight
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Check committed release and signing policy (no credentials)
+        run: node scripts/release-preflight.mjs
+      - name: Check eight GitHub Environment Secret names only
+        shell: bash
+        env:
+          APPLE_TEAM_ID: ${{ secrets.PORTFOLIOPILOT_APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.PORTFOLIOPILOT_ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.PORTFOLIOPILOT_ASC_ISSUER_ID }}
+          ASC_P8: ${{ secrets.PORTFOLIOPILOT_ASC_API_KEY_P8_BASE64 }}
+          DISTRIBUTION_P12: ${{ secrets.PORTFOLIOPILOT_IOS_DISTRIBUTION_P12_BASE64 }}
+          DISTRIBUTION_PASSWORD: ${{ secrets.PORTFOLIOPILOT_IOS_DISTRIBUTION_P12_PASSWORD }}
+          HOST_PROFILE: ${{ secrets.PORTFOLIOPILOT_IOS_APP_STORE_PROFILE_BASE64 }}
+          WIDGET_PROFILE: ${{ secrets.PORTFOLIOPILOT_IOS_WIDGET_PROFILE_BASE64 }}
+        run: |
+          set +x
+          names=(APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_P8 DISTRIBUTION_P12 DISTRIBUTION_PASSWORD HOST_PROFILE WIDGET_PROFILE)
+          missing=0
+          for name in "${names[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required environment configuration: $name"
+              missing=1
+            fi
+          done
+          if [[ "$missing" -ne 0 ]]; then
+            {
+              echo "### TestFlight preflight: NOT READY"
+              echo "One or more required encrypted GitHub Environment Secrets are missing."
+              echo "No key contents were logged, and no archive or upload was started."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "PASS: all eight required encrypted GitHub Environment Secrets are nonempty."
+          {
+            echo "### TestFlight preflight: configuration present"
+            echo "All eight encrypted secret entries are nonempty. This does NOT validate"
+            echo "the certificates, passwords, App Groups, Apple access, signing, or upload."
+            echo "Before invoking TestFlight Upload, confirm App Store Connect 1.0.0 (1) is unused."
+            echo "No archive was built, no secrets printed, and nothing was uploaded."
+          } >> "$GITHUB_STEP_SUMMARY"

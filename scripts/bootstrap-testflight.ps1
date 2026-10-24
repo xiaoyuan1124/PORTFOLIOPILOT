@@ -85,11 +85,40 @@ $Secrets = @{
   "PORTFOLIOPILOT_ASC_API_KEY_P8_BASE64" = $P8Base64
 }
 
-foreach ($Name in $Secrets.Keys) {
-  & gh secret set $Name --repo $Repo --env $EnvironmentName --body $Secrets[$Name]
-  if ($LASTEXITCODE -ne 0) {
-    throw "Failed to set environment secret: $Name"
+# Pass credentials through the CLI process' standard input, never --body or
+# another command-line argument. This also avoids PowerShell pipeline newlines.
+function Set-PrivateEnvironmentSecret {
+  param(
+    [string]$Name,
+    [string]$Value
+  )
+  $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+  $StartInfo.FileName = (Get-Command "gh").Source
+  $StartInfo.Arguments = "secret set $Name --repo $Repo --env $EnvironmentName"
+  $StartInfo.UseShellExecute = $false
+  $StartInfo.RedirectStandardInput = $true
+  $StartInfo.RedirectStandardError = $true
+  $StartInfo.RedirectStandardOutput = $true
+  $StartInfo.CreateNoWindow = $true
+  $Process = New-Object System.Diagnostics.Process
+  $Process.StartInfo = $StartInfo
+  try {
+    if (-not $Process.Start()) {
+      throw "GitHub CLI could not start to set encrypted secret: $Name"
+    }
+    $Process.StandardInput.Write($Value)
+    $Process.StandardInput.Close()
+    $Process.WaitForExit()
+    if ($Process.ExitCode -ne 0) {
+      throw "GitHub CLI could not update encrypted secret: $Name (exit code $($Process.ExitCode))."
+    }
+  } finally {
+    $Process.Dispose()
   }
+}
+
+foreach ($Name in $Secrets.Keys) {
+  Set-PrivateEnvironmentSecret -Name $Name -Value $Secrets[$Name]
 }
 
 $P8Base64 = $null
@@ -102,12 +131,41 @@ if ($LASTEXITCODE -ne 0) {
   throw "Unable to list environment secrets."
 }
 
+$SecretNamesText = $SecretList -join "`n"
 foreach ($Name in $Secrets.Keys) {
-  if ($SecretList -notmatch [regex]::Escape($Name)) {
+  $Pattern = "(?m)^" + [regex]::Escape($Name) + "(?:\s|$)"
+  if ($SecretNamesText -notmatch $Pattern) {
     throw "Secret was not found after creation: $Name"
   }
 }
-Write-Host "All four required environment secrets exist." -ForegroundColor Green
+Write-Host "Four App Store Connect API credential entries are present." -ForegroundColor Green
+
+# The modern manual App Store Distribution workflow requires four *additional*
+# signing assets. The old helper must NEVER dispatch a real upload with only
+# the API-key secrets configured.
+$SigningNames = @(
+  "PORTFOLIOPILOT_IOS_DISTRIBUTION_P12_BASE64",
+  "PORTFOLIOPILOT_IOS_DISTRIBUTION_P12_PASSWORD",
+  "PORTFOLIOPILOT_IOS_APP_STORE_PROFILE_BASE64",
+  "PORTFOLIOPILOT_IOS_WIDGET_PROFILE_BASE64"
+)
+$MissingSigning = @()
+foreach ($Name in $SigningNames) {
+  $Pattern = "(?m)^" + [regex]::Escape($Name) + "(?:\s|$)"
+  if ($SecretNamesText -notmatch $Pattern) {
+    $MissingSigning += $Name
+  }
+}
+if ($MissingSigning.Count -gt 0) {
+  Write-Warning "Four Apple signing asset entries are required in addition to the API key."
+  foreach ($Name in $MissingSigning) {
+    Write-Host "  Missing: $Name" -ForegroundColor Yellow
+  }
+  Write-Host "Provision the .p12, password, App Store host profile and Widget profile privately in the portfolio-testflight environment."
+  Write-Host "Never paste these values into a public PR, Issue, or this chat."
+} else {
+  Write-Host "PASS: all eight required environment secret names are present." -ForegroundColor Green
+}
 
 $MainMeta = & gh api "repos/$Repo/contents/native/app-store.json?ref=main" --jq ".content"
 if ($LASTEXITCODE -ne 0) {
@@ -133,8 +191,14 @@ Write-Host "  Main:    $MainSha"
 
 if ($SkipUpload) {
   Write-Host ""
-  Write-Host "Secrets are configured. Upload was skipped by -SkipUpload." -ForegroundColor Yellow
+  Write-Host "API credentials configured. Upload was skipped by -SkipUpload." -ForegroundColor Yellow
+  if ($MissingSigning.Count -gt 0) {
+    Write-Host "Signing credentials are incomplete. The read-only GitHub TestFlight Preflight workflow can recheck all eight entries." -ForegroundColor Yellow
+  }
   exit 0
+}
+if ($MissingSigning.Count -gt 0) {
+  throw "TestFlight upload blocked: missing Apple Distribution signing secrets. Configure them privately before starting the guarded workflow."
 }
 
 Write-Host ""

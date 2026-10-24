@@ -1,5 +1,7 @@
 # PortfolioPilot TestFlight Upload
 
+> **Current 1.0.0 release warning (2026-10-24):** The V0.84.2 automatic-signing and four-secret instructions below are historical. Current production uses **manual Apple Distribution** with eight encrypted GitHub Environment Secrets: four API key entries, Distribution .p12 plus password, host App Store profile, and independent Widget App Store profile. Start with [iPhone-friendly, no-upload readiness check](./TESTFLIGHT_ONE_COMMAND.md) or [current manual-signing guide](./TESTFLIGHT_MANUAL_SIGNING_AND_FREE_ACTIONS.md). Do not launch real TestFlight using only the four old credentials.
+
 Baseline: V0.84.2
 
 The repository contains a guarded, manual GitHub Actions workflow at
