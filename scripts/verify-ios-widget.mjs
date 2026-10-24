@@ -11,6 +11,7 @@ const required = {
   appEntitlements: join(iosRoot, "App", "App.entitlements"),
   widgetEntitlements: join(iosRoot, "PortfolioPilotWidgets", "PortfolioPilotWidgets.entitlements"),
   widgetPlist: join(iosRoot, "PortfolioPilotWidgets", "Info.plist"),
+  widgetPrivacy: join(iosRoot, "PortfolioPilotWidgets", "PrivacyInfo.xcprivacy"),
   widgetSource: join(iosRoot, "PortfolioPilotWidgets", "PortfolioPilotWidgets.swift"),
   syncPlugin: join(iosRoot, "App", "PortfolioWidgetSyncPlugin.swift"),
   bridgeController: join(iosRoot, "App", "PortfolioWidgetBridgeViewController.swift"),
@@ -26,6 +27,10 @@ const widgetEntitlements = readFileSync(required.widgetEntitlements, "utf8");
 const plist = readFileSync(required.widgetPlist, "utf8");
 const swift = readFileSync(required.widgetSource, "utf8");
 const groupId = "group.com.sy1124.portfoliopilot";
+assert.ok(readFileSync(required.widgetPrivacy, "utf8").includes("1C8F.1"),
+  "Widget privacy manifest must declare App Group UserDefaults reason 1C8F.1");
+assert.ok(project.includes("Widget PrivacyInfo.xcprivacy in Resources"),
+  "Widget privacy manifest must be included in its own resources build phase");
 
 for (const needle of [
   "/* PortfolioPilot WidgetKit V1 generated target */",

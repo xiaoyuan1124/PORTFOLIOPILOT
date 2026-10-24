@@ -12,6 +12,10 @@
 - 最新 iOS Bundle 版本與 build 請以 `native/app-store.json` 為準
 - 預設關閉；不提供即時報價，也沒有鎖定畫面小工具
 
+### Required-reason privacy manifests
+
+主 App 保留 Preferences 的 `CA92.1`，並為 native bridge 的 App Group UserDefaults 宣告 `1C8F.1`；Widget 的獨立 `PrivacyInfo.xcprivacy` 也宣告 `1C8F.1` 並加入 extension resources。Apple 的 [required reasons](https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacyaccessedapitypes/nsprivacyaccessedapitypereasons) 將 `1C8F.1` 對應到同 App Group 內 app／extension／App Clip 的共享偏好設定。Unsigned archive 及正式簽署驗證都必須檢查**實際 `.app` 與 `.appex`** 的 manifest，不能只確認原始檔存在。這不取代 App Privacy 申報或真機授權／撤銷驗收。
+
 ## A. Apple Developer Account — 一次性正式授權
 
 以下步驟必須由 Apple Developer Program 的 **Account Holder / Admin** 完成，或在具備 Apple 權限的簽署環境內完成。它們與 GitHub 程式合併、unsigned Simulator build 是兩件不同的事：

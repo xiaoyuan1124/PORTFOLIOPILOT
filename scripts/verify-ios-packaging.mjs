@@ -40,6 +40,7 @@ assert(
 );
 assert(privacy.includes("NSPrivacyAccessedAPICategoryUserDefaults"), "Privacy manifest is missing UserDefaults API category.");
 assert(privacy.includes("CA92.1"), "Privacy manifest is missing CA92.1 reason.");
+assert(privacy.includes("1C8F.1"), "Privacy manifest is missing App Group UserDefaults reason 1C8F.1.");
 
 const iconImages = Array.isArray(iconContents.images) ? iconContents.images : [];
 const marketingIcon = iconImages.find((image) =>

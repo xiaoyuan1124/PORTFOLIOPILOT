@@ -85,3 +85,16 @@ test("wrong widget extension identifier, version or build number is rejected", (
   badBuild.widgetInfo.CFBundleVersion = "2";
   assert.throws(() => assertSignedWidgetContract(badBuild), /Widget build number mismatch/);
 });
+import * as privacyContract from "./widget-signing-contract.mjs";
+
+test("App Group UserDefaults privacy reason must be declared in each shipping bundle", () => {
+  const manifest = reasons => ({ NSPrivacyAccessedAPITypes: [{
+    NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryUserDefaults",
+    NSPrivacyAccessedAPITypeReasons: reasons
+  }] });
+  assert.doesNotThrow(() => privacyContract.assertAppGroupPrivacyManifest(manifest(["CA92.1", "1C8F.1"])));
+  assert.doesNotThrow(() => privacyContract.assertAppGroupPrivacyManifest(manifest(["1C8F.1"])));
+  for (const invalid of [{}, manifest(["CA92.1"]), {
+    NSPrivacyAccessedAPITypes: [{NSPrivacyAccessedAPIType: "Other", NSPrivacyAccessedAPITypeReasons: ["1C8F.1"]}]
+  }]) assert.throws(() => privacyContract.assertAppGroupPrivacyManifest(invalid), /App Group/);
+});

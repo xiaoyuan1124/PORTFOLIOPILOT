@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { assertAppGroupPrivacyManifest } from "./widget-signing-contract.mjs";
 
 const archivePath = resolve(
   process.env.ARCHIVE_PATH || "build/PortfolioPilot.xcarchive"
@@ -56,6 +57,13 @@ for (const [key, expected] of Object.entries(checks)) {
 // compiled into an unshipped extension target.
 const widgetPath = join(appPath, "PlugIns", "PortfolioPilotWidgets.appex");
 const widgetInfo = join(widgetPath, "Info.plist");
+for (const bundle of [appPath, widgetPath]) {
+  const manifestPath = join(bundle, "PrivacyInfo.xcprivacy");
+  assert(existsSync(manifestPath), "Archived bundle is missing its PrivacyInfo.xcprivacy");
+  const result = spawnSync("plutil", ["-convert", "json", "-o", "-", manifestPath], { encoding: "utf8" });
+  assert(result.status === 0, "Archived privacy manifest is not a valid plist");
+  assertAppGroupPrivacyManifest(JSON.parse(result.stdout));
+}
 assert(existsSync(widgetInfo), "Archived App is missing embedded PortfolioPilotWidgets.appex.");
 assert(
   plistValue(widgetInfo, "CFBundleIdentifier") === metadata.bundleId + ".widgets",

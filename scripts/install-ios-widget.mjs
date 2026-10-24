@@ -16,7 +16,7 @@ if (!/^[A-Za-z0-9.-]+$/.test(metadata.bundleId) || !/^\d+\.\d+\.\d+$/.test(metad
   throw new Error('Invalid native App Store metadata.');
 }
 mkdirSync(widgetDir, { recursive: true });
-for (const name of ['PortfolioPilotWidgets.swift', 'Info.plist', 'PortfolioPilotWidgets.entitlements']) {
+for (const name of ['PortfolioPilotWidgets.swift', 'Info.plist', 'PortfolioPilotWidgets.entitlements', 'PrivacyInfo.xcprivacy']) {
   copyFileSync(join(sourceDir, name), join(widgetDir, name));
 }
 copyFileSync(join(root, 'native', 'ios', 'App.entitlements'), join(iosRoot, 'App', 'App.entitlements'));
@@ -54,7 +54,7 @@ const ids = {
   resources: id(9), embed: id(10), buildSwift: id(11), buildEmbed: id(12),
   debug: id(13), release: id(14), configList: id(15), proxy: id(16),
   dependency: id(17), bridgeSwift: id(18), pluginSwift: id(19),
-  buildBridge: id(20), buildPlugin: id(21)
+  buildBridge: id(20), buildPlugin: id(21), buildPrivacy: id(22), privacy: id(23)
 };
 for (const name of Object.values(ids)) {
   if (pbx.includes(name)) throw new Error('Widget PBX ID collision: ' + name);
@@ -164,6 +164,11 @@ const buildConfig = (key, mode) => obj(key, mode, [
 ]);
 
 const entries = [
+  obj('buildPrivacy', 'Widget PrivacyInfo.xcprivacy in Resources', [
+    'isa = PBXBuildFile;', 'fileRef = ' + ids.privacy + ' /* PrivacyInfo.xcprivacy */;']),
+  obj('privacy', 'PrivacyInfo.xcprivacy', [
+    'isa = PBXFileReference;', 'lastKnownFileType = text.xml;',
+    'path = PrivacyInfo.xcprivacy;', 'sourceTree = "<group>";']),
   obj('buildBridge', 'PortfolioWidgetBridgeViewController.swift in Sources', [
     'isa = PBXBuildFile;', 'fileRef = ' + ids.bridgeSwift + ' /* PortfolioWidgetBridgeViewController.swift */;']),
   obj('buildPlugin', 'PortfolioWidgetSyncPlugin.swift in Sources', [
@@ -196,6 +201,7 @@ const entries = [
     '\t' + ids.swift + ' /* PortfolioPilotWidgets.swift */,',
     '\t' + ids.plist + ' /* Info.plist */,',
     '\t' + ids.entitlement + ' /* PortfolioPilotWidgets.entitlements */,',
+    '\t' + ids.privacy + ' /* PrivacyInfo.xcprivacy */,',
     ');', 'path = PortfolioPilotWidgets;', 'sourceTree = "<group>";']),
   obj('sources', 'Widget Sources', [
     'isa = PBXSourcesBuildPhase;', 'buildActionMask = 2147483647;',
@@ -206,7 +212,8 @@ const entries = [
     'files = ( );', 'runOnlyForDeploymentPostprocessing = 0;']),
   obj('resources', 'Widget Resources', [
     'isa = PBXResourcesBuildPhase;', 'buildActionMask = 2147483647;',
-    'files = ( );', 'runOnlyForDeploymentPostprocessing = 0;']),
+    'files = ( ' + ids.buildPrivacy + ' /* Widget PrivacyInfo.xcprivacy in Resources */, );',
+    'runOnlyForDeploymentPostprocessing = 0;']),
   obj('embed', 'Embed App Extensions', [
     'isa = PBXCopyFilesBuildPhase;', 'buildActionMask = 2147483647;',
     'dstPath = "";', 'dstSubfolderSpec = 13;',
