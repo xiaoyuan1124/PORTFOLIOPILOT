@@ -196,3 +196,18 @@ export function evaluateWatchZone(close: number | null, first: number, second: n
 export function closeOnlyCandles(points: TwPriceHistoryPoint[]): StrategyCandle[] {
   return points.map(([date, close]) => ({ date, close }));
 }
+
+
+export function newestVerifiedClose(
+  candidates: Array<{ date: string; close: number; source: "quote" | "history" }>,
+  today: string
+): { date: string; close: number; source: "quote" | "history" } | null {
+  const valid = candidates.filter((item) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(item.date) || item.date > today ||
+      !Number.isFinite(item.close) || item.close <= 0) return false;
+    const instant = new Date(item.date + "T00:00:00Z");
+    return !Number.isNaN(instant.getTime()) && instant.toISOString().slice(0, 10) === item.date;
+  });
+  valid.sort((a, b) => b.date.localeCompare(a.date) || (a.source === "quote" ? -1 : 1));
+  return valid[0] ?? null;
+}
