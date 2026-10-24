@@ -1,5 +1,7 @@
 # PortfolioPilot App Store Submission Checklist
 
+> Release-candidate handoff updated 2026-10-24: **see [1.0.0 RC1 release gates](./APP_STORE_1_0_0_RELEASE_CANDIDATE.md)**. The V0.84.2 baseline steps below are historical; the current signed workflow uses **manual Apple Distribution**, one `.p12` identity and **two distinct App Store provisioning profiles** (host and WidgetKit), with **eight** GitHub Environment Secrets. Never follow the outdated automatic-signing/four-secret instructions for the current release.
+
 Baseline version: 0.84.2
 Bundle ID: `com.sy1124.portfoliopilot`
 
