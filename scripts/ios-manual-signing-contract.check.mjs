@@ -1,5 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import * as signing from "./ios-manual-signing-contract.mjs";
 import {
   APP_BUNDLE_ID, WIDGET_BUNDLE_ID, APP_GROUP_ID,
   HOST_RELEASE_ID, WIDGET_RELEASE_ID,
@@ -8,6 +12,59 @@ import {
 } from "./ios-manual-signing-contract.mjs";
 
 const team = "A1B2C3D4E5";
+const identity = "A".repeat(40);
+
+test("production configuration and export refuse an absent validated identity", () => {
+  const env = { ...process.env, APPLE_TEAM_ID: team,
+    IOS_HOST_PROFILE_NAME: "Test-Host", IOS_WIDGET_PROFILE_NAME: "Test-Widget" };
+  delete env.IOS_DISTRIBUTION_IDENTITY_SHA1;
+  for (const script of ["configure-ios-manual-signing.mjs", "create-testflight-export-options.mjs"]) {
+    const result = spawnSync(process.execPath, [fileURLToPath(new URL(script, import.meta.url))],
+      { env, encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /validated Distribution identity|IOS_DISTRIBUTION_IDENTITY_SHA1/);
+  }
+});
+
+test("select one trusted Distribution private-key identity for the exact team, including legacy iOS", () => {
+  for (const family of ["Apple Distribution", "iPhone Distribution"]) {
+    assert.equal(signing.selectDistributionIdentity(
+      `  1) ${identity} "${family}: Test Owner (${team})"\n     1 valid identities found`, team), identity);
+  }
+  for (const listing of [
+    `1) ${identity} "Apple Development: Test (${team})"`,
+    `1) ${identity} "Apple Distribution: Test (ZZZZZZZZZZ)"`,
+    `1) ${identity} "Apple Distribution: Test (${team})" (CSSMERR_TP_CERT_EXPIRED)`,
+    "0 valid identities found",
+    `1) ${identity} "Apple Distribution: Test (${team})"\n2) ${"B".repeat(40)} "iPhone Distribution: Test (${team})"`
+  ]) assert.throws(() => signing.selectDistributionIdentity(listing, team));
+});
+
+test("pin the same certificate in only the two Release targets and export", () => {
+  const debug = '\nDEBUG_UNRELATED = { CODE_SIGN_IDENTITY = "Apple Development"; };';
+  const patched = setManualReleaseSigning(pbx() + debug, team, "Host", "Widget", identity);
+  assert.equal(patched.match(new RegExp(identity, "g"))?.length, 2);
+  assert(patched.endsWith(debug));
+  assert(appStoreExportOptions(team, "Host", "Widget", identity).includes(
+    `<key>signingCertificate</key><string>${identity}</string>`));
+  for (const bad of ["-", "Apple Development", 'A"; CODE_SIGNING_ALLOWED=NO;', "A".repeat(39)]) {
+    assert.throws(() => setManualReleaseSigning(pbx(), team, "Host", "Widget", bad));
+    assert.throws(() => appStoreExportOptions(team, "Host", "Widget", bad));
+  }
+});
+
+test("an unrelated certificate in the keychain cannot mask a mismatch with the selected private-key identity", () => {
+  const a = Buffer.concat([Buffer.from([0x30, 0x82, 0x01, 0x00]), Buffer.alloc(256, 0x11)]);
+  const b = Buffer.concat([Buffer.from([0x30, 0x82, 0x01, 0x00]), Buffer.alloc(256, 0x22)]);
+  const pem = [a, b].map(der => `-----BEGIN CERTIFICATE-----\n${der.toString("base64")}\n-----END CERTIFICATE-----`).join("\n");
+  const selected = createHash("sha1").update(a).digest("hex").toUpperCase();
+  assert.doesNotThrow(() => assertDistributionCertificateMatchesProfiles(pem,
+    [a.toString("base64")], [a.toString("base64")], selected));
+  assert.throws(() => assertDistributionCertificateMatchesProfiles(pem,
+    [b.toString("base64")], [a.toString("base64")], selected), /main App/);
+  assert.throws(() => assertDistributionCertificateMatchesProfiles(pem,
+    [a.toString("base64")], [b.toString("base64")], selected), /WidgetKit/);
+});
 function profile(bundle, name = "Portfolio TestFlight") {
   return {
     UUID: "11111111-2222-3333-4444-555555555555", Name: name,
