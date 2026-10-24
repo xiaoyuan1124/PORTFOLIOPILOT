@@ -3,7 +3,7 @@ import { emptyState } from "./demo-data";
 import { parseStoredStateRaw, serializeStoredState } from "./storage";
 import {
   closeOnlyCandles, computeStrategyIndicators, DEFAULT_STRATEGY_LAB,
-  DEFAULT_STRATEGY_PROFILE, evaluateOversoldStrategy, evaluateWatchZone,
+  DEFAULT_STRATEGY_PROFILE, evaluateOversoldStrategy, evaluateWatchZone, newestVerifiedClose,
   strategyLabStateSchema, type StrategyCandle
 } from "./strategy-lab";
 
@@ -42,6 +42,16 @@ describe("Strategy Lab v0.92 contract", () => {
     const restored = parseStoredStateRaw(original);
     expect(restored.strategyLab).toBeUndefined();
     expect(restored.holdings).toEqual(emptyState.holdings);
+  });
+  it("picks newest genuine close and rejects malformed or future-dated quotes", () => {
+    const result = newestVerifiedClose([
+      { date: "2026-10-22", close: 300, source: "quote" },
+      { date: "2026-10-23", close: 280, source: "history" },
+      { date: "2026-10-25", close: 5, source: "quote" },
+      { date: "2026-02-30", close: 1, source: "quote" }
+    ], "2026-10-24");
+    expect(result).toEqual({ date: "2026-10-23", close: 280, source: "history" });
+    expect(newestVerifiedClose([{ date: "2026-10-25", close: 1, source: "quote" }], "2026-10-24")).toBeNull();
   });
   it("detects lower and upper watch zones without guessing prices", () => {
     expect(evaluateWatchZone(240, 235, 215)).toBe("outside");
