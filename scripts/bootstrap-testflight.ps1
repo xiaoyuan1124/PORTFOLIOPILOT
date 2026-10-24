@@ -107,7 +107,35 @@ foreach ($Name in $Secrets.Keys) {
     throw "Secret was not found after creation: $Name"
   }
 }
-Write-Host "All four required environment secrets exist." -ForegroundColor Green
+Write-Host "Four App Store Connect API credential entries are present." -ForegroundColor Green
+
+# The modern manual App Store Distribution workflow requires four *additional*
+# signing assets. The old helper must NEVER dispatch a real upload with only
+# the API-key secrets configured.
+$SigningNames = @(
+  "PORTFOLIOPILOT_IOS_DISTRIBUTION_P12_BASE64",
+  "PORTFOLIOPILOT_IOS_DISTRIBUTION_P12_PASSWORD",
+  "PORTFOLIOPILOT_IOS_APP_STORE_PROFILE_BASE64",
+  "PORTFOLIOPILOT_IOS_WIDGET_PROFILE_BASE64"
+)
+$MissingSigning = @()
+$SecretNamesText = $SecretList -join "`n"
+foreach ($Name in $SigningNames) {
+  $Pattern = "(?m)^" + [regex]::Escape($Name) + "(?:\\s|$)"
+  if ($SecretNamesText -notmatch $Pattern) {
+    $MissingSigning += $Name
+  }
+}
+if ($MissingSigning.Count -gt 0) {
+  Write-Warning "Four Apple signing asset entries are required in addition to the API key."
+  foreach ($Name in $MissingSigning) {
+    Write-Host "  Missing: $Name" -ForegroundColor Yellow
+  }
+  Write-Host "Provision the .p12, password, App Store host profile and Widget profile privately in the portfolio-testflight environment."
+  Write-Host "Never paste these values into a public PR, Issue, or this chat."
+} else {
+  Write-Host "PASS: all eight required environment secret names are present." -ForegroundColor Green
+}
 
 $MainMeta = & gh api "repos/$Repo/contents/native/app-store.json?ref=main" --jq ".content"
 if ($LASTEXITCODE -ne 0) {
@@ -133,8 +161,14 @@ Write-Host "  Main:    $MainSha"
 
 if ($SkipUpload) {
   Write-Host ""
-  Write-Host "Secrets are configured. Upload was skipped by -SkipUpload." -ForegroundColor Yellow
+  Write-Host "API credentials configured. Upload was skipped by -SkipUpload." -ForegroundColor Yellow
+  if ($MissingSigning.Count -gt 0) {
+    Write-Host "Signing credentials are incomplete. The read-only GitHub TestFlight Preflight workflow can recheck all eight entries." -ForegroundColor Yellow
+  }
   exit 0
+}
+if ($MissingSigning.Count -gt 0) {
+  throw "TestFlight upload blocked: missing Apple Distribution signing secrets. Configure them privately before starting the guarded workflow."
 }
 
 Write-Host ""
