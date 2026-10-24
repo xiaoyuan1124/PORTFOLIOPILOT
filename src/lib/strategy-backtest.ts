@@ -12,6 +12,8 @@ export type BacktestTrade = {
   entryPrice: number;
   exitPrice: number;
   netReturnPct: number;
+  /** Monetary P&L in the same notional units as the starting 100,000 TWD. */
+  netPnl: number;
   reason: "stop" | "target" | "final_close";
   regime: MarketRegime;
   sample: "in_sample" | "out_of_sample" | "boundary";
@@ -89,8 +91,10 @@ function annualReturn(first: number, last: number, sessions: number) {
 function summarize(trades: BacktestTrade[], values: number[]): BacktestSummary {
   const winners = trades.filter((trade) => trade.netReturnPct > 0);
   const losers = trades.filter((trade) => trade.netReturnPct < 0);
-  const grossProfit = winners.reduce((s, trade) => s + trade.netReturnPct, 0);
-  const grossLoss = Math.abs(losers.reduce((s, trade) => s + trade.netReturnPct, 0));
+  // Profit factor uses monetary profit/loss, not unweighted percentages.
+  // Percentage aggregation would misstate PF when trade capital compounds.
+  const grossProfit = winners.reduce((s, trade) => s + trade.netPnl, 0);
+  const grossLoss = Math.abs(losers.reduce((s, trade) => s + trade.netPnl, 0));
   return {
     totalReturnPct: values.length > 1 && values[0]! > 0 ? (values.at(-1)! / values[0]! - 1) * 100 : null,
     annualizedReturnPct: values.length > 1 ? annualReturn(values[0]!, values.at(-1)!, values.length - 1) : null,
@@ -159,7 +163,7 @@ export function runStrategyBacktest(
     trades.push({
       signalDate: entry.signalDate, entryDate: entry.date, exitDate: bar.date,
       entryPrice: entry.fillPrice, exitPrice: executedPrice,
-      netReturnPct, reason, regime: entry.regime, sample
+      netReturnPct, netPnl: proceeds - entry.principal, reason, regime: entry.regime, sample
     });
     cash = proceeds; quantity = 0; entry = null;
   }
@@ -184,7 +188,8 @@ export function runStrategyBacktest(
       } else if (bar.low <= stop) {
         exit(bar, stop, "stop", i); exitedToday = true;
       } else if (bar.high >= target) {
-        exit(bar, bar.open >= target ? target : target, "target", i); exitedToday = true;
+        // A favorable gap is conservatively filled at the target limit.
+        exit(bar, target, "target", i); exitedToday = true;
       } else if (i === bars.length - 1) {
         exit(bar, bar.close, "final_close", i); exitedToday = true;
       }
