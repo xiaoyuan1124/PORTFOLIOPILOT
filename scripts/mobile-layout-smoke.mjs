@@ -140,6 +140,13 @@ try {
     await page.getByRole("heading", { name: "策略實驗室", level: 1, exact: true }).waitFor();
     await page.getByText("2317 · 鴻海").waitFor();
     await checkLayout(page, viewport.name, "strategy-lab");
+    await page.getByRole("button", { name: "查看歷史回測報告" }).first().click();
+    await page.getByRole("heading", { name: "歷史回測報告" }).waitFor();
+    await checkLayout(page, viewport.name, "strategy-backtest-open");
+    await page.getByRole("button", { name: "執行本機歷史回測" }).click();
+    await page.locator("#strategy-backtest").getByText(/資料不足，無法產生績效|全部歷史樣本/).first().waitFor();
+    await checkLayout(page, viewport.name, "strategy-backtest-result");
+    await page.getByRole("button", { name: "關閉報告" }).click();
     await page.getByRole("button", { name: "複製為新策略" }).click();
     assert.equal(await page.locator("select").first().locator("option").count(), 2);
     await checkLayout(page, viewport.name, "strategy-lab-new-profile");

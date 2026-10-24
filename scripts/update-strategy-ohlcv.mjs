@@ -25,7 +25,7 @@ async function monthFor(symbol, month) {
   const endpoint = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY?date=" + date +
     "&stockNo=" + encodeURIComponent(symbol) + "&response=json";
   let last;
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       const response = await fetch(endpoint, {
         headers: { accept: "application/json", "user-agent": "PortfolioPilot/0.92 (personal research; GitHub Pages)" },
@@ -39,7 +39,7 @@ async function monthFor(symbol, month) {
       return rows;
     } catch (error) {
       last = error;
-      if (attempt < 3) await delay(attempt * 900);
+      if (attempt < 4) await delay(attempt * 1500);
     }
   }
   throw last;
@@ -59,7 +59,7 @@ for (const symbol of FIRST_PARTY_STRATEGY_SYMBOLS) {
     } catch (error) {
       failures.push({ symbol, month, reason: String(error instanceof Error ? error.message : error).slice(0, 180) });
     }
-    await delay(250); // Favor TWSE pacing; no high-frequency scraping.
+    await delay(900); // Conservative TWSE pacing and retries after HTTP 307; no high-frequency scraping.
   }
   const merged = mergeStrategyOhlcv(existing, fetched, today);
   if (merged.length) securities[symbol] = { market: "TWSE", points: merged };

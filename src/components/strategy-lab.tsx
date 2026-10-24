@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import type { AppState } from "@/lib/types";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { loadTwPriceHistory, type TwPriceHistorySeries } from "@/lib/price-history-data";
-import { loadBundledStrategyOhlcv, strategyCandlesFromCache, type StrategyOhlcvCache } from "@/lib/strategy-ohlcv-data";
+import { loadBundledStrategyOhlcv, strategyCandlesFromCache, strategyOhlcvMissingMonths, type StrategyOhlcvCache } from "@/lib/strategy-ohlcv-data";
 import {
   closeOnlyCandles, computeStrategyIndicators, DEFAULT_STRATEGY_LAB,
   evaluateOversoldStrategy, evaluateWatchZone, newestVerifiedClose, strategyLabStateSchema,
@@ -130,6 +130,7 @@ export function StrategyLab({
     const history = histories[key];
     const latestHistory = history?.points.at(-1);
     const fullCandles = strategyCandlesFromCache(ohlcv, target.venue, target.symbol);
+    const missingMonths = strategyOhlcvMissingMonths(ohlcv, target.venue, target.symbol);
     const candles = fullCandles ?? (history ? closeOnlyCandles(history.points) : []);
     const completeOhlcv = fullCandles !== null && fullCandles.length > 0;
     const latest = newestVerifiedClose([
@@ -141,11 +142,13 @@ export function StrategyLab({
     const evaluated = candles.length ? evaluateOversoldStrategy(candles, profile, completeOhlcv ? "TWSE · STOCK_DAY 官方日 K OHLCV（未還原權息）" : "TWSE／TPEx · 歷史收盤價快取") : null;
     // Prevent a validated signal from appearing current when the official quote
     // cache has moved beyond the final OHLCV observation.
-    const signal = evaluated && asOf && evaluated.asOf && evaluated.asOf < asOf
-      ? { ...evaluated, status: "insufficient" as const, source: evaluated.source + " · 落後於最新官方收盤資料，訊號暫停" }
-      : evaluated;
+    const signal = evaluated && missingMonths.length > 0
+      ? { ...evaluated, status: "insufficient" as const, source: evaluated.source + " · 官方 OHLCV 缺漏 " + missingMonths.join("、") + "，訊號暫停" }
+      : evaluated && asOf && evaluated.asOf && evaluated.asOf < asOf
+        ? { ...evaluated, status: "insufficient" as const, source: evaluated.source + " · 落後於最新官方收盤資料，訊號暫停" }
+        : evaluated;
     const metrics = candles.length ? computeStrategyIndicators(candles, profile) : null;
-    return { target, close, asOf, history, signal, metrics, key, isQuote: latest?.source === "quote", completeOhlcv, ohlcvCandles: fullCandles, zone: evaluateWatchZone(close, target.firstPrice, target.secondPrice) };
+    return { target, close, asOf, history, signal, metrics, key, isQuote: latest?.source === "quote", completeOhlcv, missingMonths, ohlcvCandles: missingMonths.length === 0 ? fullCandles : null, zone: evaluateWatchZone(close, target.firstPrice, target.secondPrice) };
   });
   const inZone = watched.filter((item) => item.zone === "first" || item.zone === "second").length;
   const backtestTarget = watched.find((item) => item.key === backtestKey) ?? null;
@@ -237,7 +240,7 @@ export function StrategyLab({
       {ohlcv?.failed.length ? <p className="rounded-xl border border-amber-400/30 p-3 text-xs">官方日 K 部分月份失敗（{ohlcv.failed.length} 筆）：請查看資料期別，缺漏區間不補造數據。</p> : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
-        {watched.map(({ target, key, close, asOf, zone, history, signal, metrics, isQuote, completeOhlcv }) => (
+        {watched.map(({ target, key, close, asOf, zone, history, signal, metrics, isQuote, completeOhlcv, missingMonths }) => (
           <Card key={key}><CardContent className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0"><h4 className="font-semibold">{target.symbol} · {target.name}</h4>
@@ -253,6 +256,7 @@ export function StrategyLab({
             </div>
             <p className="mt-2 text-xs text-black/45 dark:text-white/45">資料日：{asOf ?? "資料不足"} · 來源：{isQuote ? "TWSE／TPEx 官方收盤快取" : "台股歷史快取（若有）"}</p>
             <p className="mt-1 text-xs text-black/45 dark:text-white/45">指標依據：{completeOhlcv ? "TWSE 官方未還原權息 OHLCV" : "僅有歷史收盤價／缺少完整日 K"} · 不是盤中即時資料</p>
+            {missingMonths.length ? <p className="mt-1 text-xs text-amber-700 dark:text-amber-300" role="status">官方 OHLCV 缺漏：{missingMonths.join("、")}；策略訊號暫停，不能視為有效進場條件。</p> : null}
             <p className="mt-2 text-xs">RSI {number(metrics?.rsi)} · KD-K {number(metrics?.kdK)} · KD-D {number(metrics?.kdD)} · MACD {number(metrics?.macdHistogram, 3)} · SMA20 {number(metrics?.sma20)} · EMA20 {number(metrics?.ema20)}</p>
             <div className="mt-3 rounded-xl bg-black/[.025] p-3 text-xs dark:bg-white/[.04]">
               <p className="font-semibold">策略 B：{signal?.status === "triggered" ? "符合實驗條件（非買進指令）" : signal?.status === "not_triggered" ? "未觸發" : "資料不足，不產生交易訊號"}</p>

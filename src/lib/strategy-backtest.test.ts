@@ -58,7 +58,9 @@ describe("V0.93 strictly historical cost-aware backtesting", () => {
     expect(result.full.profitFactor).toBe(0);
   });
   it("splits in-sample and out-of-sample by trade date and produces comparison and market-regime metrics", () => {
-    const result = backtestOversoldStrategy(fixtures(), DEFAULT_STRATEGY_PROFILE, DEFAULT_BACKTEST_CONFIG, "fixture", bothSidesSignal);
+    const bars = fixtures();
+    bars[61] = { ...bars[61]!, low: 90 };
+    const result = backtestOversoldStrategy(bars, DEFAULT_STRATEGY_PROFILE, DEFAULT_BACKTEST_CONFIG, "fixture", bothSidesSignal);
     expect(result.status).toBe("available");
     if (result.status !== "available") return;
     expect(result.inSample.tradeCount).toBe(1);
