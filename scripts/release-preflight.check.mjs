@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   checkReleaseContract, releaseMetadataProblems, REQUIRED_TESTFLIGHT_SECRETS
 } from "./release-preflight.mjs";
@@ -49,4 +50,14 @@ test("fails closed if WidgetKit App Group is omitted", () => {
   const bad = good();
   bad.widgetEntitlements = "<array/>";
   assert(releaseMetadataProblems(bad).some(p => p.includes("WidgetKit App Group")));
+});
+
+test("Windows bootstrap passes secret data via process stdin and blocks four-secret upload", () => {
+  const source = readFileSync("scripts/bootstrap-testflight.ps1", "utf8");
+  assert(source.includes("StandardInput.Write($Value)"));
+  assert(!source.includes("--body $Secrets[$Name]"));
+  assert(source.includes("if ($MissingSigning.Count -gt 0)"));
+  for (const name of REQUIRED_TESTFLIGHT_SECRETS.slice(4)) {
+    assert(source.includes(name), "Missing signing gate: " + name);
+  }
 });
