@@ -12,6 +12,7 @@ import {
   type StrategyLabState, type StrategyLabTarget, type StrategyProfile
 } from "@/lib/strategy-lab";
 import { Badge, Card, CardContent } from "./ui";
+import { StrategyBacktest } from "./strategy-backtest";
 
 function number(value: number | null | undefined, digits = 2) {
   return value === null || value === undefined || !Number.isFinite(value)
@@ -289,6 +290,7 @@ export function StrategyLab({
         </div>
         <p className="text-xs text-black/45 dark:text-white/45">觀察清單與策略參數存於現有 PortfolioPilot 本機資料，並沿用既有 JSON 備份／還原。新增代號需要官方歷史資料覆蓋才能顯示技術指標。</p>
       </CardContent></Card>
+      <StrategyBacktest targets={config.targets} profile={profile} ohlcv={ohlcv} />
     </div>
   );
 }
