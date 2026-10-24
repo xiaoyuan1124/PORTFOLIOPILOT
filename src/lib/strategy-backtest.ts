@@ -11,6 +11,7 @@ export type BacktestTrade = {
   exitDate: string;
   entryPrice: number;
   exitPrice: number;
+  shares: number;
   netReturnPct: number;
   /** Monetary P&L in the same notional units as the starting 100,000 TWD. */
   netPnl: number;
@@ -193,7 +194,7 @@ export function runStrategyBacktest(
       trades.push({
         signalDate: holding.signalDate, entryDate: holding.date,
         exitDate: bar.date, entryPrice: holding.fillPrice,
-        exitPrice: executed, netPnl: pnl,
+        exitPrice: executed, shares, netPnl: pnl,
         netReturnPct: pnl / holding.invested * 100,
         reason, regime: holding.regime, sample
       });
