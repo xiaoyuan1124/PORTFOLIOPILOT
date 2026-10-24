@@ -54,8 +54,8 @@ function DataSummary({ report, onReset }: { report: BacktestReport; onReset: () 
           <div className="mini-metric"><span>買入持有基準 · 同期扣除相同成本</span><strong>{signed(report.benchmarkBuyHoldPct)}</strong></div>
           <Summary label="全期間" data={report.all}/>
           <div className="grid gap-3 xl:grid-cols-2">
-            <Summary label="樣本內 · 前 70%" data={report.inSample}/>
-            <Summary label="樣本外 · 後 30%" data={report.outOfSample}/>
+            <Summary label="樣本內 · 前 70%（獨立本金）" data={report.inSample}/>
+            <Summary label="樣本外 · 後 30%（獨立本金）" data={report.outOfSample}/>
           </div>
           <div className="rounded-xl border border-black/8 p-3 text-xs dark:border-white/10">
             <h4 className="font-semibold">進場時的市場狀態（前 60 根收盤報酬）</h4>
@@ -74,7 +74,7 @@ function DataSummary({ report, onReset }: { report: BacktestReport; onReset: () 
               {report.trades.map((trade, index) => (
                 <div key={trade.entryDate + ":" + index} className="rounded-lg bg-black/[.03] p-3 dark:bg-white/[.04]">
                   <p className="font-semibold">訊號 {trade.signalDate} → 下一交易日買入 {trade.entryDate}</p>
-                  <p className="mt-1">入場 {scalar(trade.entryPrice)} · 出場 {scalar(trade.exitPrice)} · 出場日 {trade.exitDate}</p>
+                  <p className="mt-1">入場 {scalar(trade.entryPrice)} · {trade.shares} 股 · 出場 {scalar(trade.exitPrice)} · 出場日 {trade.exitDate}</p>
                   <p className="mt-1">淨損益 {signed(trade.netReturnPct)} · {trade.reason === "stop" ? "停損" : trade.reason === "target" ? "停利" : "資料末日平倉"} · {trade.sample === "in_sample" ? "樣本內" : trade.sample === "out_of_sample" ? "樣本外" : "跨樣本邊界"}</p>
                 </div>
               ))}
@@ -110,7 +110,7 @@ export function StrategyBacktest({
       <div>
         <p className="text-xs font-semibold tracking-[.12em] text-black/45 dark:text-white/45">V0.93 · HISTORICAL BACKTEST</p>
         <h3 className="mt-1 text-xl font-semibold">歷史回測報告</h3>
-        <p className="mt-2 text-xs leading-5 text-black/55 dark:text-white/55">使用目前選取的策略 B 固定參數。訊號只看當日收盤以前的真實資料，下一交易日以真實開盤價執行；停損與停利同日都觸發，保守假設先停損。</p>
+        <p className="mt-2 text-xs leading-5 text-black/55 dark:text-white/55">使用目前選取的策略 B 固定參數。只買入可負擔的整股，不使用融資。樣本內與樣本外各自從相同模擬本金開始，前段資料只供後段指標暖機，不帶入前段持股。訊號僅用當日收盤以前的真實資料，最早隔日開盤成交。</p>
       </div>
       <label className="block text-xs font-semibold text-black/55 dark:text-white/55">
         研究標的
