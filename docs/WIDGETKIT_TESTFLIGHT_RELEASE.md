@@ -27,7 +27,7 @@
 
 GitHub repo [xiaoyuan1124/PORTFOLIOPILOT](https://github.com/xiaoyuan1124/PORTFOLIOPILOT)，Environment：`portfolio-testflight`。
 
-既有 upload workflow 要求四個 **environment secrets**（不是公開 repository 變數）：
+目前 upload workflow 要求八個 **environment secrets**（不是公開 repository 變數）：
 
 | Secret name | 來源 |
 |---|---|
@@ -35,10 +35,14 @@ GitHub repo [xiaoyuan1124/PORTFOLIOPILOT](https://github.com/xiaoyuan1124/PORTFO
 | `PORTFOLIOPILOT_ASC_KEY_ID` | App Store Connect **Team API Key ID** |
 | `PORTFOLIOPILOT_ASC_ISSUER_ID` | Team API Key Issuer ID |
 | `PORTFOLIOPILOT_ASC_API_KEY_P8_BASE64` | `AuthKey_*.p8` 私鑰檔的 Base64 |
+| `PORTFOLIOPILOT_IOS_DISTRIBUTION_P12_BASE64` | 含匹配私鑰的 Apple Distribution `.p12` Base64 |
+| `PORTFOLIOPILOT_IOS_DISTRIBUTION_P12_PASSWORD` | `.p12` 匯出密碼 |
+| `PORTFOLIOPILOT_IOS_APP_STORE_PROFILE_BASE64` | 主 App 專用 App Store profile Base64 |
+| `PORTFOLIOPILOT_IOS_WIDGET_PROFILE_BASE64` | Widget 專用 App Store profile Base64 |
 
 所有憑證都必須透過 GitHub Secrets 加密保存；**不可提交到 git、不可在聊天中傳送金鑰或 Base64**。
 
-現有輔助腳本：`scripts/bootstrap-testflight.ps1`（在已有 `gh auth login` 的電腦上執行；`-SkipUpload` 僅設定金鑰）。
+現有輔助腳本：`scripts/bootstrap-testflight.ps1`（在已有 `gh auth login` 的電腦上執行；`-SkipUpload` 僅設定原四項 API 資訊）。它不會代建 Distribution 私鑰或兩份 profiles。請依 [正式簽署文件](TESTFLIGHT_MANUAL_SIGNING_AND_FREE_ACTIONS.md) 補齊後四項，再執行無上傳 preflight；八項非空仍不等於簽署有效。
 
 ### 觸發流程（明確人工允許）
 
@@ -51,9 +55,9 @@ GitHub repo [xiaoyuan1124/PORTFOLIOPILOT](https://github.com/xiaoyuan1124/PORTFO
 
 上傳前 workflow **一定會**：
 
-1. 檢查四個必要的 Secrets。
+1. 檢查八個必要的 Secrets。
 2. 重建 WidgetKit + Capacitor iOS project。
-3. 使用 Apple Team API Key 建立**正式簽署**的 iOS archive。
+3. 匯入有效的 Apple Distribution 私鑰身分及兩份匹配的 App Store profiles；只對主 App 與 Widget 的 Release targets 設定 Manual signing。Team API Key 用於 Apple 存取，不能取代簽署私鑰。
 4. 確認主 App 與 Widget Extension 的 Bundle ID / 版本 / Build 一致。
 5. 執行 `npm run native:ios:widget:signed:verify`：
    - 主 App 和 .appex 各自的 Code Signature 有效；
@@ -68,7 +72,7 @@ GitHub repo [xiaoyuan1124/PORTFOLIOPILOT](https://github.com/xiaoyuan1124/PORTFO
 
 If `Build signed App Store archive` reports **"Your team has no devices from which to generate a provisioning profile"** and **"No iOS App Development provisioning profiles"**, the generated Release target was being signed as a development installation. TestFlight requires an **Apple Distribution** identity and App Store Connect provisioning profiles for both `com.sy1124.portfoliopilot` and `com.sy1124.portfoliopilot.widgets`; test-device UDIDs are **not** required for App Store distribution.
 
-The generated Xcode project now selects `Apple Distribution` **only within the main App and WidgetKit Release target build settings**. The `xcodebuild archive` command deliberately does not set a global `CODE_SIGN_IDENTITY`: setting it globally causes `conflicting provisioning settings` errors in Capacitor Swift Package targets. Automatic provisioning, API key authentication, and fail-closed signed entitlement verification remain enabled. If the next run reports **"No signing certificate Apple Distribution found"**, **"No profiles ... App Store"**, or a cloud-signing authorization error, this indicates an Apple certificate/profile/permission problem that cannot be repaired by adding development devices. Ensure the Apple Team and both App IDs support App Groups and the Apple Developer account permits App Store distribution signing. Review [Apple distribution signing](https://developer.apple.com/help/account/provisioning-profiles/create-an-app-store-provisioning-profile). Do not create an ad-hoc profile or bypass signature verification.
+The generated Xcode project selects `Apple Distribution` **only within the main App and WidgetKit Release target build settings**. The upload workflow then converts those two targets and their TargetAttributes to **Manual** signing with separate validated App Store profiles. The `xcodebuild archive` command deliberately does not set a global `CODE_SIGN_IDENTITY`: setting it globally causes `conflicting provisioning settings` errors in Capacitor Swift Package targets. API authentication and fail-closed signed entitlement verification remain enabled. A missing Distribution identity/profile requires the matching `.p12` private key and Apple-issued profiles, not development devices or an Ad Hoc profile. See [manual signing](TESTFLIGHT_MANUAL_SIGNING_AND_FREE_ACTIONS.md) and [Apple distribution signing](https://developer.apple.com/help/account/provisioning-profiles/create-an-app-store-provisioning-profile).
 
 ## C. TestFlight 與 iPhone 驗收
 
