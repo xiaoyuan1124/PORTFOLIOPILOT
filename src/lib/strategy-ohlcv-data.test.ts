@@ -19,8 +19,8 @@ describe("Strategy Lab official OHLCV reader", () => {
   it("validates exact market candles and maps real high low and shares", () => {
     const data = parseStrategyOhlcv(base);
     expect(strategyCandlesFromCache(data, "TWSE", "2317")).toEqual([
-      { date: "2026-10-22", high: 210, low: 198, close: 205, volume: 100000 },
-      { date: "2026-10-23", high: 208, low: 199, close: 203, volume: 300000 }
+      { date: "2026-10-22", open: 200, high: 210, low: 198, close: 205, volume: 100000 },
+      { date: "2026-10-23", open: 205, high: 208, low: 199, close: 203, volume: 300000 }
     ]);
     expect(strategyCandlesFromCache(data, "TPEx", "2317")).toBeNull();
     expect(strategyCandlesFromCache(data, "TWSE", "2345")).toBeNull();
