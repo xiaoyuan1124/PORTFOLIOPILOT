@@ -12,6 +12,7 @@ import {
   type StrategyLabState, type StrategyLabTarget, type StrategyProfile
 } from "@/lib/strategy-lab";
 import { Badge, Card, CardContent } from "./ui";
+import { BacktestReport } from "./backtest-report";
 
 function number(value: number | null | undefined, digits = 2) {
   return value === null || value === undefined || !Number.isFinite(value)
@@ -73,6 +74,7 @@ export function StrategyLab({
   const [histories, setHistories] = useState<Record<string, TwPriceHistorySeries | null>>({});
   const [historyErrors, setHistoryErrors] = useState<Record<string, string>>({});
   const [refreshIndex, setRefreshIndex] = useState(0);
+  const [backtestKey, setBacktestKey] = useState<string | null>(null);
   const [symbol, setSymbol] = useState("");
   const [name, setName] = useState("");
   const [venue, setVenue] = useState<"TWSE" | "TPEx">("TWSE");
@@ -143,9 +145,10 @@ export function StrategyLab({
       ? { ...evaluated, status: "insufficient" as const, source: evaluated.source + " · 落後於最新官方收盤資料，訊號暫停" }
       : evaluated;
     const metrics = candles.length ? computeStrategyIndicators(candles, profile) : null;
-    return { target, close, asOf, history, signal, metrics, key, isQuote: latest?.source === "quote", completeOhlcv, zone: evaluateWatchZone(close, target.firstPrice, target.secondPrice) };
+    return { target, close, asOf, history, signal, metrics, key, isQuote: latest?.source === "quote", completeOhlcv, ohlcvCandles: fullCandles, zone: evaluateWatchZone(close, target.firstPrice, target.secondPrice) };
   });
   const inZone = watched.filter((item) => item.zone === "first" || item.zone === "second").length;
+  const backtestTarget = watched.find((item) => item.key === backtestKey) ?? null;
 
   const save: Save = (next) => {
     const parsed = strategyLabStateSchema.safeParse(next);
@@ -262,10 +265,18 @@ export function StrategyLab({
               </ul>}
             </div>
             {target.note && <p className="mt-3 text-xs leading-5 text-black/55 dark:text-white/55">研究註記：{target.note}</p>}
+            <button className="mt-3 min-h-11 w-full rounded-xl border border-[#1f332a]/20 px-3 text-sm font-semibold dark:border-white/20" onClick={() => setBacktestKey(key)}>查看歷史回測報告</button>
             <TargetEditor key={key} target={target} onSave={(changed) => save({ ...config, targets: config.targets.map((row) => row.id === target.id ? changed : row) })} onRemove={() => save({ ...config, targets: config.targets.filter((row) => row.id !== target.id) })} />
           </CardContent></Card>
         ))}
       </div>
+
+      {backtestTarget ? (
+        <section id="strategy-backtest" className="space-y-2">
+          <div className="flex items-center justify-between gap-2"><h3 className="font-semibold">回測：{backtestTarget.target.symbol} · {backtestTarget.target.name}</h3><button onClick={() => setBacktestKey(null)} className="min-h-10 rounded-xl border border-black/10 px-3 text-xs dark:border-white/10">關閉報告</button></div>
+          <BacktestReport key={backtestTarget.key} candles={backtestTarget.ohlcvCandles} profile={profile} source="TWSE STOCK_DAY · 未還原權息" />
+        </section>
+      ) : null}
 
       <Card><CardContent className="space-y-3 p-4 md:p-5">
         <h3 className="font-semibold">新增觀察股票</h3>
