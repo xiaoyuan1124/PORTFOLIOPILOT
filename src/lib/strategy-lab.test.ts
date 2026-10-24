@@ -81,6 +81,6 @@ describe("Strategy Lab v0.92 contract", () => {
   it("rejects volume if any input bar is missing; does not fabricate K from close", () => {
     const candles = thirtyCloses.map((bar, i) => ({ ...bar, volume: i === 30 ? undefined : 100 }));
     expect(evaluateOversoldStrategy(candles).rules.volume.status).toBe("insufficient");
-    expect(evaluateOversoldStrategy(closeOnlyCandles(thirtyCloses.map((bar) => [bar.date, bar.close]))).rules.kd.status).toBe("insufficient");
+    expect(evaluateOversoldStrategy(closeOnlyCandles(thirtyCloses.map((bar) => [bar.date, bar.close] as [string, number]))).rules.kd.status).toBe("insufficient");
   });
 });
