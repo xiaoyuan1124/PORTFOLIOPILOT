@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   backtestOversoldStrategy, DEFAULT_BACKTEST_CONFIG,
   type BacktestConfig, type BacktestMetrics, type BacktestResult
@@ -64,8 +64,9 @@ export function BacktestReport({ candles, profile, source }: {
   source: string;
 }) {
   const [config, setConfig] = useState<BacktestConfig>({ ...DEFAULT_BACKTEST_CONFIG });
-  const [result, setResult] = useState<BacktestResult | null>(null);
-  useEffect(() => { setResult(null); }, [candles, profile, source]);
+  const fingerprint = JSON.stringify({ candles, profile, source, config });
+  const [run, setRun] = useState<{ fingerprint: string; result: BacktestResult } | null>(null);
+  const result = run?.fingerprint === fingerprint ? run.result : null;
   const fields: Array<{key: keyof BacktestConfig; label: string; step: string}> = [
     {key:"initialCapital",label:"模擬本金 TWD",step:"1000"},
     {key:"allocationPct",label:"單次使用現金 %",step:"1"},
@@ -88,13 +89,13 @@ export function BacktestReport({ candles, profile, source }: {
               <input type="number" className="field mt-1" step={step} value={config[key]}
                 onChange={(event) => {
                   setConfig((current) => ({ ...current, [key]: Number(event.target.value) }));
-                  setResult(null);
+                  setRun(null);
                 }} />
             </label>
           ))}
         </div>
         <button className="min-h-11 w-full rounded-xl bg-[#1f332a] px-4 text-sm font-semibold text-white" onClick={() => {
-          setResult(backtestOversoldStrategy(candles ?? [], profile, config, source));
+          setRun({ fingerprint, result: backtestOversoldStrategy(candles ?? [], profile, config, source) });
         }}>執行本機歷史回測</button>
         {result?.status === "insufficient" ? (
           <div className="rounded-xl border border-amber-400/30 p-4 text-sm">
