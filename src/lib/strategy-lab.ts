@@ -68,7 +68,7 @@ export const DEFAULT_STRATEGY_LAB: StrategyLabState = {
     { id: "TWSE:3037", venue: "TWSE", symbol: "3037", name: "欣興", firstPrice: 950, secondPrice: 820, createdAt: "2026-10-24", note: "研究門檻，非買進價。" }
   ]
 };
-export type StrategyCandle = { date: string; close: number; high?: number; low?: number; volume?: number };
+export type StrategyCandle = { date: string; open?: number; close: number; high?: number; low?: number; volume?: number };
 export type IndicatorResult = {
   asOf: string | null; close: number | null; bars: number;
   sma20: number | null; ema20: number | null; rsi: number | null;
@@ -79,9 +79,10 @@ function validBars(input: StrategyCandle[]): StrategyCandle[] {
   const byDate = new Map<string, StrategyCandle>();
   for (const bar of input) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(bar.date) || !Number.isFinite(bar.close) || bar.close <= 0) continue;
-    const high = bar.high, low = bar.low, volume = bar.volume;
+    const high = bar.high, low = bar.low, volume = bar.volume, open = bar.open;
     byDate.set(bar.date, {
       date: bar.date, close: bar.close,
+      ...(open !== undefined && Number.isFinite(open) && open > 0 ? { open } : {}),
       ...(high !== undefined && low !== undefined && Number.isFinite(high) && Number.isFinite(low) &&
         high >= bar.close && low <= bar.close && low > 0 ? { high, low } : {}),
       ...(volume !== undefined && Number.isFinite(volume) && volume >= 0 ? { volume } : {})
