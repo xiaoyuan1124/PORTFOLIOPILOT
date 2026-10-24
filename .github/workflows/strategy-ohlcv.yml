@@ -1,0 +1,48 @@
+name: Refresh Strategy Lab OHLCV
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/update-strategy-ohlcv.mjs"
+      - "scripts/lib/strategy-ohlcv.mjs"
+      - "scripts/lib/strategy-ohlcv.test.mjs"
+      - ".github/workflows/strategy-ohlcv.yml"
+  schedule:
+    # Taipei time 19:45, Monday to Friday. Delayed schedule is not a realtime feed.
+    - cron: "45 11 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: taiwan-market-data-writers
+  cancel-in-progress: false
+
+jobs:
+  refresh-strategy-ohlcv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Validate official TWSE OHLCV adapter
+        run: node --test scripts/lib/strategy-ohlcv.test.mjs
+      - name: Refresh six official Strategy Lab stocks
+        run: node scripts/update-strategy-ohlcv.mjs
+      - name: Commit verified OHLCV only
+        run: |
+          git add public/data/tw-strategy-ohlcv.json
+          if git diff --cached --quiet; then
+            echo "No official OHLCV change."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "data: refresh official Strategy Lab OHLCV"
+            git push
+          fi
