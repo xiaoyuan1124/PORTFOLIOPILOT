@@ -37,6 +37,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Test official Strategy Lab OHLCV parser
+        run: node --test scripts/lib/strategy-ohlcv.test.mjs
       - name: Check signed WidgetKit provisioning contract
         run: |
           npm run native:ios:widget:signing:test
