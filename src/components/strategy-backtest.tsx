@@ -5,7 +5,7 @@ import {
   DEFAULT_BACKTEST_COSTS, runStrategyBacktest, type BacktestCosts,
   type BacktestReport, type BacktestSummary
 } from "@/lib/strategy-backtest";
-import { strategyCandlesFromCache, type StrategyOhlcvCache } from "@/lib/strategy-ohlcv-data";
+import { strategyCandlesFromCache, strategyOhlcvMissingMonths, type StrategyOhlcvCache } from "@/lib/strategy-ohlcv-data";
 import type { StrategyLabTarget, StrategyProfile } from "@/lib/strategy-lab";
 import { Card, CardContent } from "./ui";
 
@@ -100,9 +100,10 @@ export function StrategyBacktest({
     () => target ? strategyCandlesFromCache(ohlcv, target.venue, target.symbol) : null,
     [ohlcv, target]
   );
+  const missingMonths = target ? strategyOhlcvMissingMonths(ohlcv, target.venue, target.symbol) : [];
   const report = useMemo(
-    () => runStrategyBacktest(candles ?? [], profile, taipeiToday(), costs),
-    [candles, costs, profile]
+    () => runStrategyBacktest(missingMonths.length ? [] : (candles ?? []), profile, taipeiToday(), costs),
+    [candles, costs, profile, missingMonths.length]
   );
   return (
     <Card><CardContent className="space-y-4 p-4 md:p-5">
@@ -128,6 +129,7 @@ export function StrategyBacktest({
         ))}
       </div>
       <p className="text-xs text-black/45 dark:text-white/45">bps = 萬分之一；預設費用、滑價與證交稅是可調實驗假設，未依券商個別折扣估算。</p>
+      {missingMonths.length > 0 ? <p className="rounded-xl border border-amber-400/30 p-3 text-xs">官方 OHLCV 缺漏：{missingMonths.join("、")}。為防止將不連續樣本當成完整行情，本次回測已停用，待資料補齊再驗證。</p> : null}
       <DataSummary report={report} onReset={() => setCosts(DEFAULT_BACKTEST_COSTS)}/>
       <p className="text-xs leading-5 text-[#7b592f] dark:text-[#e3c18e]">限制：TWSE STOCK_DAY 未還原權息；沒有歷史逐筆撮合、實際成交量限制或除權息調整。這不是實盤績效、買進建議，也不是已證實能勝過大盤的策略。無完整官方日 K 一律顯示資料不足。</p>
     </CardContent></Card>
