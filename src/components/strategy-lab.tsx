@@ -75,6 +75,15 @@ export function StrategyLab({
   const [historyErrors, setHistoryErrors] = useState<Record<string, string>>({});
   const [refreshIndex, setRefreshIndex] = useState(0);
   const [backtestKey, setBacktestKey] = useState<string | null>(null);
+  // A report is below the watch cards. Move the iPhone viewport to it after
+  // React renders it; otherwise opening the first card looks like a no-op.
+  useEffect(() => {
+    if (!backtestKey) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("strategy-backtest")?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [backtestKey]);
   const [symbol, setSymbol] = useState("");
   const [name, setName] = useState("");
   const [venue, setVenue] = useState<"TWSE" | "TPEx">("TWSE");
@@ -276,7 +285,7 @@ export function StrategyLab({
       </div>
 
       {backtestTarget ? (
-        <section id="strategy-backtest" className="space-y-2">
+        <section id="strategy-backtest" className="scroll-mt-28 space-y-2">
           <div className="flex items-center justify-between gap-2"><h3 className="font-semibold">回測：{backtestTarget.target.symbol} · {backtestTarget.target.name}</h3><button onClick={() => setBacktestKey(null)} className="min-h-10 rounded-xl border border-black/10 px-3 text-xs dark:border-white/10">關閉報告</button></div>
           <BacktestReport key={backtestTarget.key} candles={backtestTarget.ohlcvCandles} profile={profile} source="TWSE STOCK_DAY · 未還原權息" />
         </section>
