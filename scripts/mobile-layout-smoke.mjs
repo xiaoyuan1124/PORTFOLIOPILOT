@@ -143,6 +143,10 @@ try {
     await page.getByRole("button", { name: "複製為新策略" }).click();
     assert.equal(await page.locator("select").first().locator("option").count(), 2);
     await checkLayout(page, viewport.name, "strategy-lab-new-profile");
+    // New V0.93 backtesting report must fit narrow iPhone screens and
+    // fail closed without published official OHLCV.
+    await page.getByRole("heading", { name: "歷史回測報告", exact: true }).waitFor();
+    await checkLayout(page, viewport.name, "strategy-backtest-report");
 
     await nav.getByRole("button", { name: "我的", exact: true }).click();
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
