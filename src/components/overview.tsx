@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, ArrowRight, ArrowUpRight, Landmark, Layers3, Search, WalletCards } from "lucide-react";
+import { AlertTriangle, ArrowRight, ArrowUpRight, FlaskConical, Landmark, Layers3, Search, WalletCards } from "lucide-react";
 import type { AppState } from "@/lib/types";
+import { DEFAULT_STRATEGY_LAB } from "@/lib/strategy-lab";
 import {
   allocationByAccount,
   dailySnapshotDelta,
@@ -36,7 +37,7 @@ export function Overview({
   onNavigate
 }: {
   state: AppState;
-  onNavigate?: (section: "portfolio" | "research", researchKey?: string, researchType?: "stock" | "etf") => void;
+  onNavigate?: (section: "portfolio" | "research" | "lab", researchKey?: string, researchType?: "stock" | "etf") => void;
 }) {
   const [range, setRange] = useState<SnapshotRange>("3M");
   const summary = portfolioSummary(state.holdings, state.usdTwd);
@@ -260,6 +261,7 @@ export function Overview({
               </p>
             </div>
             <button onClick={() => onNavigate?.("research")} className="flex min-h-16 items-center justify-between rounded-2xl border border-black/6 p-4 text-left transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]"><span><strong className="block text-sm">研究我的持股</strong><span className="mt-1 block text-xs text-black/45 dark:text-white/45">營收、估值、法人、Scanner 集中在一頁</span></span><Search size={18} /></button>
+            <button onClick={() => onNavigate?.("lab")} className="flex min-h-16 items-center justify-between rounded-2xl border border-black/6 p-4 text-left transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]"><span><strong className="block text-sm">查看策略與觀察價</strong><span className="mt-1 block text-xs text-black/45 dark:text-white/45">{(state.strategyLab ?? DEFAULT_STRATEGY_LAB).targets.length} 檔研究清單 · 以資料驗證訊號，缺資料不進場</span></span><FlaskConical size={18} /></button>
             <button onClick={() => onNavigate?.("portfolio")} className="flex min-h-16 items-center justify-between rounded-2xl border border-black/6 p-4 text-left transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]"><span><strong className="block text-sm">檢查帳戶與績效</strong><span className="mt-1 block text-xs text-black/45 dark:text-white/45">持股、ETF 穿透、風險、現金流、績效</span></span><ArrowRight size={18} /></button>
           </CardContent>
         </Card>

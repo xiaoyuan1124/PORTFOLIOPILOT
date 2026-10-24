@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { strategyLabStateSchema } from "./strategy-lab";
 import { isCashFxActivityType, isExternalActivityType, isPositionTransferActivityType, isTradeActivityType, normalizeActivitySecurityFields } from "./activity-data";
 
 export const ETF_WEIGHT_EPSILON = 1e-6;
@@ -1145,6 +1146,7 @@ export const appStateSchema = z.object({
   holdings: z.array(holdingSchema),
   etfCompositions: z.array(etfCompositionSchema).default([]),
   watchlist: z.array(watchlistItemSchema).default([]),
+  strategyLab: strategyLabStateSchema.optional(),
   journal: z.array(journalEntrySchema),
   activities: z.array(activitySchema).default([]),
   snapshots: z.array(snapshotSchema).default([]),
