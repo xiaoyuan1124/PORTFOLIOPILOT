@@ -5,3 +5,16 @@ out
 .env.local
 .DS_Store
 *.log
+
+# Apple signing credentials and generated native artifacts must never enter git
+*.p8
+*.p12
+*.mobileprovision
+*.provisionprofile
+*.certSigningRequest
+*.keychain
+*.keychain-db
+*.cer
+*.pem
+build/
+ios/
