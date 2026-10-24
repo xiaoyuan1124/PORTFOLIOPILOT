@@ -69,6 +69,26 @@ export function setManualReleaseSigning(pbx, teamId, hostName, widgetName) {
       "\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = " + quotePbx(profileName) + ";\n");
     pbx = pbx.slice(0, begin) + block + pbx.slice(end);
   }
+  // Xcode's TargetAttributes ProvisioningStyle must agree with the Release
+  // build settings. Leaving it on Automatic can still trigger the very
+  // "conflicting provisioning settings" error encountered in upload #3.
+  for (const [target, id] of [
+    ["App", "504EC3031FED79650016851F"],
+    ["WidgetKit", "F0B100000000000000000006"]
+  ]) {
+    const head = "\t\t\t\t\t" + id + " = {\n";
+    const start = pbx.indexOf(head);
+    assert(start !== -1 && pbx.indexOf(head, start + head.length) === -1,
+      "Missing " + target + " TargetAttributes");
+    const end = pbx.indexOf("\t\t\t\t\t};\n", start);
+    assert(end !== -1, "Malformed " + target + " TargetAttributes");
+    const block = pbx.slice(start, end);
+    assert(block.includes("ProvisioningStyle = Automatic;"),
+      "Expected automatic " + target + " signing before manual conversion");
+    pbx = pbx.slice(0, start) +
+      block.replace("ProvisioningStyle = Automatic;", "ProvisioningStyle = Manual;") +
+      pbx.slice(end);
+  }
   assert((pbx.match(/PROVISIONING_PROFILE_SPECIFIER = /g) ?? []).length === 2,
     "Expected exactly two manual provisioning profiles");
   return pbx;
