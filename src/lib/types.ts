@@ -1,3 +1,5 @@
+import type { StrategyLabState } from "./strategy-lab";
+
 export type Market = "TW" | "US";
 export type AssetType = "stock" | "etf" | "cash";
 export type Currency = "TWD" | "USD";
@@ -188,6 +190,7 @@ export interface AppState {
   holdings: Holding[];
   etfCompositions: EtfComposition[];
   watchlist?: WatchlistItem[];
+  strategyLab?: StrategyLabState;
   journal: JournalEntry[];
   activities: PortfolioActivity[];
   snapshots: NetWorthSnapshot[];
