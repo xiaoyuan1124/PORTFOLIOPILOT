@@ -34,7 +34,7 @@ Apple Developer Program 會員年費為**獨立的既有成本**，不包含在 
 
 ## 3. Apple Developer — 只需第一次建立
 
-需要 Apple Developer Program **Account Holder / Admin** 權限與一台可信任的 Mac（用於建立簽署身分和匯出含私鑰的 `.p12`）。只有 iPhone 和 App Store Connect API `.p8` **無法自動變出 Apple Distribution 私鑰**。
+需要 Apple Developer Program **Account Holder / Admin** 權限。若你需要**新建**簽署身分，依 Apple 官方流程應使用可信任的 Mac／Xcode 建立並匯出含私鑰的 `.p12`。但若已有同一 Apple Team 的 Expo EAS iOS 建置憑證，可先嘗試從 Expo 下載**既有** `.p12`（見第 6 節），不必重新建立憑證。單靠 App Store Connect API `.p8` 不能簽署 iOS App。
 
 1. 打開 https://developer.apple.com/account/resources/certificates/list 。
 2. 在 Xcode → Settings → Accounts → Manage Certificates 選擇或建立 **Apple Distribution** certificate。建立時私鑰留在該 Mac 的 Keychain；Apple 網頁看到的公鑰憑證 `.cer` 本身不能簽署。
@@ -88,7 +88,14 @@ Apple 官方：
 
 ## 6. 沒有 Mac 的時候
 
-不要繼續亂改 Xcode 簽章，也不要讓 Codex 將 Apple 私鑰輸出至 GitHub 公開 Artifacts。現有 Apple Developer Program 已包含每月 **25 小時 Xcode Cloud**，但它的首次設定通常仍需透過可信任的 Mac 上的 Xcode。另一條路是借用可信任的 Mac，完成一次 `.p12` 匯出與兩份 Profiles 建立；以後由 GitHub Actions 自動上傳。
+**優先沿用已上架 App 的 Expo EAS 憑證**：若先前的麻將 App 使用同一 Apple Developer Team 和 EAS Build 管理 iOS 簽署，Expo 伺服器可能已保存有效的 Apple Distribution `.p12` 和密碼。使用可信任的 Windows／Linux／Mac 終端機，在該 Expo 專案執行 `eas credentials` → iOS → `Credentials.json: Upload/Download credentials between EAS servers and your local json` → `Download credentials from EAS to credentials.json`，取得已有的 Distribution `.p12`。**勿把下載的 credentials.json、密碼或 `.p12` 提交到公開 GitHub Repo，也不要在聊天中傳送。**
+
+Expo 的舊 App Provisioning Profile **不能直接用在 PortfolioPilot**，兩個新的 App IDs 仍需各自申請 App Store Connect Distribution `.mobileprovision`。如果 EAS 原有憑證已失效或不同 Team，則仍須產生正確憑證。
+
+Expo 官方：https://docs.expo.dev/app-signing/syncing-credentials/
+
+如果沒有既有 `.p12` 可下載，需借用可信任的 Mac 完成一次新的 Distribution 身分建立；之後就能用 GitHub Actions 自動上傳。現有 Apple Developer Program 也已包含每月 **25 小時 Xcode Cloud**，但首次設定一般仍需 Xcode。不要讓 Codex 將 Apple 私鑰輸出至 GitHub 公開 Artifacts。
+
 
 Apple 官方 Xcode Cloud：https://developer.apple.com/xcode-cloud/get-started/
 
