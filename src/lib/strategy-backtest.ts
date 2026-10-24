@@ -62,10 +62,11 @@ export function validateBacktestInput(bars: StrategyCandle[], config: BacktestCo
     return "回測成本、資金或樣本切分參數不合理。";
   }
   if (bars.length < 120) return "歷史 OHLCV 少於 120 根交易日，不足以進行可區分樣本內外的回測。";
+  const taipeiToday = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
   for (let i = 0; i < bars.length; i++) {
     const b = bars[i]!;
     const dateMs = Date.parse(b.date + "T00:00:00Z");
-    if (!Number.isFinite(dateMs) || new Date(dateMs).toISOString().slice(0, 10) !== b.date ||
+    if (!Number.isFinite(dateMs) || new Date(dateMs).toISOString().slice(0, 10) !== b.date || b.date > taipeiToday ||
         (i > 0 && b.date <= bars[i - 1]!.date)) return "日期無效、重複或沒有按照交易日遞增排序。";
     if (b.open === undefined || b.high === undefined || b.low === undefined || b.volume === undefined ||
         ![b.open, b.high, b.low, b.close, b.volume].every(Number.isFinite) ||
