@@ -155,7 +155,10 @@ function simulate(
     peak = Math.max(peak, equity);
     maxDd = Math.min(maxDd, percent(equity, peak));
   }
-  if (position) exit(end, bars[end]!.close, "end");
+  if (position) {
+    exit(end, bars[end]!.close, "end");
+    maxDd = Math.min(maxDd, percent(cash, peak));
+  }
 
   const firstDate = bars[start]!.date, lastDate = bars[end]!.date;
   const years = (Date.parse(lastDate + "T00:00:00Z") - Date.parse(firstDate + "T00:00:00Z")) / (365.25 * 86_400_000);
