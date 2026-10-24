@@ -1,58 +1,36 @@
-# One-command TestFlight bootstrap
+# PortfolioPilot TestFlight preparation — eight signing secrets
 
-This helper exists so the Apple private key never needs to be pasted into chat or committed to Git.
+**Current launch identity: 1.0.0 (1). This is not yet an Apple-signed build.**
 
-Run on the Windows PC that holds the downloaded App Store Connect Team API private key:
+## iPhone: safe preflight (does not upload)
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap-testflight.ps1
-```
+Open [TestFlight Preflight (No Upload)](https://github.com/xiaoyuan1124/PORTFOLIOPILOT/actions/workflows/testflight-preflight.yml) → Run workflow → main. In Safari, request the desktop version if the Run workflow menu is hidden.
 
-The script will:
+The check runs inside the isolated portfolio-testflight GitHub Environment. It verifies the release identity, protected upload guard, App Groups, and whether eight encrypted signing secret entries are nonempty. **It never prints secret values or initiates signing/upload.** Nonempty secrets do not prove that a certificate or password is valid.
 
-1. verify GitHub CLI authentication and access to `xiaoyuan1124/PORTFOLIOPILOT`
-2. ask for the Apple Team ID
-3. ask for the App Store Connect Team API Key ID
-4. ask for the App Store Connect Issuer ID
-5. ask for the local path to the downloaded `AuthKey_*.p8`
-6. create/update the dedicated GitHub Actions environment `portfolio-testflight`
-7. store the four PortfolioPilot-only environment secrets
-8. verify that all four secret names exist
-9. read the exact Version / Build / Bundle ID from `main`
-10. optionally dispatch the guarded `TestFlight Upload` workflow
-11. wait for that exact workflow run and return success/failure
+Eight required secret names:
 
-Use `-SkipUpload` to configure credentials without starting a real upload:
+1. PORTFOLIOPILOT_APPLE_TEAM_ID
+2. PORTFOLIOPILOT_ASC_KEY_ID
+3. PORTFOLIOPILOT_ASC_ISSUER_ID
+4. PORTFOLIOPILOT_ASC_API_KEY_P8_BASE64
+5. PORTFOLIOPILOT_IOS_DISTRIBUTION_P12_BASE64
+6. PORTFOLIOPILOT_IOS_DISTRIBUTION_P12_PASSWORD
+7. PORTFOLIOPILOT_IOS_APP_STORE_PROFILE_BASE64
+8. PORTFOLIOPILOT_IOS_WIDGET_PROFILE_BASE64
+
+Configure them privately at [GitHub Environments](https://github.com/xiaoyuan1124/PORTFOLIOPILOT/settings/environments). The main App and Widget need separate App Store profiles with the same Apple Team and shared App Group. Apple `.cer` alone is insufficient because signing requires the matching private key.
+
+## Windows helper, if a PC is available
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap-testflight.ps1 -SkipUpload
 ```
 
-## Apple values needed once
+This helper configures **only the first four App Store Connect API secrets** from local inputs. It now checks for the other four signing entries and **refuses to trigger TestFlight with only four**. The -SkipUpload switch never uploads. See [manual distribution signing](./TESTFLIGHT_MANUAL_SIGNING_AND_FREE_ACTIONS.md) to provision the Distribution .p12, password and the two independent Apple-issued App Store profiles. Do not paste the credentials into chat, Issues, PRs or online converters.
 
-The Team ID is the Apple Developer Program Team ID.
+## Real Apple upload (account holder)
 
-For the App Store Connect API credentials, use a **Team API key**. In App Store Connect, Account Holder/Admin can go to **Users and Access → Integrations → App Store Connect API → Team Keys** and generate one. Apple only allows the private `.p8` key to be downloaded once, so store it outside the repository.
+First verify App Store Connect does not already contain build 1.0.0 (1); if it does, increment the committed build number on a reviewed change. Then open [TestFlight Upload](https://github.com/xiaoyuan1124/PORTFOLIOPILOT/actions/workflows/testflight-upload.yml) from latest main, input UPLOAD and com.sy1124.portfoliopilot. The production workflow checks actual certificate/profiles and signed archive. After Apple processing, install the exact build on an iPhone and complete [device acceptance](./NATIVE_DEVICE_VALIDATION.md) before App Store Review.
 
-The script never prints or commits the private key contents. It reads the file locally, converts the bytes to Base64 in memory, and writes the encoded value directly to the dedicated GitHub environment secret.
-
-## GitHub CLI
-
-The helper requires `gh` to already be installed and authenticated. If `gh auth status` fails, run:
-
-```powershell
-gh auth login
-```
-
-Then rerun the helper.
-
-## Safety boundaries
-
-The helper is hard-coded to:
-
-- repository: `xiaoyuan1124/PORTFOLIOPILOT`
-- environment: `portfolio-testflight`
-- bundle ID: `com.sy1124.portfoliopilot`
-- workflow: `testflight-upload.yml`
-
-It does not read, modify, or reuse another app's Bundle ID, provisioning profile, App Store Connect app ID, or GitHub deployment environment.
+Successful preflight is NOT successful Apple signing, TestFlight installation or App Review. All three must be separately confirmed.
