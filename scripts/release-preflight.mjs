@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 
 export const RELEASE_APP_ID = "com.sy1124.portfoliopilot";
@@ -68,7 +69,7 @@ export function checkReleaseContract(root = process.cwd()) {
   return true;
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   checkReleaseContract();
   console.log("PASS: PortfolioPilot 1.0.0 (1) release identity, App Group, guarded upload and eight secret references.");
   console.log("UNVERIFIED: Apple secret values, signed archive, Apple processing and iPhone installation.");
