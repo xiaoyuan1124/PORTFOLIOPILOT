@@ -102,8 +102,10 @@ if ($LASTEXITCODE -ne 0) {
   throw "Unable to list environment secrets."
 }
 
+$SecretNamesText = $SecretList -join "`n"
 foreach ($Name in $Secrets.Keys) {
-  if ($SecretList -notmatch [regex]::Escape($Name)) {
+  $Pattern = "(?m)^" + [regex]::Escape($Name) + "(?:\s|$)"
+  if ($SecretNamesText -notmatch $Pattern) {
     throw "Secret was not found after creation: $Name"
   }
 }
@@ -119,7 +121,6 @@ $SigningNames = @(
   "PORTFOLIOPILOT_IOS_WIDGET_PROFILE_BASE64"
 )
 $MissingSigning = @()
-$SecretNamesText = $SecretList -join "`n"
 foreach ($Name in $SigningNames) {
   $Pattern = "(?m)^" + [regex]::Escape($Name) + "(?:\s|$)"
   if ($SecretNamesText -notmatch $Pattern) {
