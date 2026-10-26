@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-23T17:45:13.636Z",
+  "generatedAt": "2026-10-26T16:53:55.289Z",
   "sources": [
     {
-      "name": "TWSE MI_INDEX",
-      "url": "https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?date=20261022&type=ALLBUT0999&response=json",
-      "fetchedAt": "2026-10-23T17:45:13.636Z"
+      "name": "TWSE",
+      "url": "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL",
+      "fetchedAt": "2026-10-26T16:53:55.289Z"
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes",
-      "fetchedAt": "2026-10-23T17:45:13.636Z"
+      "fetchedAt": "2026-10-26T16:53:55.289Z"
     }
   ],
   "quotes": [
@@ -190,8 +190,8 @@
       "market": "TWSE",
       "close": 56.3,
       "date": "2026-10-22",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "0057",
@@ -3286,8 +3286,8 @@
       "market": "TWSE",
       "close": 22.69,
       "date": "2026-10-22",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "02001L",
@@ -3304,8 +3304,8 @@
       "market": "TWSE",
       "close": 27.46,
       "date": "2026-10-22",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "020025",
@@ -3385,8 +3385,8 @@
       "market": "TWSE",
       "close": 15.75,
       "date": "2026-10-22",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "020041",
@@ -3790,8 +3790,8 @@
       "market": "TWSE",
       "close": 23.1,
       "date": "2026-10-22",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "1313",
@@ -8461,8 +8461,8 @@
       "market": "TWSE",
       "close": 61.7,
       "date": "2026-10-22",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "2892",
@@ -21124,8 +21124,8 @@
       "market": "TWSE",
       "close": 48.7,
       "date": "2026-10-22",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "9942",
