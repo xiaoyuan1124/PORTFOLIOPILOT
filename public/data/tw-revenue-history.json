@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T16:53:55.289Z",
+  "generatedAt": "2026-10-27T15:58:38.173Z",
   "periods": [
     "2026-09",
     "2026-08",
@@ -27423,6 +27423,22 @@
       "lastYearCumulativeRevenue": 649976,
       "cumulativeYoyPct": 0.76,
       "note": "-"
+    },
+    {
+      "code": "7710",
+      "name": "東擎科技",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-09",
+      "revenue": 296265,
+      "previousMonthRevenue": 310636,
+      "lastYearRevenue": 153968,
+      "momPct": -4.62,
+      "yoyPct": 92.41,
+      "cumulativeRevenue": 2717911,
+      "lastYearCumulativeRevenue": 1382783,
+      "cumulativeYoyPct": 96.55,
+      "note": "客戶需求強勁"
     },
     {
       "code": "7711",
@@ -59217,6 +59233,22 @@
       "note": "-"
     },
     {
+      "code": "7710",
+      "name": "東擎科技",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-08",
+      "revenue": 310636,
+      "previousMonthRevenue": 352807,
+      "lastYearRevenue": 152946,
+      "momPct": -11.95,
+      "yoyPct": 103.1,
+      "cumulativeRevenue": 2421646,
+      "lastYearCumulativeRevenue": 1228815,
+      "cumulativeYoyPct": 97.07,
+      "note": "客戶需求強勁"
+    },
+    {
       "code": "7711",
       "name": "永擎",
       "market": "TWSE",
@@ -90991,6 +91023,22 @@
       "lastYearCumulativeRevenue": 519137,
       "cumulativeYoyPct": 5.32,
       "note": "-"
+    },
+    {
+      "code": "7710",
+      "name": "東擎科技",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-07",
+      "revenue": 352807,
+      "previousMonthRevenue": 323063,
+      "lastYearRevenue": 176214,
+      "momPct": 9.2,
+      "yoyPct": 100.21,
+      "cumulativeRevenue": 2111010,
+      "lastYearCumulativeRevenue": 1075869,
+      "cumulativeYoyPct": 96.21,
+      "note": "客戶需求強勁"
     },
     {
       "code": "7711",
