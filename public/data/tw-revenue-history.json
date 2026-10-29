@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T16:46:51.427Z",
+  "generatedAt": "2026-10-29T17:02:17.673Z",
   "periods": [
     "2026-09",
     "2026-08",
@@ -25838,6 +25838,22 @@
       "cumulativeRevenue": 467976,
       "lastYearCumulativeRevenue": 460541,
       "cumulativeYoyPct": 1.61,
+      "note": "-"
+    },
+    {
+      "code": "6825",
+      "name": "和暢科技",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-09",
+      "revenue": 72230,
+      "previousMonthRevenue": 37829,
+      "lastYearRevenue": 89490,
+      "momPct": 90.93,
+      "yoyPct": -19.28,
+      "cumulativeRevenue": 490823,
+      "lastYearCumulativeRevenue": 578450,
+      "cumulativeYoyPct": -15.14,
       "note": "-"
     },
     {
@@ -57646,6 +57662,22 @@
       "cumulativeRevenue": 399070,
       "lastYearCumulativeRevenue": 392794,
       "cumulativeYoyPct": 1.59,
+      "note": "-"
+    },
+    {
+      "code": "6825",
+      "name": "和暢科技",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-08",
+      "revenue": 37829,
+      "previousMonthRevenue": 34486,
+      "lastYearRevenue": 39347,
+      "momPct": 9.69,
+      "yoyPct": -3.85,
+      "cumulativeRevenue": 418593,
+      "lastYearCumulativeRevenue": 488960,
+      "cumulativeYoyPct": -14.39,
       "note": "-"
     },
     {
