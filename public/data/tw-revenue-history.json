@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T17:02:17.673Z",
+  "generatedAt": "2026-10-30T16:47:39.531Z",
   "periods": [
     "2026-09",
     "2026-08",
@@ -15366,14 +15366,14 @@
       "market": "TWSE",
       "industry": "紡織纖維",
       "period": "2026-09",
-      "revenue": 118949,
+      "revenue": 121157,
       "previousMonthRevenue": 94351,
       "lastYearRevenue": 67562,
-      "momPct": 26.07,
-      "yoyPct": 76.05,
-      "cumulativeRevenue": 754369,
+      "momPct": 28.41,
+      "yoyPct": 79.32,
+      "cumulativeRevenue": 743061,
       "lastYearCumulativeRevenue": 651557,
-      "cumulativeYoyPct": 15.77,
+      "cumulativeYoyPct": 14.04,
       "note": "訂單增加"
     },
     {
@@ -28479,6 +28479,22 @@
       "lastYearCumulativeRevenue": 1608651,
       "cumulativeYoyPct": 129.05,
       "note": "營收成長主要來自客製化產品，以及薄膜式探針卡與清潔材料等產品之貢獻。"
+    },
+    {
+      "code": "7867",
+      "name": "特力屋",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-09",
+      "revenue": 696993,
+      "previousMonthRevenue": 719056,
+      "lastYearRevenue": 672538,
+      "momPct": -3.06,
+      "yoyPct": 3.63,
+      "cumulativeRevenue": 6674793,
+      "lastYearCumulativeRevenue": 6514067,
+      "cumulativeYoyPct": 2.46,
+      "note": "-"
     },
     {
       "code": "8011",
@@ -60305,6 +60321,22 @@
       "note": "營收增加主要受惠於半導體測試工程服務與客製化產品穩定成長。"
     },
     {
+      "code": "7867",
+      "name": "特力屋",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-08",
+      "revenue": 719056,
+      "previousMonthRevenue": 720124,
+      "lastYearRevenue": 739062,
+      "momPct": -0.14,
+      "yoyPct": -2.7,
+      "cumulativeRevenue": 5977800,
+      "lastYearCumulativeRevenue": 5849730,
+      "cumulativeYoyPct": 2.18,
+      "note": "-"
+    },
+    {
       "code": "8011",
       "name": "台通",
       "market": "TWSE",
@@ -89473,6 +89505,22 @@
       "note": "-"
     },
     {
+      "code": "6825",
+      "name": "和暢科技",
+      "market": "TPEx",
+      "industry": "",
+      "period": "2026-07",
+      "revenue": 34486,
+      "previousMonthRevenue": 66698,
+      "lastYearRevenue": 43230,
+      "momPct": -48.29,
+      "yoyPct": -20.22,
+      "cumulativeRevenue": 380764,
+      "lastYearCumulativeRevenue": 449613,
+      "cumulativeYoyPct": -15.31,
+      "note": "-"
+    },
+    {
       "code": "6829",
       "name": "千附精密",
       "market": "TPEx",
@@ -92095,6 +92143,22 @@
       "lastYearCumulativeRevenue": 1169136,
       "cumulativeYoyPct": 128.17,
       "note": "營收表現受惠於先進晶片測試需求持續延續，帶動客製化產品及工程服務需求同步成長。"
+    },
+    {
+      "code": "7867",
+      "name": "特力屋",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-07",
+      "revenue": 720124,
+      "previousMonthRevenue": 742292,
+      "lastYearRevenue": 694009,
+      "momPct": -2.98,
+      "yoyPct": 3.76,
+      "cumulativeRevenue": 5258744,
+      "lastYearCumulativeRevenue": 5110667,
+      "cumulativeYoyPct": 2.89,
+      "note": "-"
     },
     {
       "code": "8011",
