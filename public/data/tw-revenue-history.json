@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T18:11:22.589Z",
+  "generatedAt": "2026-11-05T18:12:33.551Z",
   "periods": [
     "2026-09",
     "2026-08",
@@ -21630,7 +21630,7 @@
       "cumulativeRevenue": 2803056,
       "lastYearCumulativeRevenue": 2710569,
       "cumulativeYoyPct": 3.41,
-      "note": "-"
+      "note": "以上申報之合併營收包含停業單位營收。115年9月含停業單位營收76,360仟元；115年1-9月含停業單位營收 579,259仟元。"
     },
     {
       "code": "6209",
@@ -22902,15 +22902,15 @@
       "market": "TPEx",
       "industry": "電腦及週邊設備業",
       "period": "2026-09",
-      "revenue": 13605,
-      "previousMonthRevenue": 35611,
+      "revenue": 12812,
+      "previousMonthRevenue": 14122,
       "lastYearRevenue": 10107,
-      "momPct": -61.79,
-      "yoyPct": 34.6,
-      "cumulativeRevenue": 121014,
+      "momPct": -9.27,
+      "yoyPct": 26.76,
+      "cumulativeRevenue": 98732,
       "lastYearCumulativeRevenue": 212616,
-      "cumulativeYoyPct": -43.08,
-      "note": "-"
+      "cumulativeYoyPct": -53.56,
+      "note": "因客戶舊專案已全數出貨，新專案尚未開始出貨，使本期拉貨數量減少，致營收下降。"
     },
     {
       "code": "6442",
@@ -53470,7 +53470,7 @@
       "cumulativeRevenue": 2483751,
       "lastYearCumulativeRevenue": 2442359,
       "cumulativeYoyPct": 1.69,
-      "note": "-"
+      "note": "以上申報之合併營收包含停業單位營收。115年8月含停業單位營收73,401仟元；115年1-8月含停業單位營收502,899仟元。"
     },
     {
       "code": "6209",
@@ -54742,15 +54742,15 @@
       "market": "TPEx",
       "industry": "電腦及週邊設備業",
       "period": "2026-08",
-      "revenue": 35611,
+      "revenue": 14122,
       "previousMonthRevenue": 10448,
       "lastYearRevenue": 15120,
-      "momPct": 240.84,
-      "yoyPct": 135.52,
-      "cumulativeRevenue": 107409,
+      "momPct": 35.16,
+      "yoyPct": -6.6,
+      "cumulativeRevenue": 85920,
       "lastYearCumulativeRevenue": 202509,
-      "cumulativeYoyPct": -46.96,
-      "note": "因子公司接獲專案，並按完工比列認列營收所致。"
+      "cumulativeYoyPct": -57.57,
+      "note": "因客戶舊專案已全數出貨，新專案尚未開始出貨，使本期拉貨數量減少，致營收下降。"
     },
     {
       "code": "6442",
@@ -85294,7 +85294,7 @@
       "cumulativeRevenue": 2120705,
       "lastYearCumulativeRevenue": 2105502,
       "cumulativeYoyPct": 0.72,
-      "note": "-"
+      "note": "以上申報之合併營收包含停業單位營收。115年7月含停業單位營收72,628仟元；115年1-7月含停業單位營收429,498仟元。"
     },
     {
       "code": "6209",
