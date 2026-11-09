@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T17:39:08.120Z",
+  "generatedAt": "2026-11-09T20:59:15.045Z",
   "periods": [
     "2026-09",
     "2026-08",
@@ -23334,12 +23334,12 @@
       "market": "TWSE",
       "industry": "其他",
       "period": "2026-09",
-      "revenue": 605135,
+      "revenue": 605154,
       "previousMonthRevenue": 538854,
       "lastYearRevenue": 580667,
       "momPct": 12.3,
       "yoyPct": 4.21,
-      "cumulativeRevenue": 4991942,
+      "cumulativeRevenue": 4991961,
       "lastYearCumulativeRevenue": 4906015,
       "cumulativeYoyPct": 1.75,
       "note": "-"
