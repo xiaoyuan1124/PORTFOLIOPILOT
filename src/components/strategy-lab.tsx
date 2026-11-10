@@ -181,11 +181,18 @@ export function StrategyLab({
     if (valid.success) { setSymbol(""); setName(""); setFirstPrice(""); setSecondPrice(""); }
   }
 
+  function switchQuantTab(next: boolean) {
+    setQuantOpen(next);
+    // In-page tab changes do not go through the AppShell navigation scroll reset.
+    // Reset explicitly after the panel swaps so a shorter page never opens halfway down.
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+  }
+
   if (quantOpen) {
     return (
       <div className="space-y-4">
         <div className="flex flex-wrap gap-2" role="group" aria-label="策略實驗室分頁">
-          <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => setQuantOpen(false)}>觀察價與舊策略</button>
+          <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => switchQuantTab(false)}>觀察價與舊策略</button>
           <button type="button" aria-pressed className="min-h-11 rounded-full bg-[#1f332a] px-4 text-xs font-semibold text-white dark:bg-[#dce9e2] dark:text-[#122018]">PilotQuant 量化研究</button>
         </div>
         <QuantResearchPanel key={quantKey ?? "default"} requestedKey={quantKey} />
@@ -196,7 +203,7 @@ export function StrategyLab({
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2" role="group" aria-label="策略實驗室分頁">
         <button type="button" aria-pressed className="min-h-11 rounded-full bg-[#1f332a] px-4 text-xs font-semibold text-white dark:bg-[#dce9e2] dark:text-[#122018]">觀察價與舊策略</button>
-        <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => setQuantOpen(true)}>PilotQuant 量化研究</button>
+        <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => switchQuantTab(true)}>PilotQuant 量化研究</button>
       </div>
       <div className="rounded-[24px] bg-[#1f332a] p-5 text-white dark:bg-[#dce9e2] dark:text-[#122018]">
         <p className="text-xs font-semibold tracking-[.14em] opacity-60">STRATEGY LAB · V0.92</p>
@@ -209,7 +216,12 @@ export function StrategyLab({
         </div>
       </div>
 
-      <Card><CardContent className="space-y-3 p-4 md:p-5">
+      <details className="rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-section="strategy-parameters">
+        <summary className="flex min-h-11 cursor-pointer items-center justify-between px-2 text-sm font-semibold">
+          <span>策略參數與延伸工具</span>
+          <span className="text-xs font-normal text-black/45 dark:text-white/45">調整 RSI、KD、停損停利</span>
+        </summary>
+      <Card className="mt-2"><CardContent className="space-y-3 p-4 md:p-5">
         <div className="flex flex-wrap justify-between gap-2">
           <div><h3 className="font-semibold">策略 B · 超跌反彈</h3><p className="mt-1 text-xs text-black/45 dark:text-white/45">實驗參數，尚未完成回測，無保證勝率</p></div>
           <button className="min-h-10 rounded-xl border border-black/10 px-3 text-xs dark:border-white/10" onClick={() => setRefreshIndex((v) => v + 1)}>重新讀取官方快取</button>
@@ -246,6 +258,7 @@ export function StrategyLab({
           <button className="min-h-11 rounded-xl border border-black/10 px-4 text-sm dark:border-white/10" onClick={onOpenRisk}>檢查持股風險</button>
         </div>
       </CardContent></Card>
+      </details>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold">自訂股票研究清單</h3>
@@ -258,44 +271,52 @@ export function StrategyLab({
 
       <div className="grid gap-3 lg:grid-cols-2">
         {watched.map(({ target, key, close, asOf, zone, history, signal, metrics, isQuote, completeOhlcv, missingMonths }) => (
-          <Card key={key}><CardContent className="p-4">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0"><h4 className="font-semibold">{target.symbol} · {target.name}</h4>
-                <p className="mt-1 text-xs text-black/45 dark:text-white/45">{target.venue} · 建立 {target.createdAt}</p></div>
+          <Card key={key}><CardContent className="p-3 md:p-4" data-testid="watch-target-card">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0"><h4 className="truncate text-sm font-semibold">{target.symbol} · {target.name}</h4></div>
               <Badge tone={zone === "second" || zone === "first" ? "warn" : "neutral"}>
-                {zone === "second" ? "第二階段觀察" : zone === "first" ? "第一階段觀察" : zone === "outside" ? "尚未進入觀察價" : "行情不足"}
+                {zone === "second" ? "第二階段觀察" : zone === "first" ? "第一階段觀察" : zone === "outside" ? "未進入觀察價" : "行情不足"}
               </Badge>
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <div className="mini-metric"><span>{isQuote ? "官方收盤" : "歷史收盤／缺值"}</span><strong>{number(close)}</strong></div>
-              <div className="mini-metric"><span>第一階段</span><strong>{number(target.firstPrice)}</strong></div>
-              <div className="mini-metric"><span>第二階段</span><strong>{number(target.secondPrice)}</strong></div>
-            </div>
-            <p className="mt-2 text-xs text-black/45 dark:text-white/45">資料日：{asOf ?? "資料不足"} · 來源：{isQuote ? "TWSE／TPEx 官方收盤快取" : "台股歷史快取（若有）"}</p>
-            <p className="mt-1 text-xs text-black/45 dark:text-white/45">指標依據：{completeOhlcv ? "TWSE 官方未還原權息 OHLCV" : "僅有歷史收盤價／缺少完整日 K"} · 不是盤中即時資料</p>
-            {missingMonths.length ? <p className="mt-1 text-xs text-amber-700 dark:text-amber-300" role="status">官方 OHLCV 缺漏：{missingMonths.join("、")}；策略訊號暫停，不能視為有效進場條件。</p> : null}
-            <p className="mt-2 text-xs">RSI {number(metrics?.rsi)} · KD-K {number(metrics?.kdK)} · KD-D {number(metrics?.kdD)} · MACD {number(metrics?.macdHistogram, 3)} · SMA20 {number(metrics?.sma20)} · EMA20 {number(metrics?.ema20)}</p>
-            <div className="mt-3 rounded-xl bg-black/[.025] p-3 text-xs dark:bg-white/[.04]">
-              <p className="font-semibold">策略 B：{signal?.status === "triggered" ? "符合實驗條件（非買進指令）" : signal?.status === "not_triggered" ? "未觸發" : "資料不足，不產生交易訊號"}</p>
-              <p className="mt-1 text-black/45 dark:text-white/45">訊號資料日：{signal?.asOf ?? "—"} · 歷史來源：{signal?.source ?? "—"}</p>
-              {historyErrors[key] && !history && <p className="mt-1 text-amber-700 dark:text-amber-300">{historyErrors[key]}</p>}
-              {signal && <ul className="mt-2 space-y-1 text-black/60 dark:text-white/60">
-                <li>RSI：{signal.rules.rsi.status} · {signal.rules.rsi.reason}</li>
-                <li>成交量：{signal.rules.volume.status} · {signal.rules.volume.reason}</li>
-                <li>KD：{signal.rules.kd.status} · {signal.rules.kd.reason}</li>
-              </ul>}
-            </div>
-            {target.note && <p className="mt-3 text-xs leading-5 text-black/55 dark:text-white/55">研究註記：{target.note}</p>}
-            <button type="button" onClick={() => { setQuantKey(key); setQuantOpen(true); window.requestAnimationFrame(() => window.scrollTo(0, 0)); }}
-              className="mt-3 min-h-10 rounded-xl border border-[#315f49]/25 bg-[#e7f1e9] px-4 text-xs font-semibold text-[#245238] dark:bg-[#173426] dark:text-[#a9d7b7]">
-              回測 {target.symbol} 並查看成長情境
+            <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-black/65 dark:text-white/65">
+              <span>收盤 <strong className="tabular-nums">{number(close)}</strong></span>
+              <span>一階 {number(target.firstPrice)}</span><span>二階 {number(target.secondPrice)}</span>
+              <span>資料日 {asOf ?? "不足"}</span>
+            </p>
+            <p className="mt-1 text-xs font-semibold">
+              {signal?.status === "triggered" ? "符合實驗條件 · 非買進訊號"
+                : signal?.status === "not_triggered" ? "目前未觸發策略" : "資料不足 · 暫不產生策略訊號"}
+            </p>
+            {missingMonths.length ? <p role="status" className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+              官方日 K 缺漏 {missingMonths.join("、")}，策略訊號暫停
+            </p> : null}
+            <button type="button" onClick={() => { setQuantKey(key); switchQuantTab(true); }}
+              className="mt-2 min-h-10 rounded-xl border border-[#315f49]/25 bg-[#e7f1e9] px-3 text-xs font-semibold text-[#245238] dark:bg-[#173426] dark:text-[#a9d7b7]">
+              回測 {target.symbol} <span aria-hidden="true">→</span>
             </button>
-            <TargetEditor key={key} target={target} onSave={(changed) => save({ ...config, targets: config.targets.map((row) => row.id === target.id ? changed : row) })} onRemove={() => save({ ...config, targets: config.targets.filter((row) => row.id !== target.id) })} />
+            <details className="mt-2 rounded-xl border border-black/8 px-3 py-2 text-xs dark:border-white/10" data-testid="watch-target-details">
+              <summary className="min-h-7 cursor-pointer font-semibold">完整指標、來源與編輯觀察價</summary>
+              <div className="mt-3 space-y-2">
+                <p className="text-black/50 dark:text-white/50">市場 {target.venue} · 建立 {target.createdAt} · {isQuote ? "TWSE／TPEx 官方收盤快取" : "歷史收盤快取"} · {completeOhlcv ? "完整未還原權息日 K" : "僅收盤資料／日 K 不足"}</p>
+                <p>RSI {number(metrics?.rsi)} · KD-K {number(metrics?.kdK)} · KD-D {number(metrics?.kdD)} · MACD {number(metrics?.macdHistogram, 3)} · SMA20 {number(metrics?.sma20)} · EMA20 {number(metrics?.ema20)}</p>
+                <p className="text-black/55 dark:text-white/55">訊號資料日 {signal?.asOf ?? "—"} · 來源 {signal?.source ?? "—"}</p>
+                {historyErrors[key] && !history ? <p className="text-amber-700 dark:text-amber-300">{historyErrors[key]}</p> : null}
+                {signal ? <ul className="list-disc space-y-1 pl-4 text-black/65 dark:text-white/65">
+                  <li>RSI：{signal.rules.rsi.status} · {signal.rules.rsi.reason}</li>
+                  <li>成交量：{signal.rules.volume.status} · {signal.rules.volume.reason}</li>
+                  <li>KD：{signal.rules.kd.status} · {signal.rules.kd.reason}</li>
+                </ul> : null}
+                {target.note ? <p>研究註記：{target.note}</p> : null}
+                <TargetEditor key={key} target={target} onSave={(changed) => save({ ...config, targets: config.targets.map((row) => row.id === target.id ? changed : row) })} onRemove={() => save({ ...config, targets: config.targets.filter((row) => row.id !== target.id) })} />
+              </div>
+            </details>
           </CardContent></Card>
         ))}
       </div>
 
-      <Card><CardContent className="space-y-3 p-4 md:p-5">
+      <details className="rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-section="add-watch">
+        <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">＋ 新增觀察股票</summary>
+        <Card className="mt-2"><CardContent className="space-y-3 p-4 md:p-5">
         <h3 className="font-semibold">新增觀察股票</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <label className={fieldLabel}>股票代號
@@ -317,7 +338,11 @@ export function StrategyLab({
         </div>
         <p className="text-xs text-black/45 dark:text-white/45">觀察清單與策略參數存於現有 PortfolioPilot 本機資料，並沿用既有 JSON 備份／還原。新增代號需要官方歷史資料覆蓋才能顯示技術指標。</p>
       </CardContent></Card>
-      <StrategyBacktest targets={config.targets} profile={profile} ohlcv={ohlcv} />
+      </details>
+      <details className="rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-section="legacy-backtest">
+        <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">展開策略 B 歷史回測報告</summary>
+        <div className="mt-2"><StrategyBacktest targets={config.targets} profile={profile} ohlcv={ohlcv} /></div>
+      </details>
     </div>
   );
 }

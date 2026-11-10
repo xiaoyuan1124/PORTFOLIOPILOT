@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowUpRight, ChartNoAxesCombined, RefreshCw } from "lucide-react";
+import { ArrowUpRight, ChevronDown, RefreshCw } from "lucide-react";
 import { loadTwPriceHistory, loadTwPriceHistoryIndex, type TwPriceHistoryIndex, type TwPriceHistorySeries } from "@/lib/price-history-data";
 import { benchmarkById, benchmarkWindow, loadBundledBenchmarks, type BenchmarkCache } from "@/lib/benchmark";
 import { relativePerformancePct } from "@/lib/price-history";
@@ -18,6 +18,7 @@ type SourceState = { key: string; index: TwPriceHistoryIndex | null; history: Tw
 const initial: Request = { market: "TWSE", symbol: "2330" };
 const tradingHorizons = [21, 63, 126, 252] as const;
 type Horizon = typeof tradingHorizons[number];
+type QuantView = "results" | "future" | "trades";
 const smallLabel = "block space-y-1 text-xs font-semibold text-black/55 dark:text-white/55";
 const warning = "rounded-xl border border-amber-400/30 bg-amber-50/80 p-3 text-xs leading-5 text-amber-900 dark:bg-amber-950/20 dark:text-amber-200";
 
@@ -72,7 +73,9 @@ function ScenarioChart({ scenario, horizon }: { scenario: GrowthScenarios; horiz
         </AreaChart>
       </ResponsiveContainer>
     </div>
-    <div className="overflow-x-auto">
+    <details className="rounded-xl border border-black/8 p-3 dark:border-white/10">
+      <summary className="cursor-pointer text-xs font-semibold">展開各期間價格表</summary>
+      <div className="mt-2 overflow-x-auto">
       <table className="w-full min-w-[320px] text-left text-xs">
         <thead className="text-black/45 dark:text-white/45"><tr><th className="py-2">交易日</th><th>P10</th><th>P50</th><th>P90</th></tr></thead>
         <tbody>{checkpoints.map(day => {
@@ -80,7 +83,8 @@ function ScenarioChart({ scenario, horizon }: { scenario: GrowthScenarios; horiz
           return <tr key={day} className="border-t border-black/5 dark:border-white/8"><td className="py-2">{day === 0 ? "基準日" : "+" + day}</td><td>{formatMoney(row.low)}</td><td>{formatMoney(row.median)}</td><td>{formatMoney(row.high)}</td></tr>;
         })}</tbody>
       </table>
-    </div>
+      </div>
+    </details>
     <p className="text-[11px] leading-5 text-black/50 dark:text-white/50">使用最近 {scenario.sampleDays} 筆日報酬、5 日區塊重抽樣、固定亂數種子與 {scenario.observations} 條模擬路徑。P10／P50／P90 是模擬結果的百分位數，不是經校準的 80% 信賴區間，更不是未來股價預言。</p>
   </div>;
 }
@@ -97,6 +101,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
   const [source, setSource] = useState<SourceState>({ key: "", index: null, history: null, error: "" });
   const [config, setConfig] = useState<QuantConfig>(DEFAULT_QUANT_CONFIG);
   const [horizon, setHorizon] = useState<Horizon>(126);
+  const [view, setView] = useState<QuantView>("results");
   const [marketBenchmark, setMarketBenchmark] = useState<BenchmarkCache | null>(null);
 
   useEffect(() => {
@@ -176,121 +181,187 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
     setReloadToken(n => n + 1);
   }
 
-  return <div className="space-y-4">
-    <div className="rounded-[24px] bg-[#1f332a] p-5 text-white dark:bg-[#dce9e2] dark:text-[#122018]">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><p className="text-xs font-semibold uppercase tracking-[.14em] opacity-65">PilotQuant · Native research</p><h2 className="mt-1 text-xl font-semibold">個股歷史回測 × 成長情境路徑</h2><p className="mt-2 text-xs leading-5 opacity-80">以 TWSE／TPEx 官方收盤資料驗證策略，依過往報酬分布推演不同可能路徑。不上傳持股、不連券商。</p></div>
-        <Badge>研究模擬</Badge>
+
+  return <div className="space-y-3 md:space-y-4" data-testid="pilotquant-surface">
+    <div className="flex min-w-0 items-center justify-between gap-2 px-0.5" data-testid="pilotquant-top">
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-[.15em] text-black/45 dark:text-white/45">PILOTQUANT · RESEARCH</p>
+        <h2 className="mt-0.5 truncate text-lg font-semibold md:text-xl">個股量化研究</h2>
       </div>
+      <Badge>研究模擬</Badge>
     </div>
 
-    <Card><CardContent className="space-y-4 p-4 md:p-5">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_1.4fr_auto]">
+    <Card><CardContent className="space-y-3 p-3 md:p-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_100px] gap-2 sm:grid-cols-[minmax(0,1fr)_110px_auto]" role="search" aria-label="選擇研究標的">
+        <label className={smallLabel}>股票／ETF 代號
+          <input className="field mt-1" aria-label="股票或 ETF 代號" value={symbol}
+            onChange={event => setSymbol(event.target.value.toUpperCase())}
+            onKeyDown={event => { if (event.key === "Enter") submit(); }}
+            maxLength={8} inputMode="text" placeholder="例如 2330" />
+        </label>
         <label className={smallLabel}>市場
-          <select className="field mt-1" value={market} onChange={event => setMarket(event.target.value as Market)}><option value="TWSE">上市</option><option value="TPEx">上櫃</option></select>
-        </label>
-        <label className={smallLabel}>股票或 ETF 代號
-          <input className="field mt-1" value={symbol} onChange={event => setSymbol(event.target.value.toUpperCase())} maxLength={8} inputMode="text" placeholder="例如 2330" />
-        </label>
-        <div className="col-span-2 flex items-end sm:col-span-1"><button type="button" className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1f332a] px-4 text-sm font-semibold text-white dark:bg-[#dce9e2] dark:text-[#122018]" onClick={submit}><RefreshCw size={16} />分析</button></div>
-      </div>
-      {!current ? <p role="status" className="text-xs text-black/55 dark:text-white/55">正在讀取 {requestKey} 官方收盤資料…</p> : null}
-      {current?.error ? <p role="alert" className={warning}>{current.error}。可稍後重新讀取或查核 GitHub Actions 歷史資料更新紀錄。</p> : null}
-      {history && index ? <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-black/50 dark:text-white/50">
-        <span>{history.symbol} · {history.name} · {history.market}</span>
-        <span>資料：{history.startDate} ～ {history.endDate}</span>
-        <span>最新收盤：{formatMoney(history.points.at(-1)?.[1])} TWD</span>
-        <span>來源：{request.market === "TWSE" ? "TWSE MI_INDEX" : "TPEx daily close"}</span>
-        <span>快取生成：{index.generatedAt.slice(0, 10)}</span>
-      </div> : null}
-      {history && staleDays > 7 ? <p className={warning}>最新資料距今約 {staleDays} 天；可能是假期、停止交易或快取未更新。此結果不宜作為當日買賣依據。</p> : null}
-      {calculation.error ? <p role="alert" className={warning}>{calculation.error}</p> : null}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <label className={smallLabel}>量化策略
-          <select className="field mt-1" value={config.strategy} onChange={event => setConfig(current => ({ ...current, strategy: event.target.value as QuantConfig["strategy"] }))}>
-            <option value="sma">雙均線交叉</option><option value="rsi">RSI 門檻策略</option><option value="breakout">收盤價突破通道</option>
+          <select className="field mt-1" aria-label="交易市場" value={market} onChange={event => setMarket(event.target.value as Market)}>
+            <option value="TWSE">上市</option><option value="TPEx">上櫃</option>
           </select>
         </label>
-        <label className={smallLabel}>本金 (TWD)
-          <input className="field mt-1" type="number" min={1000} step={1000} value={config.capital} onChange={event => setConfig(current => ({ ...current, capital: Number(event.target.value) }))} />
+        <button type="button" onClick={submit}
+          className="pp-primary-button col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1f332a] px-4 text-sm font-semibold text-white dark:bg-[#dce9e2] dark:text-[#122018] sm:col-span-1 sm:self-end">
+          <RefreshCw size={16} />分析
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <label className={smallLabel}>交易策略
+          <select className="field mt-1" aria-label="量化策略" value={config.strategy}
+            onChange={event => setConfig(current => ({ ...current, strategy: event.target.value as QuantConfig["strategy"] }))}>
+            <option value="sma">均線交叉</option><option value="rsi">RSI 門檻</option><option value="breakout">通道突破</option>
+          </select>
         </label>
-        <label className={smallLabel}>投入比例 (%)
-          <input className="field mt-1" type="number" min={1} max={100} value={config.allocationPct} onChange={event => setConfig(current => ({ ...current, allocationPct: Number(event.target.value) }))} />
+        <label className={smallLabel}>模擬本金 · TWD
+          <input className="field mt-1" aria-label="模擬本金" type="number" min={1000} step={1000} value={config.capital}
+            onChange={event => setConfig(current => ({ ...current, capital: Number(event.target.value) }))} />
         </label>
       </div>
-      <details className="rounded-xl border border-black/8 p-3 text-xs dark:border-white/10">
-        <summary className="cursor-pointer font-semibold">策略參數與費用假設</summary>
+      {history && index ? <p className="text-xs text-black/55 dark:text-white/55" data-testid="pilotquant-source">
+        <strong>{history.symbol} · {history.name}</strong>　收盤 {formatMoney(history.points.at(-1)?.[1])} · {history.endDate}
+      </p> : null}
+      {!current ? <p role="status" className="text-xs text-black/55 dark:text-white/55">讀取 {requestKey} 官方收盤資料中…</p> : null}
+      {current?.error ? <p role="alert" className={warning}>{current.error}。請檢查標的及資料來源。</p> : null}
+      {history && staleDays > 7 ? <p className={warning}>歷史資料距今約 {staleDays} 天；可能因休市、停牌或資料更新延遲，請勿作為即時交易訊號。</p> : null}
+      {calculation.error ? <p role="alert" className={warning}>{calculation.error}</p> : null}
+      <details className="rounded-xl border border-black/8 px-3 py-2.5 text-xs dark:border-white/10" data-testid="pilotquant-advanced">
+        <summary className="flex min-h-7 cursor-pointer items-center justify-between font-semibold">
+          <span>進階參數 <span className="font-normal text-black/45 dark:text-white/45">· 比例、手續費及策略設定</span></span>
+          <ChevronDown size={16} aria-hidden="true" />
+        </summary>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {([
-            ["fast", "短均線／日"], ["slow", "長均線／日"], ["rsiPeriod", "RSI 週期"], ["rsiBuyBelow", "RSI 買入小於"],
-            ["rsiSellAbove", "RSI 賣出大於"], ["breakoutPeriod", "通道週期"], ["feeBps", "單邊手續費 bps"], ["sellTaxBps", "賣出稅 bps"],
-            ["slippageBps", "單邊滑價 bps"], ["minimumFeeTwd", "最低單筆手續費"]
-          ] as Array<[keyof QuantConfig, string]>).map(([key, label]) => (
+            ["allocationPct", "投入比例 %"], ["fast", "短均線／日"], ["slow", "長均線／日"], ["rsiPeriod", "RSI 週期"],
+            ["rsiBuyBelow", "RSI 買入小於"], ["rsiSellAbove", "RSI 賣出大於"], ["breakoutPeriod", "通道週期"],
+            ["feeBps", "單邊手續費 bps"], ["sellTaxBps", "賣出稅 bps"], ["slippageBps", "單邊滑價 bps"],
+            ["minimumFeeTwd", "最低手續費"]
+          ] as Array<[keyof QuantConfig, string]>).map(([key, label]) =>
             <label className={smallLabel} key={key}>{label}
               <input className="field mt-1" type="number" min={0} step={key === "feeBps" ? .25 : 1}
                 value={config[key]} onChange={event => setConfig(current => ({ ...current, [key]: Number(event.target.value) }))} />
             </label>
-          ))}
+          )}
         </div>
+        <p className="mt-3 leading-5 text-black/50 dark:text-white/50">修改策略或本金後會即時重新模擬；只有變更股票代號需要按「分析」。</p>
       </details>
-      <p className="text-[11px] leading-5 text-black/45 dark:text-white/45">交易規則：在第 t 日收盤產生訊號，僅於第 t+1 個交易日「收盤價」模擬成交，並扣除可設定手續費、滑價及賣出稅。沒有 OHLC 不使用盤中停損／停利。整股數為整數，不借券、不槓桿，賣出款以 T+2 交易日才可再投入的保守假設模擬，不發送實際委託。</p>
     </CardContent></Card>
 
     {calculation.report ? <>
-      <Card><CardContent className="space-y-4 p-4 md:p-5">
-        <div><p className="text-xs font-semibold uppercase tracking-[.14em] text-black/45 dark:text-white/45">Historical validation</p><h3 className="mt-1 text-lg font-semibold">過往策略回測</h3></div>
-        <SectionSummary heading="全期間" report={calculation.report.total} />
-        <div className="grid gap-3 lg:grid-cols-2">
-          <SectionSummary heading="前 70% · 樣本內" report={calculation.report.inSample} />
-          <SectionSummary heading="後 30% · 時間保留樣本" report={calculation.report.outOfSample} />
+      <div className="grid grid-cols-3 gap-1 rounded-xl border border-black/8 bg-black/[.025] p-1 dark:border-white/10 dark:bg-white/[.025]"
+        role="tablist" aria-label="量化研究內容" data-testid="pilotquant-tabs">
+        {([
+          ["results", "回測摘要"], ["future", "未來情境"], ["trades", "交易明細"]
+        ] as Array<[QuantView, string]>).map(([tab, label]) =>
+          <button key={tab} id={"pilotquant-tab-" + tab} type="button" role="tab" aria-controls={"pilotquant-panel-" + tab}
+            aria-selected={view === tab} tabIndex={view === tab ? 0 : -1}
+            onKeyDown={event => {
+              if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+              event.preventDefault();
+              const tabs: QuantView[] = ["results", "future", "trades"];
+              const next = tabs[(tabs.indexOf(tab) + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+              setView(next);
+              window.requestAnimationFrame(() => document.getElementById("pilotquant-tab-" + next)?.focus());
+            }}
+            onClick={() => {
+            setView(tab);
+            window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+          }}
+            className={"min-h-10 rounded-lg px-1 text-xs font-semibold transition sm:text-sm " +
+              (view === tab ? "bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]" : "text-black/55 dark:text-white/55")}>
+            {label}
+          </button>
+        )}
+      </div>
+
+      {view === "results" ? <Card><CardContent className="space-y-3 p-3 md:p-5" id="pilotquant-panel-results" role="tabpanel" aria-labelledby="pilotquant-tab-results">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-sm font-semibold">樣本外回測 <span className="text-xs font-normal text-black/45 dark:text-white/45">後 30% · 未參與策略設定</span></h3>
+          <span className="text-[11px] text-black/45 dark:text-white/45">{calculation.report.outOfSample.firstDate}～{calculation.report.outOfSample.lastDate}</span>
         </div>
-        <p className="text-xs leading-5 text-black/50 dark:text-white/50">分界：{calculation.report.splitDate}。兩段分別以相同本金重算，前段只提供指標暖機、不帶入持倉。這是固定參數的時間保留檢查，不是多折 Walk-forward；並且使用未還原權息股價，可能低估總報酬及受到除權息影響。</p>
-        <div className="rounded-xl border border-black/8 p-3 dark:border-white/10">
-          <h4 className="text-sm font-semibold">相同日期的市場價格比較（樣本外）</h4>
-          {benchmarkComparison ? <div className="mt-3 grid grid-cols-3 gap-2">
-            <Metric label="個股原始價格報酬" value={formatPercent(benchmarkComparison.stockReturn)} />
-            <Metric label="台股加權價格指數" value={formatPercent(benchmarkComparison.benchmarkReturn)} />
-            <Metric label="相對價格表現" value={formatPercent(benchmarkComparison.relative)} />
-          </div> : <p className="mt-2 text-xs text-black/50 dark:text-white/50">官方加權價格指數資料不足或日期不一致，不以其他期間推補市場報酬。</p>}
-          <p className="mt-2 text-[11px] leading-5 text-black/45 dark:text-white/45">對比僅使用同期間價格變化，不含股利、買賣成本，也不將相對表現稱為 Alpha。與上方「扣除成本的策略績效」屬不同口徑。</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="pilotquant-summary">
+          <Metric label="策略報酬（扣成本）" value={formatPercent(calculation.report.outOfSample.totalReturnPct)} />
+          <Metric label="買進持有（扣成本）" value={formatPercent(calculation.report.outOfSample.buyHoldReturnPct)} />
+          <Metric label="最大回撤" value={formatPercent(calculation.report.outOfSample.maxDrawdownPct)} />
+          <Metric label="完整交易" value={String(calculation.report.outOfSample.completedTrades) + " 筆"} />
         </div>
-        <div className="h-[240px]" role="img" aria-label="樣本外策略資產曲線與扣除成本買進持有比較">
+        <div className="h-[205px]" role="img" aria-label="樣本外策略與買進持有模擬資產淨值比較">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={calculation.report.outOfSample.equity}>
               <CartesianGrid strokeOpacity={0.09} vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 10 }} minTickGap={32} tickFormatter={value => String(value).slice(5)} />
+              <XAxis dataKey="date" tick={{ fontSize: 10 }} minTickGap={30} tickFormatter={value => String(value).slice(5)} />
               <YAxis hide domain={["auto", "auto"]} />
               <Tooltip labelFormatter={value => String(value)} formatter={(value, name) => [formatMoney(Number(value)), String(name)]} contentStyle={{ borderRadius: 12, fontSize: 12 }} />
-              <Line type="monotone" dataKey="equity" name="策略淨值" stroke="#315f49" strokeWidth={2.1} dot={false} />
-              <Line type="monotone" dataKey="buyHold" name="扣成本買進持有" stroke="#c39a55" strokeWidth={1.8} strokeDasharray="5 3" dot={false} />
+              <Line type="monotone" dataKey="equity" name="策略淨值" stroke="#2fb98a" strokeWidth={2.3} dot={false} />
+              <Line type="monotone" dataKey="buyHold" name="買進持有" stroke="#c39a55" strokeDasharray="5 3" strokeWidth={1.7} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <details className="rounded-xl border border-black/8 p-3 dark:border-white/10">
-          <summary className="cursor-pointer text-sm font-semibold">逐筆模擬委託（{calculation.report.total.trades.length} 筆）</summary>
-          <div className="mt-2 max-h-[310px] space-y-2 overflow-y-auto text-xs">
-            {calculation.report.total.trades.map((trade, index) =>
-              <div key={trade.date + ":" + index} className="rounded-lg bg-black/[.025] p-2 dark:bg-white/[.04]">{trade.action} {trade.shares} 股 · 模擬價格 {formatMoney(trade.price)} · {trade.signalDate} 訊號 → {trade.date} 成交 · 費用 {formatMoney(trade.fees + trade.tax)}</div>
-            )}
-            {!calculation.report.total.trades.length ? <p>沒有符合條件的完整交易；勝率不可推論。</p> : null}
+        <p className="text-[11px] leading-5 text-black/50 dark:text-white/50">綠線：模擬策略；金線：買進持有。優先顯示樣本外表現，避免全期間績效掩蓋近期策略失效。</p>
+        <details className="rounded-xl border border-black/8 p-3 dark:border-white/10" data-testid="pilotquant-full-report">
+          <summary className="cursor-pointer text-xs font-semibold">展開完整回測、樣本內及市場比較</summary>
+          <div className="mt-3 space-y-3">
+            <SectionSummary heading="全期間" report={calculation.report.total} />
+            <SectionSummary heading="前 70% · 樣本內" report={calculation.report.inSample} />
+            <SectionSummary heading="後 30% · 樣本外" report={calculation.report.outOfSample} />
+            <div className="rounded-xl border border-black/8 p-3 dark:border-white/10">
+              <h4 className="text-sm font-semibold">同期間台股加權價格指數比較</h4>
+              {benchmarkComparison ? <div className="mt-3 grid grid-cols-3 gap-2">
+                <Metric label="個股價格報酬" value={formatPercent(benchmarkComparison.stockReturn)} />
+                <Metric label="加權價格指數" value={formatPercent(benchmarkComparison.benchmarkReturn)} />
+                <Metric label="相對價格表現" value={formatPercent(benchmarkComparison.relative)} />
+              </div> : <p className="mt-2 text-xs text-black/50 dark:text-white/50">沒有完全相同日期的市場資料，不進行不同期間的比較。</p>}
+              <p className="mt-2 text-xs text-black/50 dark:text-white/50">指數對比僅為價格報酬，不含股利或成本，不能稱為 Alpha。</p>
+            </div>
           </div>
         </details>
-      </CardContent></Card>
-      <Card><CardContent className="space-y-4 p-4 md:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div><p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-[.14em] text-black/45 dark:text-white/45"><ChartNoAxesCombined size={14} /> Scenario path</p><h3 className="mt-1 text-lg font-semibold">未來價格成長情境</h3></div>
-          <div className="flex flex-wrap gap-1.5">{tradingHorizons.map(period => <button key={period} type="button" aria-pressed={horizon === period} onClick={() => setHorizon(period)} className={"min-h-9 rounded-full border px-3 text-xs font-semibold " + (horizon === period ? "border-[#315f49] bg-[#e7f1e9] text-[#245238] dark:bg-[#173426] dark:text-[#a9d7b7]" : "border-black/10 dark:border-white/10")}>{period === 21 ? "1月" : period === 63 ? "3月" : period === 126 ? "6月" : "1年"}</button>)}</div>
+      </CardContent></Card> : null}
+
+      {view === "future" ? <Card><CardContent className="space-y-3 p-3 md:p-5" id="pilotquant-panel-future" role="tabpanel" aria-labelledby="pilotquant-tab-future">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div><h3 className="text-base font-semibold">未來價格情境</h3><p className="text-xs text-black/45 dark:text-white/45">歷史抽樣 · 不等於預測目標價</p></div>
+          <div className="flex gap-1" role="group" aria-label="未來情境期間">
+            {tradingHorizons.map(period => <button key={period} type="button" aria-pressed={horizon === period} onClick={() => setHorizon(period)}
+              className={"min-h-9 rounded-full border px-2.5 text-xs font-semibold " + (horizon === period ? "border-[#315f49] bg-[#e7f1e9] text-[#245238] dark:bg-[#173426] dark:text-[#a9d7b7]" : "border-black/10 dark:border-white/10")}>
+              {period === 21 ? "1月" : period === 63 ? "3月" : period === 126 ? "6月" : "1年"}
+            </button>)}
+          </div>
         </div>
         {calculation.projectionError ? <p role="alert" className={warning}>{calculation.projectionError}</p> : null}
         {calculation.scenario ? <ScenarioChart scenario={calculation.scenario} horizon={horizon} /> : null}
-        <p className={warning}>重要：這些是由歷史價格變化所建立的機率情境，沒有納入未來營收、訂單、估值變化、法規、景氣或突發事件。股價可能落在全部模擬路徑之外，不能把 P90 當成「樂觀目標價」或將 P10 當成停損底線。</p>
-      </CardContent></Card>
+        <p className={warning}>P10／P50／P90 是歷史重抽樣的模擬分位數，不是可信度保證、投資目標價或停損區間；實際股價可能完全超出圖中範圍。</p>
+      </CardContent></Card> : null}
+
+      {view === "trades" ? <Card><CardContent className="space-y-3 p-3 md:p-5" id="pilotquant-panel-trades" role="tabpanel" aria-labelledby="pilotquant-tab-trades">
+        <div className="flex items-center justify-between gap-2"><h3 className="font-semibold">模擬成交紀錄</h3><Badge>{calculation.report.total.trades.length} 筆委託</Badge></div>
+        <p className="text-xs text-black/50 dark:text-white/50">完成交易 {calculation.report.total.completedTrades} 次 · 勝率 {formatPercent(calculation.report.total.winRatePct)} · 未平倉 {calculation.report.total.openShares} 股</p>
+        <div className="max-h-[55dvh] space-y-2 overflow-y-auto">
+          {calculation.report.total.trades.map((trade, index) =>
+            <div key={trade.date + ":" + index} className="rounded-xl border border-black/8 bg-black/[.015] p-3 text-xs dark:border-white/8 dark:bg-white/[.025]">
+              <div className="flex items-center justify-between gap-2"><strong>{trade.action} · {trade.shares} 股</strong><span>{trade.date}</span></div>
+              <p className="mt-1 text-black/50 dark:text-white/50">模擬成交價 {formatMoney(trade.price)} · 訊號日 {trade.signalDate} · 費用 {formatMoney(trade.fees + trade.tax)}</p>
+            </div>
+          )}
+          {!calculation.report.total.trades.length ? <p className="py-7 text-center text-xs text-black/50 dark:text-white/50">此期間沒有觸發交易；不代表模型沒有風險。</p> : null}
+        </div>
+      </CardContent></Card> : null}
     </> : null}
 
-    <Card><CardContent className="space-y-2 p-4">
-      <h3 className="text-sm font-semibold">延伸：完整 PilotQuant 工作台</h3>
-      <p className="text-xs leading-5 text-black/50 dark:text-white/50">進階 CSV 匯入、多標的比較及獨立策略回測保留在 PilotQuant v0.2 工作台；個股原生分析已經整合在此頁。</p>
-      <a href={advancedUrl} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-black/10 px-3 text-xs font-semibold dark:border-white/10">開啟完整量化工作台 <ArrowUpRight size={14} /></a>
-    </CardContent></Card>
+    <details className="rounded-xl border border-black/8 p-3 text-xs dark:border-white/10" data-testid="pilotquant-methodology">
+      <summary className="flex min-h-7 cursor-pointer items-center justify-between font-semibold">
+        <span>資料來源、風險與進階工具</span><ChevronDown size={16} aria-hidden="true" />
+      </summary>
+      <div className="mt-3 space-y-2 leading-5 text-black/55 dark:text-white/55">
+        {history && index ? <p>{history.market} 官方收盤資料 · {history.startDate}～{history.endDate} · 快取 {index.generatedAt.slice(0, 10)}</p> : null}
+        <p>第 t 日收盤訊號僅在下一交易日收盤模擬成交，含可調整交易費與 T+2 資金限制；沒有盤中止損或真實下單。</p>
+        <p>資料未還原除權息；固定 70/30 檢查不是多折 Walk-forward，不能把歷史績效當成未來獲利能力。</p>
+        <a href={advancedUrl} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-black/10 px-3 font-semibold dark:border-white/10">
+          開啟進階工作台 · 多標的／CSV <ArrowUpRight size={14} />
+        </a>
+      </div>
+    </details>
   </div>;
 }

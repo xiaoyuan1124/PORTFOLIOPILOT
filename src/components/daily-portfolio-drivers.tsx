@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, ArrowRight, BellRing, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { localDateKey } from "@/lib/calc";
 import { money, percent } from "@/lib/utils";
@@ -14,8 +14,7 @@ import { Badge, Card, CardContent, CardHeader, GhostButton, InfoDisclosure } fro
 import { PortfolioContributionChart } from "./portfolio-contribution-chart";
 
 export function DailyPortfolioDrivers({
-  state,
-  onNavigate
+  state
 }: {
   state: AppState;
   onNavigate?: (section: "portfolio" | "research", researchKey?: string) => void;
@@ -127,6 +126,35 @@ export function DailyPortfolioDrivers({
           </div>
         ) : null}
 
+        <div className="grid grid-cols-2 gap-2" data-ux-role="daily-key-metrics">
+          <div className="rounded-xl border border-black/8 px-3 py-2.5 text-xs dark:border-white/10">
+            <span className="text-black/50 dark:text-white/50">當日持倉影響估算</span>
+            <strong className="mt-1 block text-base tabular-nums">{drivers?.latestDate ? money(drivers.totalImpactTwd) : "—"}</strong>
+            <span className="mt-1 block text-[11px] text-black/40 dark:text-white/40">{drivers?.latestDate ?? "等待官方收盤資料"} · 非實際損益</span>
+          </div>
+          <div className="rounded-xl border border-black/8 px-3 py-2.5 text-xs dark:border-white/10">
+            <span className="text-black/50 dark:text-white/50">今日持股重大訊息</span>
+            <strong className="mt-1 block text-base tabular-nums">{events ? todayEvents.length : "—"} 筆</strong>
+            <span className="mt-1 block text-[11px] text-black/40 dark:text-white/40">{events ? today : "官方資料暫不可用"}</span>
+          </div>
+        </div>
+        {drivers?.excludedDifferentDate ? (
+          <p className="flex items-start gap-1.5 text-[11px] leading-5 text-[#8b6538] dark:text-[#d4ad7c]">
+            <AlertTriangle className="mt-0.5 shrink-0" size={13} />
+            有 {drivers.excludedDifferentDate} 檔官方報價資料日與最新交易日不同，未混入本次持倉影響合計。
+          </p>
+        ) : null}
+
+        {drivers?.unmatchedHoldings ? (
+          <p className="text-[11px] leading-5 text-black/35 dark:text-white/35">
+            另有 {drivers.unmatchedHoldings} 檔台股因缺少可比較漲跌、來源不明或市場代號歧義而未估算；系統不會猜測。
+          </p>
+        ) : null}
+
+
+        <details className="rounded-xl border border-black/8 px-3 py-2.5 text-xs dark:border-white/10" data-ux-role="daily-drivers-details">
+          <summary className="min-h-8 cursor-pointer font-semibold">展開每日持倉歸因、現金流、族群與計算方法</summary>
+          <div className="mt-3 space-y-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl bg-[#edf2ee] p-4 dark:bg-[#17201b]">
             <span className="text-xs text-black/45 dark:text-white/45">台股持倉影響估算</span>
@@ -169,19 +197,6 @@ export function DailyPortfolioDrivers({
           </div>
         </div>
 
-        {drivers?.excludedDifferentDate ? (
-          <p className="flex items-start gap-1.5 text-[11px] leading-5 text-[#8b6538] dark:text-[#d4ad7c]">
-            <AlertTriangle className="mt-0.5 shrink-0" size={13} />
-            有 {drivers.excludedDifferentDate} 檔官方報價資料日與最新交易日不同，未混入本次持倉影響合計。
-          </p>
-        ) : null}
-
-        {drivers?.unmatchedHoldings ? (
-          <p className="text-[11px] leading-5 text-black/35 dark:text-white/35">
-            另有 {drivers.unmatchedHoldings} 檔台股因缺少可比較漲跌、來源不明或市場代號歧義而未估算；系統不會猜測。
-          </p>
-        ) : null}
-
         {drivers?.rows.length ? (
           <div className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -223,17 +238,9 @@ export function DailyPortfolioDrivers({
           </div>
         ) : null}
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          <button onClick={() => onNavigate?.("research")} className="flex min-h-14 items-center justify-between rounded-2xl border border-black/6 px-4 text-left text-sm font-semibold transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]">
-            <span className="flex items-center gap-2"><BellRing size={16} />查看重大訊息與族群</span><ArrowRight size={15} />
-          </button>
-          <button onClick={() => onNavigate?.("portfolio")} className="flex min-h-14 items-center justify-between rounded-2xl border border-black/6 px-4 text-left text-sm font-semibold transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]">
-            <span className="flex items-center gap-2"><Activity size={16} />檢查現金流與績效</span><ArrowRight size={15} />
-          </button>
-          <div className="flex min-h-14 items-center rounded-2xl border border-black/6 px-4 text-[11px] leading-5 text-black/38 dark:border-white/8 dark:text-white/38">
-            <Badge>最新交易日</Badge><span className="ml-2">{drivers?.latestDate ?? "等待官方行情"}</span>
+
           </div>
-        </div>
+        </details>
       </CardContent>
     </Card>
   );

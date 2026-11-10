@@ -57,6 +57,23 @@ try {
     const nav = page.locator(".app-mobile-nav");
 
     await checkLayout(page, viewport.name, "home");
+    const onboarding = page.locator('[data-ux-role="home-first-run"]');
+    if (await onboarding.count()) {
+      assert.equal(await onboarding.locator('[data-ux-role="home-first-run-help"]').getAttribute("open"), null,
+        "first-run instructions are optional details");
+      await onboarding.getByRole("button", { name: /新增持股/ }).waitFor();
+    }
+    const homeSecondary = page.locator('[data-ux-role="home-allocation-details"]');
+    await homeSecondary.waitFor();
+    assert.equal(await homeSecondary.getAttribute("open"), null, "secondary holdings and sectors should not dominate the first viewport");
+    const dailySecondary = page.locator('[data-ux-role="daily-drivers-details"]');
+    await dailySecondary.waitFor();
+    assert.equal(await dailySecondary.getAttribute("open"), null, "daily attribution should be summarized by default");
+    await page.locator('[data-ux-role="daily-key-metrics"]').waitFor();
+    await homeSecondary.locator("summary").click();
+    await page.getByRole("heading", { name: "帳戶分布" }).waitFor();
+    await checkLayout(page, viewport.name, "home-allocations-expanded");
+    await homeSecondary.locator("summary").click();
 
     await nav.getByRole("button", { name: "投資組合", exact: true }).click();
     await page.getByRole("heading", { name: "投資組合" }).waitFor();
@@ -147,30 +164,84 @@ try {
     await page.getByRole("heading", { name: "策略實驗室", level: 1, exact: true }).waitFor();
     await page.getByRole("heading", { name: "2317 · 鴻海", level: 4, exact: true }).waitFor();
     await checkLayout(page, viewport.name, "strategy-lab");
+    const strategyConfig = page.locator('[data-ux-section="strategy-parameters"]');
+    assert.equal(await strategyConfig.getAttribute("open"), null, "strategy configuration defaults to collapsed");
+    const watchCards = page.locator('[data-testid="watch-target-card"]');
+    assert.equal(await watchCards.count(), 6, "default watchlist must retain all six research stocks");
+    assert.equal(await page.locator('[data-testid="watch-target-details"][open]').count(), 0, "detailed indicators must not all be expanded");
+    await watchCards.first().locator('[data-testid="watch-target-details"] > summary').click();
+    await watchCards.first().locator('[data-testid="watch-target-details"] > div > p').filter({ hasText: "MACD" }).waitFor();
+    await checkLayout(page, viewport.name, "strategy-watch-details-expanded");
+    await watchCards.first().locator('[data-testid="watch-target-details"] > summary').click();
+    await strategyConfig.locator("summary").click();
     await page.getByRole("button", { name: "複製為新策略" }).click();
     assert.equal(await page.locator("select").first().locator("option").count(), 2);
     await checkLayout(page, viewport.name, "strategy-lab-new-profile");
     // New V0.93 backtesting report must fit narrow iPhone screens and
     // fail closed without published official OHLCV.
+    await page.locator('[data-ux-section="legacy-backtest"] > summary').click();
     await page.getByRole("heading", { name: "歷史回測報告", exact: true }).waitFor();
     await checkLayout(page, viewport.name, "strategy-backtest-report");
+    await page.locator('[data-ux-section="legacy-backtest"] > summary').click();
+    await strategyConfig.locator("summary").click();
 
-    // PilotQuant is now native to PortfolioPilot, not a detached website.
-    // Exercise stock 2330 official close history, holdout backtest and
-    // forward scenario paths on every supported iPhone-size viewport.
+    // Regression: the former very tall Strategy Lab may leave scroll offset
+    // under the sticky header when swapping to its shorter quant subtab.
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await page.getByRole("button", { name: "PilotQuant 量化研究", exact: true }).click();
-    await page.getByRole("heading", { name: "個股歷史回測 × 成長情境路徑" }).waitFor();
-    await page.getByRole("heading", { name: "過往策略回測", exact: true }).waitFor({ timeout: 20000 });
-    await page.getByRole("heading", { name: "未來價格成長情境", exact: true }).waitFor();
-    await checkLayout(page, viewport.name, "pilotquant-native");
+    await page.getByRole("heading", { name: "個股量化研究", exact: true }).waitFor();
+    await page.getByRole("tabpanel", { name: "回測摘要" }).waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => window.scrollY <= 2);
+    const topGeometry = await page.evaluate(() => {
+      const appHeader = document.querySelector(".app-topbar");
+      const top = document.querySelector('[data-testid="pilotquant-top"]');
+      return { headerBottom: appHeader?.getBoundingClientRect().bottom ?? -1,
+        topStart: top?.getBoundingClientRect().top ?? -1 };
+    });
+    assert.ok(topGeometry.topStart >= topGeometry.headerBottom - 2,
+      `${viewport.name}: quant page start is obscured by sticky app header: ${JSON.stringify(topGeometry)}`);
+    const advanced = page.locator('[data-testid="pilotquant-advanced"]');
+    assert.equal(await advanced.getAttribute("open"), null, "advanced params must default closed");
+    const source = page.locator('[data-testid="pilotquant-source"]');
+    await source.waitFor();
+    assert.match(await source.innerText(), /2330/);
+    const metricSummary = page.locator('[data-testid="pilotquant-summary"]');
+    assert.equal(await metricSummary.locator(":scope > div").count(), 4,
+      "default research screen should show only four key metrics");
+    await checkLayout(page, viewport.name, "pilotquant-compact");
+
+    // Disclose detail only on demand, without losing the selected stock.
+    await page.locator('[data-testid="pilotquant-full-report"] > summary').click();
+    await page.getByText("前 70% · 樣本內", { exact: true }).waitFor();
+    await checkLayout(page, viewport.name, "pilotquant-details-expanded");
+    await page.locator('[data-testid="pilotquant-full-report"] > summary').click();
+
+    await page.getByRole("tab", { name: "未來情境" }).click();
+    await page.getByRole("tabpanel", { name: "未來情境" }).waitFor();
     await page.getByRole("button", { name: "1年", exact: true }).click();
     await checkLayout(page, viewport.name, "pilotquant-year-scenarios");
+    await page.getByRole("tab", { name: "交易明細" }).click();
+    await page.getByRole("tabpanel", { name: "交易明細" }).waitFor();
+    await checkLayout(page, viewport.name, "pilotquant-trades");
+
+    // Return to the old strategy tab; scroll must also reset here.
     await page.getByRole("button", { name: "觀察價與舊策略", exact: true }).click();
-    await page.getByRole("heading", { name: "歷史回測報告", exact: true }).waitFor();
+    await page.getByRole("heading", { name: "自訂股票研究清單", exact: true }).waitFor();
+    await page.waitForFunction(() => window.scrollY <= 2);
 
     await nav.getByRole("button", { name: "我的", exact: true }).click();
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
+    await page.locator('[data-ux-role="settings-backup-entry"]').waitFor();
+    const dataTools = page.locator('[data-ux-role="settings-data-tools"]');
+    await dataTools.waitFor();
+    assert.equal(await dataTools.getAttribute("open"), null, "low-frequency CSV tools should be folded");
+    assert.equal(await page.locator('[data-ux-role="settings-danger"]').getAttribute("open"), null, "destructive actions should be folded");
     await checkLayout(page, viewport.name, "settings");
+    await dataTools.locator("summary").first().click();
+    await page.getByRole("heading", { name: "完整備份" }).waitFor();
+    await page.getByRole("heading", { name: "持股 CSV" }).waitFor();
+    await checkLayout(page, viewport.name, "settings-data-tools-expanded");
+    await dataTools.locator("summary").first().click();
 
     // Theme cycling: keep existing forest-dark as the second option,
     // then enter the new screenshot-inspired TradeScope palette.
@@ -270,7 +341,12 @@ try {
     };
   });
   assert.equal(desktopPalette.sidebar, "rgb(8, 11, 10)", "desktop rail must match black trading-terminal palette");
-  assert.equal(desktopPalette.active, "rgb(209, 167, 94)", "desktop active tab must use champagne gold");
+  // Tailwind can animate text color between theme modes. Verify the stable
+  // computed state, not the first animation frame after applying the class.
+  await desktopPage.waitForFunction(() => {
+    const active = document.querySelector('.app-desktop-sidebar nav button[aria-current="page"]');
+    return active && getComputedStyle(active).color === "rgb(209, 167, 94)";
+  }, undefined, { timeout: 2500 });
   assert.ok(desktopPalette.contentWidth <= desktopPalette.viewportWidth + 2, "desktop TradeScope must not horizontally overflow");
   await desktopPage.screenshot({ path: "mobile-artifacts/desktop-tradescope.png", fullPage: false, animations: "disabled" });
   await desktop.close();

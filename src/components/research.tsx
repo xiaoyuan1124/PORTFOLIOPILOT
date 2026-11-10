@@ -19,7 +19,7 @@ type ResearchArea = "security" | "market" | "strategy" | "notes";
 const areas: Array<{ key: ResearchArea; label: string; defaultTab: ResearchTab }> = [
   { key: "security", label: "標的", defaultTab: "snapshot" },
   { key: "market", label: "市場", defaultTab: "materialEvents" },
-  { key: "strategy", label: "策略", defaultTab: "watchlist" },
+  { key: "strategy", label: "選股", defaultTab: "watchlist" },
   { key: "notes", label: "筆記", defaultTab: "journal" }
 ];
 
