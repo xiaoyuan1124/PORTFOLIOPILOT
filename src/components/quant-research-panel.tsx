@@ -358,6 +358,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
         {history && index ? <p>{history.market} 官方收盤資料 · {history.startDate}～{history.endDate} · 快取 {index.generatedAt.slice(0, 10)}</p> : null}
         <p>訊號次日收盤模擬成交；含費稅、滑價與 T+2 限制，無實際下單。</p>
         <p>價格未還原權息；70/30 非多折驗證，歷史績效不保證未來。</p>
+        {calculation.scenario ? <p>情境模型：最近 {calculation.scenario.sampleDays} 日報酬、5 日區塊重抽樣、固定亂數種子、{calculation.scenario.observations} 條路徑。P10／P50／P90 非校準信賴區間。</p> : null}
         <a href={advancedUrl} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-black/10 px-3 font-semibold dark:border-white/10">
           開啟進階工作台 · 多標的／CSV <ArrowUpRight size={14} />
         </a>
