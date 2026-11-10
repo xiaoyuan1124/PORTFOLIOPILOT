@@ -141,9 +141,7 @@ export function EtfResearch({
       <div className="rounded-[24px] border border-black/6 bg-[#1f332a] p-5 text-white shadow-sm dark:border-white/8 dark:bg-[#dce9e2] dark:text-[#122018]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">ETF Research · Look-through + Attribution</p>
-            <h3 className="mt-2 text-xl font-semibold">從 ETF 一路看到是哪幾家公司在拉抬／拖累</h3>
-            <p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">先看最近交易日影響、成份結構與異動，再展開完整資料。</p>
+            <h3 className="mt-2 text-xl font-semibold">ETF 成分與績效</h3>
             <InfoDisclosure summary="資料來源與同步方式" className="mt-3 border-white/15 bg-white/[.06] dark:border-black/10 dark:bg-black/[.04]">
               成份權重使用目前保存的可追溯資料；支援的持有台灣 ETF 會在「同步最新資料」時同步官方發行人成份。當日歸因只使用同一最新交易日、可唯一匹配的官方台股收盤漲跌，缺資料不補猜。
             </InfoDisclosure>
@@ -215,7 +213,7 @@ export function EtfResearch({
           <CardContent className="py-10 text-center">
             <p className="text-sm font-semibold">目前沒有 ETF 成份資料</p>
             <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
-              目前尚未取得可研究的官方或本機 ETF 成份；請檢查網路並按「重新整理」。未支援的 ETF 可到「ETF 穿透」以 CSV 匯入；不會從名稱推測成份。
+              尚無成分資料。可重整或至「ETF 穿透」匯入 CSV。
             </p>
           </CardContent>
         </Card>
@@ -244,9 +242,7 @@ export function EtfResearch({
             <CardContent>
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Daily attribution</p>
-                  <h3 className="mt-1 text-lg font-semibold">最近交易日哪些成份股在拉抬／拖累 {selected.etfSymbol}？</h3>
-                  <p className="mt-2 max-w-3xl text-xs leading-5 text-black/45 dark:text-white/45">先看正負貢獻最大的成份，點成份股可直接進一步研究。</p>
+                  <h3 className="mt-1 text-lg font-semibold">{selected.etfSymbol} 當日成分貢獻</h3>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-semibold tabular-nums">{result.attributionDate ? fmtPct(result.estimatedEtfReturnPct) : "—"}</p>
@@ -261,7 +257,7 @@ export function EtfResearch({
               {result.attributionUnresolvedWeightPct > 0 ? (
                 <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-5 text-[#8b6538] dark:text-[#d4ad7c]">
                   <AlertTriangle className="mt-0.5 shrink-0" size={13} />
-                  另有約 {result.attributionUnresolvedWeightPct.toFixed(1)}% 的已匯入成份權重未納入本次日歸因，可能是 US 成份、缺行情、交易日不同或代號無法唯一匹配。
+                  {result.attributionUnresolvedWeightPct.toFixed(1)}% 權重因缺行情或日期／代號無法匹配，未納入歸因。
                 </p>
               ) : null}
 

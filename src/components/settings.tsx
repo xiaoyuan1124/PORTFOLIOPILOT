@@ -364,7 +364,6 @@ export function Settings({
         <CardContent className="space-y-3 p-4 md:p-5">
           <div>
             <h2 className="text-lg font-semibold">外觀主題</h2>
-            <p className="mt-1 text-xs leading-5 text-black/50 dark:text-white/50">原有淺色與深色完整保留，新增參考 TradeScope 的「曜金交易室」；選擇後立即套用並保存在這台裝置上。</p>
           </div>
           <div className="grid grid-cols-3 gap-2" role="group" aria-label="外觀主題">
             {APP_THEME_MODES.map((mode) => {
@@ -455,7 +454,7 @@ export function Settings({
                 ) : null}
               </div>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-black/50 dark:text-white/50">
-                只檢查 PortfolioPilot 自己能驗證的資料品質，不評估投資好壞，也不把缺資料猜成正常值。
+                檢查資料完整性與來源。
               </p>
 
               {integrity.items.length ? (
@@ -528,10 +527,7 @@ export function Settings({
             <div>
               <h3 className="font-semibold">零成本本機模式</h3>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-black/50 dark:text-white/50">
-                PortfolioPilot 現在不需要帳號、Supabase 或任何付費 API。持股、ETF 成分來源、交易／現金流、筆記與每日淨值快照都存在這台裝置。
-              </p>
-              <p className="mt-2 text-xs text-black/38 dark:text-white/38">
-                換手機前先匯出 JSON 備份；持股也可另外輸出 CSV。
+                持股、交易、筆記與快照只儲存在本機。
               </p>
             </div>
           </div>
@@ -550,9 +546,6 @@ export function Settings({
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold">支援與隱私</h3>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-black/50 dark:text-white/50">
-                查看 PortfolioPilot 的公開隱私權政策與技術支援入口。Native App 與 GitHub Pages 共用同一份內容。
-              </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <a
                   href={`${appBasePath}/privacy/`}
@@ -577,7 +570,7 @@ export function Settings({
 
       <div className="lg:col-span-2 grid gap-2" data-ux-role="settings-backup-entry">
         <Button onClick={exportJson}><Download size={16} />匯出完整 JSON 備份</Button>
-        <p className="text-xs text-black/45 dark:text-white/45">換手機或匯入資料前建議先備份；本機資料不會自動上傳雲端。</p>
+        <p className="text-xs text-black/45 dark:text-white/45">換手機或匯入前請備份；資料僅存於本機。</p>
       </div>
       <details className="lg:col-span-2 rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-data-tools"
         open={pendingHoldingsCsv || pendingTradeCsv || holdingsImportUndo ? true : undefined}>
@@ -589,10 +582,9 @@ export function Settings({
           <Card className="lg:col-span-2"><CardContent>
           <h3 className="font-semibold">完整備份</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
-            JSON 會包含持股、帳戶、自選清單、ETF 成分來源、交易／現金流、投資筆記、匯率、DEMO/個人模式與歷史淨值快照，匯入時會先用 schema 驗證格式。
+            完整備份包含持股、交易、設定及歷史快照；匯入時驗證格式。
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <p className="text-xs text-black/45 dark:text-white/45">完整備份可使用上方的單一匯出入口。</p>
             <GhostButton onClick={() => jsonRef.current?.click()}><Upload size={16} />匯入 JSON</GhostButton>
             <input ref={jsonRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => importJson(e.target.files?.[0])} />
           </div>
@@ -603,7 +595,7 @@ export function Settings({
         <CardContent>
           <h3 className="font-semibold">持股 CSV</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
-            適合用 Excel / Google Sheets 編輯大量持股。新版 CSV 含 account 欄位，匯入時以「市場＋代號＋帳戶」合併，因此同一檔股票可分開存在不同券商。
+            可用試算表編輯；依市場、代號及帳戶合併持股。
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={exportCsv}><FileSpreadsheet size={16} />匯出 CSV</Button>
@@ -622,7 +614,7 @@ export function Settings({
         <CardContent>
           <h3 className="font-semibold">台灣券商庫存 CSV</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
-            給券商「目前庫存／持有部位」匯出檔使用，不是逐筆成交明細。系統辨識常見中文欄名，只要求證券代號、持有股數與平均成本；名稱、股票／ETF 類型、產業與目前價格會用 TWSE／TPEx 官方快取確認後補齊。
+            支援券商庫存 CSV，需包含證券代號、股數與平均成本；其餘資料以官方快取補齊。
           </p>
           <div className="mt-4 rounded-2xl border border-black/6 bg-black/[.018] p-3.5 text-xs leading-5 text-black/45 dark:border-white/8 dark:bg-white/[.025] dark:text-white/45">
             若同一代號在不同市場出現、官方標的找不到、數值無效或檔案內有重複庫存，整份匯入會停止，不會猜測或寫入部分資料。成交明細 CSV 因沒有平均成本也會被拒絕。
@@ -950,7 +942,7 @@ export function Settings({
         <div className="mt-2">
           <Card><CardContent>
           <h3 className="font-semibold">匯率設定</h3>
-          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">美股資產依 USD/TWD 折算。零成本階段先手動填，避免依賴不穩定或授權不清楚的免費匯率 API。</p>
+          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">美股資產依手動設定的匯率換算。</p>
           <label className="mt-5 block text-xs font-semibold text-black/45 dark:text-white/45">USD / TWD</label>
           <input
             className="field mt-2 max-w-[220px]"
@@ -980,8 +972,7 @@ export function Settings({
               }
             }}
           />
-          <p className="mt-2 text-xs text-black/35 dark:text-white/35">可先清空再完整輸入；離開欄位或按 Enter 後才會儲存，避免輸入途中把匯率誤改成 1。</p>
-          <p className="mt-3 text-xs text-black/35 dark:text-white/35">歷史快照：{state.snapshots.length.toLocaleString()} 筆</p>
+          <p className="mt-2 text-xs text-black/35 dark:text-white/35">離開欄位或按 Enter 儲存。</p>
         </CardContent>
       </Card>
 
@@ -993,7 +984,7 @@ export function Settings({
         <div className="mt-2">
           <Card><CardContent>
           <h3 className="font-semibold">資料重設</h3>
-          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">新安裝預設為空白個人模式，不會自動塞示範持股。只有你主動按下「示範資料」才會進入 DEMO，首頁與頂部會持續標示。</p>
+          <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">清空會刪除本機資料；載入示範資料將覆蓋現有內容。</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <GhostButton onClick={() => {
               if (!window.confirm("確定要清空本機的持股、ETF 成分來源、交易／現金流、筆記與淨值歷史嗎？建議先匯出 JSON。")) return;

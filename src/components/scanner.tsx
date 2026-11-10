@@ -220,10 +220,8 @@ export function Scanner({ state }: { state: AppState }) {
       <div className="rounded-[24px] border border-black/6 bg-[#1f332a] p-5 text-white shadow-sm dark:border-white/8 dark:bg-[#dce9e2] dark:text-[#122018]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">Official Scanner · 4 / 4 Gates</p>
-            <h3 className="mt-2 text-xl font-semibold">成長＋毛利改善＋雙法人共振</h3>
-            <p className="mt-2 max-w-2xl text-sm leading-6 opacity-70">全部條件皆來自 TWSE、TPEx 或 MOPS 官方公開資料。你可調整營收與法人門檻；季度毛利率仍要求最近三季嚴格連續改善，避免把條件調成黑箱分數。</p>
-            <p className="mt-2 text-xs opacity-60">目前：3 月營收 YoY &gt; {thresholds.revenueYoyMinPct}% · 外資 10D &gt; {number(thresholds.foreignNet10dMin)} 股 · 投信 10D &gt; {number(thresholds.trustNet10dMin)} 股</p>
+            <h3 className="mt-2 text-xl font-semibold">四條件選股</h3>
+            <p className="mt-2 text-xs opacity-60">近 3 月營收 YoY &gt; {thresholds.revenueYoyMinPct}% · 毛利近 3 季續升 · 外資 10D &gt; {number(thresholds.foreignNet10dMin)} 股 · 投信 10D &gt; {number(thresholds.trustNet10dMin)} 股</p>
           </div>
           <div className="text-right"><p className="text-3xl font-semibold">{loading ? "…" : error ? "—" : counts.pass}</p><p className="text-xs opacity-60">{loading ? "讀取官方 Gate" : "四關正式通過"}</p></div>
         </div>
@@ -247,7 +245,7 @@ export function Scanner({ state }: { state: AppState }) {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold">自訂 Scanner 門檻</p>
-              <p className="mt-1 text-xs leading-5 text-black/42 dark:text-white/42">只改變篩選門檻，不改資料來源、不產生買賣分數；重整頁面會回到產品預設值。</p>
+              <p className="mt-1 text-xs leading-5 text-black/42 dark:text-white/42">僅調整篩選條件，重新整理會還原預設。</p>
             </div>
             <GhostButton className="min-h-9 rounded-full px-3 text-xs" onClick={() => setThresholds({ ...defaultStrategyGateConfig })}>還原預設</GhostButton>
           </div>
@@ -297,7 +295,7 @@ export function Scanner({ state }: { state: AppState }) {
       {!error && warnings.length ? (
         <div className="rounded-2xl border border-[#b98b57]/20 bg-[#f8f1e8] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/15 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
           <p className="font-semibold">Scanner 部分官方資料暫時不可用</p>
-          <p className="mt-1 text-xs leading-5 opacity-80">其餘 Gate 仍照實顯示；缺少來源的 Gate 會標成「資料不足」，不會因單一資料源失敗而讓整頁消失。</p>
+          <p className="mt-1 text-xs leading-5 opacity-80">缺資料的條件標為「資料不足」，不會補猜。</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">
             {warnings.map((warning) => <li key={warning}>{warning}</li>)}
           </ul>
@@ -323,7 +321,7 @@ export function Scanner({ state }: { state: AppState }) {
             </div>
 
             <details className="group mt-4 rounded-2xl border border-black/6 dark:border-white/8">
-              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-black/65 dark:text-white/65">查看 Gate 實際數字、日期與官方來源</summary>
+              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-black/65 dark:text-white/65">查看條件明細與來源</summary>
               <div className="grid gap-3 border-t border-black/6 p-3 dark:border-white/8">
                 <GateDetail title={`最近 3 個月營收 YoY > ${thresholds.revenueYoyMinPct}%`} status={item.revenueGate.status} reason={item.revenueGate.reason} dataAsOf={item.revenueGate.dataAsOf} sources={item.revenueGate.sources}>
                   <div className="grid grid-cols-3 gap-2">
@@ -350,7 +348,7 @@ export function Scanner({ state }: { state: AppState }) {
         ))}
       </div>
 
-      {!loading && !error && !visible.length ? <p className="py-14 text-center text-sm text-black/40 dark:text-white/40">目前沒有符合顯示條件的公司。可切換「差一關」或「全部狀態」，也可放寬自訂門檻。</p> : null}
+      {!loading && !error && !visible.length ? <p className="py-14 text-center text-sm text-black/40 dark:text-white/40">目前沒有符合條件的公司。可調整篩選。</p> : null}
     </div>
   );
 }

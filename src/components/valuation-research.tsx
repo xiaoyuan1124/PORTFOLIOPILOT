@@ -83,9 +83,8 @@ export function ValuationResearch({ state }: { state: AppState }) {
           <div className="flex min-w-0 items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]"><Scale size={18} /></div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Official Valuation · TWSE + TPEx</p>
               <h3 className="mt-1 text-xl font-semibold">本益比、股價淨值比、殖利率</h3>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-black/55 dark:text-white/55">直接使用交易所官方快照；空白官方欄位保留為「—」，不自行猜 EPS、淨值或股利，也不把估值比率轉成買賣分數。</p>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-black/55 dark:text-white/55">交易所官方數據；缺值顯示「—」，不推估。</p>
             </div>
           </div>
           <div className="text-right text-sm text-black/45 dark:text-white/45"><p>上市 {counts.twse}</p><p>上櫃 {counts.tpex}</p><p>持有可對應 {counts.held}</p></div>

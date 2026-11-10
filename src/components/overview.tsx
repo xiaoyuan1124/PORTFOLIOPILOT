@@ -65,7 +65,7 @@ export function Overview({
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
           <div>
             <p className="text-sm font-semibold">目前是 DEMO 示範資料</p>
-            <p className="mt-0.5 text-xs opacity-75">所有持股、現金流與淨值都是模擬內容，不會被當成你的真實資產。</p>
+            <p className="mt-0.5 text-xs opacity-75">以下為示範數據，非真實資產。</p>
           </div>
           <GhostButton onClick={() => onNavigate?.("portfolio")} className="border-current/15 bg-transparent">查看示範持股 <ArrowRight size={15} /></GhostButton>
         </div>
@@ -77,16 +77,16 @@ export function Overview({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <h2 className="text-base font-semibold">先建立第一筆持股</h2>
-                <p className="mt-1 text-xs leading-5 text-black/50 dark:text-white/50">不用補歷史交易，只需證券代號、股數、平均成本與帳戶。</p>
+                <p className="mt-1 text-xs leading-5 text-black/50 dark:text-white/50">輸入代號、股數與成本即可開始。</p>
               </div>
               <GhostButton onClick={() => onNavigate?.("portfolio")} className="shrink-0">新增持股 <ArrowRight size={15} /></GhostButton>
             </div>
             <details className="rounded-xl border border-black/8 px-3 py-2 text-xs dark:border-white/10" data-ux-role="home-first-run-help">
               <summary className="min-h-7 cursor-pointer font-semibold">查看完整建立步驟（3 步）</summary>
               <ol className="mt-2 list-decimal space-y-1 pl-4 leading-5 text-black/55 dark:text-white/55">
-                <li>輸入代號或名稱，台股會嘗試帶入官方標的資料</li>
-                <li>確認股數、實際平均成本與券商帳戶</li>
-                <li>更新官方收盤價，再從持股進入研究</li>
+                <li>輸入證券代號</li>
+                <li>填入股數、成本及帳戶</li>
+                <li>更新價格並查看績效</li>
               </ol>
             </details>
           </CardContent>
@@ -143,7 +143,7 @@ export function Overview({
               <span>{snapshots.length} 筆快照 · {range === "ALL" ? "全部期間" : ranges.find((item) => item.key === range)?.label}</span>
               {period ? <span className="tabular-nums">{period.firstDate} 起淨值變動：{percent(period.pct)}</span> : null}
             </div>
-            <p className="mt-2 text-[11px] leading-5 text-black/32 dark:text-white/32">淨值變動會受入出金影響，不等同投資報酬率；精確績效請看「投資組合 → 績效」。</p>
+            <p className="mt-2 text-[11px] leading-5 text-black/32 dark:text-white/32">淨值含入出金；投資報酬率請看「績效」。</p>
             {futureSnapshotCount > 0 ? (
               <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-[#8b6538] dark:text-[#d4ad7c]">
                 <AlertTriangle className="mt-0.5 shrink-0" size={13} />
@@ -200,11 +200,11 @@ export function Overview({
             </div>
           </div>
           <details className="rounded-xl border border-black/8 px-3 py-2 dark:border-white/10" data-ux-role="home-trust-details">
-            <summary className="min-h-7 cursor-pointer text-xs font-semibold">資料來源、曝險計算與重要限制</summary>
+            <summary className="min-h-7 cursor-pointer text-xs font-semibold">計算依據</summary>
             <div className="mt-2 space-y-2 text-xs leading-5 text-black/55 dark:text-white/55">
-              <p>最大公司曝險包含直接部位與 ETF 已知成分股，並非單一券商帳面比例。</p>
-              <p>台股資料來源為 TWSE、TPEx、MOPS 研究快取；個人資產淨值仍取決於你登錄的股數、成本、價格及匯率。</p>
-              <p>Scanner、估值與法人流向只供研究，不是自動買賣評分或下單訊號。</p>
+              <p>曝險包含直接持股與 ETF 已知成分股。</p>
+              <p>台股資料來源：TWSE／TPEx／MOPS。資產依輸入部位與匯率估算。</p>
+              <p>研究數據不代表買賣訊號。</p>
             </div>
           </details>
         </CardContent>
@@ -230,7 +230,7 @@ export function Overview({
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
             {accounts.slice(0, 6).map((item) => <div key={item.name}><div className="mb-2 flex items-center justify-between gap-3 text-sm"><span className="truncate font-medium">{item.name}</span><span className="shrink-0 tabular-nums text-black/50 dark:text-white/50">{money(item.value)} · {item.pct.toFixed(1)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/8"><div className="h-full rounded-full bg-[#456b58]" style={{ width: `${Math.max(item.pct, 2)}%` }} /></div></div>)}
-            {!accounts.length ? <p className="py-6 text-center text-sm text-black/40 dark:text-white/40">新增部位後顯示帳戶分布。</p> : null}
+            {!accounts.length ? <p className="py-6 text-center text-sm text-black/40 dark:text-white/40">尚無帳戶資料。</p> : null}
           </CardContent>
         </Card>
 
@@ -243,8 +243,8 @@ export function Overview({
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
             {sectors.slice(0, 6).map((item) => <div key={item.key}><div className="mb-2 flex items-center justify-between gap-3 text-sm"><span className="truncate font-medium">{item.label}</span><span className="shrink-0 tabular-nums text-black/50 dark:text-white/50">{item.portfolioPct.toFixed(1)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/8"><div className="h-full rounded-full bg-[#456b58]" style={{ width: `${Math.max(item.portfolioPct, 2)}%` }} /></div></div>)}
-            {!sectors.length ? <p className="py-6 text-center text-sm text-black/40 dark:text-white/40">新增投資資產後顯示穿透配置。</p> : null}
-            {sectors.length ? <p className="text-[11px] leading-5 text-black/35 dark:text-white/35">已合併直接持股與 ETF 已知成份 · 證券曝險覆蓋 {risk.riskCoveragePct.toFixed(1)}%</p> : null}
+            {!sectors.length ? <p className="py-6 text-center text-sm text-black/40 dark:text-white/40">尚無配置資料。</p> : null}
+            {sectors.length ? <p className="text-[11px] leading-5 text-black/35 dark:text-white/35">已知成分覆蓋 {risk.riskCoveragePct.toFixed(1)}%</p> : null}
           </CardContent>
         </Card>
 

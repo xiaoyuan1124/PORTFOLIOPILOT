@@ -32,7 +32,7 @@ function TargetEditor({
   const [draft, setDraft] = useState(target);
   return (
     <details className="mt-3 rounded-xl border border-black/8 p-3 dark:border-white/10">
-      <summary className="cursor-pointer text-xs font-semibold">編輯觀察價、建立日期與備註</summary>
+      <summary className="cursor-pointer text-xs font-semibold">編輯觀察價</summary>
       <div className="mt-3 grid grid-cols-2 gap-3">
         <label className={fieldLabel}>第一階段（TWD）
           <input className="field" type="number" min="0.01" step="0.01" value={draft.firstPrice} onChange={(e) => setDraft({ ...draft, firstPrice: Number(e.target.value) })} />
@@ -208,7 +208,7 @@ export function StrategyLab({
       <div className="rounded-[24px] bg-[#1f332a] p-5 text-white dark:bg-[#dce9e2] dark:text-[#122018]">
         <p className="text-xs font-semibold tracking-[.14em] opacity-60">STRATEGY LAB · V0.92</p>
         <h2 className="mt-2 text-2xl font-semibold">投資策略實驗室</h2>
-        <p className="mt-2 text-sm leading-6 opacity-75">研究價位不是合理價，也不是買進建議。訊號必須同時具備完整資料與明確觸發理由；不足時不產生進場訊號。</p>
+        <p className="mt-2 text-sm leading-6 opacity-75">觀察價非買進建議；資料不足時不產生訊號。</p>
         <div className="mt-4 grid grid-cols-3 gap-2">
           <div><p className="text-2xl font-bold">{config.targets.length}</p><p className="text-xs opacity-65">觀察標的</p></div>
           <div><p className="text-2xl font-bold">{inZone}</p><p className="text-xs opacity-65">進入觀察價區</p></div>
@@ -223,7 +223,7 @@ export function StrategyLab({
         </summary>
       <Card className="mt-2"><CardContent className="space-y-3 p-4 md:p-5">
         <div className="flex flex-wrap justify-between gap-2">
-          <div><h3 className="font-semibold">策略 B · 超跌反彈</h3><p className="mt-1 text-xs text-black/45 dark:text-white/45">實驗參數，尚未完成回測，無保證勝率</p></div>
+          <div><h3 className="font-semibold">策略 B · 超跌反彈</h3><p className="mt-1 text-xs text-black/45 dark:text-white/45">僅供策略研究，績效無保證</p></div>
           <button className="min-h-10 rounded-xl border border-black/10 px-3 text-xs dark:border-white/10" onClick={() => setRefreshIndex((v) => v + 1)}>重新讀取官方快取</button>
         </div>
         <label className={fieldLabel}>儲存的策略版本
@@ -252,7 +252,7 @@ export function StrategyLab({
             </label>
           ))}
         </div>
-        <p className="text-xs leading-5 text-[#7b592f] dark:text-[#e3c18e]">台股歷史收盤可計算 RSI、SMA、EMA、MACD；六檔上市股票另外使用 TWSE 官方 OHLCV 驗證 KD 與成交量。若來源尚未建立、缺日或期別不足，顯示資料不足，不補模擬數據；所有價格未還原權息。</p>
+        <p className="text-xs leading-5 text-[#7b592f] dark:text-[#e3c18e]">技術指標以官方歷史資料計算；缺資料不產生訊號，價格未還原權息。</p>
         <div className="flex flex-wrap gap-2">
           <button className="min-h-11 rounded-xl bg-[#1f332a] px-4 text-sm font-semibold text-white" onClick={onOpenResearch}>前往官方 Scanner</button>
           <button className="min-h-11 rounded-xl border border-black/10 px-4 text-sm dark:border-white/10" onClick={onOpenRisk}>檢查持股風險</button>
@@ -267,7 +267,7 @@ export function StrategyLab({
       {quotesError && <p className="rounded-xl border border-amber-400/30 p-3 text-xs">官方收盤資料不可用：{quotesError}。歷史快取若存在仍會標示資料日期。</p>}
       {quoteCache?.offlineFallback && <p className="rounded-xl border border-amber-400/30 p-3 text-xs">目前使用離線快取，行情日期可能落後。</p>}
       {ohlcvError && <p className="rounded-xl border border-amber-400/30 p-3 text-xs">官方 OHLCV 尚未取得：{ohlcvError}；KD 與量能規則將維持資料不足。</p>}
-      {ohlcv?.failed.length ? <p className="rounded-xl border border-amber-400/30 p-3 text-xs">官方日 K 部分月份失敗（{ohlcv.failed.length} 筆）：請查看資料期別，缺漏區間不補造數據。</p> : null}
+      {ohlcv?.failed.length ? <p className="rounded-xl border border-amber-400/30 p-3 text-xs">日 K 資料缺漏（{ohlcv.failed.length} 筆）：缺漏期間不產生訊號。</p> : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
         {watched.map(({ target, key, close, asOf, zone, history, signal, metrics, isQuote, completeOhlcv, missingMonths }) => (
@@ -295,7 +295,7 @@ export function StrategyLab({
               回測 {target.symbol} <span aria-hidden="true">→</span>
             </button>
             <details className="mt-2 rounded-xl border border-black/8 px-3 py-2 text-xs dark:border-white/10" data-testid="watch-target-details">
-              <summary className="min-h-7 cursor-pointer font-semibold">完整指標、來源與編輯觀察價</summary>
+              <summary className="min-h-7 cursor-pointer font-semibold">指標與編輯</summary>
               <div className="mt-3 space-y-2">
                 <p className="text-black/50 dark:text-white/50">市場 {target.venue} · 建立 {target.createdAt} · {isQuote ? "TWSE／TPEx 官方收盤快取" : "歷史收盤快取"} · {completeOhlcv ? "完整未還原權息日 K" : "僅收盤資料／日 K 不足"}</p>
                 <p>RSI {number(metrics?.rsi)} · KD-K {number(metrics?.kdK)} · KD-D {number(metrics?.kdD)} · MACD {number(metrics?.macdHistogram, 3)} · SMA20 {number(metrics?.sma20)} · EMA20 {number(metrics?.ema20)}</p>
@@ -336,11 +336,11 @@ export function StrategyLab({
           </label>
           <div className="flex items-end"><button className="min-h-[46px] w-full rounded-xl bg-[#1f332a] px-3 text-sm font-semibold text-white" onClick={addTarget}>加入研究清單</button></div>
         </div>
-        <p className="text-xs text-black/45 dark:text-white/45">觀察清單與策略參數存於現有 PortfolioPilot 本機資料，並沿用既有 JSON 備份／還原。新增代號需要官方歷史資料覆蓋才能顯示技術指標。</p>
+        <p className="text-xs text-black/45 dark:text-white/45">新增標的需有官方歷史資料才能計算指標。</p>
       </CardContent></Card>
       </details>
       <details className="rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-section="legacy-backtest">
-        <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">展開策略 B 歷史回測報告</summary>
+        <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">策略 B 回測明細</summary>
         <div className="mt-2"><StrategyBacktest targets={config.targets} profile={profile} ohlcv={ohlcv} /></div>
       </details>
     </div>

@@ -90,7 +90,7 @@ export function MarketStatusCenter() {
           </GhostButton>
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="mini-metric">
             <span>TWSE</span>
             <strong>{status.twseDate ?? "—"}</strong>
@@ -99,14 +99,10 @@ export function MarketStatusCenter() {
             <span>TPEx</span>
             <strong>{status.tpexDate ?? "—"}</strong>
           </div>
-          <div className="mini-metric">
-            <span>自動更新</span>
-            <strong>收盤後多次重試</strong>
-          </div>
         </div>
 
         <p className="mt-3 text-[11px] leading-5 text-black/35 dark:text-white/35">
-          PortfolioPilot 使用官方收盤資料，不把最近收盤價標成盤中即時價。平日收盤後會從 13:40 起多次檢查 TWSE／TPEx 是否已發布當日完整資料。
+          官方收盤價，非盤中即時報價。
         </p>
       </CardContent>
     </Card>

@@ -334,7 +334,7 @@ export function AppShell() {
       <aside className="app-desktop-sidebar fixed inset-y-0 left-0 z-30 hidden w-[248px] border-r border-black/6 bg-[#efeee9]/85 px-4 backdrop-blur-xl dark:border-white/7 dark:bg-[#0d1210]/90 md:flex md:flex-col">
         <div className="flex items-center gap-3 px-2">
           <div className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]"><BarChart3 size={20} /></div>
-          <div><p className="font-semibold tracking-tight">PortfolioPilot</p><p className="text-[11px] text-black/40 dark:text-white/40">Local investment cockpit</p></div>
+          <p className="font-semibold tracking-tight">PortfolioPilot</p>
         </div>
         <button onClick={() => setSearchOpen(true)} className="mt-7 flex min-h-11 w-full items-center gap-3 rounded-xl border border-black/6 bg-white/55 px-3 text-left text-sm text-black/40 transition hover:bg-white hover:text-black dark:border-white/7 dark:bg-white/4 dark:text-white/40 dark:hover:bg-white/7 dark:hover:text-white">
           <Search size={17} />
@@ -347,18 +347,13 @@ export function AppShell() {
             return <button key={item.key} aria-current={section === item.key ? "page" : undefined} onClick={() => navigate(item.key)} className={cn("flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold transition", section === item.key ? "bg-white text-[#1f332a] shadow-sm dark:bg-white/10 dark:text-white" : "text-black/45 hover:bg-white/60 hover:text-black dark:text-white/45 dark:hover:bg-white/5 dark:hover:text-white")}><Icon size={18} />{item.label}</button>;
           })}
         </nav>
-        <div className="mt-auto rounded-2xl border border-black/6 bg-white/60 p-4 dark:border-white/7 dark:bg-white/4">
-          <p className="text-xs font-semibold">Zero-cost / Local-first</p>
-          <p className="mt-1 text-xs leading-5 text-black/45 dark:text-white/45">不需要帳號、不需要付費 API。重要資料請定期匯出 JSON。</p>
-        </div>
       </aside>
 
       <main className="app-mobile-main min-h-dvh md:ml-[248px]">
         <header className="app-topbar sticky top-0 z-20 border-b border-black/5 bg-[#f4f2ed]/82 backdrop-blur-xl dark:border-white/6 dark:bg-[#101412]/82">
           <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-black/35 dark:text-white/35">{title.eyebrow}</p>
-              <h1 className="mt-0.5 truncate text-xl font-semibold tracking-tight md:text-2xl">{title.title}</h1>
+              <h1 className="truncate text-xl font-semibold tracking-tight md:text-2xl">{title.title}</h1>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => setSearchOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full border border-black/6 bg-white/80 px-3 transition hover:bg-white dark:border-white/8 dark:bg-white/6 dark:hover:bg-white/10" aria-label="快速搜尋" aria-keyshortcuts="Meta+K Control+K">

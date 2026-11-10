@@ -105,11 +105,7 @@ export function DailyPortfolioDrivers({
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Daily drivers</p>
-            <h2 className="mt-1 text-lg font-semibold">今天我的資產為什麼變動？</h2>
-            <p className="mt-1 max-w-3xl text-xs leading-5 text-black/42 dark:text-white/42">
-              股票與台灣 ETF 放在同一張圖，直接看今天誰推升、誰拖累。
-            </p>
+            <h2 className="mt-1 text-lg font-semibold">今日資產變動</h2>
           </div>
           <GhostButton disabled={loading} onClick={() => void reload()}>
             <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
@@ -141,19 +137,19 @@ export function DailyPortfolioDrivers({
         {drivers?.excludedDifferentDate ? (
           <p className="flex items-start gap-1.5 text-[11px] leading-5 text-[#8b6538] dark:text-[#d4ad7c]">
             <AlertTriangle className="mt-0.5 shrink-0" size={13} />
-            有 {drivers.excludedDifferentDate} 檔官方報價資料日與最新交易日不同，未混入本次持倉影響合計。
+            {drivers.excludedDifferentDate} 檔報價日期不同，已排除計算。
           </p>
         ) : null}
 
         {drivers?.unmatchedHoldings ? (
           <p className="text-[11px] leading-5 text-black/35 dark:text-white/35">
-            另有 {drivers.unmatchedHoldings} 檔台股因缺少可比較漲跌、來源不明或市場代號歧義而未估算；系統不會猜測。
+            另有 {drivers.unmatchedHoldings} 檔資料不足，未納入估算。
           </p>
         ) : null}
 
 
         <details className="rounded-xl border border-black/8 px-3 py-2.5 text-xs dark:border-white/10" data-ux-role="daily-drivers-details">
-          <summary className="min-h-8 cursor-pointer font-semibold">展開每日持倉歸因、現金流、族群與計算方法</summary>
+          <summary className="min-h-8 cursor-pointer font-semibold">查看變動明細與計算依據</summary>
           <div className="mt-3 space-y-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl bg-[#edf2ee] p-4 dark:bg-[#17201b]">

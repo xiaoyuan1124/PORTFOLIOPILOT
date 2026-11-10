@@ -175,7 +175,7 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
   return <div className="space-y-4">
     <div className="rounded-[24px] border border-black/6 bg-[#1f332a] p-5 text-white shadow-sm dark:border-white/8 dark:bg-[#dce9e2] dark:text-[#122018]">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div><p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">Security Snapshot · Official Data</p><h3 className="mt-2 text-xl font-semibold">一頁掌握台股標的核心資料</h3><p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">把已驗證的 TWSE、TPEx、MOPS 快取集中在同一頁。不同指標保留各自日期與來源；缺值、不適用與資料不足不補猜。</p></div>
+        <div><h3 className="mt-2 text-xl font-semibold">標的總覽</h3></div>
         <div className="text-right"><p className="text-3xl font-semibold">{loading ? "…" : error && !caches ? "—" : snapshots.length}</p><p className="text-xs opacity-60">{loading ? "讀取官方資料" : "可研究標的"}</p></div>
       </div>
     </div>
@@ -195,7 +195,7 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
     {!error && warnings.length ? (
       <div className="rounded-2xl border border-[#b98b57]/20 bg-[#f8f1e8] p-4 text-sm text-[#6f4c26] dark:border-[#b98b57]/15 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
         <p className="font-semibold">部分官方研究資料暫時不可用</p>
-        <p className="mt-1 text-xs leading-5 opacity-80">收盤價與最新月營收仍可正常使用；以下區塊會保留先前已載入資料，若沒有舊資料則顯示資料不足，不用假資料補齊。</p>
+        <p className="mt-1 text-xs leading-5 opacity-80">僅顯示已取得的官方資料；缺值不推估。</p>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">
           {warnings.map((warning) => <li key={warning}>{warning}</li>)}
         </ul>
@@ -214,7 +214,7 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
       <div className="rounded-2xl border border-[#b98b57]/20 bg-[#f8f1e8] p-6 text-center text-[#6f4c26] dark:border-[#b98b57]/15 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
         <Search className="mx-auto opacity-50" size={28} />
         <p className="mt-3 text-sm font-semibold">指定標的目前不在官方研究清單</p>
-        <p className="mt-1 text-xs leading-5 opacity-80">要求的研究鍵：{selectedKey}。系統不會自動改顯示另一家公司，避免你誤以為看到的是原本指定標的。</p>
+        <p className="mt-1 text-xs leading-5 opacity-80">{selectedKey} 暫無官方資料；未切換為其他標的。</p>
         <GhostButton className="mt-4 border-current/20 bg-transparent" onClick={() => setSelectedKey("")}>改看其他標的</GhostButton>
       </div>
     ) : null}

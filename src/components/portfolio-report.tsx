@@ -136,10 +136,9 @@ export function PortfolioReportView({ state }: { state: AppState }) {
           <CardContent>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Portfolio Report · Local-first</p>
                 <h2 className="mt-1 text-xl font-semibold">投資組合報告</h2>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-black/50 dark:text-white/50">
-                  以目前本機持股、交易紀錄、績效邊界與可用官方收盤資料產生。沒有後端，也不把缺資料補成推估值。
+                  依本機持股與官方收盤資料製作；缺值不推估。
                 </p>
               </div>
               <div id="portfolio-report-actions" className="flex flex-wrap gap-2">
