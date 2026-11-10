@@ -51,6 +51,31 @@ describe("PilotQuant native historical and path model", () => {
     expect(cost.total.endingEquity).toBeLessThan(free.total.endingEquity);
     expect(cost.total.buyHoldReturnPct).toBeLessThan(free.total.buyHoldReturnPct);
   });
+  it("does not spend unsettled T+2 proceeds when reinvesting", () => {
+    const prices = fixture(300);
+    const cfg = DEFAULT_QUANT_CONFIG;
+    const trades = runQuantResearch(prices, cfg).total.trades;
+    let settledCash = cfg.capital;
+    const unsettled: Array<{ release: number; amount: number }> = [];
+    let sells = 0;
+    for (const trade of trades) {
+      const day = prices.findIndex(p => p[0] === trade.date);
+      expect(day).toBeGreaterThanOrEqual(0);
+      if (trade.action === "買入") {
+        const blocked = unsettled.filter(p => p.release > day).reduce((sum, row) => sum + row.amount, 0);
+        const debit = trade.price * trade.shares + trade.fees;
+        expect(debit).toBeLessThanOrEqual(settledCash - blocked + 0.001);
+        settledCash -= debit;
+      } else {
+        sells++;
+        const net = trade.price * trade.shares - trade.fees - trade.tax;
+        settledCash += net;
+        unsettled.push({ release: day + 2, amount: net });
+      }
+      expect(trade.cashAfter).toBeCloseTo(settledCash, 5);
+    }
+    expect(sells).toBeGreaterThan(0);
+  });
   it("does not count open positions as a closed win", () => {
     const report = runQuantResearch(fixture(200, "trend"));
     expect(report.total.wins).toBeLessThanOrEqual(report.total.completedTrades);
