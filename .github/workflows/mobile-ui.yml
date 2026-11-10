@@ -7,6 +7,7 @@ on:
       - "src/components/**"
       - "src/app/**"
       - "scripts/mobile-layout-smoke.mjs"
+      - "scripts/ux-space-audit.mjs"
       - ".github/workflows/mobile-ui.yml"
   workflow_dispatch:
 
@@ -44,6 +45,9 @@ jobs:
           python3 -m http.server 4173 --bind 127.0.0.1 --directory mobile-preview >/tmp/portfoliopilot-preview.log 2>&1 &
           sleep 2
           node scripts/mobile-layout-smoke.mjs
+      - name: Measure mobile information density against deployed main
+        if: always()
+        run: node scripts/ux-space-audit.mjs
       - name: Upload viewport screenshots for visual review
         if: always()
         uses: actions/upload-artifact@v4
