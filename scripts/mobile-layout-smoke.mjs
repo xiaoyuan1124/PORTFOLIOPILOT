@@ -301,7 +301,12 @@ try {
     };
   });
   assert.equal(desktopPalette.sidebar, "rgb(8, 11, 10)", "desktop rail must match black trading-terminal palette");
-  assert.equal(desktopPalette.active, "rgb(209, 167, 94)", "desktop active tab must use champagne gold");
+  // Tailwind can animate text color between theme modes. Verify the stable
+  // computed state, not the first animation frame after applying the class.
+  await desktopPage.waitForFunction(() => {
+    const active = document.querySelector('.app-desktop-sidebar nav button[aria-current="page"]');
+    return active && getComputedStyle(active).color === "rgb(209, 167, 94)";
+  }, { timeout: 2500 });
   assert.ok(desktopPalette.contentWidth <= desktopPalette.viewportWidth + 2, "desktop TradeScope must not horizontally overflow");
   await desktopPage.screenshot({ path: "mobile-artifacts/desktop-tradescope.png", fullPage: false, animations: "disabled" });
   await desktop.close();
