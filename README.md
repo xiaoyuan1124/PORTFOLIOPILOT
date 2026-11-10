@@ -41,7 +41,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Versioned JSON full backup/import with Zod validation (v4 adds account + DEMO/personal metadata; v1-v3 remain readable)
 - Holdings CSV import/export and downloadable template
 - ETF composition CSV import/export with strict weight validation and no automatic normalization
-- Dark mode
+- Three appearance modes: Warm Light, Forest Dark, and TradeScope-inspired charcoal/gold with mint gains and coral losses. Tap the header appearance icon to cycle, or choose a preview under 我的 → 外觀主題; existing theme preferences are retained.
 - Installable PWA shell and offline cache
 - Sonner interaction feedback
 - Vitest calculation/import tests
