@@ -117,8 +117,9 @@ try {
     await page.waitForFunction(() => window.scrollY <= 2);
     await checkLayout(page, viewport.name, "research-tab-at-top");
     await page.getByRole("button", { name: "ETF 深度", exact: true }).click();
-    await page.getByText("ETF Research · Look-through + Attribution").waitFor();
-    await page.getByText("先看最近交易日影響、成份結構與異動，再展開完整資料。").waitFor();
+    await page.getByRole("heading", { name: "ETF 成分與績效" }).waitFor();
+    // The verbose introduction has been removed; research starts with the actual ETF data.
+    await page.getByRole("button", { name: "重新整理" }).first().waitFor();
     const etfDataStatus = page.getByRole("status", { name: "ETF 官方資料狀態" });
     await etfDataStatus.waitFor();
     await page.waitForFunction(() => {
