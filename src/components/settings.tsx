@@ -945,7 +945,7 @@ export function Settings({
       </details>
 
       <details className="rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-fx">
-        <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">USD／TWD 匯率設定 · ${state.usdTwd.toFixed(2)}</summary>
+        <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">USD／TWD 匯率設定 · {state.usdTwd.toFixed(2)}</summary>
         <div className="mt-2">
       <CardContent>
           <h3 className="font-semibold">匯率設定</h3>
