@@ -52,7 +52,6 @@ export function Overview({
   const daily = dailySnapshotDelta(currentSnapshots);
   const period = snapshotPeriodDelta(snapshots);
   const priceCoverage = officialPriceCoverage(state.holdings);
-  const topSector = sectors[0];
 
   const trend = snapshots.map((snapshot) => ({
     label: snapshot.date.slice(5).replace("-", "/"),
