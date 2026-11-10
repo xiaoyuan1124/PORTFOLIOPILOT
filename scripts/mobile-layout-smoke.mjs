@@ -170,7 +170,7 @@ try {
     assert.equal(await watchCards.count(), 6, "default watchlist must retain all six research stocks");
     assert.equal(await page.locator('[data-testid="watch-target-details"][open]').count(), 0, "detailed indicators must not all be expanded");
     await watchCards.first().locator('[data-testid="watch-target-details"] > summary').click();
-    await page.getByText(/MACD/, { exact: false }).first().waitFor();
+    await watchCards.first().locator('[data-testid="watch-target-details"] > div > p').filter({ hasText: "MACD" }).waitFor();
     await checkLayout(page, viewport.name, "strategy-watch-details-expanded");
     await watchCards.first().locator('[data-testid="watch-target-details"] > summary').click();
     await strategyConfig.locator("summary").click();
