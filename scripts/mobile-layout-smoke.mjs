@@ -155,6 +155,19 @@ try {
     await page.getByRole("heading", { name: "歷史回測報告", exact: true }).waitFor();
     await checkLayout(page, viewport.name, "strategy-backtest-report");
 
+    // PilotQuant is now native to PortfolioPilot, not a detached website.
+    // Exercise stock 2330 official close history, holdout backtest and
+    // forward scenario paths on every supported iPhone-size viewport.
+    await page.getByRole("button", { name: "PilotQuant 量化研究", exact: true }).click();
+    await page.getByRole("heading", { name: "個股歷史回測 × 成長情境路徑" }).waitFor();
+    await page.getByRole("heading", { name: "過往策略回測", exact: true }).waitFor({ timeout: 20000 });
+    await page.getByRole("heading", { name: "未來價格成長情境", exact: true }).waitFor();
+    await checkLayout(page, viewport.name, "pilotquant-native");
+    await page.getByRole("button", { name: "1年", exact: true }).click();
+    await checkLayout(page, viewport.name, "pilotquant-year-scenarios");
+    await page.getByRole("button", { name: "觀察價與舊策略", exact: true }).click();
+    await page.getByRole("heading", { name: "歷史回測報告", exact: true }).waitFor();
+
     await nav.getByRole("button", { name: "我的", exact: true }).click();
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
     await checkLayout(page, viewport.name, "settings");
