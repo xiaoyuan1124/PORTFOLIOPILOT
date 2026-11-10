@@ -76,3 +76,21 @@ Candidate task path targets (navigation steps, not seconds):
 - Daily impact and important-company events stay prominent; contribution chart, external cash flows, sector breakdown and methodology are grouped.
 - Integrity alerts stay above disclosures: storage recovery remains visible; integrity detail automatically starts open when there are material warning categories.
 - All storage and backtesting algorithms remain untouched; only navigation/presentation and labels changed.
+
+
+## First reproducible page-height observations
+
+GitHub Actions **Mobile UI Layout Smoke #102**, run ID [42860742822](https://github.com/xiaoyuan1124/PORTFOLIOPILOT/actions/runs/42860742822), completed its comparative Playwright measurement stage after the layout smoke failed on an ambiguous nested-summary selector. These are *real measured values* from the public main baseline versus the proposed preview, with fresh isolated browser contexts and consistent content mode, not manual pixel estimates.
+
+| Screen | Viewport | Baseline height | Proposed height | Saved px | Saved % | Buttons before → after |
+|---|---:|---:|---:|---:|---:|---:|
+| Home | 390×844 | 4,403 | 2,388 | 2,015 | 45.8% | 20 → 15 |
+| Strategy watchlist | 390×844 | 7,400 | 2,052 | 5,348 | 72.3% | 21 → 15 |
+| PilotQuant | 390×844 | 3,670 | 1,330 | 2,340 | 63.8% | 14 → 13 |
+| Settings | 390×844 | 4,313 | 1,141 | 3,172 | 73.5% | 20 → 11 |
+| Home | 375×812 | 4,403 | 2,388 | 2,015 | 45.8% | 20 → 15 |
+| Strategy watchlist | 375×812 | 7,400 | 2,052 | 5,348 | 72.3% | 21 → 15 |
+| PilotQuant | 375×812 | 3,690 | 1,330 | 2,360 | 64.0% | 14 → 13 |
+| Settings | 375×812 | 4,337 | 1,141 | 3,196 | 73.7% | 20 → 11 |
+
+Comparisons are **default-collapsed page heights** and capture **visible button counts**, not number of all underlying interactive controls, not backend response speed, and not seconds saved. In 390px testing the total of four page lengths shrank from 19,786 to 6,911 px (12,875 px). Individual expanded details retain the original content and can lengthen the page on demand. The smoke failure was in the **test locator** (nested target editor summary matched twice), subsequently corrected; a clean end-to-end run must still pass before main merge.
