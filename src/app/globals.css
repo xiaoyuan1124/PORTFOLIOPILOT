@@ -432,3 +432,11 @@ html.theme-tradescope .app-page-content [class*="bg-[#1f332a]"][class*="rounded-
 html.theme-tradescope .app-page-content [class*="bg-[#1f332a]"][class*="rounded-[24px]"] :is(h1, h2, h3) {
   color: var(--ts-gold);
 }
+
+
+/* The desktop rail's active button inherited a subdued legacy color despite
+   the gold indicator. Keep the active item's text visibly gold in all modes. */
+html.theme-tradescope .app-desktop-sidebar nav button[aria-current="page"],
+html.theme-tradescope .app-desktop-sidebar nav button[aria-current="page"] svg {
+  color: var(--ts-gold) !important;
+}
