@@ -517,11 +517,10 @@ export function Settings({
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-2">
-        <details className="lg:col-span-2 rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-device-support">
+      <details className="lg:col-span-2 rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-device-support">
         <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">裝置功能、隱私與支援</summary>
         <div className="mt-2 grid gap-3 lg:grid-cols-2">
-      <CardContent>
+          <Card className="lg:col-span-2"><CardContent>
           <div className="flex items-start gap-3">
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#edf2ee] text-[#335b46] dark:bg-[#17201b] dark:text-[#a8dab8]">
               <DatabaseBackup size={19} />
@@ -573,8 +572,6 @@ export function Settings({
         </CardContent>
       </Card>
 
-      <Card>
-  
         </div>
       </details>
 
@@ -589,7 +586,7 @@ export function Settings({
           <span className="text-xs font-normal text-black/45 dark:text-white/45">JSON · 持股 · 券商 · 交易</span>
         </summary>
         <div className="mt-2 grid gap-3 lg:grid-cols-2">
-      <CardContent>
+          <Card className="lg:col-span-2"><CardContent>
           <h3 className="font-semibold">完整備份</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
             JSON 會包含持股、帳戶、自選清單、ETF 成分來源、交易／現金流、投資筆記、匯率、DEMO/個人模式與歷史淨值快照，匯入時會先用 schema 驗證格式。
@@ -945,15 +942,13 @@ export function Settings({
         </CardContent>
       </Card>
 
-      <Card>
-  
         </div>
       </details>
 
       <details className="rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-fx">
         <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">USD／TWD 匯率設定 · {state.usdTwd.toFixed(2)}</summary>
         <div className="mt-2">
-      <CardContent>
+          <Card><CardContent>
           <h3 className="font-semibold">匯率設定</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">美股資產依 USD/TWD 折算。零成本階段先手動填，避免依賴不穩定或授權不清楚的免費匯率 API。</p>
           <label className="mt-5 block text-xs font-semibold text-black/45 dark:text-white/45">USD / TWD</label>
@@ -990,15 +985,13 @@ export function Settings({
         </CardContent>
       </Card>
 
-      <Card>
-  
         </div>
       </details>
 
       <details className="rounded-2xl border border-[#b98b57]/25 p-2 dark:border-[#b98b57]/20" data-ux-role="settings-danger">
         <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">危險操作：清空或重設資料</summary>
         <div className="mt-2">
-      <CardContent>
+          <Card><CardContent>
           <h3 className="font-semibold">資料重設</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">新安裝預設為空白個人模式，不會自動塞示範持股。只有你主動按下「示範資料」才會進入 DEMO，首頁與頂部會持續標示。</p>
           <div className="mt-5 flex flex-wrap gap-2">
