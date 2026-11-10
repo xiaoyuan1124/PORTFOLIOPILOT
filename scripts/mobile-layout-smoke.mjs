@@ -245,6 +245,35 @@ try {
     await context.close();
     console.log(`PASS ${viewport.name}: legacy themes, TradeScope theme, settings persistence, mobile layouts, report/CSV`);
   }
+
+  // The supplied design reference is a desktop trading terminal.
+  // Verify its defining near-black sidebar / gold active navigation at 1440px.
+  const desktop = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    colorScheme: "light",
+    reducedMotion: "reduce"
+  });
+  const desktopPage = await desktop.newPage();
+  await desktopPage.goto(url, { waitUntil: "domcontentloaded" });
+  await desktopPage.getByRole("heading", { name: "投資總覽" }).waitFor();
+  await desktopPage.getByRole("button", { name: "切換外觀模式" }).click();
+  await desktopPage.getByRole("button", { name: "切換外觀模式" }).click();
+  await desktopPage.waitForFunction(() => document.documentElement.classList.contains("theme-tradescope"));
+  const desktopPalette = await desktopPage.evaluate(() => {
+    const sidebar = document.querySelector(".app-desktop-sidebar");
+    const activeTab = sidebar?.querySelector('nav button[aria-current="page"]');
+    return {
+      sidebar: sidebar ? getComputedStyle(sidebar).backgroundColor : null,
+      active: activeTab ? getComputedStyle(activeTab).color : null,
+      contentWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth
+    };
+  });
+  assert.equal(desktopPalette.sidebar, "rgb(8, 11, 10)", "desktop rail must match black trading-terminal palette");
+  assert.equal(desktopPalette.active, "rgb(209, 167, 94)", "desktop active tab must use champagne gold");
+  assert.ok(desktopPalette.contentWidth <= desktopPalette.viewportWidth + 2, "desktop TradeScope must not horizontally overflow");
+  await desktopPage.screenshot({ path: "mobile-artifacts/desktop-tradescope.png", fullPage: false, animations: "disabled" });
+  await desktop.close();
 } finally {
   await browser.close();
 }
