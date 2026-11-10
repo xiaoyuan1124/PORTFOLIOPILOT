@@ -225,6 +225,9 @@ function simulate(points: readonly QuantPrice[], signals: readonly QuantSignal[]
   let cash = cfg.capital, shares = 0;
   const equity: QuantSummary['equity'] = [], trades: QuantTrade[] = [];
   let entryCost = 0, wins = 0, completed = 0, peak = cfg.capital, mdd = 0;
+  // Taiwan T+2 trading-day settlement: sale receivables count toward equity,
+  // but cannot fund a subsequent purchase until their settlement date.
+  const pendingSettlement: Array<{ releaseIndex: number; amount: number }> = [];
   const buyHoldPct = afterCostHold(points, start, end, cfg);
   const startClose = points[start][1];
   for (let i = start; i <= end; i++) {
@@ -238,13 +241,16 @@ function simulate(points: readonly QuantPrice[], signals: readonly QuantSignal[]
       const tax = proceeds * cfg.sellTaxBps / 10_000;
       const netProceeds = proceeds - cost - tax;
       cash += netProceeds;
+      pendingSettlement.push({ releaseIndex: i + 2, amount: netProceeds });
       shares = 0;
       completed++;
       if (netProceeds > entryCost) wins++; // compare trade net proceeds with actual buy debit
       trades.push({ signalDate: points[i - 1][0], date: points[i][0], action: '賣出', shares: n, price: proceeds / n, fees: cost, tax, cashAfter: cash });
       entryCost = 0;
     } else if (signal === 'buy' && shares === 0) {
-      const budget = Math.min(cash, cfg.capital * cfg.allocationPct / 100);
+      const blocked = pendingSettlement.reduce((sum, pending) => sum + (pending.releaseIndex > i ? pending.amount : 0), 0);
+      const available = Math.max(0, cash - blocked);
+      const budget = Math.min(available, cfg.capital * cfg.allocationPct / 100);
       let n = Math.floor(budget / (close * (1 + (cfg.slippageBps + cfg.feeBps) / 10_000)));
       while (n > 0 && buyNotional(n, close, cfg) + fee(buyNotional(n, close, cfg), cfg) > budget + 1e-7) n--;
       if (n > 0) {
