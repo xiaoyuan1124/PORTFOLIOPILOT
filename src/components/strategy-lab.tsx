@@ -59,15 +59,14 @@ function TargetEditor({
 }
 
 export function StrategyLab({
-  state, onChange, onOpenResearch, onOpenRisk, quantRequestedKey, quantRequestId
+  state, onChange, onOpenResearch, onOpenRisk, quantRequestedKey
 }: {
   state: AppState;
   onChange: (next: AppState) => boolean;
   onOpenResearch: () => void;
   onOpenRisk: () => void;
   quantRequestedKey?: string;
-  quantRequestId?: number;
-}) {
+ }) {
   const config = state.strategyLab ?? DEFAULT_STRATEGY_LAB;
   const profile = config.profiles.find((item) => item.id === config.activeProfileId) ?? config.profiles[0]!;
   const [quoteCache, setQuoteCache] = useState<TwQuoteCache | null>(null);
@@ -79,11 +78,6 @@ export function StrategyLab({
   const [refreshIndex, setRefreshIndex] = useState(0);
   const [quantOpen, setQuantOpen] = useState(Boolean(quantRequestedKey));
   const [quantKey, setQuantKey] = useState(quantRequestedKey);
-  useEffect(() => {
-    if (!quantRequestedKey) return;
-    setQuantKey(quantRequestedKey);
-    setQuantOpen(true);
-  }, [quantRequestedKey, quantRequestId]);
   const [symbol, setSymbol] = useState("");
   const [name, setName] = useState("");
   const [venue, setVenue] = useState<"TWSE" | "TPEx">("TWSE");
@@ -194,7 +188,7 @@ export function StrategyLab({
           <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => setQuantOpen(false)}>觀察價與舊策略</button>
           <button type="button" aria-pressed className="min-h-11 rounded-full bg-[#1f332a] px-4 text-xs font-semibold text-white dark:bg-[#dce9e2] dark:text-[#122018]">PilotQuant 量化研究</button>
         </div>
-        <QuantResearchPanel requestedKey={quantKey} />
+        <QuantResearchPanel key={quantKey ?? "default"} requestedKey={quantKey} />
       </div>
     );
   }
