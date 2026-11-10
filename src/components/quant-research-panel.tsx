@@ -73,7 +73,9 @@ function ScenarioChart({ scenario, horizon }: { scenario: GrowthScenarios; horiz
         </AreaChart>
       </ResponsiveContainer>
     </div>
-    <div className="overflow-x-auto">
+    <details className="rounded-xl border border-black/8 p-3 dark:border-white/10">
+      <summary className="cursor-pointer text-xs font-semibold">展開各期間價格表</summary>
+      <div className="mt-2 overflow-x-auto">
       <table className="w-full min-w-[320px] text-left text-xs">
         <thead className="text-black/45 dark:text-white/45"><tr><th className="py-2">交易日</th><th>P10</th><th>P50</th><th>P90</th></tr></thead>
         <tbody>{checkpoints.map(day => {
@@ -81,7 +83,8 @@ function ScenarioChart({ scenario, horizon }: { scenario: GrowthScenarios; horiz
           return <tr key={day} className="border-t border-black/5 dark:border-white/8"><td className="py-2">{day === 0 ? "基準日" : "+" + day}</td><td>{formatMoney(row.low)}</td><td>{formatMoney(row.median)}</td><td>{formatMoney(row.high)}</td></tr>;
         })}</tbody>
       </table>
-    </div>
+      </div>
+    </details>
     <p className="text-[11px] leading-5 text-black/50 dark:text-white/50">使用最近 {scenario.sampleDays} 筆日報酬、5 日區塊重抽樣、固定亂數種子與 {scenario.observations} 條模擬路徑。P10／P50／P90 是模擬結果的百分位數，不是經校準的 80% 信賴區間，更不是未來股價預言。</p>
   </div>;
 }
