@@ -208,7 +208,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <label className={smallLabel}>量化策略
           <select className="field mt-1" value={config.strategy} onChange={event => setConfig(current => ({ ...current, strategy: event.target.value as QuantConfig["strategy"] }))}>
-            <option value="sma">雙均線交叉</option><option value="rsi">RSI 超跌回升</option><option value="breakout">收盤價突破通道</option>
+            <option value="sma">雙均線交叉</option><option value="rsi">RSI 門檻策略</option><option value="breakout">收盤價突破通道</option>
           </select>
         </label>
         <label className={smallLabel}>本金 (TWD)
