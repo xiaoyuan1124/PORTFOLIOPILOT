@@ -169,10 +169,10 @@ try {
     const watchCards = page.locator('[data-testid="watch-target-card"]');
     assert.equal(await watchCards.count(), 6, "default watchlist must retain all six research stocks");
     assert.equal(await page.locator('[data-testid="watch-target-details"][open]').count(), 0, "detailed indicators must not all be expanded");
-    await watchCards.first().locator('[data-testid="watch-target-details"] summary').click();
+    await watchCards.first().locator('[data-testid="watch-target-details"] > summary').click();
     await page.getByText(/MACD/, { exact: false }).first().waitFor();
     await checkLayout(page, viewport.name, "strategy-watch-details-expanded");
-    await watchCards.first().locator('[data-testid="watch-target-details"] summary').click();
+    await watchCards.first().locator('[data-testid="watch-target-details"] > summary').click();
     await strategyConfig.locator("summary").click();
     await page.getByRole("button", { name: "複製為新策略" }).click();
     assert.equal(await page.locator("select").first().locator("option").count(), 2);
