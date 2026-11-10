@@ -229,3 +229,195 @@ button {
     padding: .65rem;
   }
 }
+
+
+/* TradeScope reference-inspired appearance.
+   Scoped to html.theme-tradescope so original light and forest-dark palettes
+   remain pixel-for-pixel unaffected when this mode is not selected.
+   Gold = navigation / neutral emphasis; mint = gains; coral = losses. */
+html.theme-tradescope {
+  color-scheme: dark;
+  background: #0b0e0c;
+  --ts-bg: #0b0e0c;
+  --ts-sidebar: #080b0a;
+  --ts-surface: #111514;
+  --ts-surface-raised: #181c19;
+  --ts-border: #292d28;
+  --ts-gold: #d1a75e;
+  --ts-gold-soft: #a99065;
+  --ts-positive: #32cb95;
+  --ts-negative: #ed727c;
+  --ts-text: #e5e8e1;
+  --ts-muted: #9b9e94;
+}
+
+html.theme-tradescope body {
+  background: var(--ts-bg);
+  color: var(--ts-text);
+}
+
+html.theme-tradescope ::selection {
+  background: rgba(209, 167, 94, .32);
+  color: #fff;
+}
+
+/* Application chrome follows the nearly black left rail and golden title. */
+html.theme-tradescope .app-desktop-sidebar {
+  background: var(--ts-sidebar);
+  border-color: var(--ts-border);
+  backdrop-filter: none;
+}
+html.theme-tradescope .app-topbar {
+  background: rgba(10, 13, 11, .96);
+  border-color: var(--ts-border);
+}
+html.theme-tradescope .app-mobile-nav {
+  background: rgba(9, 12, 10, .97);
+  border-color: var(--ts-border);
+}
+html.theme-tradescope .app-topbar h1,
+html.theme-tradescope .app-desktop-sidebar > div:first-child p:first-child {
+  color: var(--ts-gold);
+}
+html.theme-tradescope .app-desktop-sidebar > div:first-child > div:first-child {
+  background: #251f14;
+  border: 1px solid rgba(209, 167, 94, .48);
+  color: var(--ts-gold);
+}
+html.theme-tradescope .app-desktop-sidebar nav button[aria-current="page"] {
+  color: var(--ts-gold);
+  background: rgba(209, 167, 94, .12);
+  box-shadow: inset 2px 0 var(--ts-gold);
+}
+html.theme-tradescope .app-mobile-nav button[aria-current="page"] {
+  color: var(--ts-gold);
+  background: rgba(209, 167, 94, .09);
+}
+html.theme-tradescope .app-theme-toggle {
+  color: var(--ts-gold);
+  background: #1d1b14;
+  border-color: rgba(209, 167, 94, .37);
+}
+
+/* Dense dark analytics surfaces, quiet outlines and warm gold section titles. */
+html.theme-tradescope .pp-card {
+  background: var(--ts-surface);
+  border-color: var(--ts-border);
+  border-radius: 16px;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+html.theme-tradescope .pp-card :is(h2, h3) {
+  color: var(--ts-gold);
+}
+html.theme-tradescope .mini-metric {
+  background: #0e1210;
+  border: 1px solid #242a24;
+  border-radius: 12px;
+}
+html.theme-tradescope .mini-metric span {
+  color: #a1a49b;
+}
+html.theme-tradescope .mini-metric strong {
+  color: var(--ts-text);
+}
+html.theme-tradescope .pp-disclosure,
+html.theme-tradescope .pp-modal,
+html.theme-tradescope .pp-modal > div:first-child {
+  background: #121614;
+  border-color: var(--ts-border);
+}
+html.theme-tradescope .app-page-content [class*="bg-[#1f332a]"][class*="rounded-[24px]"] {
+  background: linear-gradient(130deg, #1d1a13, #121614);
+  border: 1px solid rgba(209, 167, 94, .22);
+}
+
+/* Form controls & modal surfaces remain readable in mobile Safari. */
+html.theme-tradescope .field {
+  background: #0c100e;
+  border-color: #30342e;
+  color: #e5e8e1;
+  border-radius: 10px;
+}
+html.theme-tradescope .field::placeholder {
+  color: #858a81;
+}
+html.theme-tradescope .field:focus {
+  border-color: var(--ts-gold);
+  box-shadow: 0 0 0 3px rgba(209, 167, 94, .12);
+  background: #151914;
+}
+html.theme-tradescope :is(button, input, select, textarea, summary, a):focus-visible {
+  outline: 2px solid var(--ts-gold);
+  outline-offset: 2px;
+}
+html.theme-tradescope .pp-primary-button {
+  background: var(--ts-gold);
+  color: #17140e;
+}
+html.theme-tradescope .pp-primary-button:hover {
+  background: #e0b876;
+}
+html.theme-tradescope .pp-ghost-button {
+  background: #181b17;
+  border-color: #51442c;
+  color: #d5b982;
+}
+html.theme-tradescope .pp-ghost-button:hover {
+  background: #242219;
+}
+html.theme-tradescope .pp-badge-good {
+  background: #143528;
+  color: var(--ts-positive);
+}
+html.theme-tradescope .pp-badge-warn {
+  background: #342616;
+  color: #efbb74;
+}
+html.theme-tradescope .pp-badge-neutral {
+  background: #242620;
+  color: #b8b9aa;
+}
+html.theme-tradescope .theme-choice[aria-pressed="true"] {
+  background: #2a2418;
+  border-color: var(--ts-gold);
+  color: #f2d8a9;
+}
+html.theme-tradescope .theme-choice[aria-pressed="true"] .text-black\/45 {
+  color: #e0bf83;
+}
+
+/* Existing app-specific Tailwind utilities are not semantic design tokens.
+   Only override the common green-highlight utilities inside this new mode.
+   In the two original modes those classes retain their existing meanings. */
+html.theme-tradescope [class*="dark:bg-[#dce9e2]"] {
+  background-color: var(--ts-gold);
+}
+html.theme-tradescope [class*="dark:text-[#122018]"] {
+  color: #17140e;
+}
+html.theme-tradescope [class*="dark:bg-[#173426]"] {
+  background-color: #143528;
+}
+html.theme-tradescope [class*="dark:text-[#a8dab8]"],
+html.theme-tradescope [class*="dark:text-[#a9d7b7]"] {
+  color: var(--ts-positive);
+}
+html.theme-tradescope .app-desktop-sidebar nav [aria-current="page"],
+html.theme-tradescope .app-mobile-nav [aria-current="page"] {
+  color: var(--ts-gold);
+}
+
+/* Charts: muted grid, warm equity curve, existing gain/loss styling preserved. */
+html.theme-tradescope .recharts-cartesian-grid line {
+  stroke: #2c302b;
+}
+html.theme-tradescope .recharts-cartesian-axis-tick-value {
+  fill: var(--ts-muted);
+}
+html.theme-tradescope :is(.recharts-line-curve, .recharts-area-curve)[stroke="#456b58"] {
+  stroke: var(--ts-gold);
+}
+html.theme-tradescope .recharts-area-area[fill="#456b58"] {
+  fill: var(--ts-gold);
+}
