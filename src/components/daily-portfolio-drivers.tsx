@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, ArrowRight, BellRing, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { localDateKey } from "@/lib/calc";
 import { money, percent } from "@/lib/utils";
@@ -14,8 +14,7 @@ import { Badge, Card, CardContent, CardHeader, GhostButton, InfoDisclosure } fro
 import { PortfolioContributionChart } from "./portfolio-contribution-chart";
 
 export function DailyPortfolioDrivers({
-  state,
-  onNavigate
+  state
 }: {
   state: AppState;
   onNavigate?: (section: "portfolio" | "research", researchKey?: string) => void;
