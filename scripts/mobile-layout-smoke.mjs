@@ -179,10 +179,10 @@ try {
     await checkLayout(page, viewport.name, "strategy-lab-new-profile");
     // New V0.93 backtesting report must fit narrow iPhone screens and
     // fail closed without published official OHLCV.
-    await page.locator('[data-ux-section="legacy-backtest"] summary').click();
+    await page.locator('[data-ux-section="legacy-backtest"] > summary').click();
     await page.getByRole("heading", { name: "歷史回測報告", exact: true }).waitFor();
     await checkLayout(page, viewport.name, "strategy-backtest-report");
-    await page.locator('[data-ux-section="legacy-backtest"] summary').click();
+    await page.locator('[data-ux-section="legacy-backtest"] > summary').click();
     await strategyConfig.locator("summary").click();
 
     // Regression: the former very tall Strategy Lab may leave scroll offset
@@ -211,10 +211,10 @@ try {
     await checkLayout(page, viewport.name, "pilotquant-compact");
 
     // Disclose detail only on demand, without losing the selected stock.
-    await page.locator('[data-testid="pilotquant-full-report"] summary').click();
+    await page.locator('[data-testid="pilotquant-full-report"] > summary').click();
     await page.getByText("前 70% · 樣本內", { exact: true }).waitFor();
     await checkLayout(page, viewport.name, "pilotquant-details-expanded");
-    await page.locator('[data-testid="pilotquant-full-report"] summary').click();
+    await page.locator('[data-testid="pilotquant-full-report"] > summary').click();
 
     await page.getByRole("tab", { name: "未來情境" }).click();
     await page.getByRole("tabpanel", { name: "未來情境" }).waitFor();
