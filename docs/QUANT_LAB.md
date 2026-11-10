@@ -1,38 +1,41 @@
-# PilotQuant Lab v0.1.0 — Quant Research Module
+# PilotQuant Lab v0.2.0
 
-This module lives at `public/quant-lab/index.html`, is intentionally isolated from existing PortfolioPilot routes, and does **not** require a paid API, broker, Supabase, server or login.
+Zero-cost, mobile-first, local-first research module for PortfolioPilot. Published entrypoint is a self-contained `public/quant-lab/index.html`; a split-file developer copy is also included in this ZIP. The quant lab is **not** a brokerage execution service.
 
-## User entry point
-- Locally: open `public/quant-lab/index.html` in a modern browser.
-- After this branch merges into `main` and the existing static GitHub Pages workflow completes, the module can be visited at `/quant-lab/` under the project's configured Pages base URL.
-- This branch is not deployed by creating the PR. No live URL is claimed until verified.
+## New in v0.2
 
-## Delivered
-1. Mobile-first dashboard: total return, max drawdown, Sharpe, closed-trade win rate, profit factor, drawdown chart, synthetic benchmark.
-2. Strategy lab: moving-average crossover, RSI mean reversion, Donchian channel breakout.
-3. Daily-bar execution simulation: signals generated at close of day t, filled at next day's open; buying/slipping up and selling/slipping down; long-only integer shares.
-4. Risk controls: configurable capital, allocation, stop loss, take profit, fees, minimum fees, Taiwan sell-side tax, slippage.
-5. CSV data center: validate and import `date,symbol,open,high,low,close,volume` for any number of symbols; close-only accepted but flagged unsuitable for stop/take analysis.
-6. Trade audit trail and downloadable CSV + structured JSON result report.
-7. Fixed-seed synthetic demonstration data, always labelled simulation; imported data stays in the active browser session.
+- Read PortfolioPilot's existing, GitHub-Pages-hosted TWSE / TPEx close-price history: `../data/tw-price-history/index.json` + market/code-prefix bucket. Strictly checks cache versions, generation metadata, symbol and date validity, and flags missing-market dates.
+- NO invented `open`, `high` or `low` for official close-only data or close-only CSV imports. When closes are the only available information, backtest uses the following session's **closing price** as a simplified fill proxy; signals come from the previous close, close-channel breakout instead of intraday Donchian, and close-confirmed stop/take (executed the next close). It does not claim actual fill availability or intraday protection.
+- Time-ordered 70/30 holdout results for any symbol with >= 120 daily observations. Indicators use historical data up to the signal date; capital/positions reset when the holdout begins. **Not** full expanding or rolling walk-forward, and the test period is no longer untouched if repeatedly used for tuning.
+- Multi-symbol comparison for up to 50 imported/loaded symbols based on the same configuration. Ranked by holdout simulated return only; not intended as a live predictive screening model.
+- Extended JSON report includes execution mode and verified source metadata; separate OHLCV/open-fills still work as in v0.1.
 
-## Verification
-A standalone 11-case engine test suite passed in the isolated development package before submission. Run repository smoke checks with:
+## Running
+
+- **Standalone**: open `PilotQuant-Standalone.html` from the ZIP to use demo/CSV features. File-based navigation cannot fetch hosted cache files.
+- **PortfolioPilot**: the published `public/quant-lab/index.html` expects history files from the same site's `public/data/tw-price-history/` and can access them on GitHub Pages after merge/deploy.
+- **Local dev**: `python3 -m http.server 8080 --directory public` then visit `http://localhost:8080/quant-lab/`; when all PortfolioPilot cache files are present the official importer works.
+
+## Tests
+
 ```sh
-node scripts/check-quant-lab.mjs
+node --test tests/*.test.js
 ```
-Interactive browser screenshot verification was not completed in the execution environment because its browser network/file policy blocked local navigation; inspect on a physical phone before merging.
 
-## Backtesting caveats
-- Buy-and-hold curve is a no-fee normalized reference, **not** a fee-matched alternative.
-- Max drawdown from daily end-of-bar equity omits intraday equity spikes.
-- The same candle can touch both exit barriers, and the simulation resolves stop first. Fill price and same-bar order are uncertain without intraday records.
-- Strategy calculations assume adjusted history and sufficient bars. No corporate-action reconstruction, historical constituents, borrowing, short sales, FX or margin.
-- This is not verified live performance, a recommendation, or an automated trading service.
-- The module is completely separate from the existing native iOS app and will not automatically appear in its navigation.
+19/19 engine tests passed locally. Mobile and desktop screenshots were rendered with Chromium; UI automation verified demo, holdout, scanner, CSV import, and the cache fetch flow with **a mocked official-cache API response**. Live official-data browser import was not exercised in that browser environment due network/navigation restrictions. All tests were performed as of 2026-11-10.
 
-## Subsequent milestones
-1. Verified TWSE/TPEx official-history import with provenance and dividend/split adjustments.
-2. Walk-forward and out-of-sample testing, parameter stability and sensitivity heat maps.
-3. Multi-asset portfolio allocation with FX conversion, settlement dates and broker minimum fees.
-4. Offline persistent datasets and opt-in device notifications; **only afterward** consider broker API integration with kill-switch and paper-trading first.
+## Risks / exclusions
+
+1. TWSE/TPEx cached historical **closing prices are not dividend/split-adjusted**; raw price signals can be materially misleading through corporate actions.
+2. Costs, min fees and sell tax are user-configured; no claim that a user's broker rate exactly matches defaults. Fill prices are hypothetical and liquidity is not modeled.
+3. No dealer-level order/settlement simulation, shorting, borrowing, levered instruments, real-time feeds, intraday trading, broker integration or automatic purchases.
+4. Results are not real money performance; reported benchmark is a cost-free normalized buy-and-hold price comparison, not matched performance. No predictive or verified alpha claim.
+5. CSV research data is not uploaded to a cloud service, and is cleared on page reload; only strategy settings are stored locally. The optional official cache feature performs read-only same-origin HTTP GET requests.
+6. Official cache depends on the existing PortfolioPilot price-history workflow, and can be stale or partial. The UI shows its date and failed date count.
+
+## Integration & licensing
+
+Keep the v0.2 PR as draft until GitHub CI and real-device checks are verified. MIT; local-first; no paid APIs, Supabase or brokerage credentials.
+## GitHub pull request
+
+See [PilotQuant Lab PR #185](https://github.com/xiaoyuan1124/PORTFOLIOPILOT/pull/185) (draft until quality and device checks). This is an isolated web module, not a production iOS tab.
