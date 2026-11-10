@@ -57,6 +57,12 @@ try {
     const nav = page.locator(".app-mobile-nav");
 
     await checkLayout(page, viewport.name, "home");
+    const onboarding = page.locator('[data-ux-role="home-first-run"]');
+    if (await onboarding.count()) {
+      assert.equal(await onboarding.locator('[data-ux-role="home-first-run-help"]').getAttribute("open"), null,
+        "first-run instructions are optional details");
+      await onboarding.getByRole("button", { name: /新增持股/ }).waitFor();
+    }
     const homeSecondary = page.locator('[data-ux-role="home-allocation-details"]');
     await homeSecondary.waitFor();
     assert.equal(await homeSecondary.getAttribute("open"), null, "secondary holdings and sectors should not dominate the first viewport");
