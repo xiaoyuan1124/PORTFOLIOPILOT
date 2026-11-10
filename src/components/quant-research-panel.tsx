@@ -256,7 +256,17 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
         {([
           ["results", "回測摘要"], ["future", "未來情境"], ["trades", "交易明細"]
         ] as Array<[QuantView, string]>).map(([tab, label]) =>
-          <button key={tab} type="button" role="tab" aria-selected={view === tab} onClick={() => {
+          <button key={tab} id={"pilotquant-tab-" + tab} type="button" role="tab" aria-controls={"pilotquant-panel-" + tab}
+            aria-selected={view === tab} tabIndex={view === tab ? 0 : -1}
+            onKeyDown={event => {
+              if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+              event.preventDefault();
+              const tabs: QuantView[] = ["results", "future", "trades"];
+              const next = tabs[(tabs.indexOf(tab) + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+              setView(next);
+              window.requestAnimationFrame(() => document.getElementById("pilotquant-tab-" + next)?.focus());
+            }}
+            onClick={() => {
             setView(tab);
             window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
           }}
@@ -267,7 +277,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
         )}
       </div>
 
-      {view === "results" ? <Card><CardContent className="space-y-3 p-3 md:p-5" role="tabpanel" aria-label="回測摘要">
+      {view === "results" ? <Card><CardContent className="space-y-3 p-3 md:p-5" id="pilotquant-panel-results" role="tabpanel" aria-labelledby="pilotquant-tab-results">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h3 className="text-sm font-semibold">樣本外回測 <span className="text-xs font-normal text-black/45 dark:text-white/45">後 30% · 未參與策略設定</span></h3>
           <span className="text-[11px] text-black/45 dark:text-white/45">{calculation.report.outOfSample.firstDate}～{calculation.report.outOfSample.lastDate}</span>
@@ -310,7 +320,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
         </details>
       </CardContent></Card> : null}
 
-      {view === "future" ? <Card><CardContent className="space-y-3 p-3 md:p-5" role="tabpanel" aria-label="未來情境">
+      {view === "future" ? <Card><CardContent className="space-y-3 p-3 md:p-5" id="pilotquant-panel-future" role="tabpanel" aria-labelledby="pilotquant-tab-future">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div><h3 className="text-base font-semibold">未來價格情境</h3><p className="text-xs text-black/45 dark:text-white/45">歷史抽樣 · 不等於預測目標價</p></div>
           <div className="flex gap-1" role="group" aria-label="未來情境期間">
@@ -325,7 +335,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
         <p className={warning}>P10／P50／P90 是歷史重抽樣的模擬分位數，不是可信度保證、投資目標價或停損區間；實際股價可能完全超出圖中範圍。</p>
       </CardContent></Card> : null}
 
-      {view === "trades" ? <Card><CardContent className="space-y-3 p-3 md:p-5" role="tabpanel" aria-label="交易明細">
+      {view === "trades" ? <Card><CardContent className="space-y-3 p-3 md:p-5" id="pilotquant-panel-trades" role="tabpanel" aria-labelledby="pilotquant-tab-trades">
         <div className="flex items-center justify-between gap-2"><h3 className="font-semibold">模擬成交紀錄</h3><Badge>{calculation.report.total.trades.length} 筆委託</Badge></div>
         <p className="text-xs text-black/50 dark:text-white/50">完成交易 {calculation.report.total.completedTrades} 次 · 勝率 {formatPercent(calculation.report.total.winRatePct)} · 未平倉 {calculation.report.total.openShares} 股</p>
         <div className="max-h-[55dvh] space-y-2 overflow-y-auto">
