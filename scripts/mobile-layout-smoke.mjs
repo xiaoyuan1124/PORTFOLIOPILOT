@@ -172,8 +172,44 @@ try {
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
     await checkLayout(page, viewport.name, "settings");
 
-    await page.getByRole("button", { name: "切換深色模式" }).click();
+    // Theme cycling: keep existing forest-dark as the second option,
+    // then enter the new screenshot-inspired TradeScope palette.
+    await page.getByRole("button", { name: "切換外觀模式" }).click();
+    await page.waitForFunction(() => document.documentElement.classList.contains("dark") &&
+      !document.documentElement.classList.contains("theme-tradescope"));
+    assert.equal(await page.evaluate(() => localStorage.getItem("portfoliopilot:theme")), "dark");
     await checkLayout(page, viewport.name, "settings-dark");
+
+    await page.getByRole("button", { name: "切換外觀模式" }).click();
+    await page.waitForFunction(() => document.documentElement.classList.contains("theme-tradescope"));
+    const themeColors = await page.evaluate(() => ({
+      body: getComputedStyle(document.body).backgroundColor,
+      card: getComputedStyle(document.querySelector(".pp-card")).backgroundColor
+    }));
+    assert.equal(themeColors.body, "rgb(11, 14, 12)", "TradeScope page must be near-black");
+    assert.equal(themeColors.card, "rgb(17, 21, 20)", "TradeScope card must have graphite surface");
+    assert.equal(await page.evaluate(() => localStorage.getItem("portfoliopilot:theme")), "tradescope");
+    await checkLayout(page, viewport.name, "settings-tradescope");
+
+    // The third theme must persist across reload, not just tab changes.
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByRole("heading", { name: "投資總覽" }).waitFor();
+    await page.waitForFunction(() => document.documentElement.classList.contains("theme-tradescope"));
+    await checkLayout(page, viewport.name, "home-tradescope");
+    await nav.getByRole("button", { name: "策略", exact: true }).click();
+    await page.getByRole("heading", { name: "策略實驗室", level: 1, exact: true }).waitFor();
+    await checkLayout(page, viewport.name, "strategy-tradescope");
+    await nav.getByRole("button", { name: "我的", exact: true }).click();
+    await page.getByRole("heading", { name: "設定與資料" }).waitFor();
+
+    // Direct selection of any theme also works.
+    const themeGroup = page.getByRole("group", { name: "外觀主題" });
+    await themeGroup.getByRole("button", { name: /淺色/ }).click();
+    await page.waitForFunction(() => !document.documentElement.classList.contains("dark"));
+    assert.equal(await page.evaluate(() => localStorage.getItem("portfoliopilot:theme")), "light");
+    await themeGroup.getByRole("button", { name: /TradeScope/ }).click();
+    await page.waitForFunction(() => document.documentElement.classList.contains("theme-tradescope"));
+    await checkLayout(page, viewport.name, "theme-choices-tradescope");
 
     // End-to-end CSV interaction with demo-only data in a fresh browser context:
     // preview -> confirm -> guarded undo. No personal portfolio is involved.
@@ -201,7 +237,7 @@ try {
     await page.getByRole("button", { name: "撤銷這次匯入" }).click();
     await undoHeading.waitFor({ state: "detached" });
     await context.close();
-    console.log(`PASS ${viewport.name}: home, portfolio, cross-ETF, ETF research, settings, dark mode`);
+    console.log(`PASS ${viewport.name}: legacy themes, TradeScope theme, settings persistence, mobile layouts, report/CSV`);
   }
 } finally {
   await browser.close();
