@@ -459,7 +459,7 @@ export function Settings({
               </p>
 
               {integrity.items.length ? (
-                <details key={integrity.warningCount ? "attention" : "healthy"} defaultOpen={integrity.warningCount > 0}
+                <details key={integrity.warningCount ? "attention" : "healthy"} open={integrity.warningCount > 0 ? true : undefined}
                   className="mt-3 rounded-xl border border-black/8 px-3 py-2.5 text-xs dark:border-white/10" data-ux-role="settings-integrity-details">
                   <summary className="min-h-8 cursor-pointer font-semibold">
                     {integrity.warningCount ? `展開核對 ${integrity.warningCount} 類需要處理的資料問題` : `查看 ${integrity.infoCount} 項資料限制與細節`}
@@ -580,7 +580,7 @@ export function Settings({
         <p className="text-xs text-black/45 dark:text-white/45">換手機或匯入資料前建議先備份；本機資料不會自動上傳雲端。</p>
       </div>
       <details className="lg:col-span-2 rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-data-tools"
-        defaultOpen={Boolean(pendingHoldingsCsv || pendingTradeCsv || holdingsImportUndo)}>
+        open={pendingHoldingsCsv || pendingTradeCsv || holdingsImportUndo ? true : undefined}>
         <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-2 text-sm font-semibold">
           <span>資料匯入／匯出與 CSV 工具</span>
           <span className="text-xs font-normal text-black/45 dark:text-white/45">JSON · 持股 · 券商 · 交易</span>
