@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, ArrowRight, ArrowUpRight, FlaskConical, Landmark, Layers3, Search, WalletCards } from "lucide-react";
+import { AlertTriangle, ArrowRight, ArrowUpRight, Landmark, Layers3, WalletCards } from "lucide-react";
 import type { AppState } from "@/lib/types";
-import { DEFAULT_STRATEGY_LAB } from "@/lib/strategy-lab";
 import {
   allocationByAccount,
   dailySnapshotDelta,
@@ -186,10 +185,48 @@ export function Overview({
         </Card>
       </section>
 
+      <Card className="min-w-0" data-ux-role="home-priority">
+        <CardContent className="space-y-2.5 p-3.5 md:p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold">今天先看這些</h2>
+            <span className="text-[11px] text-black/45 dark:text-white/45">持股與官方資料狀態</span>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded-xl border border-black/8 px-3 py-2.5 text-xs dark:border-white/10">
+              <span className="text-black/50 dark:text-white/50">最大公司曝險</span>
+              <p className="mt-1 font-semibold">{risk.largestCompany
+                ? `${risk.largestCompany.name} · ${risk.largestCompany.portfolioPct.toFixed(1)}%`
+                : "尚無持股"}</p>
+            </div>
+            <div className="rounded-xl border border-black/8 px-3 py-2.5 text-xs dark:border-white/10">
+              <span className="text-black/50 dark:text-white/50">官方台股報價</span>
+              <p className="mt-1 font-semibold">{priceCoverage.total === 0 ? "尚無台股報價" :
+                `${priceCoverage.covered}/${priceCoverage.total} 檔有官方價格`}</p>
+              {priceCoverage.manualOrUnknown > 0 || (priceCoverage.covered > 0 && !priceCoverage.aligned) ?
+                <p className="mt-1 text-amber-700 dark:text-amber-300" role="status">有未確認來源或不同交易日報價，請先核對</p> : null}
+            </div>
+          </div>
+          <details className="rounded-xl border border-black/8 px-3 py-2 dark:border-white/10" data-ux-role="home-trust-details">
+            <summary className="min-h-7 cursor-pointer text-xs font-semibold">資料來源、曝險計算與重要限制</summary>
+            <div className="mt-2 space-y-2 text-xs leading-5 text-black/55 dark:text-white/55">
+              <p>最大公司曝險包含直接部位與 ETF 已知成分股，並非單一券商帳面比例。</p>
+              <p>台股資料來源為 TWSE、TPEx、MOPS 研究快取；個人資產淨值仍取決於你登錄的股數、成本、價格及匯率。</p>
+              <p>Scanner、估值與法人流向只供研究，不是自動買賣評分或下單訊號。</p>
+            </div>
+          </details>
+        </CardContent>
+      </Card>
+
       <MarketStatusCenter />
 
       <DailyPortfolioDrivers state={state} onNavigate={onNavigate} />
 
+      <details className="rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="home-allocation-details">
+        <summary className="flex min-h-11 cursor-pointer items-center justify-between px-2 text-sm font-semibold">
+          <span>展開帳戶分布、產業曝險與最大持股</span>
+          <span className="text-xs font-normal text-black/45 dark:text-white/45">進階配置</span>
+        </summary>
+        <div className="mt-2">
       <section className="grid gap-4 xl:grid-cols-3">
         <Card>
           <CardHeader>
@@ -235,48 +272,10 @@ export function Overview({
           </CardContent>
         </Card>
       </section>
+        </div>
+      </details>
 
-      <section className="grid gap-4 lg:grid-cols-[1fr_.8fr]">
-        <Card>
-          <CardHeader><p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Decision cockpit</p><h2 className="mt-1 text-lg font-semibold">今天先看這些</h2></CardHeader>
-          <CardContent className="grid gap-3 pt-4 sm:grid-cols-2">
-            <div className="rounded-2xl bg-[#edf2ee] p-4 dark:bg-[#17201b]">
-              <p className="text-sm font-semibold">最大公司曝險：{risk.largestCompany?.name ?? "—"}</p>
-              <p className="mt-1 text-sm leading-6 text-black/55 dark:text-white/55">
-                {risk.largestCompany
-                  ? `穿透後占總資產 ${risk.largestCompany.portfolioPct.toFixed(1)}% · 直接 ${money(risk.largestCompany.directValueTwd)} / ETF ${money(risk.largestCompany.implicitValueTwd)}`
-                  : "新增持股後會顯示公司層級真實曝險。"}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-black/6 p-4 dark:border-white/8">
-              <p className="text-sm font-semibold">官方台股資料</p>
-              <p className="mt-1 text-sm leading-6 text-black/55 dark:text-white/55">
-                {priceCoverage.covered === 0
-                  ? "尚無由官方快取更新的台股持股價格。"
-                  : priceCoverage.manualOrUnknown > 0
-                    ? `已有 ${priceCoverage.covered}/${priceCoverage.total} 檔使用官方收盤價；另有 ${priceCoverage.manualOrUnknown} 檔仍是手動或來源未確認。`
-                    : priceCoverage.aligned
-                      ? `全部 ${priceCoverage.covered} 檔台股官方收盤價資料日一致：${priceCoverage.newestDate}。`
-                      : `官方價日期分布：${priceCoverage.oldestDate} ～ ${priceCoverage.newestDate}；部分持股資料日不同。`}
-              </p>
-            </div>
-            <button onClick={() => onNavigate?.("research")} className="flex min-h-16 items-center justify-between rounded-2xl border border-black/6 p-4 text-left transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]"><span><strong className="block text-sm">研究我的持股</strong><span className="mt-1 block text-xs text-black/45 dark:text-white/45">營收、估值、法人、Scanner 集中在一頁</span></span><Search size={18} /></button>
-            <button onClick={() => onNavigate?.("lab")} className="flex min-h-16 items-center justify-between rounded-2xl border border-black/6 p-4 text-left transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]"><span><strong className="block text-sm">查看策略與觀察價</strong><span className="mt-1 block text-xs text-black/45 dark:text-white/45">{(state.strategyLab ?? DEFAULT_STRATEGY_LAB).targets.length} 檔研究清單 · 以資料驗證訊號，缺資料不進場</span></span><FlaskConical size={18} /></button>
-            <button onClick={() => onNavigate?.("portfolio")} className="flex min-h-16 items-center justify-between rounded-2xl border border-black/6 p-4 text-left transition hover:bg-black/[.025] dark:border-white/8 dark:hover:bg-white/[.03]"><span><strong className="block text-sm">檢查帳戶與績效</strong><span className="mt-1 block text-xs text-black/45 dark:text-white/45">持股、ETF 穿透、風險、現金流、績效</span></span><ArrowRight size={18} /></button>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader><p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Trust</p><h2 className="mt-1 text-lg font-semibold">資料可信度</h2></CardHeader>
-          <CardContent className="space-y-3 pt-4">
-            <div className="flex gap-3 rounded-2xl border border-black/6 p-4 dark:border-white/8">
-              <AlertTriangle size={18} className="mt-0.5 shrink-0 text-[#8b6538]" />
-              <p className="text-sm leading-6 text-black/55 dark:text-white/55">TWSE、TPEx、MOPS 研究資料保留來源與日期；個人淨值仍以你輸入的持股、價格、成本與匯率為準。</p>
-            </div>
-            <p className="text-xs leading-5 text-black/38 dark:text-white/38">PortfolioPilot 不把 Scanner、估值或資金流轉成買賣評分；它們是研究條件與原始資料。</p>
-          </CardContent>
-        </Card>
-      </section>
     </div>
   );
 }
