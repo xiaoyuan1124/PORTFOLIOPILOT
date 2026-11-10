@@ -221,7 +221,7 @@ export function Scanner({ state }: { state: AppState }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h3 className="mt-2 text-xl font-semibold">四條件選股</h3>
-            <p className="mt-2 text-xs opacity-60">目前：3 月營收 YoY &gt; {thresholds.revenueYoyMinPct}% · 外資 10D &gt; {number(thresholds.foreignNet10dMin)} 股 · 投信 10D &gt; {number(thresholds.trustNet10dMin)} 股</p>
+            <p className="mt-2 text-xs opacity-60">近 3 月營收 YoY &gt; {thresholds.revenueYoyMinPct}% · 毛利近 3 季續升 · 外資 10D &gt; {number(thresholds.foreignNet10dMin)} 股 · 投信 10D &gt; {number(thresholds.trustNet10dMin)} 股</p>
           </div>
           <div className="text-right"><p className="text-3xl font-semibold">{loading ? "…" : error ? "—" : counts.pass}</p><p className="text-xs opacity-60">{loading ? "讀取官方 Gate" : "四關正式通過"}</p></div>
         </div>
