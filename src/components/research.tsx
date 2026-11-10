@@ -55,13 +55,15 @@ export function Research({
   onChange,
   researchKey,
   researchType,
-  onAddHolding
+  onAddHolding,
+  onQuantResearch
 }: {
   state: AppState;
   onChange: (state: AppState) => boolean;
   researchKey?: string;
   researchType?: "stock" | "etf";
   onAddHolding?: (candidate: HoldingLookupCandidate) => void;
+  onQuantResearch?: (key: string) => void;
 }) {
   const [tab, setTab] = useState<ResearchTab>(researchType === "etf" ? "etf" : "snapshot");
   const [snapshotKey, setSnapshotKey] = useState(researchKey);
@@ -121,7 +123,7 @@ export function Research({
         </div>
       ) : null}
 
-      {tab === "snapshot" ? <CompanySnapshotResearch key={snapshotRequestId} state={state} requestedKey={snapshotKey} /> : null}
+      {tab === "snapshot" ? <CompanySnapshotResearch key={snapshotRequestId} state={state} requestedKey={snapshotKey} onQuantResearch={onQuantResearch} /> : null}
       {tab === "etf" ? <EtfResearch key={etfRequestedSymbol ?? "default"} state={state} onOpenStock={openStockFromEtf} requestedSymbol={etfRequestedSymbol} /> : null}
       {tab === "materialEvents" ? <MaterialEventsResearch state={state} /> : null}
       {tab === "sectorPulse" ? <SectorPulseResearch state={state} /> : null}
