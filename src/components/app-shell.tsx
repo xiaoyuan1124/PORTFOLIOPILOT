@@ -344,7 +344,7 @@ export function AppShell() {
         <nav className="mt-3 space-y-1">
           {nav.map((item) => {
             const Icon = item.icon;
-            return <button key={item.key} onClick={() => navigate(item.key)} className={cn("flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold transition", section === item.key ? "bg-white text-[#1f332a] shadow-sm dark:bg-white/10 dark:text-white" : "text-black/45 hover:bg-white/60 hover:text-black dark:text-white/45 dark:hover:bg-white/5 dark:hover:text-white")}><Icon size={18} />{item.label}</button>;
+            return <button key={item.key} aria-current={section === item.key ? "page" : undefined} onClick={() => navigate(item.key)} className={cn("flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold transition", section === item.key ? "bg-white text-[#1f332a] shadow-sm dark:bg-white/10 dark:text-white" : "text-black/45 hover:bg-white/60 hover:text-black dark:text-white/45 dark:hover:bg-white/5 dark:hover:text-white")}><Icon size={18} />{item.label}</button>;
           })}
         </nav>
         <div className="mt-auto rounded-2xl border border-black/6 bg-white/60 p-4 dark:border-white/7 dark:bg-white/4">
@@ -429,7 +429,7 @@ export function AppShell() {
             const Icon = item.icon;
             const active = section === item.key;
             return (
-              <button key={item.key} onClick={() => navigate(item.key)} className={cn("flex min-h-[54px] flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold transition", active ? "text-[#1f5b40] dark:text-[#a7d8b8]" : "text-black/38 dark:text-white/38")}>
+              <button key={item.key} aria-current={active ? "page" : undefined} onClick={() => navigate(item.key)} className={cn("flex min-h-[54px] flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold transition", active ? "text-[#1f5b40] dark:text-[#a7d8b8]" : "text-black/38 dark:text-white/38")}>
                 <Icon size={20} strokeWidth={active ? 2.4 : 2} />
                 {item.label}
               </button>
