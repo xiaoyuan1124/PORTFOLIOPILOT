@@ -85,7 +85,7 @@ function ScenarioChart({ scenario, horizon }: { scenario: GrowthScenarios; horiz
       </table>
       </div>
     </details>
-    <p className="text-[11px] leading-5 text-black/50 dark:text-white/50">使用最近 {scenario.sampleDays} 筆日報酬、5 日區塊重抽樣、固定亂數種子與 {scenario.observations} 條模擬路徑。P10／P50／P90 是模擬結果的百分位數，不是經校準的 80% 信賴區間，更不是未來股價預言。</p>
+    <p className="text-[11px] leading-5 text-black/50 dark:text-white/50">歷史 {scenario.sampleDays} 日、{scenario.observations} 條模擬路徑；分位數非保證區間。</p>
   </div>;
 }
 
@@ -188,7 +188,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
         <p className="text-[10px] font-semibold uppercase tracking-[.15em] text-black/45 dark:text-white/45">PILOTQUANT · RESEARCH</p>
         <h2 className="mt-0.5 truncate text-lg font-semibold md:text-xl">個股量化研究</h2>
       </div>
-      <Badge>研究模擬</Badge>
+      <Badge>模擬</Badge>
     </div>
 
     <Card><CardContent className="space-y-3 p-3 md:p-4">
@@ -226,7 +226,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
       </p> : null}
       {!current ? <p role="status" className="text-xs text-black/55 dark:text-white/55">讀取 {requestKey} 官方收盤資料中…</p> : null}
       {current?.error ? <p role="alert" className={warning}>{current.error}。請檢查標的及資料來源。</p> : null}
-      {history && staleDays > 7 ? <p className={warning}>歷史資料距今約 {staleDays} 天；可能因休市、停牌或資料更新延遲，請勿作為即時交易訊號。</p> : null}
+      {history && staleDays > 7 ? <p className={warning}>資料距今 {staleDays} 天，非即時行情。</p> : null}
       {calculation.error ? <p role="alert" className={warning}>{calculation.error}</p> : null}
       <details className="rounded-xl border border-black/8 px-3 py-2.5 text-xs dark:border-white/10" data-testid="pilotquant-advanced">
         <summary className="flex min-h-7 cursor-pointer items-center justify-between font-semibold">
@@ -246,7 +246,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
             </label>
           )}
         </div>
-        <p className="mt-3 leading-5 text-black/50 dark:text-white/50">修改策略或本金後會即時重新模擬；只有變更股票代號需要按「分析」。</p>
+        <p className="mt-3 leading-5 text-black/50 dark:text-white/50">參數即時更新；更換股票請按「分析」。</p>
       </details>
     </CardContent></Card>
 
@@ -300,9 +300,9 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <p className="text-[11px] leading-5 text-black/50 dark:text-white/50">綠線：模擬策略；金線：買進持有。優先顯示樣本外表現，避免全期間績效掩蓋近期策略失效。</p>
+        <p className="text-[11px] leading-5 text-black/50 dark:text-white/50">綠線：策略；金線：買進持有。</p>
         <details className="rounded-xl border border-black/8 p-3 dark:border-white/10" data-testid="pilotquant-full-report">
-          <summary className="cursor-pointer text-xs font-semibold">展開完整回測、樣本內及市場比較</summary>
+          <summary className="cursor-pointer text-xs font-semibold">完整回測與市場比較</summary>
           <div className="mt-3 space-y-3">
             <SectionSummary heading="全期間" report={calculation.report.total} />
             <SectionSummary heading="前 70% · 樣本內" report={calculation.report.inSample} />
@@ -313,8 +313,8 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
                 <Metric label="個股價格報酬" value={formatPercent(benchmarkComparison.stockReturn)} />
                 <Metric label="加權價格指數" value={formatPercent(benchmarkComparison.benchmarkReturn)} />
                 <Metric label="相對價格表現" value={formatPercent(benchmarkComparison.relative)} />
-              </div> : <p className="mt-2 text-xs text-black/50 dark:text-white/50">沒有完全相同日期的市場資料，不進行不同期間的比較。</p>}
-              <p className="mt-2 text-xs text-black/50 dark:text-white/50">指數對比僅為價格報酬，不含股利或成本，不能稱為 Alpha。</p>
+              </div> : <p className="mt-2 text-xs text-black/50 dark:text-white/50">缺少同期間市場資料。</p>}
+              <p className="mt-2 text-xs text-black/50 dark:text-white/50">指數比較不含股利與成本。</p>
             </div>
           </div>
         </details>
@@ -322,7 +322,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
 
       {view === "future" ? <Card><CardContent className="space-y-3 p-3 md:p-5" id="pilotquant-panel-future" role="tabpanel" aria-labelledby="pilotquant-tab-future">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div><h3 className="text-base font-semibold">未來價格情境</h3><p className="text-xs text-black/45 dark:text-white/45">歷史抽樣 · 不等於預測目標價</p></div>
+          <div><h3 className="text-base font-semibold">未來價格情境</h3><p className="text-xs text-black/45 dark:text-white/45">歷史模擬 · 非目標價</p></div>
           <div className="flex gap-1" role="group" aria-label="未來情境期間">
             {tradingHorizons.map(period => <button key={period} type="button" aria-pressed={horizon === period} onClick={() => setHorizon(period)}
               className={"min-h-9 rounded-full border px-2.5 text-xs font-semibold " + (horizon === period ? "border-[#315f49] bg-[#e7f1e9] text-[#245238] dark:bg-[#173426] dark:text-[#a9d7b7]" : "border-black/10 dark:border-white/10")}>
@@ -332,7 +332,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
         </div>
         {calculation.projectionError ? <p role="alert" className={warning}>{calculation.projectionError}</p> : null}
         {calculation.scenario ? <ScenarioChart scenario={calculation.scenario} horizon={horizon} /> : null}
-        <p className={warning}>P10／P50／P90 是歷史重抽樣的模擬分位數，不是可信度保證、投資目標價或停損區間；實際股價可能完全超出圖中範圍。</p>
+        <p className={warning}>歷史模擬非目標價或保證區間，實際股價可能超出範圍。</p>
       </CardContent></Card> : null}
 
       {view === "trades" ? <Card><CardContent className="space-y-3 p-3 md:p-5" id="pilotquant-panel-trades" role="tabpanel" aria-labelledby="pilotquant-tab-trades">
@@ -345,19 +345,19 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
               <p className="mt-1 text-black/50 dark:text-white/50">模擬成交價 {formatMoney(trade.price)} · 訊號日 {trade.signalDate} · 費用 {formatMoney(trade.fees + trade.tax)}</p>
             </div>
           )}
-          {!calculation.report.total.trades.length ? <p className="py-7 text-center text-xs text-black/50 dark:text-white/50">此期間沒有觸發交易；不代表模型沒有風險。</p> : null}
+          {!calculation.report.total.trades.length ? <p className="py-7 text-center text-xs text-black/50 dark:text-white/50">無模擬成交紀錄。</p> : null}
         </div>
       </CardContent></Card> : null}
     </> : null}
 
     <details className="rounded-xl border border-black/8 p-3 text-xs dark:border-white/10" data-testid="pilotquant-methodology">
       <summary className="flex min-h-7 cursor-pointer items-center justify-between font-semibold">
-        <span>資料來源、風險與進階工具</span><ChevronDown size={16} aria-hidden="true" />
+        <span>資料與模型限制</span><ChevronDown size={16} aria-hidden="true" />
       </summary>
       <div className="mt-3 space-y-2 leading-5 text-black/55 dark:text-white/55">
         {history && index ? <p>{history.market} 官方收盤資料 · {history.startDate}～{history.endDate} · 快取 {index.generatedAt.slice(0, 10)}</p> : null}
-        <p>第 t 日收盤訊號僅在下一交易日收盤模擬成交，含可調整交易費與 T+2 資金限制；沒有盤中止損或真實下單。</p>
-        <p>資料未還原除權息；固定 70/30 檢查不是多折 Walk-forward，不能把歷史績效當成未來獲利能力。</p>
+        <p>訊號次日收盤模擬成交；含費稅、滑價與 T+2 限制，無實際下單。</p>
+        <p>價格未還原權息；70/30 非多折驗證，歷史績效不保證未來。</p>
         <a href={advancedUrl} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-black/10 px-3 font-semibold dark:border-white/10">
           開啟進階工作台 · 多標的／CSV <ArrowUpRight size={14} />
         </a>
