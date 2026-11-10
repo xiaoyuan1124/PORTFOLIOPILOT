@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { BarChart3, BriefcaseBusiness, FlaskConical, Home, Moon, Search, Settings as SettingsIcon, Sun } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, FlaskConical, Home, Moon, Palette, Search, Settings as SettingsIcon, Sun } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import type { AppState } from "@/lib/types";
+import { APP_THEME_LABELS, nextAppTheme, parseAppTheme, themeClassState, type AppTheme } from "@/lib/app-theme";
 import type { HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { emptyState } from "@/lib/demo-data";
 import { withTodaySnapshot } from "@/lib/calc";
@@ -52,7 +53,7 @@ const titles: Record<Section, { title: string; eyebrow: string }> = {
 export function AppShell() {
   const [section, setSection] = useState<Section>("home");
   const [state, setState] = useState<AppState>(emptyState);
-  const [dark, setDark] = useState(false);
+  const [theme, setTheme] = useState<AppTheme>("light");
   const [searchOpen, setSearchOpen] = useState(false);
   const [researchKey, setResearchKey] = useState<string | undefined>();
   const [researchType, setResearchType] = useState<"stock" | "etf" | undefined>();
@@ -109,9 +110,11 @@ export function AppShell() {
           } catch {
             saved = null;
           }
-          const shouldDark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
-          setDark(shouldDark);
-          document.documentElement.classList.toggle("dark", shouldDark);
+          const initialTheme = parseAppTheme(saved, window.matchMedia("(prefers-color-scheme: dark)").matches);
+          setTheme(initialTheme);
+          const classes = themeClassState(initialTheme);
+          document.documentElement.classList.toggle("dark", classes.dark);
+          document.documentElement.classList.toggle("theme-tradescope", classes.tradescope);
         } finally {
           if (!cancelled) setStorageReady(true);
         }
@@ -292,15 +295,20 @@ export function AppShell() {
     });
   }
 
-  function toggleTheme() {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
+  function chooseTheme(next: AppTheme) {
+    setTheme(next);
+    const classes = themeClassState(next);
+    document.documentElement.classList.toggle("dark", classes.dark);
+    document.documentElement.classList.toggle("theme-tradescope", classes.tradescope);
     try {
-      window.localStorage.setItem("portfoliopilot:theme", next ? "dark" : "light");
+      window.localStorage.setItem("portfoliopilot:theme", next);
     } catch {
       toast.info("主題已套用，但瀏覽器目前無法記住這個偏好。");
     }
+  }
+
+  function toggleTheme() {
+    chooseTheme(nextAppTheme(theme));
   }
 
   if (!storageReady) {
@@ -314,7 +322,7 @@ export function AppShell() {
   return (
     <div className="min-h-dvh text-[#1b241f] dark:text-[#e7eee9]">
       <Toaster
-        theme={dark ? "dark" : "light"}
+        theme={theme === "light" ? "light" : "dark"}
         position="top-center"
         offset={{ top: "max(5.5rem, calc(env(safe-area-inset-top, 0px) + 1rem))" }}
         mobileOffset={{ top: "max(5.5rem, calc(env(safe-area-inset-top, 0px) + 1rem))" }}
@@ -357,8 +365,8 @@ export function AppShell() {
                 <Search size={17} /><span className="hidden text-xs font-semibold text-black/50 dark:text-white/50 sm:inline">搜尋</span>
               </button>
               <Badge tone={state.dataMode === "demo" ? "warn" : "neutral"}>{state.dataMode === "demo" ? "DEMO" : "LOCAL"}</Badge>
-              <button onClick={toggleTheme} className="grid h-11 w-11 place-items-center rounded-full border border-black/6 bg-white/80 transition hover:bg-white dark:border-white/8 dark:bg-white/6 dark:hover:bg-white/10" aria-label="切換深色模式">
-                {dark ? <Sun size={18} /> : <Moon size={18} />}
+              <button onClick={toggleTheme} className="app-theme-toggle grid h-11 w-11 place-items-center rounded-full border border-black/6 bg-white/80 transition hover:bg-white dark:border-white/8 dark:bg-white/6 dark:hover:bg-white/10" aria-label="切換外觀模式" title={`目前：${APP_THEME_LABELS[theme]} · 點擊切換至${APP_THEME_LABELS[nextAppTheme(theme)]}`}>
+                {theme === "light" ? <Moon size={18} /> : theme === "dark" ? <Palette size={18} /> : <Sun size={18} />}
               </button>
             </div>
           </div>
@@ -403,6 +411,8 @@ export function AppShell() {
             <Settings
               state={state}
               onChange={updateState}
+              theme={theme}
+              onThemeChange={chooseTheme}
               hasRecoveryBackup={hasRecoveryBackup}
               onRecoveryBackupCleared={() => setHasRecoveryBackup(false)}
               storageWriteBlocked={storageWriteBlocked}
