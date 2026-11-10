@@ -155,18 +155,49 @@ try {
     await page.getByRole("heading", { name: "歷史回測報告", exact: true }).waitFor();
     await checkLayout(page, viewport.name, "strategy-backtest-report");
 
-    // PilotQuant is now native to PortfolioPilot, not a detached website.
-    // Exercise stock 2330 official close history, holdout backtest and
-    // forward scenario paths on every supported iPhone-size viewport.
+    // Regression: the former very tall Strategy Lab may leave scroll offset
+    // under the sticky header when swapping to its shorter quant subtab.
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await page.getByRole("button", { name: "PilotQuant 量化研究", exact: true }).click();
-    await page.getByRole("heading", { name: "個股歷史回測 × 成長情境路徑" }).waitFor();
-    await page.getByRole("heading", { name: "過往策略回測", exact: true }).waitFor({ timeout: 20000 });
-    await page.getByRole("heading", { name: "未來價格成長情境", exact: true }).waitFor();
-    await checkLayout(page, viewport.name, "pilotquant-native");
+    await page.getByRole("heading", { name: "個股量化研究", exact: true }).waitFor();
+    await page.getByRole("tabpanel", { name: "回測摘要" }).waitFor({ timeout: 20000 });
+    await page.waitForFunction(() => window.scrollY <= 2);
+    const topGeometry = await page.evaluate(() => {
+      const appHeader = document.querySelector(".app-topbar");
+      const top = document.querySelector('[data-testid="pilotquant-top"]');
+      return { headerBottom: appHeader?.getBoundingClientRect().bottom ?? -1,
+        topStart: top?.getBoundingClientRect().top ?? -1 };
+    });
+    assert.ok(topGeometry.topStart >= topGeometry.headerBottom - 2,
+      `${viewport.name}: quant page start is obscured by sticky app header: ${JSON.stringify(topGeometry)}`);
+    const advanced = page.locator('[data-testid="pilotquant-advanced"]');
+    assert.equal(await advanced.getAttribute("open"), null, "advanced params must default closed");
+    const source = page.locator('[data-testid="pilotquant-source"]');
+    await source.waitFor();
+    assert.match(await source.innerText(), /2330/);
+    const metricSummary = page.locator('[data-testid="pilotquant-summary"]');
+    assert.equal(await metricSummary.locator(".mini-metric").count(), 4,
+      "default research screen should show only four key metrics");
+    await checkLayout(page, viewport.name, "pilotquant-compact");
+
+    // Disclose detail only on demand, without losing the selected stock.
+    await page.locator('[data-testid="pilotquant-full-report"] summary').click();
+    await page.getByText("前 70% · 樣本內", { exact: true }).waitFor();
+    await checkLayout(page, viewport.name, "pilotquant-details-expanded");
+    await page.locator('[data-testid="pilotquant-full-report"] summary').click();
+
+    await page.getByRole("tab", { name: "未來情境" }).click();
+    await page.getByRole("tabpanel", { name: "未來情境" }).waitFor();
     await page.getByRole("button", { name: "1年", exact: true }).click();
     await checkLayout(page, viewport.name, "pilotquant-year-scenarios");
+    await page.getByRole("tab", { name: "交易明細" }).click();
+    await page.getByRole("tabpanel", { name: "交易明細" }).waitFor();
+    await checkLayout(page, viewport.name, "pilotquant-trades");
+
+    // Return to the old strategy tab; scroll must also reset here.
     await page.getByRole("button", { name: "觀察價與舊策略", exact: true }).click();
     await page.getByRole("heading", { name: "歷史回測報告", exact: true }).waitFor();
+    await page.waitForFunction(() => window.scrollY <= 2);
 
     await nav.getByRole("button", { name: "我的", exact: true }).click();
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
