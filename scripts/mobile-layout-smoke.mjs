@@ -57,6 +57,17 @@ try {
     const nav = page.locator(".app-mobile-nav");
 
     await checkLayout(page, viewport.name, "home");
+    const homeSecondary = page.locator('[data-ux-role="home-allocation-details"]');
+    await homeSecondary.waitFor();
+    assert.equal(await homeSecondary.getAttribute("open"), null, "secondary holdings and sectors should not dominate the first viewport");
+    const dailySecondary = page.locator('[data-ux-role="daily-drivers-details"]');
+    await dailySecondary.waitFor();
+    assert.equal(await dailySecondary.getAttribute("open"), null, "daily attribution should be summarized by default");
+    await page.locator('[data-ux-role="daily-key-metrics"]').waitFor();
+    await homeSecondary.locator("summary").click();
+    await page.getByRole("heading", { name: "帳戶分布" }).waitFor();
+    await checkLayout(page, viewport.name, "home-allocations-expanded");
+    await homeSecondary.locator("summary").click();
 
     await nav.getByRole("button", { name: "投資組合", exact: true }).click();
     await page.getByRole("heading", { name: "投資組合" }).waitFor();
@@ -147,13 +158,26 @@ try {
     await page.getByRole("heading", { name: "策略實驗室", level: 1, exact: true }).waitFor();
     await page.getByRole("heading", { name: "2317 · 鴻海", level: 4, exact: true }).waitFor();
     await checkLayout(page, viewport.name, "strategy-lab");
+    const strategyConfig = page.locator('[data-ux-section="strategy-parameters"]');
+    assert.equal(await strategyConfig.getAttribute("open"), null, "strategy configuration defaults to collapsed");
+    const watchCards = page.locator('[data-testid="watch-target-card"]');
+    assert.equal(await watchCards.count(), 6, "default watchlist must retain all six research stocks");
+    assert.equal(await page.locator('[data-testid="watch-target-details"][open]').count(), 0, "detailed indicators must not all be expanded");
+    await watchCards.first().locator('[data-testid="watch-target-details"] summary').click();
+    await page.getByText(/MACD/, { exact: false }).first().waitFor();
+    await checkLayout(page, viewport.name, "strategy-watch-details-expanded");
+    await watchCards.first().locator('[data-testid="watch-target-details"] summary').click();
+    await strategyConfig.locator("summary").click();
     await page.getByRole("button", { name: "複製為新策略" }).click();
     assert.equal(await page.locator("select").first().locator("option").count(), 2);
     await checkLayout(page, viewport.name, "strategy-lab-new-profile");
     // New V0.93 backtesting report must fit narrow iPhone screens and
     // fail closed without published official OHLCV.
+    await page.locator('[data-ux-section="legacy-backtest"] summary').click();
     await page.getByRole("heading", { name: "歷史回測報告", exact: true }).waitFor();
     await checkLayout(page, viewport.name, "strategy-backtest-report");
+    await page.locator('[data-ux-section="legacy-backtest"] summary').click();
+    await strategyConfig.locator("summary").click();
 
     // Regression: the former very tall Strategy Lab may leave scroll offset
     // under the sticky header when swapping to its shorter quant subtab.
@@ -196,12 +220,22 @@ try {
 
     // Return to the old strategy tab; scroll must also reset here.
     await page.getByRole("button", { name: "觀察價與舊策略", exact: true }).click();
-    await page.getByRole("heading", { name: "歷史回測報告", exact: true }).waitFor();
+    await page.getByRole("heading", { name: "自訂股票研究清單", exact: true }).waitFor();
     await page.waitForFunction(() => window.scrollY <= 2);
 
     await nav.getByRole("button", { name: "我的", exact: true }).click();
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
+    await page.locator('[data-ux-role="settings-backup-entry"]').waitFor();
+    const dataTools = page.locator('[data-ux-role="settings-data-tools"]');
+    await dataTools.waitFor();
+    assert.equal(await dataTools.getAttribute("open"), null, "low-frequency CSV tools should be folded");
+    assert.equal(await page.locator('[data-ux-role="settings-danger"]').getAttribute("open"), null, "destructive actions should be folded");
     await checkLayout(page, viewport.name, "settings");
+    await dataTools.locator("summary").first().click();
+    await page.getByRole("heading", { name: "完整備份" }).waitFor();
+    await page.getByRole("heading", { name: "持股 CSV" }).waitFor();
+    await checkLayout(page, viewport.name, "settings-data-tools-expanded");
+    await dataTools.locator("summary").first().click();
 
     // Theme cycling: keep existing forest-dark as the second option,
     // then enter the new screenshot-inspired TradeScope palette.
