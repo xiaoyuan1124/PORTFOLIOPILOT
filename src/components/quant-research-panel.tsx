@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowUpRight, ChartNoAxesCombined, RefreshCw } from "lucide-react";
 import { loadTwPriceHistory, loadTwPriceHistoryIndex, type TwPriceHistoryIndex, type TwPriceHistorySeries } from "@/lib/price-history-data";
+import { benchmarkById, benchmarkWindow, loadBundledBenchmarks, type BenchmarkCache } from "@/lib/benchmark";
+import { relativePerformancePct } from "@/lib/price-history";
 import {
   DEFAULT_QUANT_CONFIG, projectGrowthScenarios, runQuantResearch,
   type GrowthScenarios, type QuantConfig, type QuantReport, type QuantSummary
@@ -95,6 +97,14 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
   const [source, setSource] = useState<SourceState>({ key: "", index: null, history: null, error: "" });
   const [config, setConfig] = useState<QuantConfig>(DEFAULT_QUANT_CONFIG);
   const [horizon, setHorizon] = useState<Horizon>(126);
+  const [marketBenchmark, setMarketBenchmark] = useState<BenchmarkCache | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void loadBundledBenchmarks().then(cache => { if (active) setMarketBenchmark(cache); })
+      .catch(() => { if (active) setMarketBenchmark(null); });
+    return () => { active = false; };
+  }, [reloadToken]);
 
   useEffect(() => {
     const next = keyToRequest(requestedKey);
@@ -143,6 +153,19 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
       return { report: null, scenario: null, error: cause instanceof Error ? cause.message : "回測資料不足", projectionError: "" };
     }
   }, [history, index, blockedReason, config, horizon]);
+  const benchmarkComparison = useMemo(() => {
+    if (!marketBenchmark || !history || !calculation.report) return null;
+    const series = benchmarkById(marketBenchmark, "TWSE:TAIEX-PRICE");
+    if (!series) return null;
+    const period = calculation.report.outOfSample;
+    const result = benchmarkWindow(series, period.firstDate, period.lastDate);
+    if (result.status !== "available" || result.returnPct === null || !result.calendarDatesExact) return null;
+    const start = history.points.find(point => point[0] === result.actualStart);
+    const end = history.points.find(point => point[0] === result.actualEnd);
+    if (!start || !end || !start[1]) return null;
+    const stockReturn = (end[1] / start[1] - 1) * 100;
+    return { stockReturn, benchmarkReturn: result.returnPct, relative: relativePerformancePct(stockReturn, result.returnPct), dates: [result.actualStart, result.actualEnd] };
+  }, [marketBenchmark, history, calculation.report]);
   const staleDays = history?.endDate ? Math.round((Date.now() - new Date(history.endDate + "T00:00:00+08:00").getTime()) / 86400000) : 0;
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   const advancedUrl = basePath + "/quant-lab/";
@@ -226,6 +249,15 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
           <SectionSummary heading="後 30% · 時間保留樣本" report={calculation.report.outOfSample} />
         </div>
         <p className="text-xs leading-5 text-black/50 dark:text-white/50">分界：{calculation.report.splitDate}。兩段分別以相同本金重算，前段只提供指標暖機、不帶入持倉。這是固定參數的時間保留檢查，不是多折 Walk-forward；並且使用未還原權息股價，可能低估總報酬及受到除權息影響。</p>
+        <div className="rounded-xl border border-black/8 p-3 dark:border-white/10">
+          <h4 className="text-sm font-semibold">相同日期的市場價格比較（樣本外）</h4>
+          {benchmarkComparison ? <div className="mt-3 grid grid-cols-3 gap-2">
+            <Metric label="個股原始價格報酬" value={formatPercent(benchmarkComparison.stockReturn)} />
+            <Metric label="台股加權價格指數" value={formatPercent(benchmarkComparison.benchmarkReturn)} />
+            <Metric label="相對價格表現" value={formatPercent(benchmarkComparison.relative)} />
+          </div> : <p className="mt-2 text-xs text-black/50 dark:text-white/50">官方加權價格指數資料不足或日期不一致，不以其他期間推補市場報酬。</p>}
+          <p className="mt-2 text-[11px] leading-5 text-black/45 dark:text-white/45">對比僅使用同期間價格變化，不含股利、買賣成本，也不將相對表現稱為 Alpha。與上方「扣除成本的策略績效」屬不同口徑。</p>
+        </div>
         <div className="h-[240px]" role="img" aria-label="樣本外策略資產曲線與扣除成本買進持有比較">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={calculation.report.outOfSample.equity}>
