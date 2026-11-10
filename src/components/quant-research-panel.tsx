@@ -233,7 +233,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
           ))}
         </div>
       </details>
-      <p className="text-[11px] leading-5 text-black/45 dark:text-white/45">交易規則：在第 t 日收盤產生訊號，僅於第 t+1 個交易日「收盤價」模擬成交，並扣除可設定手續費、滑價及賣出稅。沒有 OHLC 不使用盤中停損／停利。整股數為整數，不借券、不槓桿、不發送實際委託。</p>
+      <p className="text-[11px] leading-5 text-black/45 dark:text-white/45">交易規則：在第 t 日收盤產生訊號，僅於第 t+1 個交易日「收盤價」模擬成交，並扣除可設定手續費、滑價及賣出稅。沒有 OHLC 不使用盤中停損／停利。整股數為整數，不借券、不槓桿，賣出款以 T+2 交易日才可再投入的保守假設模擬，不發送實際委託。</p>
     </CardContent></Card>
 
     {calculation.report ? <>
