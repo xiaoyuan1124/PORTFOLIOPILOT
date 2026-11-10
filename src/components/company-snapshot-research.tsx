@@ -82,7 +82,7 @@ function SectionHeader({ title, detail }: { title: string; detail: string }) {
   return <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-semibold">{title}</h4><span className="text-[11px] text-black/40 dark:text-white/40">{detail}</span></div>;
 }
 
-export function CompanySnapshotResearch({ state, requestedKey }: { state: AppState; requestedKey?: string }) {
+export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }: { state: AppState; requestedKey?: string; onQuantResearch?: (key: string) => void }) {
   const [caches, setCaches] = useState<Caches | null>(null);
   const [query, setQuery] = useState("");
   const [heldOnly, setHeldOnly] = useState(false);
@@ -222,6 +222,14 @@ export function CompanySnapshotResearch({ state, requestedKey }: { state: AppSta
 
     {selected ? <>
       <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{isHeldCompanySnapshot(selected, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>
+
+      {onQuantResearch ? (
+        <button type="button" onClick={() => onQuantResearch(selected.market + ":" + selected.code)}
+          className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-[#315f49]/20 bg-[#e7f1e9] px-4 text-left text-sm font-semibold text-[#245238] dark:border-[#8ec7a3]/25 dark:bg-[#173426] dark:text-[#a9d7b7]">
+          <span>使用 PilotQuant 回測 {selected.code}，查看未來價格情境</span>
+          <span aria-hidden>→</span>
+        </button>
+      ) : null}
 
       <SecurityPriceHistoryCard market={selected.market} symbol={selected.code} />
 

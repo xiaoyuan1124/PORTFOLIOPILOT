@@ -57,6 +57,8 @@ export function AppShell() {
   const [researchKey, setResearchKey] = useState<string | undefined>();
   const [researchType, setResearchType] = useState<"stock" | "etf" | undefined>();
   const [researchRequestId, setResearchRequestId] = useState(0);
+  const [quantRequestedKey, setQuantRequestedKey] = useState<string | undefined>();
+  const [quantRequestId, setQuantRequestId] = useState(0);
   const [hasRecoveryBackup, setHasRecoveryBackup] = useState(false);
   const [storageWriteBlocked, setStorageWriteBlocked] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
@@ -263,6 +265,13 @@ export function AppShell() {
     });
   }
 
+  function openQuantResearch(key: string) {
+    setQuantRequestedKey(key);
+    setQuantRequestId((value) => value + 1);
+    setSection("lab");
+    window.requestAnimationFrame(() => window.scrollTo(0, 0));
+  }
+
   function navigatePortfolioTab(tab: PortfolioTab) {
     setPortfolioRequestedTab(tab);
     setPortfolioHoldingCandidate(undefined);
@@ -388,8 +397,8 @@ export function AppShell() {
               requestedHoldingCandidate={portfolioHoldingCandidate}
             />
           ) : null}
-          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} onAddHolding={addWatchlistCandidateToPortfolio} /> : null}
-          {section === "lab" ? <StrategyLab state={state} onChange={updateState} onOpenResearch={() => navigate("research")} onOpenRisk={() => navigatePortfolioTab("risk")} /> : null}
+          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} onAddHolding={addWatchlistCandidateToPortfolio} onQuantResearch={openQuantResearch} /> : null}
+          {section === "lab" ? <StrategyLab key={quantRequestId} state={state} onChange={updateState} onOpenResearch={() => navigate("research")} onOpenRisk={() => navigatePortfolioTab("risk")} quantRequestedKey={quantRequestedKey} /> : null}
           {section === "settings" ? (
             <Settings
               state={state}

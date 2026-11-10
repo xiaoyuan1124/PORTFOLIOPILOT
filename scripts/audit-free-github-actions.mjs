@@ -12,7 +12,7 @@ const freeGitHubActions = new Set([
   "actions/deploy-pages", "actions/upload-artifact"
 ]);
 const freeStandardRunners = new Set([
-  "ubuntu-latest", "macos-26"
+  "ubuntu-latest", "ubuntu-24.04", "macos-26"
 ]);
 const thirdPartyActions = new Set();
 const unexpectedRunners = new Set();

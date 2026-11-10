@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d1815" />
+  <meta name="description" content="PilotQuant Lab — 零成本、本機優先、可驗證的股票量化回測研究室。" />
+  <title>PilotQuant Lab — 量化研究室</title>
+  <style>
+:root{color-scheme:dark;--bg:#0b1412;--side:#0d1815;--card:#13211d;--card2:#172722;--line:#263a33;--text:#e8eee8;--soft:#9aaea3;--mute:#6c857a;--accent:#b0e0b4;--green:#80d6a5;--red:#ed9d9b;--gold:#d8cb9d;--radius:16px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC","Microsoft JhengHei",Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible,.dropzone:focus-visible{outline:2px solid var(--accent);outline-offset:3px}a{text-decoration:none;color:inherit}.shell{min-height:100vh;display:flex}.sidebar{width:244px;position:sticky;top:0;height:100vh;flex:0 0 244px;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:27px 18px}.brand{display:flex;gap:11px;align-items:center;padding:0 7px 38px}.brand-mark{width:38px;height:38px;border-radius:12px;background:#244937;color:#b4f4c3;display:grid;place-items:center;font-size:26px}.brand strong{font-size:16px;letter-spacing:1px;font-weight:750}.brand-accent{color:var(--accent)}.brand small{font-size:8px;letter-spacing:2.2px;color:var(--mute);display:block;margin-top:-2px}.section-caption{font-size:10px;letter-spacing:2px;color:#60786d;padding:4px 13px 12px;font-weight:bold}.side-nav{display:grid;gap:6px}.nav-item{border:0;background:transparent;color:#91a79b;text-align:left;padding:12px 15px;border-radius:10px;display:flex;gap:13px;align-items:center}.nav-item span{font-size:18px;width:22px;text-align:center;font-weight:300}.nav-item:hover{background:#1b3027;color:#fff}.nav-item.active{background:#1d3b2c;color:#c1f1cb;font-weight:700}.sidebar-bottom{display:flex;align-items:center;gap:11px;margin-top:auto;padding:19px 9px 5px;border-top:1px solid var(--line)}.sidebar-bottom strong{font-size:10px;letter-spacing:1.2px;display:block}.sidebar-bottom small{font-size:10px;color:#7d9486}.live-dot,.notice-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#82c69b;box-shadow:0 0 14px #74c29475}.main{flex:1;min-width:0}.topbar{height:75px;display:flex;align-items:center;justify-content:space-between;padding:0 42px;border-bottom:1px solid var(--line);background:#0c1714}.breadcrumb{font-size:11px;letter-spacing:1.4px;color:#668476}.breadcrumb strong{color:#b3c6b9}.top-actions{display:flex;gap:9px;align-items:center}.mode-pill{border-radius:50px;padding:8px 14px;border:1px solid #456345;color:#acd5aa;font-size:11px;white-space:nowrap}.btn{border-radius:8px;padding:10px 14px;font-size:12px;white-space:nowrap;border:1px solid var(--line);font-weight:650;transition:filter .2s,background .2s}.btn:hover{filter:brightness(1.15)}.btn-primary{background:#b9dfba;border-color:#b9dfba;color:#153126}.btn-outline{background:#182820;color:#c4d5c8}.btn-ghost{background:transparent;color:#b5c5ba}.page{max-width:1440px;margin:auto;padding:42px 42px 58px}.hidden{display:none!important}.hero{display:flex;align-items:center;justify-content:space-between;min-height:169px;padding-bottom:20px}.eyebrow,.section-kicker{color:#95ba9e;letter-spacing:2.2px;font-size:10px;font-weight:720}.teal-line{display:inline-block;height:1px;width:18px;vertical-align:middle;background:#9ecbac;margin-right:6px}.hero h1{font-weight:700;font-size:clamp(27px,3.3vw,45px);margin:16px 0 11px;letter-spacing:-1.2px;line-height:1.2}.hero h1 em{font-style:normal;color:var(--accent)}.hero p,.intro{margin:0;color:var(--soft);font-size:13px}.hero-ornament{position:relative;margin-right:40px;width:95px;height:95px;border:1px solid #375548;border-radius:50%;display:grid;place-items:center;color:#315c43;font-size:68px;font-family:Georgia,serif;opacity:.8}.hero-ornament:after{content:"";position:absolute;inset:-12px;border:1px dashed #27483a;border-radius:50%}.orb-small{position:absolute;right:-15px;bottom:-13px;border-radius:50%;background:#173f2c;border:1px solid #427657;font-size:10px!important;color:#b5e7c0;width:28px;height:28px;display:grid;place-items:center}.notice{display:flex;align-items:center;gap:12px;border-radius:10px;background:#1a3026;border:1px solid #33503b;color:#b5d5b8;padding:12px 15px;font-size:12px;margin-bottom:32px}.section-row{display:flex;align-items:end;justify-content:space-between;margin:0 0 18px}.section-row h2{font-size:20px;margin:4px 0 0}.section-row .subtle{font-size:12px;color:var(--mute)}.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.metric-card{min-height:168px;position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 20px;overflow:hidden}.metric-card.feature{background:linear-gradient(136deg,#244d36,#163b2b);border-color:#3f704c}.metric-label{font-size:12px;color:#a7beac;display:flex;justify-content:space-between;gap:4px}.metric-label span{font-size:17px;color:#6b9979}.metric-card strong{font-size:clamp(23px,2.5vw,34px);letter-spacing:-.7px;display:block;margin:12px 0 7px;font-weight:740}.metric-card small{color:#8fa99a;font-size:11px}.metric-spark{position:absolute;bottom:0;left:0;width:100%;height:45px;opacity:.3;pointer-events:none}.charts-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr);gap:14px;margin-top:16px}.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px}.panel-title{display:flex;align-items:start;justify-content:space-between;gap:12px}.panel h3{margin:4px 0 0;font-size:17px}.legend{display:flex;gap:16px;font-size:10px;color:var(--soft);flex-wrap:wrap;justify-content:end}.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}.dot.teal{background:#95dda6}.dot.beige{background:#a28e62}.chart-wrap{height:252px;margin:16px 0 4px;position:relative}.chart-wrap.short{height:165px}.chart-wrap svg{width:100%;height:100%;overflow:visible}.chart-wrap svg text{fill:#779184;font-size:10px}.chart-footer{display:flex;justify-content:space-between;color:var(--mute);font-size:10px}.risk-list{margin-top:22px}.risk-list>div{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #293a33;padding:11px 0;color:#96ab9f;font-size:12px;gap:15px}.risk-list>div strong{color:#f0f2ea;font-size:13px}.risk-foot{margin-top:20px;border-left:2px solid #56815f;padding:8px 10px;color:#92a69b;background:#1b2c24;font-size:11px}.lower{margin-top:16px}.last-signal{margin-top:20px;min-height:112px;display:grid;align-content:center;gap:8px}.signal-head{display:flex;align-items:center;gap:10px}.signal-icon{background:#29452f;color:#bdeabc;border-radius:10px;padding:9px 12px;font-size:16px}.signal-text{display:grid}.signal-text strong{font-size:15px}.signal-text small{color:var(--soft)}.signal-meta{font-size:11px;color:var(--mute)}.link-button{background:none;border:0;padding:0;color:#b6dabb;font-size:12px}.top-heading{margin:0 0 30px}.section-h1{font-size:clamp(27px,3vw,36px);margin:5px 0 12px}.lab-grid{display:grid;grid-template-columns:410px minmax(0,1fr);gap:18px}.lab-right{display:grid;gap:18px;align-content:start}.config-panel h3{margin:0 0 22px}.form-field{display:grid;gap:7px;margin:13px 0}.form-field label{font-size:11px;color:#a9bcae}.form-field input,.form-field select{width:100%;background:#0f1b17;color:#e3eee5;border:1px solid #365142;border-radius:8px;padding:10px 11px;min-width:0;outline:none}.form-field input:focus,.form-field select:focus{border-color:#a5dbb2}.form-field.twin{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.form-field.twin>div{min-width:0}.form-caption{font-size:11px;color:#93b8a1;font-weight:bold;letter-spacing:1px}.separator{height:1px;background:var(--line);margin:22px 0}.run-btn{width:100%;margin-top:17px;padding:13px}.field-note{display:block;color:#789285;font-size:11px;line-height:1.6;margin-top:15px}.result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:20px}.result-box{background:#1a2c24;padding:17px;border:1px solid #2c4638;border-radius:10px}.result-box span{font-size:11px;color:#91a99a;display:block}.result-box strong{display:block;font-size:22px;margin-top:7px}.method-list{margin:18px 0 0;padding-left:23px;color:#a3b8aa;line-height:2.1;font-size:12px}.method-list li{padding-left:4px}.table-panel{padding:0;overflow:hidden}.table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:795px;text-align:left}th{color:#80998c;background:#1a2922;font-size:11px;white-space:nowrap;font-weight:600;letter-spacing:.3px}th,td{padding:15px 17px;border-bottom:1px solid var(--line)}td{font-size:12px;color:#d0ddd1;white-space:nowrap}.pos{color:#a8e5ac!important}.neg{color:#f4aaa7!important}.table-foot{padding:15px 18px;color:var(--mute);font-size:11px}.data-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}.data-grid .panel h3{margin:9px 0 20px}.dropzone{display:flex;align-items:center;justify-content:center;text-align:center;flex-direction:column;gap:10px;border:1px dashed #53765e;border-radius:12px;padding:33px 12px;cursor:pointer;background:#193026;transition:background .2s}.dropzone:hover,.dropzone.dragging{background:#264b35}.dropzone strong{font-size:13px}.dropzone small{color:#91ae99;font-size:11px}.upload-icon{font-size:27px;color:#a9dfb4}.sample-code{background:#0c1712;border-radius:8px;color:#a2b9ab;font:11px/1.8 ui-monospace,Menlo,monospace;padding:14px;margin:17px 0;overflow-x:auto}.data-grid .btn{margin:5px 6px 0 0}.data-details{display:grid;gap:0}.data-details>div{padding:13px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:15px}.data-details span{color:#91a89a;font-size:12px}.data-details strong{font-size:12px;text-align:right}.fine-text{color:#91a99b;font-size:12px;line-height:1.9}.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,120px);border:1px solid #4a7357;background:#20382b;color:#d5ead6;border-radius:10px;padding:12px 18px;max-width:85%;z-index:10;opacity:0;transition:transform .25s,opacity .25s;box-shadow:0 12px 35px #0006;font-size:12px;text-align:center}.toast.show{transform:translate(-50%,0);opacity:1}footer{padding:25px 42px;border-top:1px solid var(--line);color:#60796d;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font-size:9px;letter-spacing:1px}button:disabled{opacity:.4;cursor:not-allowed}@media(max-width:1150px){.page{padding:33px 23px}.topbar{padding:0 23px}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.charts-grid{grid-template-columns:1fr}.lab-grid{grid-template-columns:minmax(0,1fr)}.lab-right{grid-template-columns:1fr 1fr}.data-grid{grid-template-columns:1fr 1fr}.hero-ornament{margin-right:10px}}@media(max-width:760px){.shell{display:block}.sidebar{position:fixed;z-index:9;bottom:0;top:auto;width:100%;height:65px;background:#0f1e17ef;backdrop-filter:blur(16px);border-right:0;border-top:1px solid var(--line);padding:5px 8px;display:block}.sidebar .brand,.sidebar .section-caption,.sidebar-bottom{display:none}.side-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px}.nav-item{padding:5px 0;display:grid;justify-items:center;align-content:center;font-size:9px;gap:0}.nav-item span{font-size:18px}.main{padding-bottom:60px}.topbar{height:66px;padding:0 16px}.breadcrumb{font-size:10px}.top-actions{gap:6px}.mode-pill{display:none}.top-actions .btn{padding:9px;font-size:10px}.page{padding:27px 15px 35px}.hero{min-height:130px}.hero h1{font-size:29px;margin:12px 0}.hero p{max-width:280px;font-size:12px}.hero-ornament{display:none}.notice{font-size:11px;margin-bottom:25px}.metric-grid{gap:9px}.metric-card{padding:16px 14px;min-height:139px}.metric-card strong{font-size:25px;margin:12px 0 5px}.metric-card small{font-size:10px}.charts-grid{gap:10px;margin-top:10px}.panel{padding:16px}.legend{font-size:9px}.panel-title{flex-wrap:wrap}.chart-wrap{height:215px}.lab-right,.data-grid{grid-template-columns:1fr}.section-row{align-items:start;gap:13px;flex-wrap:wrap}.top-heading{margin-bottom:20px}footer{padding:15px;font-size:9px}.sidebar .nav-item.active{background:#204333}.toast{bottom:80px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* v0.2: official-cache import and result comparison */
+.official-panel h3{margin:7px 0 10px}.official-controls{display:grid;grid-template-columns:minmax(140px,1fr) minmax(140px,1fr) auto;gap:12px;align-items:end;max-width:750px}.official-controls .form-field{margin:0}.official-controls .btn{min-height:42px;margin:0!important}.official-panel #official-status{margin-top:12px}.result-box small{font-size:10px;color:#90aa98;display:block}.table-scroll td button{background:#244735;color:#c5ecd0;border:1px solid #3c6650;padding:7px 12px;border-radius:7px}.notice.error{background:#3d211f;border-color:#874d45;color:#efc5c0}.sidebar .side-nav{gap:3px}
+@media(max-width:760px){.side-nav{grid-template-columns:repeat(5,minmax(0,1fr))}.sidebar{height:66px}.sidebar .nav-item{font-size:8px}.official-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.official-controls .btn{grid-column:span 2}.result-box strong{font-size:18px}}
+
+</style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a href="#" class="brand" aria-label="PilotQuant 首頁"><span class="brand-mark">◈</span><span><strong>PILOT<span class="brand-accent">QUANT</span></strong><small>RESEARCH TERMINAL</small></span></a>
+      <div class="section-caption">WORKSPACE</div>
+      <nav class="side-nav" aria-label="主選單">
+        <button class="nav-item active" data-tab="overview"><span>▦</span> 總覽</button>
+        <button class="nav-item" data-tab="lab"><span>⌘</span> 策略實驗室</button>
+        <button class="nav-item" data-tab="scan"><span>◎</span> 多標的比較</button>
+        <button class="nav-item" data-tab="trades"><span>⇆</span> 交易紀錄</button>
+        <button class="nav-item" data-tab="data"><span>≡</span> 資料中心</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="live-dot"></div><div><strong>LOCAL-FIRST ENGINE</strong><small>不連接券商・不自動下單</small></div></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumb">RESEARCH / <strong id="crumb">OVERVIEW</strong></div>
+        <div class="top-actions"><span class="mode-pill" id="mode-pill">◉ 模擬資料</span><button class="btn btn-outline" id="export-btn">↓ 匯出報告</button><button class="btn btn-primary" id="import-top">＋ 匯入行情</button></div>
+      </header>
+      <section class="page" id="tab-overview">
+        <div class="hero">
+          <div><span class="eyebrow"><span class="teal-line"></span> QUANTITATIVE RESEARCH SYSTEM · V0.2</span><h1>量化交易，<em>從證據開始。</em></h1><p>本機運行的策略研究室。先驗證、再決策；每一筆報酬都有計算依據。</p></div>
+          <div class="hero-ornament" aria-hidden="true"><span>Q</span><span class="orb-small">01</span></div>
+        </div>
+        <div class="notice" id="source-notice"><span class="notice-dot"></span><span id="source-text">目前使用可重現的合成示範資料，所有行情、報酬及訊號都不是實盤數據。</span></div>
+        <div class="section-row"><div><div class="section-kicker">BACKTEST SUMMARY</div><h2>策略績效概覽</h2></div><span class="subtle" id="date-range">—</span></div>
+        <div class="metric-grid">
+          <article class="metric-card feature"><div class="metric-label">策略總報酬 <span>↗</span></div><strong id="m-return">—</strong><small id="m-profit">期末資產 —</small><div class="metric-spark" id="spark"></div></article>
+          <article class="metric-card"><div class="metric-label">最大回撤 <span>↘</span></div><strong id="m-drawdown">—</strong><small>最大歷史高點跌幅</small></article>
+          <article class="metric-card"><div class="metric-label">夏普比率 <span>≋</span></div><strong id="m-sharpe">—</strong><small>日報酬年化風險調整</small></article>
+          <article class="metric-card"><div class="metric-label">已平倉勝率 <span>◎</span></div><strong id="m-win">—</strong><small id="m-trades">已平倉 0 筆</small></article>
+        </div>
+        <div class="charts-grid">
+          <article class="panel wide"><div class="panel-title"><div><div class="section-kicker">EQUITY CURVE</div><h3>資產成長曲線</h3></div><div class="legend"><span><i class="dot teal"></i> 策略（淨值）</span><span><i class="dot beige"></i> 買進持有（未計成本）</span></div></div><div class="chart-wrap" id="equity-chart"></div><div class="chart-footer"><span id="chart-start">—</span><span id="chart-end">—</span></div></article>
+          <article class="panel side-panel"><div class="panel-title"><div><div class="section-kicker">RISK MONITOR</div><h3>風險概況</h3></div></div><div class="risk-list"><div><span>策略年化報酬</span><strong id="r-annual">—</strong></div><div><span>持倉時間比例</span><strong id="r-exposure">—</strong></div><div><span>相對買持超額報酬</span><strong id="r-excess">—</strong></div><div><span>手續費 + 交易稅</span><strong id="r-fees">—</strong></div><div><span>獲利因子</span><strong id="r-pf">—</strong></div></div><div class="risk-foot"><span id="execution-rule">完整 OHLCV：收盤後訊號，下一交易日開盤模擬成交。</span></div></article>
+        </div>
+        <div class="charts-grid lower">
+          <article class="panel wide"><div class="panel-title"><div><div class="section-kicker">DRAWDOWN</div><h3>歷史回撤分布</h3></div></div><div class="chart-wrap short" id="drawdown-chart"></div></article>
+          <article class="panel side-panel"><div class="panel-title"><div><div class="section-kicker">LAST SIGNAL</div><h3>最近執行紀錄</h3></div></div><div class="last-signal" id="last-signal">—</div><button class="link-button" data-tab="trades">查看所有交易 →</button></article>
+        </div>
+      </section>
+      <section class="page hidden" id="tab-lab">
+        <div class="section-row top-heading"><div><div class="section-kicker">STRATEGY WORKBENCH</div><h1 class="section-h1">策略實驗室</h1><p class="intro">輸入同一份資料，讓策略與買進持有公平比較。參數變更後按「重新回測」。</p></div></div>
+        <div class="lab-grid">
+          <form class="panel config-panel" id="strategy-form"><h3>研究參數</h3>
+            <div class="form-field"><label for="symbol">研究標的</label><select id="symbol" name="symbol"></select></div>
+            <div class="form-field"><label for="strategy">交易策略</label><select id="strategy" name="strategy"><option value="ma">雙均線交叉</option><option value="rsi">RSI 均值回歸</option><option value="breakout">通道突破</option></select></div>
+            <div class="form-field twin strategy-ma"><div><label for="fast">短期均線（日）</label><input name="fast" id="fast" type="number" min="2" max="219" value="10" /></div><div><label for="slow">長期均線（日）</label><input name="slow" id="slow" type="number" min="3" max="220" value="30" /></div></div>
+            <div class="form-field twin strategy-rsi hidden"><div><label for="rsiBuy">RSI 進場線</label><input name="rsiBuy" id="rsiBuy" type="number" min="1" max="98" value="30" /></div><div><label for="rsiSell">RSI 出場線</label><input name="rsiSell" id="rsiSell" type="number" min="2" max="99" value="65" /></div></div>
+            <div class="form-field strategy-breakout hidden"><label for="breakout">突破觀察天數</label><input name="breakout" id="breakout" type="number" min="2" max="220" value="20" /></div>
+            <div class="separator"></div><div class="form-caption">資金與風控</div>
+            <div class="form-field twin"><div><label for="capital">初始本金</label><input name="capital" id="capital" type="number" min="1000" step="1000" value="30000" /></div><div><label for="allocation">進場投入比例 %</label><input name="allocation" id="allocation" type="number" min="1" max="100" value="90" /></div></div>
+            <div class="form-field twin"><div><label for="stop">停損 %（0 停用）</label><input name="stop" id="stop" type="number" min="0" max="100" value="8" step="0.5" /></div><div><label for="take">停利 %（0 停用）</label><input name="take" id="take" type="number" min="0" max="1000" value="22" step="0.5" /></div></div>
+            <div class="separator"></div><div class="form-caption">成交成本（百分比）</div>
+            <div class="form-field twin"><div><label for="fee">單邊手續費 %</label><input name="fee" id="fee" type="number" min="0" max="5" value="0.1425" step="0.0001" /></div><div><label for="tax">賣出交易稅 %</label><input name="tax" id="tax" type="number" min="0" max="5" value="0.3" step="0.01" /></div></div>
+            <div class="form-field twin"><div><label for="slippage">滑價 %（單邊）</label><input name="slippage" id="slippage" type="number" min="0" max="10" value="0.1" step="0.01" /></div><div><label for="minFee">每筆最低手續費</label><input name="minFee" id="minFee" type="number" min="0" max="1000" value="0" step="1" /></div></div>
+            <button type="submit" class="btn btn-primary run-btn">▶ 重新執行回測</button>
+            <small class="field-note">費率僅為可調假設值，不保證符合特定券商實際折扣。僅支援多頭、現股、整數股，無槓桿。</small>
+          </form>
+          <div class="lab-right"><div class="panel"><div class="panel-title"><div><div class="section-kicker">EXPERIMENT RESULT</div><h3>策略表現</h3></div></div><div class="result-grid" id="experiment-result"></div></div><div class="panel"><div class="panel-title"><div><div class="section-kicker">HOLDOUT VALIDATION</div><h3>時間序列保留測試</h3></div></div><p class="fine-text">按時間先後分成前 70% 訓練、後 30% 測試。測試段開始時重置資金與持倉；指標可使用此前已發生的歷史資料。這不是完整 Walk-forward，反覆查看測試結果調參仍會過擬合。</p><button type="button" class="btn btn-outline" id="holdout-btn">驗證樣本外績效</button><div class="result-grid" id="holdout-result"></div></div><div class="panel"><div class="panel-title"><div><div class="section-kicker">METHODOLOGY</div><h3>回測保護規則</h3></div></div><ol class="method-list"><li>完整 OHLCV 以隔日開盤模擬；僅收盤價以隔日收盤模擬，並明示模型差異。</li><li>買入價格加滑價，賣出價格減滑價；手續費雙邊計算，交易稅僅賣出計。</li><li>完整 OHLCV 同日觸發停損、停利採停損優先；僅收盤價不假設盤中觸價。</li><li>未平倉部位以期末收盤價計算，不假設已賣出。</li><li>買進持有基準不含成本，僅作價格走勢參考；不代表正式績效比較。</li><li>日線資料無法保證盤中觸價的真實順序，結果須用更細資料驗證。</li></ol></div></div>
+        </div>
+      </section>
+      <section class="page hidden" id="tab-scan">
+        <div class="section-row top-heading"><div><div class="section-kicker">MULTI-SYMBOL HOLDOUT</div><h1 class="section-h1">多標的量化比較</h1><p class="intro">同一策略參數逐檔進行時間切分回測，依測試期報酬率排序。這不是選股建議，且不以未見過的資料保證未來獲利。</p></div><button class="btn btn-primary" id="scan-btn">▶ 分析目前標的</button></div>
+        <div class="notice"><span class="notice-dot"></span><span id="scan-info">可比較本機匯入的多檔股票，或逐檔載入官方收盤價快取；上限 50 檔。</span></div>
+        <div class="panel table-panel"><div class="table-scroll"><table><thead><tr><th>股票</th><th>資料期數</th><th>訓練報酬</th><th>測試期報酬</th><th>測試期最大回撤</th><th>交易筆數</th><th>研究</th></tr></thead><tbody id="scan-body"><tr><td colspan="7">尚未開始分析</td></tr></tbody></table></div></div>
+      </section>
+      <section class="page hidden" id="tab-trades">
+        <div class="section-row top-heading"><div><div class="section-kicker">TRADE AUDIT TRAIL</div><h1 class="section-h1">交易紀錄</h1><p class="intro">完整列出已平倉部位及模擬成交事件，讓每一筆損益都能追溯。</p></div><button class="btn btn-outline" id="download-trades">↓ 交易 CSV</button></div>
+        <div class="panel table-panel"><div class="table-scroll"><table><thead><tr><th>買入日期</th><th>賣出日期</th><th>股數</th><th>買進價</th><th>賣出價</th><th>已實現損益</th><th>損益率</th><th>出場原因</th></tr></thead><tbody id="trades-body"></tbody></table></div><div class="table-foot" id="trade-note"></div></div>
+      </section>
+      <section class="page hidden" id="tab-data">
+        <div class="section-row top-heading"><div><div class="section-kicker">DATA & PROVENANCE</div><h1 class="section-h1">資料中心</h1><p class="intro">CSV 與研究設定留在瀏覽器；載入官方資料時只向本專案 GitHub Pages 靜態行情快取發送 GET。</p></div></div>
+        <div class="panel official-panel" style="margin-bottom:16px"><div class="section-kicker">OFFICIAL TAIWAN HISTORY · CLOSE ONLY</div><h3>載入 PortfolioPilot 官方台股收盤價快取</h3><p class="fine-text">直接使用本專案已建立的 TWSE／TPEx 每日歷史價格；系統會顯示來源、資料日期與快取完整性。僅有收盤價，無法回測盤中觸價與隔日開盤成交；改採隔日收盤價模擬。未經除權息調整的價格可能扭曲績效。需從 PortfolioPilot 網站訪問，單檔 HTML 無法線上讀取快取。</p><div class="official-controls"><div class="form-field"><label for="official-market">交易市場</label><select id="official-market"><option value="TWSE">TWSE 上市</option><option value="TPEx">TPEx 上櫃</option></select></div><div class="form-field"><label for="official-symbol">股票代號</label><input id="official-symbol" value="2330" maxlength="8" inputmode="text" autocomplete="off" placeholder="例如 2330" /></div><button type="button" class="btn btn-primary" id="official-add">＋ 加入官方資料</button></div><div class="fine-text" id="official-status" role="status" aria-live="polite">尚未連線。可先用下方 CSV 或模擬資料進行研究。</div></div>
+        <div class="data-grid"><article class="panel"><div class="section-kicker">LOCAL IMPORT</div><h3>匯入 OHLCV 日線 CSV</h3><div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="選擇 CSV 檔案"><span class="upload-icon">↑</span><strong>拖曳 CSV 至此，或點擊選擇檔案</strong><small>至少 32 筆日線；支援多檔股票，一個 CSV 即可匯入</small></div><input id="csv-input" type="file" accept=".csv,text/csv" hidden /><div class="sample-code">date,symbol,open,high,low,close,volume<br>2026-01-02,2330,900,915,895,910,12345678</div><button class="btn btn-outline" id="template-btn">↓ 下載 CSV 範本</button><button class="btn btn-ghost" id="reset-demo">↺ 切回合成示範資料</button></article><article class="panel"><div class="section-kicker">DATA QUALITY</div><h3>當前資料狀態</h3><div class="data-details" id="data-details"></div><div class="separator"></div><div class="form-caption">資料使用原則</div><p class="fine-text">系統不會把虛構行情標示為真實報價。匯入的數據由使用者自行確認來源、時區、還原權息與生存者偏差。僅收盤資料絕不合成開高低價，而改採隔日收盤價成交、收盤確認停利停損的專用模型，不代表可以用同價實盤成交。</p><p class="fine-text">匯入資料不會永久上傳；重新整理頁面後會回到示範資料。設定可儲存在此瀏覽器。使用「匯出報告」保存結果。</p></article></div>
+      </section>
+      <footer><span>© 2026 PILOTQUANT LAB · RESEARCH ONLY · NOT INVESTMENT ADVICE</span><span>LOCAL-FIRST · ZERO PAID API · NO BROKER CONNECTION</span></footer>
+    </main>
+  </div>
+  <div class="toast" role="status" aria-live="polite" id="toast"></div>
+  <script>
+/* PilotQuant Lab — deterministic, dependency-free, long-only daily backtest engine.
+   MIT License. Prices must be chronological real OHLCV records or explicitly demo.
+   Signals are generated ONLY on finished bar t and executed at bar t+1 open.
+*/
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  root.QuantEngine = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+  const round = (n, p = 4) => Number(Number(n).toFixed(p));
+  const mean = (xs) => xs.reduce((s, x) => s + x, 0) / Math.max(1, xs.length);
+  function sma(vals, n) {
+    const arr = Array(vals.length).fill(null); let sum = 0;
+    for (let i = 0; i < vals.length; i++) {
+      sum += vals[i]; if (i >= n) sum -= vals[i - n];
+      if (i >= n - 1) arr[i] = sum / n;
+    }
+    return arr;
+  }
+  function rsi(vals, n = 14) {
+    const out = Array(vals.length).fill(null); if (vals.length <= n) return out;
+    let gain = 0, loss = 0;
+    for (let i = 1; i <= n; i++) { const d = vals[i] - vals[i - 1]; gain += Math.max(d, 0); loss += Math.max(-d, 0); }
+    gain /= n; loss /= n;
+    out[n] = loss === 0 ? (gain === 0 ? 50 : 100) : 100 - 100 / (1 + gain / loss);
+    for (let i = n + 1; i < vals.length; i++) {
+      const d = vals[i] - vals[i - 1]; gain = (gain * (n - 1) + Math.max(d, 0)) / n;
+      loss = (loss * (n - 1) + Math.max(-d, 0)) / n;
+      out[i] = loss === 0 ? (gain === 0 ? 50 : 100) : 100 - 100 / (1 + gain / loss);
+    }
+    return out;
+  }
+  function normalizeBars(bars) {
+    if (!Array.isArray(bars)) throw new Error('資料必須是陣列');
+    const dates = new Set();
+    const result = bars.map((row) => {
+      const date = String(row.date ?? row.Date ?? '').trim().replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+      const open = Number(row.open ?? row.Open ?? row.close ?? row.Close);
+      const close = Number(row.close ?? row.Close);
+      const high = Number(row.high ?? row.High ?? Math.max(open, close));
+      const low = Number(row.low ?? row.Low ?? Math.min(open, close));
+      const volume = Number(row.volume ?? row.Volume ?? 0);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date+'T00:00:00Z').toISOString().slice(0,10)!==date ||
+          ![open, high, low, close, volume].every(Number.isFinite) || low <= 0 ||
+          high < Math.max(open, close) || low > Math.min(open, close) || volume < 0)
+        throw new Error('含無效日期或 OHLCV 數據，請檢查輸入檔');
+      if (dates.has(date)) throw new Error('資料中有重複交易日期：' + date);
+      dates.add(date);
+      return { date, open, high, low, close, volume };
+    }).sort((a, b) => a.date.localeCompare(b.date));
+    if (result.length < 32) throw new Error('至少需要 32 筆日線資料');
+    return result;
+  }
+  function signals(bars, config) {
+    const closes = bars.map(b => b.close), n = bars.length;
+    const out = Array(n).fill('hold');
+    const fast = sma(closes, config.fast), slow = sma(closes, config.slow);
+    const r = rsi(closes, 14);
+    const span = config.breakout;
+    for (let i = 1; i < n; i++) {
+      if (config.strategy === 'ma') {
+        if (fast[i] == null || slow[i] == null || fast[i - 1] == null || slow[i - 1] == null) continue;
+        if (fast[i] > slow[i] && fast[i - 1] <= slow[i - 1]) out[i] = 'buy';
+        else if (fast[i] < slow[i] && fast[i - 1] >= slow[i - 1]) out[i] = 'sell';
+      } else if (config.strategy === 'rsi') {
+        if (r[i] == null || r[i - 1] == null) continue;
+        if (r[i] <= config.rsiBuy && r[i - 1] > config.rsiBuy) out[i] = 'buy';
+        else if (r[i] >= config.rsiSell && r[i - 1] < config.rsiSell) out[i] = 'sell';
+      } else if (config.strategy === 'breakout') {
+        if (i < span) continue;
+        const prevHigh = Math.max(...bars.slice(i - span, i).map(b => b.high));
+        const prevLow = Math.min(...bars.slice(i - span, i).map(b => b.low));
+        if (closes[i] > prevHigh) out[i] = 'buy';
+        else if (closes[i] < prevLow) out[i] = 'sell';
+      } else throw new Error('未知的交易策略');
+    }
+    return { signals: out, fast, slow, rsi: r };
+  }
+  function validateConfig(o) {
+    const c = {capital: 30000, strategy:'ma', fast:10, slow:30, breakout:20, rsiBuy:30, rsiSell:65,
+      allocation:90, stop:8, take:22, fee:0.1425, minFee:0, tax:0.3, slippage:0.1, ...o};
+    for (const k of ['capital','fast','slow','breakout','rsiBuy','rsiSell','allocation','stop','take','fee','minFee','tax','slippage']) {
+      if (!Number.isFinite(Number(c[k]))) throw new Error('參數非數字：' + k);
+      c[k] = Number(c[k]);
+    }
+    if (c.capital <= 0 || c.fast < 2 || c.slow < 3 || c.fast >= c.slow || c.slow > 220 ||
+        c.breakout < 2 || c.breakout > 220 || c.rsiBuy < 1 || c.rsiSell > 99 || c.rsiBuy >= c.rsiSell ||
+        c.allocation <= 0 || c.allocation > 100 || c.stop < 0 || c.take < 0 ||
+        c.fee < 0 || c.minFee < 0 || c.tax < 0 || c.slippage < 0 || c.slippage > 10) throw new Error('策略參數超出合理範圍');
+    return c;
+  }
+  function backtest(rawBars, params = {}) {
+    const bars = normalizeBars(rawBars), config = validateConfig(params);
+    const s = signals(bars, config);
+    const windowStartIndex = params.firstTradeDate ? bars.findIndex(b=>b.date>=params.firstTradeDate) : 0;
+    if (windowStartIndex<0) throw new Error('所選回測日期沒有資料');
+    let cash = config.capital, qty = 0, entry = null, fees = 0, investedDays = 0;
+    const trades = [], equity = [], events = [];
+    const rate = config.fee / 100, sellTax = config.tax / 100, slip = config.slippage / 100;
+    function closePos(price, day, reason) {
+      if (!qty || !entry) return;
+      const gross = qty * price;
+      const brokerage = Math.max(config.minFee, gross * rate);
+      const tax = gross * sellTax;
+      cash += gross - brokerage - tax; fees += brokerage + tax;
+      const pnl = gross - brokerage - tax - entry.cost;
+      trades.push({entryDate:entry.date, exitDate: day, buy:round(entry.price), sell:round(price), qty,
+        pnl:round(pnl,2), pnlPct:round(pnl / entry.cost * 100,2), reason,
+        fees:round(brokerage + tax + entry.fee,2)});
+      events.push({date:day, action:'賣出', price:round(price), qty, reason});
+      qty=0; entry=null;
+    }
+    for (let i = 0; i < bars.length; i++) {
+      const bar = bars[i];
+      if (params.firstTradeDate && bar.date < params.firstTradeDate) continue;
+      if (params.lastTradeDate && bar.date > params.lastTradeDate) break;
+      const prev = i ? s.signals[i-1] : 'hold';
+      // Signal at bar i-1 close, fill at today's open including adverse slippage.
+      if (qty > 0 && prev === 'sell') closePos(bar.open * (1 - slip), bar.date, '訊號出場');
+      if (qty === 0 && prev === 'buy') {
+        const price = bar.open * (1 + slip);
+        const budget = cash * config.allocation / 100;
+        const targetQty = Math.floor(Math.max(0,(budget - config.minFee) / (price * (1 + rate))));
+        if (targetQty > 0) {
+          const value = targetQty * price, fee = Math.max(config.minFee, value * rate);
+          if (value + fee <= cash + 1e-8) {
+            cash -= value + fee; fees += fee; qty = targetQty;
+            entry = {date:bar.date, price, cost:value+fee, fee};
+            events.push({date:bar.date, action:'買入', price:round(price), qty, reason:'策略訊號'});
+          }
+        }
+      }
+      // Intraday stops/takes use today's OHLC and the existing actual entry price.
+      // When BOTH hit in the same daily bar, pessimistically resolve STOP first.
+      if (qty > 0 && entry) {
+        const stopPrice = config.stop > 0 ? entry.price * (1 - config.stop/100) : -Infinity;
+        const takePrice = config.take > 0 ? entry.price * (1 + config.take/100) : Infinity;
+        if (bar.low <= stopPrice) closePos(Math.min(bar.open, stopPrice) * (1-slip),bar.date,'停損');
+        else if (bar.high >= takePrice) closePos(Math.max(bar.open, takePrice) * (1-slip),bar.date,'停利');
+      }
+      if (qty > 0) investedDays++;
+      equity.push({date:bar.date, value:round(cash + qty*bar.close,4),
+        buyHold:round(config.capital * bar.close / bars[windowStartIndex].close,4), close:bar.close, qty});
+    }
+    // Last open position remains marked to market; never fabricate a sale at end of test.
+    if(!equity.length) throw new Error('所選回測區間沒有資料');
+    const end = equity[equity.length-1].value;
+    let peak=config.capital,maxDD=0;
+    const ret=[];
+    for (let i=0;i<equity.length;i++) {
+      peak=Math.max(peak,equity[i].value);
+      equity[i].drawdown=round((equity[i].value/peak-1)*100,3);
+      maxDD=Math.min(maxDD,equity[i].drawdown);
+      if(i) ret.push(equity[i].value / equity[i-1].value - 1);
+    }
+    const total=end/config.capital-1;
+    const annualized= Math.pow(end/config.capital,252/Math.max(1,equity.length-1))-1;
+    const meanDaily=mean(ret);
+    const dev=Math.sqrt(mean(ret.map(x=>(x-meanDaily)**2)));
+    const downside=Math.sqrt(mean(ret.map(x=>Math.min(x,0)**2)));
+    const winners=trades.filter(t=>t.pnl>0), losers=trades.filter(t=>t.pnl<0);
+    const winGross=winners.reduce((a,t)=>a+t.pnl,0),lossGross=-losers.reduce((a,t)=>a+t.pnl,0);
+    return {config, bars:equity.length, start:equity[0].date, end:equity[equity.length-1].date,
+      equity, trades, events, indicators:s, openPosition:entry?{date:entry.date,qty,entryPrice:round(entry.price),unrealizedPnL:round(qty*equity[equity.length-1].close-entry.cost,2)}:null,
+      metrics:{totalReturn:round(total*100,2), annualized:round(annualized*100,2),
+        maxDrawdown:round(maxDD,2), winRate:trades.length?round(winners.length/trades.length*100,1):null,
+        sharpe:ret.length>=20&&dev>0?round(meanDaily/dev*Math.sqrt(252),2):null,
+        sortino:ret.length>=20&&downside>0?round(meanDaily/downside*Math.sqrt(252),2):null,
+        trades:trades.length, profitFactor:lossGross>0?round(winGross/lossGross,2):null,
+        taxesAndFees:round(fees,2), exposure:round(investedDays/bars.length*100,1),
+        endEquity:round(end,2), buyHold:round((equity[equity.length-1].buyHold/config.capital-1)*100,2),
+        excess:round((end-equity[equity.length-1].buyHold)/config.capital*100,2)} };
+  }
+  function parseCSV(text) {
+    if (typeof text !== 'string' || !text.trim()) throw new Error('CSV 為空');
+    const lines = []; let row=[], field='', inQuote=false;
+    const clean=text.replace(/^\uFEFF/,'');
+    for(let i=0;i<clean.length;i++) {
+      const c=clean[i];
+      if(c==='"') { if(inQuote&&clean[i+1]==='"'){field+='"';i++;}else inQuote=!inQuote; }
+      else if(c===','&&!inQuote){row.push(field);field='';}
+      else if((c==='\n'||c==='\r')&&!inQuote){if(c==='\r'&&clean[i+1]==='\n')i++;row.push(field);if(row.some(x=>x.trim()))lines.push(row);row=[];field='';}
+      else field+=c;
+    }
+    if(inQuote)throw new Error('CSV 引號沒有關閉');
+    row.push(field);if(row.some(x=>x.trim()))lines.push(row);
+    if(lines.length<2)throw new Error('CSV 沒有資料列');
+    const header=lines.shift().map(x=>x.trim().toLowerCase().replace(/[\s_-]+/g,''));
+    const fieldIx=(names)=>header.findIndex(h=>names.includes(h));
+    const keys={date:fieldIx(['date','日期','交易日期']),symbol:fieldIx(['symbol','ticker','stock','代號','股票代號']),
+      open:fieldIx(['open','開盤','開盤價']), high:fieldIx(['high','最高','最高價']),low:fieldIx(['low','最低','最低價']),
+      close:fieldIx(['close','收盤','收盤價','adjclose']), volume:fieldIx(['volume','成交量','交易量'])};
+    if(keys.date<0||keys.close<0)throw new Error('CSV 必須包含 date、close 欄位');
+    const result={};let closeOnly=keys.open<0||keys.high<0||keys.low<0;
+    for(const cols of lines) {
+      const get=(k)=>(keys[k]<0?'':String(cols[keys[k]]??'').trim());
+      const symbol=get('symbol')||'IMPORTED';
+      const rec={date:get('date'),close:Number(get('close').replace(/,/g,''))};
+      for(const k of ['open','high','low','volume'])if(keys[k]>=0)rec[k]=Number(get(k).replace(/,/g,''));
+      if(!result[symbol])result[symbol]=[];
+      result[symbol].push(rec);
+    }
+    const parsed={};for(const [sym,bars] of Object.entries(result))parsed[sym]=closeOnly?normalizeCloseSeries(bars):normalizeBars(bars);
+    return {symbols:parsed,closeOnly};
+  }
+  function demoData() {
+    // Synthetic data, not historical price quotes. Fixed PRNG means repeatable tests.
+    let seed=11242026;
+    const rng=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+    const names=['DEMO-TREND','DEMO-RANGE','DEMO-VOL'];const out={};
+    for(let k=0;k<3;k++){
+      const bars=[];let price= k===0?100:k===1?80:160;
+      const start=new Date('2025-02-03T00:00:00Z');
+      for(let day=0;bars.length<390;day++){
+        const d=new Date(start.getTime()+day*86400000),dow=d.getUTCDay();if(dow===0||dow===6)continue;
+        const j=bars.length;
+        const drift=k===0?0.0013:k===1?0.00015:0.0004;
+        const noise=(rng()-.5)*(k===2?0.095:0.041);
+        const oscillation=k===1?0.008*Math.sin(j/9):0.003*Math.sin(j/23);
+        const op=price*(1+(rng()-.5)*0.009);
+        const cl=Math.max(1,op*(1+drift+noise+oscillation));
+        const hi=Math.max(op,cl)*(1+rng()*0.013),lo=Math.min(op,cl)*(1-rng()*0.012);
+        bars.push({date:d.toISOString().slice(0,10),open:round(op),high:round(hi),low:round(lo),close:round(cl),volume:Math.round(50000+rng()*150000)});
+        price=cl;
+      }
+      out[names[k]]=bars;
+    }
+    return out;
+  }
+  function normalizeCloseSeries(points) {
+    if (!Array.isArray(points)) throw new Error('收盤資料必須為陣列');
+    const out=[]; const dates=new Set();
+    for (const point of points) {
+      const date=String(Array.isArray(point)?point[0]:(point.date??point.Date??'')).trim();
+      const close=Number(Array.isArray(point)?point[1]:(point.close??point.Close));
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) ||
+         new Date(date+'T00:00:00Z').toISOString().slice(0,10)!==date ||
+         !Number.isFinite(close) || close<=0) throw new Error('含無效日期或收盤價：'+date);
+      if(dates.has(date)) throw new Error('資料中有重複交易日期：'+date);
+      dates.add(date);out.push({date,close});
+    }
+    out.sort((a,b)=>a.date.localeCompare(b.date));
+    if(out.length<32) throw new Error('至少需要 32 筆收盤價');
+    return out;
+  }
+  function validateOfficialCache(index,bucket,market,symbol) {
+    if(!index || index.version!==1 || !Array.isArray(index.failed) || !index.generatedAt ||
+       !bucket || bucket.version!==1 || bucket.market!==market ||
+       bucket.prefix!==symbol.slice(0,2).padEnd(2,'_') || bucket.generatedAt!==index.generatedAt)
+      throw new Error('官方行情快取版本不一致，請稍後更新或聯繫維護者');
+    const security=bucket.securities?.[symbol];
+    if(!security || !Array.isArray(security.points)) throw new Error('歷史資料不存在：'+symbol);
+    const bars=normalizeCloseSeries(security.points);
+    if(index.endDate && bars[bars.length-1].date>index.endDate)
+      throw new Error('歷史行情日期晚於索引日期');
+    return {bars,name:String(security.name||symbol),market,symbol,
+      generatedAt:index.generatedAt,lastCloseDate:bars.at(-1).date,
+      indexEndDate:index.endDate,missingDates:index.failed.filter(x=>x.market===market).length};
+  }
+  // Signals are calculated using only chronological closes; breakout is a CLOSE-channel, not an intraday Donchian.
+  function closeSignals(bars,config) {
+    const closes=bars.map(b=>b.close);
+    const fast=sma(closes,config.fast),slow=sma(closes,config.slow),r=rsi(closes,14);
+    const out=Array(bars.length).fill('hold');
+    for(let i=1;i<bars.length;i++) {
+      if(config.strategy==='ma') {
+        if(fast[i]==null||slow[i]==null||fast[i-1]==null||slow[i-1]==null)continue;
+        if(fast[i]>slow[i]&&fast[i-1]<=slow[i-1])out[i]='buy';
+        else if(fast[i]<slow[i]&&fast[i-1]>=slow[i-1])out[i]='sell';
+      } else if(config.strategy==='rsi') {
+        if(r[i]==null||r[i-1]==null)continue;
+        if(r[i]<=config.rsiBuy&&r[i-1]>config.rsiBuy)out[i]='buy';
+        else if(r[i]>=config.rsiSell&&r[i-1]<config.rsiSell)out[i]='sell';
+      } else if(config.strategy==='breakout') {
+        if(i<config.breakout)continue;
+        const previous=closes.slice(i-config.breakout,i);
+        if(closes[i]>Math.max(...previous))out[i]='buy';
+        else if(closes[i]<Math.min(...previous))out[i]='sell';
+      }
+    }
+    return {signals:out,fast,slow,rsi:r};
+  }
+  // Intentionally no intraday stop/take claims, fills are an idealized NEXT SESSION CLOSE benchmark.
+  function backtestCloseOnly(rawPoints, params={}) {
+    const bars=normalizeCloseSeries(rawPoints),config=validateConfig(params);
+    const si=closeSignals(bars,config);
+    let cash=config.capital,qty=0,entry=null,fees=0,investedDays=0;
+    const equity=[],trades=[],events=[];
+    const feeRate=config.fee/100,taxRate=config.tax/100,slip=config.slippage/100;
+    const first=params.firstTradeDate??bars[0].date,last=params.lastTradeDate??bars.at(-1).date;
+    const firstIndex=bars.findIndex(x=>x.date>=first);
+    if(firstIndex<0)throw new Error('所選回測日期沒有資料');
+    function sell(price,date,reason) {
+      if(!entry||qty===0)return;
+      const amount=qty*price,fee=Math.max(config.minFee,amount*feeRate),tax=amount*taxRate;
+      cash+=amount-fee-tax;fees+=fee+tax;
+      const pnl=amount-fee-tax-entry.cost;
+      trades.push({entryDate:entry.date,exitDate:date,buy:round(entry.price),sell:round(price),qty,pnl:round(pnl,2),pnlPct:round(pnl/entry.cost*100,2),reason,fees:round(entry.fee+fee+tax,2)});
+      events.push({date,action:'賣出',price:round(price),qty,reason});qty=0;entry=null;
+    }
+    for(let i=0;i<bars.length;i++) {
+      const bar=bars[i];if(bar.date<first)continue;if(bar.date>last)break;
+      const prev=i>0?si.signals[i-1]:'hold';
+      let closeReason=prev==='sell'?'隔日收盤策略出場':null;
+      if(qty&&entry&&i>0) {
+        const prior=bars[i-1].close;
+        if(config.stop>0&&prior<=entry.price*(1-config.stop/100)) closeReason='隔日收盤停損';
+        else if(config.take>0&&prior>=entry.price*(1+config.take/100)) closeReason='隔日收盤停利';
+      }
+      if(qty&&closeReason)sell(bar.close*(1-slip),bar.date,closeReason);
+      if(qty===0&&prev==='buy') {
+        const price=bar.close*(1+slip),budget=cash*config.allocation/100;
+        const targetQty=Math.floor(Math.max(0,(budget-config.minFee)/(price*(1+feeRate))));
+        if(targetQty>0) {
+          const amount=targetQty*price,fee=Math.max(config.minFee,amount*feeRate);
+          if(amount+fee<=cash+1e-8){cash-=amount+fee;fees+=fee;qty=targetQty;
+            entry={date:bar.date,price,cost:amount+fee,fee};
+            events.push({date:bar.date,action:'買入',price:round(price),qty,reason:'隔日收盤訊號'});}
+        }
+      }
+      if(qty>0)investedDays++;
+      equity.push({date:bar.date,value:round(cash+qty*bar.close,4),buyHold:round(config.capital*bar.close/bars[firstIndex].close,4),close:bar.close,qty});
+    }
+    if(!equity.length)throw new Error('回測區間沒有資料');
+    const end=equity.at(-1).value,rets=[];let peak=config.capital,maxDD=0;
+    for(let i=0;i<equity.length;i++) {
+      peak=Math.max(peak,equity[i].value);
+      equity[i].drawdown=round((equity[i].value/peak-1)*100,3);
+      maxDD=Math.min(maxDD,equity[i].drawdown);
+      if(i)rets.push(equity[i].value/equity[i-1].value-1);
+    }
+    const avg=mean(rets),std=Math.sqrt(mean(rets.map(x=>(x-avg)**2)));
+    const downside=Math.sqrt(mean(rets.map(x=>Math.min(0,x)**2)));
+    const wins=trades.filter(x=>x.pnl>0),losses=trades.filter(x=>x.pnl<0);
+    const gp=wins.reduce((a,x)=>a+x.pnl,0),gl=-losses.reduce((a,x)=>a+x.pnl,0);
+    return {config,bars:equity.length,start:equity[0].date,end:equity.at(-1).date,
+      equity,trades,events,indicators:si,execution:'NEXT_CLOSE_ONLY',
+      methodology:'訊號於 t 日收盤產生，假設以 t+1 日收盤價成交；僅收盤停損停利，絕非盤中觸價模擬。',
+      openPosition:entry?{date:entry.date,qty,entryPrice:round(entry.price),unrealizedPnL:round(qty*equity.at(-1).close-entry.cost,2)}:null,
+      metrics:{totalReturn:round((end/config.capital-1)*100,2),
+        annualized:round((Math.pow(end/config.capital,252/Math.max(1,equity.length-1))-1)*100,2),
+        maxDrawdown:round(maxDD,2),winRate:trades.length?round(wins.length/trades.length*100,1):null,
+        sharpe:rets.length>=20&&std>0?round(avg/std*Math.sqrt(252),2):null,
+        sortino:rets.length>=20&&downside>0?round(avg/downside*Math.sqrt(252),2):null,
+        trades:trades.length,profitFactor:gl>0?round(gp/gl,2):null,
+        taxesAndFees:round(fees,2),exposure:round(investedDays/equity.length*100,1),
+        endEquity:round(end,2),buyHold:round((equity.at(-1).buyHold/config.capital-1)*100,2),
+        excess:round((end-equity.at(-1).buyHold)/config.capital*100,2)}
+    };
+  }
+  function holdout(rawBars, params={}, closeOnly=false, fraction=0.3) {
+    const bars=closeOnly?normalizeCloseSeries(rawBars):normalizeBars(rawBars);
+    if(bars.length<120)throw new Error('保留測試至少需 120 筆日線資料');
+    const split=Math.floor(bars.length*(1-fraction));
+    if(split<70||bars.length-split<30)throw new Error('樣本不足以進行訓練與測試區間切分');
+    const fn=closeOnly?backtestCloseOnly:backtest;
+    const train=fn(bars,{...params,firstTradeDate:bars[0].date,lastTradeDate:bars[split-1].date});
+    const test=fn(bars,{...params,firstTradeDate:bars[split].date,lastTradeDate:bars.at(-1).date});
+    return {train,test,splitDate:bars[split].date,ratio:fraction,
+      note:'此為時間先後切分的單次保留測試，並非多折 Walk-forward，也不保證參數未被用測試資料反覆調整。'};
+  }
+  return {sma,rsi,normalizeBars,normalizeCloseSeries,validateOfficialCache,signals,closeSignals,validateConfig,backtest,backtestCloseOnly,holdout,parseCSV,demoData};
+});
+
+</script>
+  <script>
+/* PilotQuant Lab UI: no network requests, credentials, or order routing. */
+(function () {
+  'use strict';
+  const Q = window.QuantEngine;
+  const $ = id => document.getElementById(id);
+  const nf = new Intl.NumberFormat('zh-TW', { maximumFractionDigits:2 });
+  const num = n => Number.isFinite(Number(n)) ? nf.format(Number(n)) : '—';
+  const pct = (n, signed=false) => n == null || !Number.isFinite(n) ? '—' : (signed && n>0?'+':'')+num(n)+'%';
+  const escap = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const money = n => 'NT$ '+num(n);
+  const defaults = Q.validateConfig({});
+  let dataset=Q.demoData(), isDemo=true, closeOnly=false, fileName='', result=null, currentSymbol='DEMO-TREND';
+  let perSymbolProvenance={};
+  let toastTimer;
+  function toast(msg) { const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4300); }
+  function nav(tab) {
+    document.querySelectorAll('[data-tab]').forEach(e=>e.classList.toggle('active',e.classList.contains('nav-item')&&e.dataset.tab===tab));
+    document.querySelectorAll('.page').forEach(e=>e.classList.toggle('hidden',e.id!=='tab-'+tab));
+    $('crumb').textContent=({overview:'OVERVIEW',lab:'STRATEGY LAB',scan:'MULTI-SYMBOL',trades:'TRADE LOG',data:'DATA CENTER'})[tab];
+    history.replaceState(null,'','#'+tab);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  document.querySelectorAll('[data-tab]').forEach(e=>e.addEventListener('click',()=>nav(e.dataset.tab)));
+  function formConfig() {
+    const c={}; for(const k of Object.keys(defaults)) {
+      const el=$(k);if(!el) continue;c[k]=el.tagName==='SELECT'?el.value:Number(el.value);
+    }
+    return Q.validateConfig(c);
+  }
+  function syncStrategy() {
+    const type=$('strategy').value;
+    for(const t of ['ma','rsi','breakout']) document.querySelectorAll('.strategy-'+t).forEach(e=>e.classList.toggle('hidden',t!==type));
+  }
+  $('strategy').addEventListener('change',syncStrategy);
+  function populateSymbols() {
+    const names=Object.keys(dataset),select=$('symbol');select.innerHTML='';
+    for(const sym of names) { const opt=document.createElement('option');opt.value=sym;opt.textContent=sym+(isDemo?' (合成)':'');select.appendChild(opt); }
+    if(names.includes(currentSymbol))select.value=currentSymbol;else {currentSymbol=names[0];select.value=currentSymbol;}
+  }
+  function drawSVG(nodeId, lines, isDrawdown=false, height=240) {
+    const target=$(nodeId),width=760,padX=20,padY=18;
+    const rows=lines[0].data; if(!rows.length){target.textContent='沒有足夠資料';return;}
+    const all=lines.flatMap(x=>x.data.filter(Number.isFinite));
+    let lo=Math.min(...all),hi=Math.max(...all);if(hi===lo){lo-=1;hi+=1;}const spread=hi-lo;
+    hi+=spread*.07;lo-=spread*.07;
+    const x=i=>padX+i/Math.max(1,rows.length-1)*(width-2*padX);
+    const y=v=>height-padY-(v-lo)/(hi-lo)*(height-2*padY);
+    const grid=[0,.25,.5,.75,1].map(f=>{
+      const yy=padY+f*(height-2*padY),value=hi-f*(hi-lo);
+      return '<line x1="'+padX+'" x2="'+(width-padX)+'" y1="'+yy+'" y2="'+yy+'" stroke="#294136" stroke-width="1"/><text x="'+(padX+2)+'" y="'+(yy-5)+'">'+(isDrawdown?pct(value):num(value))+'</text>';
+    }).join('');
+    const paths=lines.map(line=>{
+      const p=line.data.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+      return '<path d="'+p+'" stroke="'+line.color+'" stroke-width="'+(line.bold?2.7:1.6)+'" fill="none" vector-effect="non-scaling-stroke" opacity="'+(line.bold?1:.72)+'"/>';
+    }).join('');
+    target.innerHTML='<svg viewBox="0 0 '+width+' '+height+'" preserveAspectRatio="none" role="img" aria-label="'+(isDrawdown?'資產回撤折線圖':'策略與買進持有資產走勢圖')+'">'+grid+paths+'</svg>';
+  }
+  function updateOverview() {
+    if(!result)return;
+    const r=result,m=r.metrics,rows=r.equity;
+    $('date-range').textContent=r.start+' — '+r.end;
+    $('m-return').textContent=pct(m.totalReturn,true);
+    $('m-return').style.color=m.totalReturn<0?'#f4aaa7':'#d4f3d7';
+    $('m-profit').textContent='期末資產 '+money(m.endEquity);
+    $('m-drawdown').textContent=pct(m.maxDrawdown);
+    $('m-sharpe').textContent=m.sharpe==null?'樣本不足':num(m.sharpe);
+    $('m-win').textContent=pct(m.winRate);
+    $('m-trades').textContent='已平倉 '+m.trades+' 筆';
+    $('execution-rule').textContent=closeOnly?'僅收盤價：訊號於 t 日完成，理想化以 t+1 日收盤成交；停損停利不模擬盤中觸價。':'完整 OHLCV：收盤後訊號，下一交易日開盤模擬成交。';
+    $('r-annual').textContent=pct(m.annualized,true);$('r-exposure').textContent=pct(m.exposure);
+    $('r-excess').textContent=pct(m.excess,true);$('r-fees').textContent=money(m.taxesAndFees);
+    $('r-pf').textContent=m.profitFactor==null?'樣本不足':num(m.profitFactor);
+    $('chart-start').textContent=r.start;$('chart-end').textContent=r.end;
+    drawSVG('equity-chart',[{data:rows.map(x=>x.value),color:'#9edfaa',bold:true},{data:rows.map(x=>x.buyHold),color:'#b4a06c'}]);
+    drawSVG('drawdown-chart',[{data:rows.map(x=>x.drawdown),color:'#dcad87',bold:true}],true,165);
+    const event=r.events[r.events.length-1];
+    $('last-signal').innerHTML= event?'<div class="signal-head"><span class="signal-icon">'+(event.action==='買入'?'↗':'↘')+'</span><span class="signal-text"><strong>'+escap(event.action)+' · '+escap(currentSymbol)+'</strong><small>'+escap(event.date)+' · '+escap(event.reason)+'</small></span></div><div class="signal-meta">'+num(event.qty)+' 股 @ '+num(event.price)+' · 模擬成交</div>': '<div class="signal-meta">策略尚未產生交易；可在策略實驗室修改參數。</div>';
+    drawSVG('spark',[{data:rows.map(x=>x.value),color:'#e4ffe4',bold:true}],false,85);
+    $('spark').querySelectorAll('svg text,svg line').forEach(el=>el.remove());
+  }
+  function updateResult() {
+    const m=result.metrics;
+    const fields=[['總報酬',pct(m.totalReturn,true)],['買進持有',pct(m.buyHold,true)],['最大回撤',pct(m.maxDrawdown)],['夏普比率',m.sharpe==null?'樣本不足':num(m.sharpe)],['已平倉交易',num(m.trades)+' 筆'],['市場暴露',pct(m.exposure)],['交易稅費',money(m.taxesAndFees)],['持有中部位',result.openPosition?num(result.openPosition.qty)+' 股':'無']];
+    $('experiment-result').innerHTML=fields.map(([a,b])=>'<div class="result-box"><span>'+a+'</span><strong>'+b+'</strong></div>').join('');
+    $('trades-body').innerHTML=result.trades.length?result.trades.map(t=>'<tr><td>'+escap(t.entryDate)+'</td><td>'+escap(t.exitDate)+'</td><td>'+num(t.qty)+'</td><td>'+num(t.buy)+'</td><td>'+num(t.sell)+'</td><td class="'+(t.pnl>=0?'pos':'neg')+'">'+(t.pnl>0?'+':'')+num(t.pnl)+'</td><td class="'+(t.pnlPct>=0?'pos':'neg')+'">'+pct(t.pnlPct,true)+'</td><td>'+escap(t.reason)+'</td></tr>').join(''):'<tr><td colspan="8">目前沒有已平倉交易</td></tr>';
+    $('trade-note').textContent='僅顯示已平倉交易 · 未平倉部位 '+(result.openPosition?num(result.openPosition.qty)+' 股，未實現損益 '+money(result.openPosition.unrealizedPnL):'無')+' · 回測不代表實盤交易';
+    const provenance=perSymbolProvenance[currentSymbol];
+    $('source-text').textContent=isDemo?'目前使用可重現的合成示範資料，所有行情、報酬及訊號都不是實盤數據。':
+      provenance?'官方歷史收盤價 · '+currentSymbol+' · 最後資料日 '+provenance.lastCloseDate+' · 最後匯入快取 '+provenance.generatedAt+'。未經權息調整；報酬僅供價格策略研究。':
+      '本機檔案「'+fileName+'」；請自行核驗資料來源、權息處理與品質。';
+    if(closeOnly)$('source-text').textContent+=' 收盤價專用模式：隔一交易日收盤模擬成交，無盤中停損或停利。';
+    if(provenance&&provenance.missingDates)$('source-text').textContent+=' 警告：該交易市場的快取紀錄有 '+provenance.missingDates+' 個未取得日期。';
+
+    $('mode-pill').textContent=isDemo?'◉ 模擬資料':provenance?'◉ 官方收盤快取':'◉ 本機匯入';
+    $('data-details').innerHTML=[['來源',isDemo?'固定種子合成資料':provenance?provenance.market+' 歷史快取':fileName],['資料類別',isDemo?'DEMO / 非真實市場':closeOnly?'僅收盤價 / 不推估開高低價':'使用者匯入 OHLCV'],['標的數量',Object.keys(dataset).length+' 檔'],['研究標的',currentSymbol],['資料筆數',num(result.bars)+' 筆'],['資料時間',result.start+' → '+result.end],['快取更新',provenance?provenance.generatedAt:'—'],['缺失日期',provenance?provenance.missingDates+' 筆待補':'—'],['交易模式','僅模擬 / 不下單']].map(([a,b])=>'<div><span>'+escap(a)+'</span><strong>'+escap(b)+'</strong></div>').join('');
+  }
+  function run() {
+    try {
+      const config=formConfig();currentSymbol=$('symbol').value;
+      result=closeOnly?Q.backtestCloseOnly(dataset[currentSymbol],config):Q.backtest(dataset[currentSymbol],config);
+      $('holdout-result').innerHTML='';
+      updateOverview();updateResult();
+      try{localStorage.setItem('pilotquant.v01.config',JSON.stringify(config));}catch(e){}
+      toast('回測完成：'+currentSymbol+' · '+result.bars+' 根日 K · 模擬下單');
+    }catch(e){toast('無法回測：'+e.message);}
+  }
+  $('strategy-form').addEventListener('submit',e=>{e.preventDefault();run();});
+  $('symbol').addEventListener('change',run);
+  function safeCSVCell(x) {
+    const s=String(x??'');
+    const safe=/^[=+@\-\t\r]/.test(s)?"'"+s:s;
+    return '"'+safe.replace(/"/g,'""')+'"';
+  }
+  function download(filename,content,type='text/csv;charset=utf-8;') {
+    const url=URL.createObjectURL(new Blob(['\uFEFF'+content],{type}));
+    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500);
+  }
+  function tradeCSV() {
+    const header=['買入日','賣出日','股數','買入價','賣出價','損益','報酬率','出場原因','交易成本'];
+    return [header,...result.trades.map(t=>[t.entryDate,t.exitDate,t.qty,t.buy,t.sell,t.pnl,t.pnlPct,t.reason,t.fees])].map(x=>x.map(safeCSVCell).join(',')).join('\r\n');
+  }
+  $('download-trades').addEventListener('click',()=>download('PilotQuant-trades-'+currentSymbol.replace(/[^a-z0-9_-]/gi,'_')+'.csv',tradeCSV()));
+  $('export-btn').addEventListener('click',()=>{
+    if(!result)return;
+    const report={name:'PilotQuant Lab 研究報告',version:'0.2.0',createdAt:new Date().toISOString(),
+      warning:'僅供研究；非投資建議、非實際成交或帳戶績效',dataSource:isDemo?'DEMO SYNTHETIC':fileName,
+      closeOnly,execution:result.execution||'NEXT_OPEN_OHLC',provenance:perSymbolProvenance[currentSymbol]||null,symbol:currentSymbol,period:{start:result.start,end:result.end,bars:result.bars},
+      config:result.config,metrics:result.metrics,openPosition:result.openPosition,trades:result.trades,
+      equity:result.equity};
+    download('PilotQuant-report-'+currentSymbol.replace(/[^a-z0-9_-]/gi,'_')+'.json',JSON.stringify(report,null,2),'application/json;charset=utf-8;');
+  });
+  $('template-btn').addEventListener('click',()=>download('PilotQuant-OHLCV-template.csv','date,symbol,open,high,low,close,volume\r\n2026-01-02,2330,900,915,895,910,12345678\r\n2026-01-05,2330,911,921,901,918,12455678\r\n'));
+  function importFile(file) {
+    if(!file)return;
+    if(file.size>10*1024*1024){toast('CSV 不可超過 10 MB');return;}
+    const reader=new FileReader();
+    reader.onload=()=>{
+      try {
+        const loaded=Q.parseCSV(String(reader.result));
+        dataset=loaded.symbols;isDemo=false;closeOnly=loaded.closeOnly;fileName=file.name;perSymbolProvenance={};
+        currentSymbol=Object.keys(dataset)[0];populateSymbols();run();nav('overview');
+      }catch(e){toast('匯入失敗：'+e.message);}
+    };
+    reader.onerror=()=>toast('無法讀取檔案');
+    reader.readAsText(file,'UTF-8');
+  }
+  $('csv-input').addEventListener('change',e=>{importFile(e.target.files[0]);e.target.value='';});
+  $('import-top').addEventListener('click',()=>$('csv-input').click());
+  const zone=$('dropzone');zone.addEventListener('click',()=>$('csv-input').click());
+  zone.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('csv-input').click();}});
+  for(const evt of ['dragenter','dragover'])zone.addEventListener(evt,e=>{e.preventDefault();zone.classList.add('dragging');});
+  for(const evt of ['dragleave','drop'])zone.addEventListener(evt,e=>{e.preventDefault();zone.classList.remove('dragging');});
+  zone.addEventListener('drop',e=>importFile(e.dataTransfer.files[0]));
+  $('reset-demo').addEventListener('click',()=>{dataset=Q.demoData();isDemo=true;closeOnly=false;fileName='';perSymbolProvenance={};currentSymbol='DEMO-TREND';populateSymbols();run();nav('overview');});
+  // Historical quotes are read only from PortfolioPilot's already-generated static cache.
+  // This intentionally does not fetch arbitrary URLs, ask for brokerage keys, or submit orders.
+  $('official-add').addEventListener('click',async()=>{
+    const market=$('official-market').value;
+    const symbol=$('official-symbol').value.trim().toUpperCase();
+    const status=$('official-status');
+    if(!['TWSE','TPEx'].includes(market)||!/^[A-Z0-9]{2,8}$/.test(symbol)) {
+      status.textContent='請輸入有效的股票代號（限英數 2–8 碼）。';return;
+    }
+    if(location.protocol==='file:') {
+      status.textContent='單檔 HTML 無法存取官方快取；請在 PortfolioPilot GitHub Pages 網站使用，或先匯入 CSV。';return;
+    }
+    const button=$('official-add');button.disabled=true;
+    status.textContent='讀取官方快取索引與 '+market+':'+symbol+'…';
+    try {
+      const base='../data/tw-price-history/';
+      const get=async path=>{
+        const resp=await fetch(base+path,{cache:'no-store'});
+        if(!resp.ok)throw new Error('行情檔案未載入：HTTP '+resp.status);
+        return await resp.json();
+      };
+      const index=await get('index.json');
+      const prefix=symbol.slice(0,2).padEnd(2,'_');
+      const bucket=await get(market.toLowerCase()+'-'+prefix+'.json');
+      const found=Q.validateOfficialCache(index,bucket,market,symbol);
+      if(isDemo||!closeOnly){dataset={};perSymbolProvenance={};}
+      isDemo=false;closeOnly=true;fileName='PortfolioPilot 官方收盤價快取';
+      const key=market+':'+symbol;
+      dataset[key]=found.bars;perSymbolProvenance[key]=found;
+      currentSymbol=key;populateSymbols();run();nav('overview');
+      status.textContent='已載入 '+key+' '+found.name+'，'+found.bars.length+' 筆，最後收盤日 '+found.lastCloseDate+'。來源：'+market+'，未調整權息。';
+    }catch(err){status.textContent='載入失敗：'+err.message+'。你仍可改用 CSV 手動匯入。';}
+    finally{button.disabled=false;}
+  });
+  $('holdout-btn').addEventListener('click',()=>{
+    const output=$('holdout-result');
+    try {
+      const h=Q.holdout(dataset[currentSymbol],formConfig(),closeOnly);
+      const train=h.train.metrics,test=h.test.metrics;
+      const rows=[['訓練區間',h.train.start+' → '+h.train.end],['測試區間',h.test.start+' → '+h.test.end],
+        ['訓練報酬',pct(train.totalReturn,true)],['測試報酬',pct(test.totalReturn,true)],
+        ['測試最大回撤',pct(test.maxDrawdown)],['測試已平倉交易',String(test.trades)+' 筆']];
+      output.innerHTML=rows.map(([a,b])=>'<div class="result-box"><span>'+escap(a)+'</span><strong>'+escap(b)+'</strong></div>').join('');
+      toast('完成時間切分保留測試：'+currentSymbol+'。切勿用測試結果反覆調參。');
+    }catch(e){output.textContent='無法驗證：'+e.message;}
+  });
+  $('scan-btn').addEventListener('click',()=>{
+    const output=$('scan-body'),info=$('scan-info');
+    try {
+      const config=formConfig(),names=Object.keys(dataset);
+      const ok=[],skipped=[];
+      if(names.length>50)throw new Error('一次最多分析 50 檔標的，請分批匯入或載入。');
+      for(const name of names) {
+        try {
+          const h=Q.holdout(dataset[name],config,closeOnly);
+          ok.push({name,bars:dataset[name].length,train:h.train.metrics,test:h.test.metrics});
+        }catch(e){skipped.push(name+':'+e.message);}
+      }
+      ok.sort((a,b)=>b.test.totalReturn-a.test.totalReturn);
+      output.innerHTML=ok.map(x=>'<tr><td>'+escap(x.name)+'</td><td>'+x.bars+'</td><td>'+pct(x.train.totalReturn,true)+'</td><td class="'+(x.test.totalReturn>=0?'pos':'neg')+'">'+pct(x.test.totalReturn,true)+'</td><td>'+pct(x.test.maxDrawdown)+'</td><td>'+x.test.trades+'</td><td><button data-study="'+escap(x.name)+'">查看</button></td></tr>').join('')||'<tr><td colspan="7">目前沒有符合保留測試資料量的標的</td></tr>';
+      info.textContent='已測試 '+ok.length+' 檔，跳過 '+skipped.length+' 檔。排名只依測試期間的「模擬報酬」排序；不是未來績效預測，也不是獨立選股推薦。';
+      if(skipped.length)info.textContent+=' 前三筆跳過原因：'+skipped.slice(0,3).join('；');
+    }catch(e){info.textContent='分析失敗：'+e.message;}
+  });
+  $('scan-body').addEventListener('click',e=>{
+    const button=e.target.closest('[data-study]');if(!button)return;
+    const sym=button.dataset.study;
+    if(!Object.prototype.hasOwnProperty.call(dataset,sym))return;
+    currentSymbol=sym;populateSymbols();run();nav('overview');
+  });
+  try {const stored=JSON.parse(localStorage.getItem('pilotquant.v01.config')||'null');if(stored&&typeof stored==='object') {
+    for(const key of Object.keys(defaults)){if($(key)&&stored[key]!=null)$(key).value=stored[key];}
+  }}catch(e){}
+  populateSymbols();syncStrategy();run();const hash=location.hash.slice(1);if(['overview','lab','scan','trades','data'].includes(hash))nav(hash);
+})();
+
+</script>
+</body>
+</html>

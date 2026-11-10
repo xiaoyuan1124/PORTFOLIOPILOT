@@ -13,6 +13,7 @@ import {
 } from "@/lib/strategy-lab";
 import { Badge, Card, CardContent } from "./ui";
 import { StrategyBacktest } from "./strategy-backtest";
+import { QuantResearchPanel } from "./quant-research-panel";
 
 function number(value: number | null | undefined, digits = 2) {
   return value === null || value === undefined || !Number.isFinite(value)
@@ -58,13 +59,14 @@ function TargetEditor({
 }
 
 export function StrategyLab({
-  state, onChange, onOpenResearch, onOpenRisk
+  state, onChange, onOpenResearch, onOpenRisk, quantRequestedKey
 }: {
   state: AppState;
   onChange: (next: AppState) => boolean;
   onOpenResearch: () => void;
   onOpenRisk: () => void;
-}) {
+  quantRequestedKey?: string;
+ }) {
   const config = state.strategyLab ?? DEFAULT_STRATEGY_LAB;
   const profile = config.profiles.find((item) => item.id === config.activeProfileId) ?? config.profiles[0]!;
   const [quoteCache, setQuoteCache] = useState<TwQuoteCache | null>(null);
@@ -74,6 +76,8 @@ export function StrategyLab({
   const [histories, setHistories] = useState<Record<string, TwPriceHistorySeries | null>>({});
   const [historyErrors, setHistoryErrors] = useState<Record<string, string>>({});
   const [refreshIndex, setRefreshIndex] = useState(0);
+  const [quantOpen, setQuantOpen] = useState(Boolean(quantRequestedKey));
+  const [quantKey, setQuantKey] = useState(quantRequestedKey);
   const [symbol, setSymbol] = useState("");
   const [name, setName] = useState("");
   const [venue, setVenue] = useState<"TWSE" | "TPEx">("TWSE");
@@ -177,8 +181,23 @@ export function StrategyLab({
     if (valid.success) { setSymbol(""); setName(""); setFirstPrice(""); setSecondPrice(""); }
   }
 
+  if (quantOpen) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="策略實驗室分頁">
+          <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => setQuantOpen(false)}>觀察價與舊策略</button>
+          <button type="button" aria-pressed className="min-h-11 rounded-full bg-[#1f332a] px-4 text-xs font-semibold text-white dark:bg-[#dce9e2] dark:text-[#122018]">PilotQuant 量化研究</button>
+        </div>
+        <QuantResearchPanel key={quantKey ?? "default"} requestedKey={quantKey} />
+      </div>
+    );
+  }
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="策略實驗室分頁">
+        <button type="button" aria-pressed className="min-h-11 rounded-full bg-[#1f332a] px-4 text-xs font-semibold text-white dark:bg-[#dce9e2] dark:text-[#122018]">觀察價與舊策略</button>
+        <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => setQuantOpen(true)}>PilotQuant 量化研究</button>
+      </div>
       <div className="rounded-[24px] bg-[#1f332a] p-5 text-white dark:bg-[#dce9e2] dark:text-[#122018]">
         <p className="text-xs font-semibold tracking-[.14em] opacity-60">STRATEGY LAB · V0.92</p>
         <h2 className="mt-2 text-2xl font-semibold">投資策略實驗室</h2>
@@ -267,6 +286,10 @@ export function StrategyLab({
               </ul>}
             </div>
             {target.note && <p className="mt-3 text-xs leading-5 text-black/55 dark:text-white/55">研究註記：{target.note}</p>}
+            <button type="button" onClick={() => { setQuantKey(key); setQuantOpen(true); window.requestAnimationFrame(() => window.scrollTo(0, 0)); }}
+              className="mt-3 min-h-10 rounded-xl border border-[#315f49]/25 bg-[#e7f1e9] px-4 text-xs font-semibold text-[#245238] dark:bg-[#173426] dark:text-[#a9d7b7]">
+              回測 {target.symbol} 並查看成長情境
+            </button>
             <TargetEditor key={key} target={target} onSave={(changed) => save({ ...config, targets: config.targets.map((row) => row.id === target.id ? changed : row) })} onRemove={() => save({ ...config, targets: config.targets.filter((row) => row.id !== target.id) })} />
           </CardContent></Card>
         ))}

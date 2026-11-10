@@ -36,6 +36,7 @@ PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio 
 - Official TAIEX Total Return benchmark comparison with explicit actual trading-date alignment
 - **Real local daily net-worth snapshots** instead of a fabricated trend line
 - Four-gate Official Scanner using only official/non-demo Taiwan market data
+- **Native PilotQuant research inside Strategy Lab:** launch a stock's historical close-price backtest and reproducible P10/P50/P90 scenario paths directly from a Company Snapshot or research watchlist; uses dated TWSE/TPEx caches, chronological 70/30 holdout and date-matched TAIEX price-index context. Simulated, not forecasts or broker orders. Advanced CSV/multi-symbol workbench remains in `/quant-lab/`.
 - Investment journal
 - Versioned JSON full backup/import with Zod validation (v4 adds account + DEMO/personal metadata; v1-v3 remain readable)
 - Holdings CSV import/export and downloadable template

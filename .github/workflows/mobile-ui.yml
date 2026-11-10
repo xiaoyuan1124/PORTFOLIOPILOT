@@ -19,7 +19,9 @@ concurrency:
 
 jobs:
   mobile-layout:
-    runs-on: ubuntu-latest
+    # Playwright 1.56.1 has no Chromium package for the ubuntu-latest 26.04 image.
+    # Pin a standard GitHub-hosted 24.04 runner until browser compatibility is updated.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
