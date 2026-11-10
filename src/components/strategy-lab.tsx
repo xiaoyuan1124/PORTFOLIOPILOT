@@ -181,11 +181,18 @@ export function StrategyLab({
     if (valid.success) { setSymbol(""); setName(""); setFirstPrice(""); setSecondPrice(""); }
   }
 
+  function switchQuantTab(next: boolean) {
+    setQuantOpen(next);
+    // In-page tab changes do not go through the AppShell navigation scroll reset.
+    // Reset explicitly after the panel swaps so a shorter page never opens halfway down.
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+  }
+
   if (quantOpen) {
     return (
       <div className="space-y-4">
         <div className="flex flex-wrap gap-2" role="group" aria-label="策略實驗室分頁">
-          <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => setQuantOpen(false)}>觀察價與舊策略</button>
+          <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => switchQuantTab(false)}>觀察價與舊策略</button>
           <button type="button" aria-pressed className="min-h-11 rounded-full bg-[#1f332a] px-4 text-xs font-semibold text-white dark:bg-[#dce9e2] dark:text-[#122018]">PilotQuant 量化研究</button>
         </div>
         <QuantResearchPanel key={quantKey ?? "default"} requestedKey={quantKey} />
@@ -196,7 +203,7 @@ export function StrategyLab({
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2" role="group" aria-label="策略實驗室分頁">
         <button type="button" aria-pressed className="min-h-11 rounded-full bg-[#1f332a] px-4 text-xs font-semibold text-white dark:bg-[#dce9e2] dark:text-[#122018]">觀察價與舊策略</button>
-        <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => setQuantOpen(true)}>PilotQuant 量化研究</button>
+        <button type="button" className="min-h-11 rounded-full border border-black/10 px-4 text-xs font-semibold dark:border-white/10" onClick={() => switchQuantTab(true)}>PilotQuant 量化研究</button>
       </div>
       <div className="rounded-[24px] bg-[#1f332a] p-5 text-white dark:bg-[#dce9e2] dark:text-[#122018]">
         <p className="text-xs font-semibold tracking-[.14em] opacity-60">STRATEGY LAB · V0.92</p>
@@ -286,7 +293,7 @@ export function StrategyLab({
               </ul>}
             </div>
             {target.note && <p className="mt-3 text-xs leading-5 text-black/55 dark:text-white/55">研究註記：{target.note}</p>}
-            <button type="button" onClick={() => { setQuantKey(key); setQuantOpen(true); window.requestAnimationFrame(() => window.scrollTo(0, 0)); }}
+            <button type="button" onClick={() => { setQuantKey(key); switchQuantTab(true); }}
               className="mt-3 min-h-10 rounded-xl border border-[#315f49]/25 bg-[#e7f1e9] px-4 text-xs font-semibold text-[#245238] dark:bg-[#173426] dark:text-[#a9d7b7]">
               回測 {target.symbol} 並查看成長情境
             </button>
