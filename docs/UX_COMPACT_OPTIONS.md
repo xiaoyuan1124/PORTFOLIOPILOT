@@ -47,6 +47,7 @@ Use these established sources as design rules, not as claims about individual Po
 
 | Before | After | Rationale |
 |---|---|---|
+| New-user home displayed three large tutorial cards ahead of the add-holding action | One compact `先建立第一筆持股` card with immediate `新增持股` button; full three-step help behind disclosure | P1 primary task comes before P3 onboarding explanation |
 | Home three large buttons pointing to Research, Strategy Lab and Portfolio (also in 5-item global nav) | Removed, global nav remains | Saves visual height without losing a destination |
 | Daily Drivers links to Research and Portfolio (also in main nav) | Removed; two high-value data signals remain in short summary | Avoid repeating navigation twice |
 | Strategy Lab full RSI/KD/volume/fee controls before stock list | One summary `策略參數與延伸工具` | Primary task is scanning watched stocks, not tuning every period |
