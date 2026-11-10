@@ -398,7 +398,7 @@ export function AppShell() {
             />
           ) : null}
           {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} onAddHolding={addWatchlistCandidateToPortfolio} onQuantResearch={openQuantResearch} /> : null}
-          {section === "lab" ? <StrategyLab state={state} onChange={updateState} onOpenResearch={() => navigate("research")} onOpenRisk={() => navigatePortfolioTab("risk")} quantRequestedKey={quantRequestedKey} quantRequestId={quantRequestId} /> : null}
+          {section === "lab" ? <StrategyLab key={quantRequestId} state={state} onChange={updateState} onOpenResearch={() => navigate("research")} onOpenRisk={() => navigatePortfolioTab("risk")} quantRequestedKey={quantRequestedKey} /> : null}
           {section === "settings" ? (
             <Settings
               state={state}
