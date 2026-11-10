@@ -72,29 +72,23 @@ export function Overview({
       ) : null}
 
       {!state.holdings.length ? (
-        <Card>
-          <CardContent className="py-8 md:py-10">
-            <div className="mx-auto max-w-2xl text-center">
-              <WalletCards className="mx-auto text-black/25 dark:text-white/25" size={32} />
-              <h2 className="mt-4 text-lg font-semibold">3 步開始使用 PortfolioPilot</h2>
-              <p className="mt-2 text-sm leading-6 text-black/48 dark:text-white/48">不用先補歷史交易。先建立現在真正持有的部位，就能開始看淨值、配置與官方研究。</p>
+        <Card data-ux-role="home-first-run">
+          <CardContent className="space-y-3 p-4 md:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-semibold">先建立第一筆持股</h2>
+                <p className="mt-1 text-xs leading-5 text-black/50 dark:text-white/50">不用補歷史交易，只需證券代號、股數、平均成本與帳戶。</p>
+              </div>
+              <GhostButton onClick={() => onNavigate?.("portfolio")} className="shrink-0">新增持股 <ArrowRight size={15} /></GhostButton>
             </div>
-            <div className="mx-auto mt-5 grid max-w-2xl gap-2 text-left sm:grid-cols-3">
-              {[
-                ["1", "新增部位", "輸入代號或名稱，自動帶入台股官方資料"],
-                ["2", "確認持有資料", "只需補股數、實際平均成本與帳戶"],
-                ["3", "更新與研究", "更新官方收盤價，再從持股一鍵進研究"]
-              ].map(([step, label, detail]) => (
-                <div key={step} className="rounded-2xl border border-black/6 p-3 dark:border-white/8">
-                  <span className="text-xs font-semibold text-black/35 dark:text-white/35">STEP {step}</span>
-                  <strong className="mt-1 block text-sm">{label}</strong>
-                  <span className="mt-1 block text-xs leading-5 text-black/45 dark:text-white/45">{detail}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 flex justify-center">
-              <GhostButton onClick={() => onNavigate?.("portfolio")}>新增第一個部位 <ArrowRight size={15} /></GhostButton>
-            </div>
+            <details className="rounded-xl border border-black/8 px-3 py-2 text-xs dark:border-white/10" data-ux-role="home-first-run-help">
+              <summary className="min-h-7 cursor-pointer font-semibold">查看完整建立步驟（3 步）</summary>
+              <ol className="mt-2 list-decimal space-y-1 pl-4 leading-5 text-black/55 dark:text-white/55">
+                <li>輸入代號或名稱，台股會嘗試帶入官方標的資料</li>
+                <li>確認股數、實際平均成本與券商帳戶</li>
+                <li>更新官方收盤價，再從持股進入研究</li>
+              </ol>
+            </details>
           </CardContent>
         </Card>
       ) : null}
