@@ -421,3 +421,14 @@ html.theme-tradescope :is(.recharts-line-curve, .recharts-area-curve)[stroke="#4
 html.theme-tradescope .recharts-area-area[fill="#456b58"] {
   fill: var(--ts-gold);
 }
+
+
+/* Several branded hero banners are pale mint in Forest Dark with intentionally
+   dark text. In TradeScope their backgrounds become graphite, so explicitly
+   switch the text back to high-contrast ivory/gold. */
+html.theme-tradescope .app-page-content [class*="bg-[#1f332a]"][class*="rounded-[24px]"] {
+  color: var(--ts-text);
+}
+html.theme-tradescope .app-page-content [class*="bg-[#1f332a]"][class*="rounded-[24px]"] :is(h1, h2, h3) {
+  color: var(--ts-gold);
+}
