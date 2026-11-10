@@ -43,6 +43,8 @@ jobs:
       - run: npm test
       - name: Test official Strategy Lab OHLCV parser
         run: node --test scripts/lib/strategy-ohlcv.check.mjs
+      - name: Test PilotQuant v0.2 bundle, sources, close-only and holdout
+        run: node scripts/check-quant-lab.mjs
       - name: Check signed WidgetKit provisioning contract
         run: |
           npm run native:ios:widget:signing:test
