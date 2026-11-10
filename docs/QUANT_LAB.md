@@ -39,3 +39,25 @@ Keep the v0.2 PR as draft until GitHub CI and real-device checks are verified. M
 ## GitHub pull request
 
 See [PilotQuant Lab PR #185](https://github.com/xiaoyuan1124/PORTFOLIOPILOT/pull/185) (draft until quality and device checks). This is an isolated web module, not a production iOS tab.
+
+
+## PortfolioPilot-native integration (v0.3 work, PR #185)
+
+- Entry point: main app **策略 → PilotQuant 量化研究**, or **研究 → 個股總覽 → 使用 PilotQuant 回測該股**. Research watch-zone cards also deep-link the active ticker. No new top-level bottom-nav button (avoids iPhone nav crowding).
+- Native React component: `src/components/quant-research-panel.tsx`. Pure math and deterministic simulation: `src/lib/quant-research.ts`; Vitest regression checks: `src/lib/quant-research.test.ts`.
+- Official TWSE/TPEx public history buckets are loaded through the already-supported `src/lib/price-history-data.ts`. Generation mismatch and known failed dates block backtests; cache dates, venue and origin are displayed. Data has raw closing price only; these results are not dividend-adjusted total returns.
+- Three long-only strategies: moving-average crossover, RSI threshold, closing-price channel breakout. Decisions use close[t] and never fill before close[t+1]. Fees and slippage are charged for each side; Taiwan sell tax is charged on simulated sale. 70/30 date-ordered holdout uses independent starting capital and warmed indicators (single holdout, not full walk-forward).
+- Benchmarks: a fee-matched buy-and-hold comparison for each simulator period; separately, the official TWSE TAIEX **price** index is compared against the stock's **raw price** change only when both date endpoints are exact. This is not an Alpha estimate.
+- Growth scenarios use a **fixed-seed five-day block bootstrap** of the latest <=252 observed daily log returns. 700 paths for 21/63/126/252 trading days yield P10/P50/P90 quantiles; these are **not calibrated confidence bands, target prices, probabilities of profit, or advice**. Extreme raw price jumps >30% in a day suspend projections until potential corporate actions are resolved.
+- The enhanced native UI does not expose account credentials, place or recommend orders, or send trading history to a server. Advanced CSV/multi-stock analysis remains the static local workbench `/quant-lab/`.
+
+### Verification
+
+Run: `npm run lint && npm run typecheck && npm test && npm run build && npm run native:build`; GitHub Actions runs these on PRs, plus legacy PilotQuant static-smoke tests. Require CI green and physical iPhone verification before publishing.
+
+### Known limitations
+
+- Unadjusted prices: dividends/splits, ETF distributions, delisting survivorship and corporate events are not reconstructed. *Do not* equate price-only returns with actual account profits.
+- Projected scenarios extrapolate the historical returns' statistical structure only; no forecast of sales growth, margin, macroeconomics, interest rates, valuation multiples or future news. Path quantiles do not guarantee actual future prices.
+- End-of-day fill is a conservative **next-close proxy**, not a promise that an actual intraday order will be executed at that price. No intraday stop/target is simulated.
+- User-entered stock selection/strategy options are view-local; existing portfolio holdings and Strategy Lab watch-zone state are not modified.
