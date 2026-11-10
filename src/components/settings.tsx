@@ -512,7 +512,10 @@ export function Settings({
       </Card>
 
       <Card className="lg:col-span-2">
-        <CardContent>
+        <details className="lg:col-span-2 rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-device-support">
+        <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">裝置功能、隱私與支援</summary>
+        <div className="mt-2 grid gap-3 lg:grid-cols-2">
+      <CardContent>
           <div className="flex items-start gap-3">
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#edf2ee] text-[#335b46] dark:bg-[#17201b] dark:text-[#a8dab8]">
               <DatabaseBackup size={19} />
@@ -565,13 +568,28 @@ export function Settings({
       </Card>
 
       <Card>
-        <CardContent>
+  
+        </div>
+      </details>
+
+      <div className="lg:col-span-2 grid gap-2" data-ux-role="settings-backup-entry">
+        <Button onClick={exportJson}><Download size={16} />匯出完整 JSON 備份</Button>
+        <p className="text-xs text-black/45 dark:text-white/45">換手機或匯入資料前建議先備份；本機資料不會自動上傳雲端。</p>
+      </div>
+      <details className="lg:col-span-2 rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-data-tools"
+        defaultOpen={Boolean(pendingHoldingsCsv || pendingTradeCsv || holdingsImportUndo)}>
+        <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-2 text-sm font-semibold">
+          <span>資料匯入／匯出與 CSV 工具</span>
+          <span className="text-xs font-normal text-black/45 dark:text-white/45">JSON · 持股 · 券商 · 交易</span>
+        </summary>
+        <div className="mt-2 grid gap-3 lg:grid-cols-2">
+      <CardContent>
           <h3 className="font-semibold">完整備份</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">
             JSON 會包含持股、帳戶、自選清單、ETF 成分來源、交易／現金流、投資筆記、匯率、DEMO/個人模式與歷史淨值快照，匯入時會先用 schema 驗證格式。
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <Button onClick={exportJson}><Download size={16} />匯出 JSON</Button>
+            <p className="text-xs text-black/45 dark:text-white/45">完整備份可使用上方的單一匯出入口。</p>
             <GhostButton onClick={() => jsonRef.current?.click()}><Upload size={16} />匯入 JSON</GhostButton>
             <input ref={jsonRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => importJson(e.target.files?.[0])} />
           </div>
@@ -587,7 +605,10 @@ export function Settings({
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={exportCsv}><FileSpreadsheet size={16} />匯出 CSV</Button>
             <GhostButton onClick={() => csvRef.current?.click()}><Upload size={16} />選擇 CSV 預覽</GhostButton>
-            <GhostButton onClick={() => downloadText("portfoliopilot-holdings-template.csv", csvTemplate(), "text/csv;charset=utf-8")}>下載範本</GhostButton>
+            <details className="w-full rounded-xl border border-black/8 px-3 py-2 text-xs dark:border-white/10">
+              <summary className="min-h-8 cursor-pointer font-semibold">CSV 格式說明與下載範本</summary>
+              <div className="mt-2"><GhostButton onClick={() => downloadText("portfoliopilot-holdings-template.csv", csvTemplate(), "text/csv;charset=utf-8")}>下載範本</GhostButton></div>
+            </details>
             <input ref={csvRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => void prepareHoldingsCsvFile(e.target.files?.[0])} />
           </div>
         </CardContent>
@@ -919,7 +940,14 @@ export function Settings({
       </Card>
 
       <Card>
-        <CardContent>
+  
+        </div>
+      </details>
+
+      <details className="rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-fx">
+        <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">USD／TWD 匯率設定 · ${state.usdTwd.toFixed(2)}</summary>
+        <div className="mt-2">
+      <CardContent>
           <h3 className="font-semibold">匯率設定</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">美股資產依 USD/TWD 折算。零成本階段先手動填，避免依賴不穩定或授權不清楚的免費匯率 API。</p>
           <label className="mt-5 block text-xs font-semibold text-black/45 dark:text-white/45">USD / TWD</label>
@@ -957,7 +985,14 @@ export function Settings({
       </Card>
 
       <Card>
-        <CardContent>
+  
+        </div>
+      </details>
+
+      <details className="rounded-2xl border border-[#b98b57]/25 p-2 dark:border-[#b98b57]/20" data-ux-role="settings-danger">
+        <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">危險操作：清空或重設資料</summary>
+        <div className="mt-2">
+      <CardContent>
           <h3 className="font-semibold">資料重設</h3>
           <p className="mt-2 text-sm leading-6 text-black/50 dark:text-white/50">新安裝預設為空白個人模式，不會自動塞示範持股。只有你主動按下「示範資料」才會進入 DEMO，首頁與頂部會持續標示。</p>
           <div className="mt-5 flex flex-wrap gap-2">
@@ -974,6 +1009,9 @@ export function Settings({
           </div>
         </CardContent>
       </Card>
+
+        </div>
+      </details>
     </div>
   );
 }
