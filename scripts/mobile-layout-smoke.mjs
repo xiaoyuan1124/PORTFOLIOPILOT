@@ -172,8 +172,50 @@ try {
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
     await checkLayout(page, viewport.name, "settings");
 
-    await page.getByRole("button", { name: "切換深色模式" }).click();
+    // Theme cycling: keep existing forest-dark as the second option,
+    // then enter the new screenshot-inspired TradeScope palette.
+    await page.getByRole("button", { name: "切換外觀模式" }).click();
+    await page.waitForFunction(() => document.documentElement.classList.contains("dark") &&
+      !document.documentElement.classList.contains("theme-tradescope"));
+    assert.equal(await page.evaluate(() => localStorage.getItem("portfoliopilot:theme")), "dark");
     await checkLayout(page, viewport.name, "settings-dark");
+
+    await page.getByRole("button", { name: "切換外觀模式" }).click();
+    await page.waitForFunction(() => document.documentElement.classList.contains("theme-tradescope"));
+    const themeColors = await page.evaluate(() => ({
+      body: getComputedStyle(document.body).backgroundColor,
+      card: getComputedStyle(document.querySelector(".pp-card")).backgroundColor
+    }));
+    assert.equal(themeColors.body, "rgb(11, 14, 12)", "TradeScope page must be near-black");
+    assert.equal(themeColors.card, "rgb(17, 21, 20)", "TradeScope card must have graphite surface");
+    assert.equal(await page.evaluate(() => localStorage.getItem("portfoliopilot:theme")), "tradescope");
+    await checkLayout(page, viewport.name, "settings-tradescope");
+
+    // The third theme must persist across reload, not just tab changes.
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByRole("heading", { name: "投資總覽" }).waitFor();
+    await page.waitForFunction(() => document.documentElement.classList.contains("theme-tradescope"));
+    await checkLayout(page, viewport.name, "home-tradescope");
+    await nav.getByRole("button", { name: "策略", exact: true }).click();
+    await page.getByRole("heading", { name: "策略實驗室", level: 1, exact: true }).waitFor();
+    const heroContrast = await page.getByRole("heading", { name: "投資策略實驗室", exact: true }).evaluate((heading) => {
+      const hero = heading.parentElement;
+      return { foreground: hero ? getComputedStyle(hero).color : "", heading: getComputedStyle(heading).color };
+    });
+    assert.equal(heroContrast.foreground, "rgb(229, 232, 225)", "Graphite hero text must be readable ivory, not original dark-on-mint");
+    assert.equal(heroContrast.heading, "rgb(209, 167, 94)", "Graphite hero heading must be warm gold");
+    await checkLayout(page, viewport.name, "strategy-tradescope");
+    await nav.getByRole("button", { name: "我的", exact: true }).click();
+    await page.getByRole("heading", { name: "設定與資料" }).waitFor();
+
+    // Direct selection of any theme also works.
+    const themeGroup = page.getByRole("group", { name: "外觀主題" });
+    await themeGroup.getByRole("button", { name: /淺色/ }).click();
+    await page.waitForFunction(() => !document.documentElement.classList.contains("dark"));
+    assert.equal(await page.evaluate(() => localStorage.getItem("portfoliopilot:theme")), "light");
+    await themeGroup.getByRole("button", { name: /TradeScope/ }).click();
+    await page.waitForFunction(() => document.documentElement.classList.contains("theme-tradescope"));
+    await checkLayout(page, viewport.name, "theme-choices-tradescope");
 
     // End-to-end CSV interaction with demo-only data in a fresh browser context:
     // preview -> confirm -> guarded undo. No personal portfolio is involved.
@@ -201,8 +243,37 @@ try {
     await page.getByRole("button", { name: "撤銷這次匯入" }).click();
     await undoHeading.waitFor({ state: "detached" });
     await context.close();
-    console.log(`PASS ${viewport.name}: home, portfolio, cross-ETF, ETF research, settings, dark mode`);
+    console.log(`PASS ${viewport.name}: legacy themes, TradeScope theme, settings persistence, mobile layouts, report/CSV`);
   }
+
+  // The supplied design reference is a desktop trading terminal.
+  // Verify its defining near-black sidebar / gold active navigation at 1440px.
+  const desktop = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    colorScheme: "light",
+    reducedMotion: "reduce"
+  });
+  const desktopPage = await desktop.newPage();
+  await desktopPage.goto(url, { waitUntil: "domcontentloaded" });
+  await desktopPage.getByRole("heading", { name: "投資總覽" }).waitFor();
+  await desktopPage.getByRole("button", { name: "切換外觀模式" }).click();
+  await desktopPage.getByRole("button", { name: "切換外觀模式" }).click();
+  await desktopPage.waitForFunction(() => document.documentElement.classList.contains("theme-tradescope"));
+  const desktopPalette = await desktopPage.evaluate(() => {
+    const sidebar = document.querySelector(".app-desktop-sidebar");
+    const activeTab = sidebar?.querySelector('nav button[aria-current="page"]');
+    return {
+      sidebar: sidebar ? getComputedStyle(sidebar).backgroundColor : null,
+      active: activeTab ? getComputedStyle(activeTab).color : null,
+      contentWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth
+    };
+  });
+  assert.equal(desktopPalette.sidebar, "rgb(8, 11, 10)", "desktop rail must match black trading-terminal palette");
+  assert.equal(desktopPalette.active, "rgb(209, 167, 94)", "desktop active tab must use champagne gold");
+  assert.ok(desktopPalette.contentWidth <= desktopPalette.viewportWidth + 2, "desktop TradeScope must not horizontally overflow");
+  await desktopPage.screenshot({ path: "mobile-artifacts/desktop-tradescope.png", fullPage: false, animations: "disabled" });
+  await desktop.close();
 } finally {
   await browser.close();
 }
