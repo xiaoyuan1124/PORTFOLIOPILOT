@@ -459,7 +459,12 @@ export function Settings({
               </p>
 
               {integrity.items.length ? (
-                <div className="mt-4 grid gap-2 md:grid-cols-2">
+                <details key={integrity.warningCount ? "attention" : "healthy"} defaultOpen={integrity.warningCount > 0}
+                  className="mt-3 rounded-xl border border-black/8 px-3 py-2.5 text-xs dark:border-white/10" data-ux-role="settings-integrity-details">
+                  <summary className="min-h-8 cursor-pointer font-semibold">
+                    {integrity.warningCount ? `展開核對 ${integrity.warningCount} 類需要處理的資料問題` : `查看 ${integrity.infoCount} 項資料限制與細節`}
+                  </summary>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
                   {integrity.items.map((item) => (
                     <div key={item.id} className="rounded-2xl border border-black/6 bg-black/[.018] p-3.5 dark:border-white/8 dark:bg-white/[.025]">
                       <div className="flex items-start gap-2.5">
@@ -501,8 +506,9 @@ export function Settings({
                     </div>
                   ))}
                 </div>
+                </details>
               ) : (
-                <div className="mt-4 rounded-2xl border border-[#6c8c79]/20 bg-[#edf2ee] px-4 py-3 text-sm leading-6 text-[#335b46] dark:border-[#6c8c79]/18 dark:bg-[#17201b] dark:text-[#a8dab8]">
+                <div className="mt-3 rounded-xl border border-[#6c8c79]/20 bg-[#edf2ee] px-4 py-3 text-sm leading-6 text-[#335b46] dark:border-[#6c8c79]/18 dark:bg-[#17201b] dark:text-[#a8dab8]">
                   目前沒有偵測到未來日期、台股價格來源、Exact TWR 邊界、CSV provenance 或淨值快照方面的資料完整性問題。
                 </div>
               )}
