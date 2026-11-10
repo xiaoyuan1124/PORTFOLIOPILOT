@@ -206,7 +206,7 @@ try {
     await source.waitFor();
     assert.match(await source.innerText(), /2330/);
     const metricSummary = page.locator('[data-testid="pilotquant-summary"]');
-    assert.equal(await metricSummary.locator(".mini-metric").count(), 4,
+    assert.equal(await metricSummary.locator(":scope > div").count(), 4,
       "default research screen should show only four key metrics");
     await checkLayout(page, viewport.name, "pilotquant-compact");
 
