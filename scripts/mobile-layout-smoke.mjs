@@ -198,6 +198,12 @@ try {
     await checkLayout(page, viewport.name, "home-tradescope");
     await nav.getByRole("button", { name: "策略", exact: true }).click();
     await page.getByRole("heading", { name: "策略實驗室", level: 1, exact: true }).waitFor();
+    const heroContrast = await page.getByRole("heading", { name: "投資策略實驗室", exact: true }).evaluate((heading) => {
+      const hero = heading.parentElement;
+      return { foreground: hero ? getComputedStyle(hero).color : "", heading: getComputedStyle(heading).color };
+    });
+    assert.equal(heroContrast.foreground, "rgb(229, 232, 225)", "Graphite hero text must be readable ivory, not original dark-on-mint");
+    assert.equal(heroContrast.heading, "rgb(209, 167, 94)", "Graphite hero heading must be warm gold");
     await checkLayout(page, viewport.name, "strategy-tradescope");
     await nav.getByRole("button", { name: "我的", exact: true }).click();
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
