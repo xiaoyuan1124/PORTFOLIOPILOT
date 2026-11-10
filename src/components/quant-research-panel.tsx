@@ -14,7 +14,7 @@ import { Card, CardContent, Badge } from "./ui";
 
 type Market = "TWSE" | "TPEx";
 type Request = { market: Market; symbol: string };
-type SourceState = { key: string; index: TwPriceHistoryIndex | null; history: TwPriceHistorySeries | null; error: string };
+type SourceState = { key: string; index: TwPriceHistoryIndex | null; history: TwPriceHistorySeries | null; error: string; ageDays?: number };
 const initial: Request = { market: "TWSE", symbol: "2330" };
 const tradingHorizons = [21, 63, 126, 252] as const;
 type Horizon = typeof tradingHorizons[number];
@@ -106,21 +106,17 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
     return () => { active = false; };
   }, [reloadToken]);
 
-  useEffect(() => {
-    const next = keyToRequest(requestedKey);
-    if (!next) return;
-    setMarket(next.market);
-    setSymbol(next.symbol);
-    setRequest(next);
-  }, [requestedKey]);
-
+  // A new requested stock remounts this component through its parent key.
+  // No effect synchronously copying props into local input state.
   const requestKey = request.market + ":" + request.symbol;
   useEffect(() => {
     let active = true;
     void Promise.all([loadTwPriceHistoryIndex(), loadTwPriceHistory(request.market, request.symbol)])
       .then(([index, history]) => {
         if (!active) return;
-        setSource({ key: requestKey, index, history, error: "" });
+        const lastDate = history.endDate ?? "";
+        const ageDays = lastDate ? Math.max(0, Math.floor((Date.now() - new Date(lastDate + "T00:00:00+08:00").getTime()) / 86400000)) : 0;
+        setSource({ key: requestKey, index, history, error: "", ageDays });
       })
       .catch((cause: unknown) => {
         if (!active) return;
@@ -166,7 +162,7 @@ export function QuantResearchPanel({ requestedKey }: { requestedKey?: string }) 
     const stockReturn = (end[1] / start[1] - 1) * 100;
     return { stockReturn, benchmarkReturn: result.returnPct, relative: relativePerformancePct(stockReturn, result.returnPct), dates: [result.actualStart, result.actualEnd] };
   }, [marketBenchmark, history, calculation.report]);
-  const staleDays = history?.endDate ? Math.round((Date.now() - new Date(history.endDate + "T00:00:00+08:00").getTime()) / 86400000) : 0;
+  const staleDays = current?.ageDays ?? 0;
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
   const advancedUrl = basePath + "/quant-lab/";
 
