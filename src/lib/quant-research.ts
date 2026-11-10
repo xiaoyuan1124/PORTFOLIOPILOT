@@ -236,10 +236,11 @@ function simulate(points: readonly QuantPrice[], signals: readonly QuantSignal[]
       const proceeds = sellNotional(n, close, cfg);
       const cost = fee(proceeds, cfg);
       const tax = proceeds * cfg.sellTaxBps / 10_000;
-      cash += proceeds - cost - tax;
+      const netProceeds = proceeds - cost - tax;
+      cash += netProceeds;
       shares = 0;
       completed++;
-      if (cash - entryCost > 0) wins++; // compare net proceeds with the recorded entry debit
+      if (netProceeds > entryCost) wins++; // compare trade net proceeds with actual buy debit
       trades.push({ signalDate: points[i - 1][0], date: points[i][0], action: '賣出', shares: n, price: proceeds / n, fees: cost, tax, cashAfter: cash });
       entryCost = 0;
     } else if (signal === 'buy' && shares === 0) {
@@ -258,9 +259,7 @@ function simulate(points: readonly QuantPrice[], signals: readonly QuantSignal[]
     const worth = cash + shares * close;
     peak = Math.max(peak, worth);
     mdd = Math.min(mdd, (worth / peak - 1) * 100);
-    // This comparison line is descriptive, not a fee-matched daily buy/hold path.
-    const hold = cfg.capital * (1 + buyHoldPct / 100 * (close / startClose - 1) / Math.max(points[end][1] / startClose - 1, 1e-12));
-    equity.push({ date: points[i][0], equity: worth, buyHold: Number.isFinite(hold) ? hold : cfg.capital });
+    equity.push({ date: points[i][0], equity: worth, buyHold: cfg.capital });
   }
   // Convert benchmark to its actual daily after-cost liquidation value.
   let holdCash = cfg.capital, holdShares = 0;
