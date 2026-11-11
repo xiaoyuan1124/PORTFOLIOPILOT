@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { BarChart3, BriefcaseBusiness, FlaskConical, Home, Moon, Palette, Search, Settings as SettingsIcon, Sun } from "lucide-react";
 import { Toaster, toast } from "sonner";
@@ -8,7 +8,8 @@ import type { AppState } from "@/lib/types";
 import { APP_THEME_LABELS, nextAppTheme, parseAppTheme, themeClassState, type AppTheme } from "@/lib/app-theme";
 import type { HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { emptyState } from "@/lib/demo-data";
-import { withTodaySnapshot } from "@/lib/calc";
+import { localDateKey, withTodaySnapshot } from "@/lib/calc";
+import { applyTwQuotes, loadBundledTwQuotes, shouldRejectStaleClosingCache } from "@/lib/market-data";
 import { loadInitialState } from "@/lib/storage";
 import {
   loadDurableInitialState,
@@ -29,6 +30,7 @@ import { Research } from "./research";
 import { StrategyLab } from "./strategy-lab";
 import { Settings } from "./settings";
 import { QuickSearch, type AppSection } from "./quick-search";
+import { DataSourcesHub } from "./data-sources-hub";
 import { NATIVE_RESUME_EVENT } from "./native-runtime-bridge";
 import { Badge } from "./ui";
 
@@ -53,6 +55,7 @@ const titles: Record<Section, { title: string; eyebrow: string }> = {
 export function AppShell() {
   const [section, setSection] = useState<Section>("home");
   const [state, setState] = useState<AppState>(emptyState);
+  const stateRef = useRef<AppState>(emptyState);
   const [theme, setTheme] = useState<AppTheme>("light");
   const [searchOpen, setSearchOpen] = useState(false);
   const [researchKey, setResearchKey] = useState<string | undefined>();
@@ -87,6 +90,7 @@ export function AppShell() {
           if (cancelled) return;
 
           const initial = withTodaySnapshot(loaded.state);
+          stateRef.current = initial;
           setState(initial);
           setHasRecoveryBackup(loaded.recoveryPreserved);
           setStorageWriteBlocked(loaded.invalidStoredState && !loaded.recoveryPreserved);
@@ -168,6 +172,70 @@ export function AppShell() {
     };
   }, [state, storageReady, storageWriteBlocked, nativeStorageDegraded]);
 
+  // Public market caches refresh on GitHub Actions independently of the
+  // portfolio. Reconcile new official closes into the private local portfolio
+  // without requiring a visit to the holdings or research tab.
+  useEffect(() => {
+    if (!storageReady || storageWriteBlocked || nativeStorageDegraded) return;
+    let disposed = false;
+    let inFlight = false;
+    let lastAttemptAt = 0;
+
+    const refreshIfNeeded = async (force = false) => {
+      if (disposed || inFlight || document.visibilityState === "hidden") return;
+      const now = Date.now();
+      if (!force && now - lastAttemptAt < 60_000) return;
+      lastAttemptAt = now;
+      inFlight = true;
+      try {
+        const quotes = await loadBundledTwQuotes();
+        if (disposed || quotes.offlineFallback || shouldRejectStaleClosingCache(quotes)) return;
+        const current = stateRef.current;
+        const updated = applyTwQuotes(current.holdings, quotes);
+        const needsDay = Boolean(current.holdings.length && !current.snapshots.some(item => item.date === localDateKey()));
+        if (updated.updated === 0 && !needsDay) return;
+        // Never invent values for the days when the App was closed. A new
+        // verified close only updates today's local record.
+        const next = withTodaySnapshot({ ...current, holdings: updated.holdings });
+        try {
+          await saveDurableState(next);
+        } catch (error) {
+          if (!disposed) {
+            if (error instanceof NativeDurabilityError) setNativeStorageDegraded(true);
+            else setStorageWriteBlocked(true);
+            toast.error("每日官方報價已取得，但本機保存失敗。請先匯出備份。");
+          }
+          return;
+        }
+        if (!disposed) {
+          stateRef.current = next;
+          setState(next);
+        }
+      } catch {
+        // Connection failures must not replace verified prices or manufacture
+        // dates. The source panel exposes the last successful cache date.
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    void refreshIfNeeded(true);
+    const timer = window.setInterval(() => { void refreshIfNeeded(); }, 15 * 60_000);
+    const onVisible = () => { if (document.visibilityState === "visible") void refreshIfNeeded(true); };
+    const onResume = () => { void refreshIfNeeded(true); };
+    const onOnline = () => { void refreshIfNeeded(true); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener(NATIVE_RESUME_EVENT, onResume);
+    window.addEventListener("online", onOnline);
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener(NATIVE_RESUME_EVENT, onResume);
+      window.removeEventListener("online", onOnline);
+    };
+  }, [storageReady, storageWriteBlocked, nativeStorageDegraded]);
+
   useEffect(() => {
     function openNativeDeepLink(value: string) {
       const target = parseNativeDeepLink(value);
@@ -225,6 +293,7 @@ export function AppShell() {
     const prepared = withTodaySnapshot(next);
     try {
       const durableWrite = saveDurableState(prepared);
+      stateRef.current = prepared;
       setState(prepared);
 
       void durableWrite
@@ -359,7 +428,8 @@ export function AppShell() {
               <button onClick={() => setSearchOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full border border-black/6 bg-white/80 px-3 transition hover:bg-white dark:border-white/8 dark:bg-white/6 dark:hover:bg-white/10" aria-label="快速搜尋" aria-keyshortcuts="Meta+K Control+K">
                 <Search size={17} /><span className="hidden text-xs font-semibold text-black/50 dark:text-white/50 sm:inline">搜尋</span>
               </button>
-              <Badge tone={state.dataMode === "demo" ? "warn" : "neutral"}>{state.dataMode === "demo" ? "DEMO" : "LOCAL"}</Badge>
+              <DataSourcesHub state={state} />
+              {state.dataMode === "demo" ? <Badge tone="warn">DEMO</Badge> : null}
               <button onClick={toggleTheme} className="app-theme-toggle grid h-11 w-11 place-items-center rounded-full border border-black/6 bg-white/80 transition hover:bg-white dark:border-white/8 dark:bg-white/6 dark:hover:bg-white/10" aria-label="切換外觀模式" title={`目前：${APP_THEME_LABELS[theme]} · 點擊切換至${APP_THEME_LABELS[nextAppTheme(theme)]}`}>
                 {theme === "light" ? <Moon size={18} /> : theme === "dark" ? <Palette size={18} /> : <Sun size={18} />}
               </button>
