@@ -197,19 +197,22 @@ export function AppShell() {
         // Never invent values for the days when the App was closed. A new
         // verified close only updates today's local record.
         const next = withTodaySnapshot({ ...current, holdings: updated.holdings });
+        // saveDurableState writes the web copy synchronously, then queues the
+        // native Preferences copy. Set in-memory state immediately; otherwise
+        // the promise could resolve after a newer user edit and overwrite it.
         try {
-          await saveDurableState(next);
+          const write = saveDurableState(next);
+          if (!disposed) {
+            stateRef.current = next;
+            setState(next);
+          }
+          await write;
         } catch (error) {
           if (!disposed) {
             if (error instanceof NativeDurabilityError) setNativeStorageDegraded(true);
             else setStorageWriteBlocked(true);
             toast.error("每日官方報價已取得，但本機保存失敗。請先匯出備份。");
           }
-          return;
-        }
-        if (!disposed) {
-          stateRef.current = next;
-          setState(next);
         }
       } catch {
         // Connection failures must not replace verified prices or manufacture
@@ -222,7 +225,30 @@ export function AppShell() {
     void refreshIfNeeded(true);
     const timer = window.setInterval(() => { void refreshIfNeeded(); }, 15 * 60_000);
     const onVisible = () => { if (document.visibilityState === "visible") void refreshIfNeeded(true); };
-    const onResume = () => { void refreshIfNeeded(true); };
+    const onResume = () => {
+      void (async () => {
+        if (Capacitor.isNativePlatform()) {
+          try {
+            // A system-approved native background task may have written a
+            // newer envelope while the WebView was suspended. Reconcile it
+            // before applying another official close.
+            const loaded = await loadDurableInitialState();
+            if (!disposed && !loaded.invalidStoredState) {
+              const next = withTodaySnapshot(loaded.state);
+              if (JSON.stringify(next) !== JSON.stringify(stateRef.current)) {
+                stateRef.current = next;
+                setState(next);
+                try { await saveDurableState(next); }
+                catch { setNativeStorageDegraded(true); }
+              }
+            }
+          } catch {
+            // Keep the currently verified local state on storage errors.
+          }
+        }
+        await refreshIfNeeded(true);
+      })();
+    };
     const onOnline = () => { void refreshIfNeeded(true); };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener(NATIVE_RESUME_EVENT, onResume);
