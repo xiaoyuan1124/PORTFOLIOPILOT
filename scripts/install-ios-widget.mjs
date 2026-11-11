@@ -60,12 +60,13 @@ function injectNativeBackgroundRefresh() {
   if (info.includes('<key>BGTaskSchedulerPermittedIdentifiers</key>') || info.includes('<key>UIBackgroundModes</key>')) {
     throw new Error('Background task Info.plist entries already exist; manual merge required.');
   }
-  if (info.split('</dict>').length !== 2) throw new Error('Unexpected App Info.plist layout.');
-  info = info.replace('</dict>',
+  const plistClosing = info.lastIndexOf('</dict>');
+  if (plistClosing < 0) throw new Error('Invalid App Info.plist.');
+  info = info.slice(0, plistClosing) +
     '    <key>BGTaskSchedulerPermittedIdentifiers</key>\n' +
     '    <array><string>com.sy1124.portfoliopilot.daily-refresh</string></array>\n' +
     '    <key>UIBackgroundModes</key>\n' +
-    '    <array><string>fetch</string></array>\n</dict>');
+    '    <array><string>fetch</string></array>\n' + info.slice(plistClosing);
   writeFileSync(infoPath, info);
 }
 injectNativeBackgroundRefresh();
