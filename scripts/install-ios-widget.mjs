@@ -51,8 +51,8 @@ function injectNativeBackgroundRefresh() {
   if (delegate.split(launchMarker).length !== 2 || delegate.split(backgroundMarker).length !== 2) {
     throw new Error('Unexpected AppDelegate layout: cannot register BGTask safely.');
   }
-  delegate = delegate.replace(launchMarker, 'PortfolioDailyRefresh.register()\\n        ' + launchMarker);
-  delegate = delegate.replace(backgroundMarker, backgroundMarker + '\\n        PortfolioDailyRefresh.schedule()');
+  delegate = delegate.replace(launchMarker, 'PortfolioDailyRefresh.register()\n        ' + launchMarker);
+  delegate = delegate.replace(backgroundMarker, backgroundMarker + '\n        PortfolioDailyRefresh.schedule()');
   writeFileSync(appDelegatePath, delegate);
 
   const infoPath = join(iosRoot, 'App', 'Info.plist');
@@ -62,10 +62,10 @@ function injectNativeBackgroundRefresh() {
   }
   if (info.split('</dict>').length !== 2) throw new Error('Unexpected App Info.plist layout.');
   info = info.replace('</dict>',
-    '    <key>BGTaskSchedulerPermittedIdentifiers</key>\\n' +
-    '    <array><string>com.sy1124.portfoliopilot.daily-refresh</string></array>\\n' +
-    '    <key>UIBackgroundModes</key>\\n' +
-    '    <array><string>fetch</string></array>\\n</dict>');
+    '    <key>BGTaskSchedulerPermittedIdentifiers</key>\n' +
+    '    <array><string>com.sy1124.portfoliopilot.daily-refresh</string></array>\n' +
+    '    <key>UIBackgroundModes</key>\n' +
+    '    <array><string>fetch</string></array>\n</dict>');
   writeFileSync(infoPath, info);
 }
 injectNativeBackgroundRefresh();
