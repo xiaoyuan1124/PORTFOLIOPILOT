@@ -23,7 +23,6 @@ import { money, percent } from "@/lib/utils";
 import { calculatePortfolioRisk } from "@/lib/portfolio-risk";
 import { Badge, Card, CardContent, CardHeader, GhostButton, Metric } from "./ui";
 import { DailyPortfolioDrivers } from "./daily-portfolio-drivers";
-import { MarketStatusCenter } from "./market-status-center";
 
 const ranges: Array<{ key: SnapshotRange; label: string }> = [
   { key: "1M", label: "1月" },
@@ -199,18 +198,10 @@ export function Overview({
                 <p className="mt-1 text-amber-700 dark:text-amber-300" role="status">有未確認來源或不同交易日報價，請先核對</p> : null}
             </div>
           </div>
-          <details className="rounded-xl border border-black/8 px-3 py-2 dark:border-white/10" data-ux-role="home-trust-details">
-            <summary className="min-h-7 cursor-pointer text-xs font-semibold">計算依據</summary>
-            <div className="mt-2 space-y-2 text-xs leading-5 text-black/55 dark:text-white/55">
-              <p>曝險包含直接持股與 ETF 已知成分股。</p>
-              <p>台股資料來源：TWSE／TPEx／MOPS。資產依輸入部位與匯率估算。</p>
-              <p>研究數據不代表買賣訊號。</p>
-            </div>
-          </details>
+
         </CardContent>
       </Card>
 
-      <MarketStatusCenter />
 
       <DailyPortfolioDrivers state={state} onNavigate={onNavigate} />
 
