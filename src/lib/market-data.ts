@@ -46,7 +46,7 @@ export async function fetchPublishedMarketCache(path: string): Promise<{
   try {
     const response = await fetch(`${primary}?ts=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) throw new Error("官方市場資料 HTTP " + response.status);
-    return { response, offlineFallback: isOfflineBundleResponse(response.headers) };
+    return { response, offlineFallback: response.headers?.get ? isOfflineBundleResponse(response.headers) : false };
   } catch (cause) {
     if (!Capacitor.isNativePlatform()) throw cause;
     const response = await fetch(`/data/${path}?ts=${Date.now()}`, { cache: "no-store" });
