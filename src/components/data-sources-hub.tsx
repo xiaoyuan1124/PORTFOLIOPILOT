@@ -100,7 +100,6 @@ export function DataSourcesHub({ state }: { state: AppState }) {
     if (!open) return;
     let cancelled = false;
     const controller = new AbortController();
-    setLoading(true);
     void Promise.all(datasets.map(async ({ title, path }) => {
       try {
         const response = await fetch(`${publicMarketDataUrl(path)}?ts=${Date.now()}`, {
@@ -124,7 +123,7 @@ export function DataSourcesHub({ state }: { state: AppState }) {
   return <Modal
     title="資料來源"
     open={open}
-    onOpenChange={setOpen}
+    onOpenChange={next => { setOpen(next); if (next) setLoading(true); }}
     trigger={<button type="button" aria-label="資料來源" title="查看資料來源、價格日期及公開資料網址"
       className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-black/6 bg-white/80 dark:border-white/8 dark:bg-white/6">
       <Database size={19} aria-hidden="true" />
@@ -184,7 +183,7 @@ export function DataSourcesHub({ state }: { state: AppState }) {
       <p className="text-xs leading-5 text-black/45 dark:text-white/45">
         收盤價不是盤中報價；無來源、日期不一致或資料不足時不補造數據。ETF 手動匯入的來源仍以各筆成分資料記錄為準。
       </p>
-      <GhostButton className="w-full" onClick={() => setRefreshKey(value => value + 1)}>
+      <GhostButton className="w-full" onClick={() => { setLoading(true); setRefreshKey(value => value + 1); }}>
         <RefreshCw size={15} />重新讀取資料索引
       </GhostButton>
     </div>
