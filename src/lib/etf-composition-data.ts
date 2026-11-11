@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { fetchPublishedMarketCache } from "./market-data";
 import { etfCompositionSchema } from "./schema";
 import type { EtfComposition, Holding } from "./types";
 import { isOfflineBundleResponse } from "./bundled-data-status";
@@ -63,17 +64,14 @@ function sameComposition(a: EtfComposition, b: EtfComposition) {
 }
 
 export async function loadBundledEtfCompositions(): Promise<EtfCompositionCache> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-etf-compositions.json?ts=${Date.now()}`, {
-    cache: "no-store"
-  });
+  const { response, offlineFallback } = await fetchPublishedMarketCache("tw-etf-compositions.json");
 
   if (!response.ok) {
     throw new Error("尚未取得官方 ETF 成份資料快取。");
   }
 
   const parsed = parseEtfCompositionCache(await response.json());
-  return isOfflineBundleResponse(response.headers)
+  return offlineFallback || isOfflineBundleResponse(response.headers)
     ? { ...parsed, offlineFallback: true }
     : parsed;
 }
