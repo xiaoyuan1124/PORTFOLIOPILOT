@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Database, ExternalLink, RefreshCw } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { Modal, GhostButton } from "./ui";
-import { publicMarketDataUrl } from "@/lib/market-data";
+import { fetchPublishedMarketCache, publicMarketDataUrl } from "@/lib/market-data";
 
 const datasets = [
   { title: "台股收盤價", path: "tw-quotes.json" },
@@ -31,6 +31,7 @@ type Group = {
   generatedAt: string | null;
   sources: ListedSource[];
   error?: string;
+  offlineFallback?: boolean;
 };
 
 function textValue(value: unknown): string | null {
@@ -102,12 +103,10 @@ export function DataSourcesHub({ state }: { state: AppState }) {
     const controller = new AbortController();
     void Promise.all(datasets.map(async ({ title, path }) => {
       try {
-        const response = await fetch(`${publicMarketDataUrl(path)}?ts=${Date.now()}`, {
-          cache: "no-store", signal: controller.signal
-        });
-        if (!response.ok) throw new Error("HTTP " + response.status);
+        const { response, offlineFallback } = await fetchPublishedMarketCache(path);
+        if (controller.signal.aborted) throw new Error("已取消");
         const parsed = extractPublishedSources(await response.json());
-        return { title, path, ...parsed } satisfies Group;
+        return { title, path, ...parsed, offlineFallback } satisfies Group;
       } catch (error) {
         return { title, path, generatedAt: null, sources: [], error: error instanceof Error ? error.message : "讀取失敗" } satisfies Group;
       }
@@ -149,6 +148,17 @@ export function DataSourcesHub({ state }: { state: AppState }) {
           </div>
         </details> : null}
       </div>
+      {state.etfCompositions.length ? <details className="rounded-xl border border-black/8 p-3 text-xs dark:border-white/10">
+        <summary className="min-h-9 cursor-pointer font-semibold">我儲存的 ETF 成分來源（{state.etfCompositions.length} 筆）</summary>
+        <div className="mt-2 max-h-[32dvh] space-y-2 overflow-y-auto">
+          {state.etfCompositions.map(item => <div key={item.id} className="rounded-lg bg-black/[.02] p-2 dark:bg-white/[.03]">
+            <div className="flex flex-wrap justify-between gap-2"><strong>{item.etfSymbol} · {item.etfName}</strong>
+              {httpUrl(item.sourceUrl) ? <a href={httpUrl(item.sourceUrl)!} rel="noopener noreferrer" target="_blank"
+                className="inline-flex items-center gap-1 underline underline-offset-2">檢視出處 <ExternalLink size={12} /></a> : null}</div>
+            <p className="mt-1 text-black/50 dark:text-white/50">{item.sourceName} · {item.sourceType === "user_import" ? "手動匯入" : "官方"} · 資料日 {item.asOf}</p>
+          </div>)}
+        </div>
+      </details> : null}
       <p className="text-xs text-black/55 dark:text-white/55">
         公開行情由 GitHub Actions 排程更新快取；個人持股及淨值保存在本機，兩者更新時間不一定相同。
       </p>
@@ -159,7 +169,7 @@ export function DataSourcesHub({ state }: { state: AppState }) {
           <span>{group.title}</span><span className="shrink-0 text-xs font-normal text-black/45 dark:text-white/45">{groupSourceCount(group)}</span>
         </summary>
         <div className="space-y-2 pb-2 text-xs">
-          <p className="text-black/50 dark:text-white/50">快取生成：{dateLabel(group.generatedAt)}</p>
+          <p className="text-black/50 dark:text-white/50">快取生成：{dateLabel(group.generatedAt)}{group.offlineFallback ? " · 離線內建備份，可能過期" : ""}</p>
           {group.error ? <p role="alert" className="text-amber-700 dark:text-amber-300">無法讀取快取：{group.error}</p> : null}
           {group.sources.map((source, index) => <div key={index} className="rounded-lg bg-black/[.02] p-2 dark:bg-white/[.03]">
             <div className="flex flex-wrap items-center justify-between gap-2">
