@@ -8,6 +8,8 @@ import {
   allocationByAccount,
   dailySnapshotDelta,
   localDateKey,
+  missingSnapshotDays,
+  snapshotChartPoints,
   officialPriceCoverage,
   portfolioCashSummary,
   portfolioSummary,
@@ -52,12 +54,9 @@ export function Overview({
   const daily = dailySnapshotDelta(currentSnapshots);
   const period = snapshotPeriodDelta(snapshots);
   const priceCoverage = officialPriceCoverage(state.holdings);
+  const missingDays = missingSnapshotDays(snapshots);
 
-  const trend = snapshots.map((snapshot) => ({
-    label: snapshot.date.slice(5).replace("-", "/"),
-    date: snapshot.date,
-    value: Math.round(snapshot.total)
-  }));
+  const trend = snapshotChartPoints(snapshots);
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -97,7 +96,7 @@ export function Overview({
         <Card className="md:col-span-2">
           <CardContent>
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <Metric label="總資產淨值" value={money(summary.total)} helper={daily ? `最近一日淨值變動 ${percent(daily.pct)}` : "依目前輸入價格估算"} />
+              <Metric label="總資產淨值" value={money(summary.total)} helper={daily ? `自 ${daily.previousDate} 變動 ${percent(daily.pct)}` : "依目前輸入價格估算"} />
               <Badge tone={state.dataMode === "demo" ? "warn" : "good"}><ArrowUpRight size={13} /> {state.dataMode === "demo" ? "DEMO" : "本機資料"}</Badge>
             </div>
 
@@ -130,12 +129,12 @@ export function Overview({
                       labelStyle={{ color: "#78817b", fontWeight: 500 }}
                       itemStyle={{ color: "#456b58" }}
                     />
-                    <Area type="monotone" dataKey="value" stroke="#456b58" strokeWidth={2.5} fill="url(#networth)" />
+                    <Area type="monotone" dataKey="value" connectNulls={false} dot={{ r: 2 }} stroke="#456b58" strokeWidth={2.5} fill="url(#networth)" />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="grid h-full place-items-center rounded-2xl border border-dashed border-black/10 px-5 text-center text-sm text-black/35 dark:border-white/10 dark:text-white/35">
-                  每日會自動保留一筆真實淨值；累積兩天後即可比較趨勢。
+                  尚無足夠的實際淨值紀錄。
                 </div>
               )}
             </div>
@@ -143,6 +142,7 @@ export function Overview({
               <span>{snapshots.length} 筆快照 · {range === "ALL" ? "全部期間" : ranges.find((item) => item.key === range)?.label}</span>
               {period ? <span className="tabular-nums">{period.firstDate} 起淨值變動：{percent(period.pct)}</span> : null}
             </div>
+            {missingDays > 0 ? <p role="status" data-testid="snapshot-gap-warning" className="mt-2 text-xs text-amber-700 dark:text-amber-300">缺 {missingDays} 天淨值紀錄，圖表不補估。</p> : null}
             <p className="mt-2 text-[11px] leading-5 text-black/32 dark:text-white/32">淨值含入出金；投資報酬率請看「績效」。</p>
             {futureSnapshotCount > 0 ? (
               <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-[#8b6538] dark:text-[#d4ad7c]">
