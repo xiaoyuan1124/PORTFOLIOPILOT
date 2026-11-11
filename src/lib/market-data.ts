@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Capacitor } from "@capacitor/core";
 import type { Holding } from "./types";
 import { isOfflineBundleResponse } from "./bundled-data-status";
 
@@ -24,20 +25,41 @@ const cacheSchema = z.object({
 
 export type TwQuoteCache = z.infer<typeof cacheSchema> & { offlineFallback?: boolean };
 
-export async function loadBundledTwQuotes(): Promise<TwQuoteCache> {
+const REMOTE_MARKET_DATA_ORIGIN = "https://xiaoyuan1124.github.io/PORTFOLIOPILOT";
+
+/** The iOS app package is frozen at release time; read *public* market data
+ * from the deployed static site instead of silently treating bundled data as fresh. */
+export function publicMarketDataUrl(path: string) {
+  const relative = path.replace(/^\/+/, "");
+  if (Capacitor.isNativePlatform()) return `${REMOTE_MARKET_DATA_ORIGIN}/data/${relative}`;
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-quotes.json?ts=${Date.now()}`, {
+  return `${base}/data/${relative}`;
+}
+
+async function fetchAndParseTwQuotes(url: string): Promise<TwQuoteCache> {
+  const response = await fetch(`${url}?ts=${Date.now()}`, {
     cache: "no-store"
   });
-
-  if (!response.ok) {
-    throw new Error("尚未取得官方台股資料快取。");
-  }
-
+  if (!response.ok) throw new Error("官方收盤快取 HTTP " + response.status);
   const parsed = cacheSchema.parse(await response.json());
   return isOfflineBundleResponse(response.headers)
     ? { ...parsed, offlineFallback: true }
     : parsed;
+}
+
+export async function loadBundledTwQuotes(): Promise<TwQuoteCache> {
+  const primary = publicMarketDataUrl("tw-quotes.json");
+  try {
+    return await fetchAndParseTwQuotes(primary);
+  } catch (cause) {
+    if (!Capacitor.isNativePlatform()) throw cause;
+    // Keep the app usable offline, but mark bundled values as fallback. A
+    // caller must not present them as today's successful network update.
+    const response = await fetch("/data/tw-quotes.json", { cache: "no-store" });
+    if (!response.ok) throw cause;
+    const parsed = cacheSchema.parse(await response.json());
+    return { ...parsed, offlineFallback: true };
+  }
 }
 
 // A closing quote must be dated on or before the current calendar day in Taiwan.
