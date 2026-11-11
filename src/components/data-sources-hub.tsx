@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Database, ExternalLink, RefreshCw } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { Modal, GhostButton } from "./ui";
+import { publicMarketDataUrl } from "@/lib/market-data";
 
 const datasets = [
   { title: "台股收盤價", path: "tw-quotes.json" },
@@ -90,6 +91,7 @@ export function DataSourcesHub({ state }: { state: AppState }) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatedAt, setUpdatedAt] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
   const holdingPrices = useMemo(() => state.holdings.filter(holding => holding.type !== "cash"), [state.holdings]);
   const manuallyPriced = holdingPrices.filter(holding => holding.priceSource !== "TWSE" && holding.priceSource !== "TPEx");
   const officialPrices = holdingPrices.filter(holding => holding.priceSource === "TWSE" || holding.priceSource === "TPEx");
@@ -98,11 +100,10 @@ export function DataSourcesHub({ state }: { state: AppState }) {
     if (!open) return;
     let cancelled = false;
     const controller = new AbortController();
-    const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
     setLoading(true);
     void Promise.all(datasets.map(async ({ title, path }) => {
       try {
-        const response = await fetch(`${base}/data/${path}?ts=${Date.now()}`, {
+        const response = await fetch(`${publicMarketDataUrl(path)}?ts=${Date.now()}`, {
           cache: "no-store", signal: controller.signal
         });
         if (!response.ok) throw new Error("HTTP " + response.status);
@@ -118,7 +119,7 @@ export function DataSourcesHub({ state }: { state: AppState }) {
       setLoading(false);
     });
     return () => { cancelled = true; controller.abort(); };
-  }, [open]);
+  }, [open, refreshKey]);
 
   return <Modal
     title="資料來源"
@@ -174,7 +175,7 @@ export function DataSourcesHub({ state }: { state: AppState }) {
               {source.status && source.status !== "ok" ? " · " + source.status : ""}
             </p>
           </div>)}
-          <a href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/data/${group.path}`} target="_blank" rel="noopener noreferrer"
+          <a href={publicMarketDataUrl(group.path)} target="_blank" rel="noopener noreferrer"
             className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold underline underline-offset-2">
             查看本站公開快取 <ExternalLink size={12} aria-hidden="true" />
           </a>
@@ -183,7 +184,7 @@ export function DataSourcesHub({ state }: { state: AppState }) {
       <p className="text-xs leading-5 text-black/45 dark:text-white/45">
         收盤價不是盤中報價；無來源、日期不一致或資料不足時不補造數據。ETF 手動匯入的來源仍以各筆成分資料記錄為準。
       </p>
-      <GhostButton className="w-full" onClick={() => { setOpen(false); window.requestAnimationFrame(() => setOpen(true)); }}>
+      <GhostButton className="w-full" onClick={() => setRefreshKey(value => value + 1)}>
         <RefreshCw size={15} />重新讀取資料索引
       </GhostButton>
     </div>
