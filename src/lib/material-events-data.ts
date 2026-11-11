@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { fetchPublishedMarketCache } from "./market-data";
 import type { Holding } from "./types";
 import { twSecurityKey } from "./research-holdings";
 
@@ -31,10 +32,7 @@ export type MaterialEventRow = z.infer<typeof materialEventRowSchema>;
 export type MaterialEventCache = z.infer<typeof materialEventCacheSchema>;
 
 export async function loadBundledMaterialEvents(): Promise<MaterialEventCache> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-material-events.json?ts=${Date.now()}`, {
-    cache: "no-store"
-  });
+  const { response } = await fetchPublishedMarketCache("tw-material-events.json");
 
   if (!response.ok) {
     throw new Error("尚未取得官方重大訊息資料快取。");
