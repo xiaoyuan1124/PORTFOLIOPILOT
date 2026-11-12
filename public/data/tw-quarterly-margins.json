@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T18:04:52.948Z",
+  "generatedAt": "2026-11-12T18:33:47.271Z",
   "periods": [
     "2026-Q1",
     "2026-Q2",
@@ -12,7 +12,7 @@
       "period": "2026-Q1",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-11T18:04:52.948Z",
+      "fetchedAt": "2026-11-12T18:33:47.271Z",
       "generalRows": 1051,
       "notApplicableRows": 35
     },
@@ -22,7 +22,7 @@
       "period": "2026-Q1",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-11T18:04:52.948Z",
+      "fetchedAt": "2026-11-12T18:33:47.271Z",
       "generalRows": 889,
       "notApplicableRows": 7
     },
@@ -32,7 +32,7 @@
       "period": "2026-Q2",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-11T18:04:52.948Z",
+      "fetchedAt": "2026-11-12T18:33:47.271Z",
       "generalRows": 1053,
       "notApplicableRows": 35
     },
@@ -42,7 +42,7 @@
       "period": "2026-Q2",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-11T18:04:52.948Z",
+      "fetchedAt": "2026-11-12T18:33:47.271Z",
       "generalRows": 889,
       "notApplicableRows": 7
     },
@@ -52,9 +52,9 @@
       "period": "2026-Q3",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-11T18:04:52.948Z",
-      "generalRows": 532,
-      "notApplicableRows": 9
+      "fetchedAt": "2026-11-12T18:33:47.271Z",
+      "generalRows": 752,
+      "notApplicableRows": 14
     },
     {
       "name": "MOPS 公開資訊觀測站－綜合損益表",
@@ -62,9 +62,9 @@
       "period": "2026-Q3",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-11T18:04:52.948Z",
-      "generalRows": 442,
-      "notApplicableRows": 4
+      "fetchedAt": "2026-11-12T18:33:47.271Z",
+      "generalRows": 640,
+      "notApplicableRows": 6
     }
   ],
   "rows": [
@@ -42606,6 +42606,50 @@
       "basis": "2026-Q2 cumulative statement minus 2026-Q1 cumulative statement"
     },
     {
+      "code": "1101",
+      "name": "台泥",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 41232918,
+      "operatingCost": 32995396,
+      "grossProfit": 8237522,
+      "grossMarginPct": 19.98,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1102",
+      "name": "亞泥",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 17754160,
+      "operatingCost": 16022279,
+      "grossProfit": 1731881,
+      "grossMarginPct": 9.75,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1104",
+      "name": "環泥",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1796903,
+      "operatingCost": 1305780,
+      "grossProfit": 491123,
+      "grossMarginPct": 27.33,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1109",
+      "name": "信大",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 842578,
+      "operatingCost": 852104,
+      "grossProfit": -9526,
+      "grossMarginPct": -1.13,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1201",
       "name": "味全",
       "market": "TWSE",
@@ -42614,6 +42658,17 @@
       "operatingCost": 4336679,
       "grossProfit": 1549385,
       "grossMarginPct": 26.32,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1203",
+      "name": "味王",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1368173,
+      "operatingCost": 892048,
+      "grossProfit": 476125,
+      "grossMarginPct": 34.8,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -42647,6 +42702,28 @@
       "operatingCost": 126028554,
       "grossProfit": 61038207,
       "grossMarginPct": 32.63,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1217",
+      "name": "愛之味",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1722552,
+      "operatingCost": 1272841,
+      "grossProfit": 449711,
+      "grossMarginPct": 26.11,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1220",
+      "name": "台榮",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 943627,
+      "operatingCost": 877783,
+      "grossProfit": 65844,
+      "grossMarginPct": 6.98,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -42694,6 +42771,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1240",
+      "name": "茂生農經",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 777056,
+      "operatingCost": 691897,
+      "grossProfit": 105544,
+      "grossMarginPct": 13.58,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1256",
       "name": "鮮活果汁-KY",
       "market": "TWSE",
@@ -42716,6 +42804,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1264",
+      "name": "德麥",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1842577,
+      "operatingCost": 1201742,
+      "grossProfit": 640835,
+      "grossMarginPct": 34.78,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1268",
       "name": "漢來美食",
       "market": "TPEx",
@@ -42724,6 +42823,28 @@
       "operatingCost": 1013073,
       "grossProfit": 776074,
       "grossMarginPct": 43.38,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1294",
+      "name": "漢田生技",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 195472,
+      "operatingCost": 139758,
+      "grossProfit": 55714,
+      "grossMarginPct": 28.5,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1301",
+      "name": "台塑",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 44304632,
+      "operatingCost": 45276681,
+      "grossProfit": -972049,
+      "grossMarginPct": -2.19,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -42738,6 +42859,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1305",
+      "name": "華夏",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1989692,
+      "operatingCost": 2150412,
+      "grossProfit": -160720,
+      "grossMarginPct": -8.08,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1307",
       "name": "三芳",
       "market": "TWSE",
@@ -42749,6 +42881,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1308",
+      "name": "亞聚",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1505628,
+      "operatingCost": 1609369,
+      "grossProfit": -103741,
+      "grossMarginPct": -6.89,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1309",
+      "name": "台達化",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 3443474,
+      "operatingCost": 3450620,
+      "grossProfit": -7146,
+      "grossMarginPct": -0.21,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1310",
       "name": "台苯",
       "market": "TWSE",
@@ -42757,6 +42911,17 @@
       "operatingCost": 2350496,
       "grossProfit": -37036,
       "grossMarginPct": -1.6,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1313",
+      "name": "聯成",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 15939299,
+      "operatingCost": 15216902,
+      "grossProfit": 722397,
+      "grossMarginPct": 4.53,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -42779,6 +42944,17 @@
       "operatingCost": 839914,
       "grossProfit": 71387,
       "grossMarginPct": 7.83,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1323",
+      "name": "永裕",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 594467,
+      "operatingCost": 462628,
+      "grossProfit": 131839,
+      "grossMarginPct": 22.18,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -42837,6 +43013,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1341",
+      "name": "富林-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 672201,
+      "operatingCost": 549268,
+      "grossProfit": 122933,
+      "grossMarginPct": 18.29,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1342",
       "name": "八貫",
       "market": "TWSE",
@@ -42845,6 +43032,17 @@
       "operatingCost": 707298,
       "grossProfit": 237600,
       "grossMarginPct": 25.15,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1410",
+      "name": "南染",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 60899,
+      "operatingCost": 41128,
+      "grossProfit": 19771,
+      "grossMarginPct": 32.47,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -42867,6 +43065,17 @@
       "operatingCost": 82018,
       "grossProfit": 12434,
       "grossMarginPct": 13.16,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1416",
+      "name": "廣豐",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 140537,
+      "operatingCost": 79900,
+      "grossProfit": 60637,
+      "grossMarginPct": 43.15,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -42903,6 +43112,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1432",
+      "name": "大魯閣",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 215822,
+      "operatingCost": 173005,
+      "grossProfit": 42817,
+      "grossMarginPct": 19.84,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1434",
       "name": "福懋",
       "market": "TWSE",
@@ -42936,6 +43156,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1437",
+      "name": "勤益控",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 257600,
+      "operatingCost": 106169,
+      "grossProfit": 151431,
+      "grossMarginPct": 58.79,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1439",
+      "name": "雋揚",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1024730,
+      "operatingCost": 807992,
+      "grossProfit": 216738,
+      "grossMarginPct": 21.15,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1440",
       "name": "南紡",
       "market": "TWSE",
@@ -42944,6 +43186,17 @@
       "operatingCost": 3078483,
       "grossProfit": 302654,
       "grossMarginPct": 8.95,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1441",
+      "name": "大東",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 297041,
+      "operatingCost": 287294,
+      "grossProfit": 9747,
+      "grossMarginPct": 3.28,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43057,6 +43310,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1460",
+      "name": "宏遠",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1961141,
+      "operatingCost": 1673632,
+      "grossProfit": 287509,
+      "grossMarginPct": 14.66,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1463",
       "name": "強盛新",
       "market": "TWSE",
@@ -43065,6 +43329,28 @@
       "operatingCost": 48565,
       "grossProfit": 3723,
       "grossMarginPct": 7.12,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1465",
+      "name": "偉全",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 79956,
+      "operatingCost": 82397,
+      "grossProfit": -2441,
+      "grossMarginPct": -3.05,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1466",
+      "name": "聚隆",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 562756,
+      "operatingCost": 513367,
+      "grossProfit": 49389,
+      "grossMarginPct": 8.78,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43156,6 +43442,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1504",
+      "name": "東元",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 16949473,
+      "operatingCost": 13052676,
+      "grossProfit": 3896797,
+      "grossMarginPct": 22.99,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1506",
+      "name": "正道",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 352667,
+      "operatingCost": 325944,
+      "grossProfit": 26723,
+      "grossMarginPct": 7.58,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1513",
       "name": "中興電",
       "market": "TWSE",
@@ -43164,6 +43472,17 @@
       "operatingCost": 5307111,
       "grossProfit": 2022696,
       "grossMarginPct": 27.6,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1514",
+      "name": "亞力",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2648723,
+      "operatingCost": 2103779,
+      "grossProfit": 544944,
+      "grossMarginPct": 20.57,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43186,6 +43505,28 @@
       "operatingCost": 27129,
       "grossProfit": 1261,
       "grossMarginPct": 4.44,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1517",
+      "name": "利奇",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 516035,
+      "operatingCost": 502434,
+      "grossProfit": 13601,
+      "grossMarginPct": 2.64,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1519",
+      "name": "華城",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 5994850,
+      "operatingCost": 3297077,
+      "grossProfit": 2697773,
+      "grossMarginPct": 45,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43244,6 +43585,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1527",
+      "name": "鑽全",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 785655,
+      "operatingCost": 635171,
+      "grossProfit": 150484,
+      "grossMarginPct": 19.15,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1528",
       "name": "恩德",
       "market": "TWSE",
@@ -43263,6 +43615,39 @@
       "operatingCost": 100212,
       "grossProfit": 20202,
       "grossMarginPct": 16.78,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1530",
+      "name": "亞崴",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 622124,
+      "operatingCost": 524527,
+      "grossProfit": 97597,
+      "grossMarginPct": 15.69,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1531",
+      "name": "高林股",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 393878,
+      "operatingCost": 332763,
+      "grossProfit": 61115,
+      "grossMarginPct": 15.52,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1533",
+      "name": "車王電",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1145301,
+      "operatingCost": 850571,
+      "grossProfit": 294730,
+      "grossMarginPct": 25.73,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43296,6 +43681,28 @@
       "operatingCost": 273859,
       "grossProfit": 30799,
       "grossMarginPct": 10.11,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1541",
+      "name": "錩泰",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 578811,
+      "operatingCost": 481143,
+      "grossProfit": 97668,
+      "grossMarginPct": 16.87,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1558",
+      "name": "伸興",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2795183,
+      "operatingCost": 2108716,
+      "grossProfit": 686467,
+      "grossMarginPct": 24.56,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43376,6 +43783,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1586",
+      "name": "和勤",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 623714,
+      "operatingCost": 537266,
+      "grossProfit": 86448,
+      "grossMarginPct": 13.86,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1587",
+      "name": "吉茂",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 670048,
+      "operatingCost": 569932,
+      "grossProfit": 100116,
+      "grossMarginPct": 14.94,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1591",
       "name": "駿吉-KY",
       "market": "TPEx",
@@ -43398,6 +43827,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1595",
+      "name": "川寶",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 284059,
+      "operatingCost": 220093,
+      "grossProfit": 63966,
+      "grossMarginPct": 22.52,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1597",
       "name": "直得",
       "market": "TWSE",
@@ -43417,6 +43857,17 @@
       "operatingCost": 608741,
       "grossProfit": 187192,
       "grossMarginPct": 23.52,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1603",
+      "name": "華電",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1443240,
+      "operatingCost": 1212730,
+      "grossProfit": 230510,
+      "grossMarginPct": 15.97,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43497,6 +43948,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1616",
+      "name": "億泰",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1473059,
+      "operatingCost": 1334803,
+      "grossProfit": 138256,
+      "grossMarginPct": 9.39,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1618",
       "name": "合機",
       "market": "TWSE",
@@ -43505,17 +43967,6 @@
       "operatingCost": 1237534,
       "grossProfit": 310624,
       "grossMarginPct": 20.06,
-      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
-    },
-    {
-      "code": "1626",
-      "name": "艾美特-KY",
-      "market": "TWSE",
-      "period": "2026-Q3",
-      "revenue": 1520997,
-      "operatingCost": 1412335,
-      "grossProfit": 108662,
-      "grossMarginPct": 7.14,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43538,6 +43989,17 @@
       "operatingCost": 615625,
       "grossProfit": 1533447,
       "grossMarginPct": 71.35,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1708",
+      "name": "東鹼",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1966454,
+      "operatingCost": 1250299,
+      "grossProfit": 716155,
+      "grossMarginPct": 36.42,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43574,6 +44036,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1717",
+      "name": "長興",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 12596115,
+      "operatingCost": 9811953,
+      "grossProfit": 2784162,
+      "grossMarginPct": 22.1,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1720",
       "name": "生達",
       "market": "TWSE",
@@ -43582,6 +44055,17 @@
       "operatingCost": 1040220,
       "grossProfit": 879787,
       "grossMarginPct": 45.82,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1721",
+      "name": "國慶科技",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 421104,
+      "operatingCost": 438693,
+      "grossProfit": -17589,
+      "grossMarginPct": -4.18,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43618,6 +44102,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1727",
+      "name": "中華化",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 744579,
+      "operatingCost": 629655,
+      "grossProfit": 114924,
+      "grossMarginPct": 15.43,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1730",
       "name": "花仙子",
       "market": "TWSE",
@@ -43637,6 +44132,17 @@
       "operatingCost": 152500,
       "grossProfit": 270497,
       "grossMarginPct": 63.95,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1732",
+      "name": "毛寶",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 162557,
+      "operatingCost": 93988,
+      "grossProfit": 68569,
+      "grossMarginPct": 42.18,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43692,6 +44198,17 @@
       "operatingCost": 346411,
       "grossProfit": 156664,
       "grossMarginPct": 31.14,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1760",
+      "name": "寶齡富錦",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 491637,
+      "operatingCost": 271623,
+      "grossProfit": 220014,
+      "grossMarginPct": 44.75,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43772,6 +44289,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1788",
+      "name": "杏昌",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1160888,
+      "operatingCost": 811237,
+      "grossProfit": 349651,
+      "grossMarginPct": 30.12,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1789",
       "name": "神隆",
       "market": "TWSE",
@@ -43827,6 +44355,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "1809",
+      "name": "中釉",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 641906,
+      "operatingCost": 522513,
+      "grossProfit": 119393,
+      "grossMarginPct": 18.6,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1810",
+      "name": "和成",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1081581,
+      "operatingCost": 825615,
+      "grossProfit": 255966,
+      "grossMarginPct": 23.67,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "1813",
       "name": "寶利徠",
       "market": "TPEx",
@@ -43835,6 +44385,17 @@
       "operatingCost": 70290,
       "grossProfit": -2434,
       "grossMarginPct": -3.59,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1815",
+      "name": "富喬",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 2705321,
+      "operatingCost": 1377056,
+      "grossProfit": 1328265,
+      "grossMarginPct": 49.1,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43857,6 +44418,17 @@
       "operatingCost": 13370,
       "grossProfit": 23117,
       "grossMarginPct": 63.36,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "1904",
+      "name": "正隆",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 12776664,
+      "operatingCost": 10638383,
+      "grossProfit": 2138281,
+      "grossMarginPct": 16.74,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -43970,6 +44542,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2023",
+      "name": "燁輝",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 15747952,
+      "operatingCost": 14213285,
+      "grossProfit": 1534667,
+      "grossMarginPct": 9.75,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2028",
       "name": "威致",
       "market": "TWSE",
@@ -44069,6 +44652,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2059",
+      "name": "川湖",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 17342579,
+      "operatingCost": 2046922,
+      "grossProfit": 15295657,
+      "grossMarginPct": 88.2,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2061",
+      "name": "風青",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 374624,
+      "operatingCost": 328327,
+      "grossProfit": 46297,
+      "grossMarginPct": 12.36,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2062",
       "name": "橋椿",
       "market": "TWSE",
@@ -44113,6 +44718,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2066",
+      "name": "世德",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 676095,
+      "operatingCost": 463632,
+      "grossProfit": 212463,
+      "grossMarginPct": 31.43,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2069",
       "name": "運錩",
       "market": "TWSE",
@@ -44154,6 +44770,17 @@
       "operatingCost": 446224,
       "grossProfit": 30862,
       "grossMarginPct": 6.47,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2101",
+      "name": "南港",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 4855813,
+      "operatingCost": 2945205,
+      "grossProfit": 1910608,
+      "grossMarginPct": 39.35,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -44300,6 +44927,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2239",
+      "name": "英利-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 3684223,
+      "operatingCost": 3513010,
+      "grossProfit": 171213,
+      "grossMarginPct": 4.65,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2241",
       "name": "艾姆勒",
       "market": "TWSE",
@@ -44319,6 +44957,17 @@
       "operatingCost": 9976766,
       "grossProfit": 1324555,
       "grossMarginPct": 11.72,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2248",
+      "name": "華勝-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 727432,
+      "operatingCost": 489626,
+      "grossProfit": 237806,
+      "grossMarginPct": 32.69,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -44432,6 +45081,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2321",
+      "name": "東訊",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 196159,
+      "operatingCost": 126469,
+      "grossProfit": 69690,
+      "grossMarginPct": 35.53,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2329",
       "name": "華泰",
       "market": "TWSE",
@@ -44484,6 +45144,17 @@
       "operatingCost": 24230095,
       "grossProfit": 58100710,
       "grossMarginPct": 70.57,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2345",
+      "name": "智邦",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 120743710,
+      "operatingCost": 99471015,
+      "grossProfit": 21272695,
+      "grossMarginPct": 17.62,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -44564,6 +45235,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2357",
+      "name": "華碩",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 276329565,
+      "operatingCost": 230851827,
+      "grossProfit": 45477738,
+      "grossMarginPct": 16.46,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2362",
+      "name": "藍天",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 5760740,
+      "operatingCost": 4639294,
+      "grossProfit": 1121446,
+      "grossMarginPct": 19.47,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2363",
       "name": "矽統",
       "market": "TWSE",
@@ -44572,6 +45265,17 @@
       "operatingCost": 959806,
       "grossProfit": 355455,
       "grossMarginPct": 27.03,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2365",
+      "name": "昆盈",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 325371,
+      "operatingCost": 220001,
+      "grossProfit": 105370,
+      "grossMarginPct": 32.38,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -44619,6 +45323,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2377",
+      "name": "微星",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 56945956,
+      "operatingCost": 47242879,
+      "grossProfit": 9703077,
+      "grossMarginPct": 17.04,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2379",
+      "name": "瑞昱",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 37731811,
+      "operatingCost": 19829226,
+      "grossProfit": 17902585,
+      "grossMarginPct": 47.45,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2382",
       "name": "廣達",
       "market": "TWSE",
@@ -44663,6 +45389,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2388",
+      "name": "威盛",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2999402,
+      "operatingCost": 2201566,
+      "grossProfit": 797836,
+      "grossMarginPct": 26.6,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2393",
+      "name": "億光",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 5755852,
+      "operatingCost": 4168522,
+      "grossProfit": 1587330,
+      "grossMarginPct": 27.58,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2395",
       "name": "研華",
       "market": "TWSE",
@@ -44682,6 +45430,28 @@
       "operatingCost": 2819076,
       "grossProfit": 999984,
       "grossMarginPct": 26.18,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2401",
+      "name": "凌陽",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2071624,
+      "operatingCost": 1085622,
+      "grossProfit": 986002,
+      "grossMarginPct": 47.6,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2404",
+      "name": "漢唐",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 27537769,
+      "operatingCost": 20330518,
+      "grossProfit": 7207251,
+      "grossMarginPct": 26.17,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -44751,6 +45521,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2415",
+      "name": "錩新",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 644358,
+      "operatingCost": 494390,
+      "grossProfit": 149968,
+      "grossMarginPct": 23.27,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2419",
       "name": "仲琦",
       "market": "TWSE",
@@ -44781,6 +45562,17 @@
       "operatingCost": 4134409,
       "grossProfit": 2008101,
       "grossMarginPct": 32.69,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2423",
+      "name": "固緯",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 897965,
+      "operatingCost": 377320,
+      "grossProfit": 520645,
+      "grossMarginPct": 57.98,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -44817,6 +45609,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2429",
+      "name": "銘旺科",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 93226,
+      "operatingCost": 82378,
+      "grossProfit": 10848,
+      "grossMarginPct": 11.64,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2430",
       "name": "燦坤",
       "market": "TWSE",
@@ -44850,6 +45653,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2434",
+      "name": "統懋",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 13770,
+      "operatingCost": 25504,
+      "grossProfit": -11734,
+      "grossMarginPct": -85.21,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2436",
       "name": "偉詮電",
       "market": "TWSE",
@@ -44872,6 +45686,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2440",
+      "name": "太空梭",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1198604,
+      "operatingCost": 1172198,
+      "grossProfit": 26406,
+      "grossMarginPct": 2.2,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2441",
       "name": "超豐",
       "market": "TWSE",
@@ -44880,6 +45705,17 @@
       "operatingCost": 4193445,
       "grossProfit": 1804579,
       "grossMarginPct": 30.09,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2442",
+      "name": "新美齊",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 100458,
+      "operatingCost": 71402,
+      "grossProfit": 29056,
+      "grossMarginPct": 28.92,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -44946,6 +45782,28 @@
       "operatingCost": 1973785,
       "grossProfit": 526115,
       "grossMarginPct": 21.05,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2458",
+      "name": "義隆",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2220814,
+      "operatingCost": 1228522,
+      "grossProfit": 992292,
+      "grossMarginPct": 44.68,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2459",
+      "name": "敦吉",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1461006,
+      "operatingCost": 1025417,
+      "grossProfit": 435589,
+      "grossMarginPct": 29.81,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45125,6 +45983,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2485",
+      "name": "兆赫",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 703788,
+      "operatingCost": 638987,
+      "grossProfit": 64801,
+      "grossMarginPct": 9.21,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2486",
       "name": "一詮",
       "market": "TWSE",
@@ -45155,6 +46024,28 @@
       "operatingCost": 8046689,
       "grossProfit": 794597,
       "grossMarginPct": 8.99,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2492",
+      "name": "華新科",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 13820571,
+      "operatingCost": 9973092,
+      "grossProfit": 3847479,
+      "grossMarginPct": 27.84,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2493",
+      "name": "揚博",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1231256,
+      "operatingCost": 799498,
+      "grossProfit": 431758,
+      "grossMarginPct": 35.07,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45202,6 +46093,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2504",
+      "name": "國產",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 5275672,
+      "operatingCost": 3887593,
+      "grossProfit": 1388079,
+      "grossMarginPct": 26.31,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2506",
       "name": "太設",
       "market": "TWSE",
@@ -45235,6 +46137,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2516",
+      "name": "新建",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1964231,
+      "operatingCost": 1839163,
+      "grossProfit": 125068,
+      "grossMarginPct": 6.37,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2520",
       "name": "冠德",
       "market": "TWSE",
@@ -45246,6 +46159,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2524",
+      "name": "京城",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 878024,
+      "operatingCost": 405142,
+      "grossProfit": 472882,
+      "grossMarginPct": 53.86,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2528",
       "name": "皇普",
       "market": "TWSE",
@@ -45254,6 +46178,17 @@
       "operatingCost": 1278728,
       "grossProfit": 621743,
       "grossMarginPct": 32.72,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2530",
+      "name": "華建",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 21814,
+      "operatingCost": 29578,
+      "grossProfit": -7764,
+      "grossMarginPct": -35.59,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45276,6 +46211,39 @@
       "operatingCost": 35310,
       "grossProfit": 23764,
       "grossMarginPct": 40.23,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2538",
+      "name": "基泰",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 71880,
+      "operatingCost": 31559,
+      "grossProfit": 40321,
+      "grossMarginPct": 56.09,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2542",
+      "name": "興富發",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 13954961,
+      "operatingCost": 9098395,
+      "grossProfit": 4856566,
+      "grossMarginPct": 34.8,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2545",
+      "name": "皇翔",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2045688,
+      "operatingCost": 761771,
+      "grossProfit": 1283917,
+      "grossMarginPct": 62.76,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45309,6 +46277,39 @@
       "operatingCost": 1504004,
       "grossProfit": 569386,
       "grossMarginPct": 27.46,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2596",
+      "name": "綠意",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 595289,
+      "operatingCost": 348216,
+      "grossProfit": 247073,
+      "grossMarginPct": 41.5,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2597",
+      "name": "潤弘",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 9017885,
+      "operatingCost": 7426897,
+      "grossProfit": 1590988,
+      "grossMarginPct": 17.64,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2603",
+      "name": "長榮",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 146776100,
+      "operatingCost": 90306503,
+      "grossProfit": 56469597,
+      "grossMarginPct": 38.47,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45356,6 +46357,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2611",
+      "name": "志信",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 182488,
+      "operatingCost": 129308,
+      "grossProfit": 53180,
+      "grossMarginPct": 29.14,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2616",
+      "name": "山隆",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2374969,
+      "operatingCost": 2269337,
+      "grossProfit": 105632,
+      "grossMarginPct": 4.45,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2618",
       "name": "長榮航",
       "market": "TWSE",
@@ -45389,6 +46412,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2634",
+      "name": "漢翔",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 9477393,
+      "operatingCost": 8285244,
+      "grossProfit": 1192149,
+      "grossMarginPct": 12.58,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2636",
+      "name": "台驊控股",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 8734626,
+      "operatingCost": 7407199,
+      "grossProfit": 1327427,
+      "grossMarginPct": 15.2,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2641",
       "name": "正德",
       "market": "TPEx",
@@ -45397,6 +46442,17 @@
       "operatingCost": 344338,
       "grossProfit": 227411,
       "grossMarginPct": 39.77,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2642",
+      "name": "宅配通",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 764456,
+      "operatingCost": 718283,
+      "grossProfit": 46173,
+      "grossMarginPct": 6.04,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45419,6 +46475,17 @@
       "operatingCost": 3904011,
       "grossProfit": 1370894,
       "grossMarginPct": 25.99,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2701",
+      "name": "萬企",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 61573,
+      "operatingCost": 14184,
+      "grossProfit": 47389,
+      "grossMarginPct": 76.96,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45452,6 +46519,17 @@
       "operatingCost": 437143,
       "grossProfit": 184293,
       "grossMarginPct": 29.66,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2706",
+      "name": "第一店",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 109380,
+      "operatingCost": 20920,
+      "grossProfit": 88460,
+      "grossMarginPct": 80.87,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45510,6 +46588,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2732",
+      "name": "六角",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1347601,
+      "operatingCost": 661394,
+      "grossProfit": 686207,
+      "grossMarginPct": 50.92,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2734",
+      "name": "易飛網",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 645038,
+      "operatingCost": 559780,
+      "grossProfit": 85258,
+      "grossMarginPct": 13.22,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2739",
       "name": "寒舍",
       "market": "TWSE",
@@ -45540,6 +46640,28 @@
       "operatingCost": 2215778,
       "grossProfit": 349147,
       "grossMarginPct": 13.61,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2748",
+      "name": "雲品",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 532115,
+      "operatingCost": 389353,
+      "grossProfit": 142762,
+      "grossMarginPct": 26.83,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2752",
+      "name": "豆府",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1108476,
+      "operatingCost": 537989,
+      "grossProfit": 570487,
+      "grossMarginPct": 51.47,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45598,6 +46720,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "2915",
+      "name": "潤泰全",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 24767,
+      "operatingCost": 17390,
+      "grossProfit": 7377,
+      "grossMarginPct": 29.79,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "2916",
       "name": "滿心",
       "market": "TPEx",
@@ -45639,6 +46772,39 @@
       "operatingCost": 1017561,
       "grossProfit": 273408,
       "grossMarginPct": 21.18,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2939",
+      "name": "永邑-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 61953,
+      "operatingCost": 53886,
+      "grossProfit": 8067,
+      "grossMarginPct": 13.02,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "2949",
+      "name": "欣新網",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1801515,
+      "operatingCost": 1569274,
+      "grossProfit": 232241,
+      "grossMarginPct": 12.89,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3002",
+      "name": "歐格",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 262558,
+      "operatingCost": 246312,
+      "grossProfit": 16246,
+      "grossMarginPct": 6.19,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45741,6 +46907,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3021",
+      "name": "鴻名",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 810444,
+      "operatingCost": 684393,
+      "grossProfit": 126051,
+      "grossMarginPct": 15.55,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3022",
+      "name": "威強電",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2696948,
+      "operatingCost": 1827115,
+      "grossProfit": 869833,
+      "grossMarginPct": 32.25,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3023",
       "name": "信邦",
       "market": "TWSE",
@@ -45829,6 +47017,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3033",
+      "name": "威健",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 45622994,
+      "operatingCost": 42926888,
+      "grossProfit": 2696106,
+      "grossMarginPct": 5.91,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3034",
       "name": "聯詠",
       "market": "TWSE",
@@ -45851,6 +47050,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3036",
+      "name": "文曄",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 597282432,
+      "operatingCost": 575787404,
+      "grossProfit": 21495028,
+      "grossMarginPct": 3.6,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3037",
       "name": "欣興",
       "market": "TWSE",
@@ -45862,6 +47072,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3042",
+      "name": "晶技",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 4195503,
+      "operatingCost": 2705008,
+      "grossProfit": 1490495,
+      "grossMarginPct": 35.53,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3043",
+      "name": "科風",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 276869,
+      "operatingCost": 211564,
+      "grossProfit": 65305,
+      "grossMarginPct": 23.59,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3044",
       "name": "健鼎",
       "market": "TWSE",
@@ -45870,6 +47102,17 @@
       "operatingCost": 19999935,
       "grossProfit": 10694283,
       "grossMarginPct": 34.84,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3045",
+      "name": "台灣大",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 50365482,
+      "operatingCost": 39507857,
+      "grossProfit": 10857625,
+      "grossMarginPct": 21.56,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -45906,6 +47149,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3050",
+      "name": "鈺德",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 301788,
+      "operatingCost": 209664,
+      "grossProfit": 92124,
+      "grossMarginPct": 30.53,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3052",
       "name": "夆典",
       "market": "TWSE",
@@ -45939,6 +47193,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3056",
+      "name": "富華新",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 254283,
+      "operatingCost": 211196,
+      "grossProfit": 43087,
+      "grossMarginPct": 16.94,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3059",
       "name": "華晶科",
       "market": "TWSE",
@@ -45961,6 +47226,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3062",
+      "name": "建漢",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 957275,
+      "operatingCost": 890137,
+      "grossProfit": 67138,
+      "grossMarginPct": 7.01,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3064",
       "name": "泰偉",
       "market": "TPEx",
@@ -45969,6 +47245,17 @@
       "operatingCost": 2043,
       "grossProfit": 19140,
       "grossMarginPct": 90.36,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3071",
+      "name": "協禧",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 665409,
+      "operatingCost": 482235,
+      "grossProfit": 183174,
+      "grossMarginPct": 27.53,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46082,6 +47369,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3095",
+      "name": "及成",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 164642,
+      "operatingCost": 133768,
+      "grossProfit": 30874,
+      "grossMarginPct": 18.75,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3105",
       "name": "穩懋",
       "market": "TPEx",
@@ -46090,6 +47388,28 @@
       "operatingCost": 3668109,
       "grossProfit": 2190877,
       "grossMarginPct": 37.39,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3114",
+      "name": "好德",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 808434,
+      "operatingCost": 723637,
+      "grossProfit": 84797,
+      "grossMarginPct": 10.49,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3115",
+      "name": "富榮綱",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1626,
+      "operatingCost": 0,
+      "grossProfit": 1626,
+      "grossMarginPct": 100,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46115,6 +47435,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3128",
+      "name": "昇銳",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 182382,
+      "operatingCost": 129491,
+      "grossProfit": 52891,
+      "grossMarginPct": 29,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3130",
       "name": "一零四",
       "market": "TWSE",
@@ -46123,6 +47454,17 @@
       "operatingCost": 105913,
       "grossProfit": 682245,
       "grossMarginPct": 86.56,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3135",
+      "name": "凌航",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 5638107,
+      "operatingCost": 4260895,
+      "grossProfit": 1377212,
+      "grossMarginPct": 24.43,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46167,6 +47509,17 @@
       "operatingCost": 250316,
       "grossProfit": 210679,
       "grossMarginPct": 45.7,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3158",
+      "name": "嘉實",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 307839,
+      "operatingCost": 100908,
+      "grossProfit": 206931,
+      "grossMarginPct": 67.22,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46225,6 +47578,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3171",
+      "name": "炎洲流通",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 664702,
+      "operatingCost": 500934,
+      "grossProfit": 163768,
+      "grossMarginPct": 24.64,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3178",
       "name": "公準",
       "market": "TPEx",
@@ -46233,6 +47597,17 @@
       "operatingCost": 267247,
       "grossProfit": 102723,
       "grossMarginPct": 27.77,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3188",
+      "name": "鑫龍騰",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 589688,
+      "operatingCost": 316981,
+      "grossProfit": 272707,
+      "grossMarginPct": 46.25,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46291,6 +47666,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3218",
+      "name": "大學光",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1161412,
+      "operatingCost": 495911,
+      "grossProfit": 665501,
+      "grossMarginPct": 57.3,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3224",
       "name": "三顧",
       "market": "TPEx",
@@ -46299,6 +47685,17 @@
       "operatingCost": 497609,
       "grossProfit": 64901,
       "grossMarginPct": 11.54,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3227",
+      "name": "原相",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 2528167,
+      "operatingCost": 1028935,
+      "grossProfit": 1499232,
+      "grossMarginPct": 59.3,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46313,6 +47710,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3229",
+      "name": "晟鈦",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 427190,
+      "operatingCost": 373129,
+      "grossProfit": 54061,
+      "grossMarginPct": 12.66,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3230",
+      "name": "錦明",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 118011,
+      "operatingCost": 115697,
+      "grossProfit": 2314,
+      "grossMarginPct": 1.96,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3231",
       "name": "緯創",
       "market": "TWSE",
@@ -46324,6 +47743,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3232",
+      "name": "昱捷",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 275927,
+      "operatingCost": 227376,
+      "grossProfit": 48551,
+      "grossMarginPct": 17.6,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3234",
       "name": "光環",
       "market": "TPEx",
@@ -46332,6 +47762,28 @@
       "operatingCost": 228754,
       "grossProfit": 97081,
       "grossMarginPct": 29.79,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3236",
+      "name": "千如",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 702028,
+      "operatingCost": 519975,
+      "grossProfit": 182053,
+      "grossMarginPct": 25.93,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3257",
+      "name": "虹冠電",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 182759,
+      "operatingCost": 108055,
+      "grossProfit": 74704,
+      "grossMarginPct": 40.88,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46379,6 +47831,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3268",
+      "name": "海德威",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 226665,
+      "operatingCost": 213820,
+      "grossProfit": 12845,
+      "grossMarginPct": 5.67,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3272",
       "name": "東碩",
       "market": "TPEx",
@@ -46398,6 +47861,28 @@
       "operatingCost": 195043,
       "grossProfit": 17431,
       "grossMarginPct": 8.2,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3287",
+      "name": "廣寰科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 280063,
+      "operatingCost": 215958,
+      "grossProfit": 64105,
+      "grossMarginPct": 22.89,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3290",
+      "name": "東浦",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1140926,
+      "operatingCost": 826823,
+      "grossProfit": 314103,
+      "grossMarginPct": 27.53,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46445,6 +47930,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3305",
+      "name": "昇貿",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 4260947,
+      "operatingCost": 3560472,
+      "grossProfit": 700475,
+      "grossMarginPct": 16.44,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3306",
       "name": "鼎天",
       "market": "TPEx",
@@ -46478,6 +47974,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3313",
+      "name": "斐成",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 2584,
+      "operatingCost": 4018,
+      "grossProfit": -1434,
+      "grossMarginPct": -55.5,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3317",
       "name": "尼克森",
       "market": "TPEx",
@@ -46497,6 +48004,17 @@
       "operatingCost": 562704,
       "grossProfit": 130045,
       "grossMarginPct": 18.77,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3323",
+      "name": "加百裕",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 901544,
+      "operatingCost": 795554,
+      "grossProfit": 105990,
+      "grossMarginPct": 11.76,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46541,6 +48059,17 @@
       "operatingCost": 20285,
       "grossProfit": 13146,
       "grossMarginPct": 39.32,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3356",
+      "name": "奇偶",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 318231,
+      "operatingCost": 153217,
+      "grossProfit": 165014,
+      "grossMarginPct": 51.85,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46610,6 +48139,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3388",
+      "name": "崇越電",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 2003261,
+      "operatingCost": 1613803,
+      "grossProfit": 389458,
+      "grossMarginPct": 19.44,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3390",
       "name": "旭軟",
       "market": "TPEx",
@@ -46618,6 +48158,17 @@
       "operatingCost": 198438,
       "grossProfit": 27285,
       "grossMarginPct": 12.09,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3406",
+      "name": "玉晶光",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 7812294,
+      "operatingCost": 5231625,
+      "grossProfit": 2580669,
+      "grossMarginPct": 33.03,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46640,6 +48191,28 @@
       "operatingCost": 899223,
       "grossProfit": 513717,
       "grossMarginPct": 36.36,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3419",
+      "name": "譁裕",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 542018,
+      "operatingCost": 481597,
+      "grossProfit": 60421,
+      "grossMarginPct": 11.15,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3432",
+      "name": "台端",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 82464,
+      "operatingCost": 65694,
+      "grossProfit": 16770,
+      "grossMarginPct": 20.34,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46695,6 +48268,17 @@
       "operatingCost": 287944,
       "grossProfit": 110388,
       "grossMarginPct": 27.71,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3450",
+      "name": "聯鈞",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 3755855,
+      "operatingCost": 2492515,
+      "grossProfit": 1263340,
+      "grossMarginPct": 33.64,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46764,6 +48348,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3491",
+      "name": "昇達科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 842939,
+      "operatingCost": 422053,
+      "grossProfit": 420886,
+      "grossMarginPct": 49.93,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3492",
       "name": "長盛",
       "market": "TPEx",
@@ -46772,6 +48367,39 @@
       "operatingCost": 167714,
       "grossProfit": 52932,
       "grossMarginPct": 23.99,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3494",
+      "name": "誠研",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 286354,
+      "operatingCost": 238534,
+      "grossProfit": 47820,
+      "grossMarginPct": 16.7,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3498",
+      "name": "陽程",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1153281,
+      "operatingCost": 797224,
+      "grossProfit": 356057,
+      "grossMarginPct": 30.87,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3499",
+      "name": "環天科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 69281,
+      "operatingCost": 55124,
+      "grossProfit": 14157,
+      "grossMarginPct": 20.43,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46816,6 +48444,17 @@
       "operatingCost": 454117,
       "grossProfit": 70188,
       "grossMarginPct": 13.39,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3512",
+      "name": "皇龍",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 25519,
+      "operatingCost": 16083,
+      "grossProfit": 9436,
+      "grossMarginPct": 36.98,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -46929,6 +48568,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3532",
+      "name": "台勝科",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 3984383,
+      "operatingCost": 3577642,
+      "grossProfit": 406741,
+      "grossMarginPct": 10.21,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3535",
       "name": "晶彩科",
       "market": "TWSE",
@@ -46973,6 +48623,39 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3545",
+      "name": "敦泰",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2724251,
+      "operatingCost": 2028899,
+      "grossProfit": 695352,
+      "grossMarginPct": 25.52,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3546",
+      "name": "宇峻",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 580412,
+      "operatingCost": 72749,
+      "grossProfit": 507663,
+      "grossMarginPct": 87.47,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3550",
+      "name": "聯穎",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1207140,
+      "operatingCost": 991742,
+      "grossProfit": 215398,
+      "grossMarginPct": 17.84,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3551",
       "name": "世禾",
       "market": "TPEx",
@@ -46981,6 +48664,17 @@
       "operatingCost": 524125,
       "grossProfit": 381719,
       "grossMarginPct": 42.14,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3552",
+      "name": "同致",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1879768,
+      "operatingCost": 1745201,
+      "grossProfit": 134567,
+      "grossMarginPct": 7.16,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47003,6 +48697,17 @@
       "operatingCost": 155232,
       "grossProfit": 161970,
       "grossMarginPct": 51.06,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3557",
+      "name": "嘉威",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 769864,
+      "operatingCost": 514820,
+      "grossProfit": 255044,
+      "grossMarginPct": 33.13,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47061,6 +48766,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3580",
+      "name": "友威科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 150147,
+      "operatingCost": 59238,
+      "grossProfit": 90909,
+      "grossMarginPct": 60.55,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3581",
       "name": "博磊",
       "market": "TPEx",
@@ -47069,6 +48785,17 @@
       "operatingCost": 263067,
       "grossProfit": 177423,
       "grossMarginPct": 40.28,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3588",
+      "name": "通嘉",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 459710,
+      "operatingCost": 292999,
+      "grossProfit": 166711,
+      "grossMarginPct": 36.26,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47127,6 +48854,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3607",
+      "name": "谷崧",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 831127,
+      "operatingCost": 747151,
+      "grossProfit": 83976,
+      "grossMarginPct": 10.1,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3615",
       "name": "安可",
       "market": "TPEx",
@@ -47168,6 +48906,17 @@
       "operatingCost": 678810,
       "grossProfit": 420131,
       "grossMarginPct": 38.23,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3625",
+      "name": "西勝",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 118031,
+      "operatingCost": 86956,
+      "grossProfit": 31075,
+      "grossMarginPct": 26.33,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47223,6 +48972,17 @@
       "operatingCost": 377160,
       "grossProfit": 109801,
       "grossMarginPct": 22.55,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3646",
+      "name": "艾恩特",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 245330,
+      "operatingCost": 186741,
+      "grossProfit": 58589,
+      "grossMarginPct": 23.88,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47314,6 +49074,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3685",
+      "name": "元創精密",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 243670,
+      "operatingCost": 179077,
+      "grossProfit": 64593,
+      "grossMarginPct": 26.51,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3686",
       "name": "達能",
       "market": "TWSE",
@@ -47325,6 +49096,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3687",
+      "name": "歐買尬",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 511734,
+      "operatingCost": 309205,
+      "grossProfit": 202529,
+      "grossMarginPct": 39.58,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "3689",
       "name": "湧德",
       "market": "TPEx",
@@ -47333,6 +49115,28 @@
       "operatingCost": 1713610,
       "grossProfit": 739794,
       "grossMarginPct": 30.15,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3693",
+      "name": "營邦",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 4028728,
+      "operatingCost": 2823019,
+      "grossProfit": 1205709,
+      "grossMarginPct": 29.93,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "3702",
+      "name": "大聯大",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 509995680,
+      "operatingCost": 487431455,
+      "grossProfit": 22564225,
+      "grossMarginPct": 4.42,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47424,6 +49228,39 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "3717",
+      "name": "聯嘉投控",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1616054,
+      "operatingCost": 1291202,
+      "grossProfit": 324852,
+      "grossMarginPct": 20.1,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4102",
+      "name": "永日",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 108254,
+      "operatingCost": 84263,
+      "grossProfit": 23991,
+      "grossMarginPct": 22.16,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4104",
+      "name": "佳醫",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2747891,
+      "operatingCost": 2117224,
+      "grossProfit": 630667,
+      "grossMarginPct": 22.95,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4105",
       "name": "東洋",
       "market": "TPEx",
@@ -47432,6 +49269,39 @@
       "operatingCost": 842825,
       "grossProfit": 1131565,
       "grossMarginPct": 57.31,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4106",
+      "name": "雃博",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 678689,
+      "operatingCost": 334529,
+      "grossProfit": 344160,
+      "grossMarginPct": 50.71,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4107",
+      "name": "邦特",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 581220,
+      "operatingCost": 316241,
+      "grossProfit": 264979,
+      "grossMarginPct": 45.59,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4108",
+      "name": "懷特",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 36421,
+      "operatingCost": 25853,
+      "grossProfit": 10568,
+      "grossMarginPct": 29.02,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47468,6 +49338,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4119",
+      "name": "旭富",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 503145,
+      "operatingCost": 374165,
+      "grossProfit": 128980,
+      "grossMarginPct": 25.63,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4120",
+      "name": "友華",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1191203,
+      "operatingCost": 600812,
+      "grossProfit": 590391,
+      "grossMarginPct": 49.56,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4121",
       "name": "優盛",
       "market": "TPEx",
@@ -47476,6 +49368,17 @@
       "operatingCost": 646576,
       "grossProfit": 338762,
       "grossMarginPct": 34.38,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4123",
+      "name": "晟德",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 481029,
+      "operatingCost": 255753,
+      "grossProfit": 225276,
+      "grossMarginPct": 46.83,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47501,6 +49404,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4128",
+      "name": "中天",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 456710,
+      "operatingCost": 286419,
+      "grossProfit": 170291,
+      "grossMarginPct": 37.29,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4131",
       "name": "浩泰",
       "market": "TPEx",
@@ -47520,6 +49434,50 @@
       "operatingCost": 38796,
       "grossProfit": 38659,
       "grossMarginPct": 49.91,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4137",
+      "name": "麗豐-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1085424,
+      "operatingCost": 194068,
+      "grossProfit": 891356,
+      "grossMarginPct": 82.12,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4138",
+      "name": "曜亞",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 357962,
+      "operatingCost": 204183,
+      "grossProfit": 153779,
+      "grossMarginPct": 42.96,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4139",
+      "name": "馬光-KY",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 273699,
+      "operatingCost": 242289,
+      "grossProfit": 31410,
+      "grossMarginPct": 11.48,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4142",
+      "name": "國光生",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 715670,
+      "operatingCost": 413466,
+      "grossProfit": 302204,
+      "grossMarginPct": 42.23,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47545,6 +49503,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4162",
+      "name": "智擎",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 267421,
+      "operatingCost": 17490,
+      "grossProfit": 249931,
+      "grossMarginPct": 93.46,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4163",
+      "name": "鐿鈦",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 777346,
+      "operatingCost": 443751,
+      "grossProfit": 333595,
+      "grossMarginPct": 42.91,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4164",
       "name": "承業醫",
       "market": "TWSE",
@@ -47553,6 +49533,39 @@
       "operatingCost": 866527,
       "grossProfit": 293954,
       "grossMarginPct": 25.33,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4166",
+      "name": "友霖",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 396581,
+      "operatingCost": 168927,
+      "grossProfit": 227654,
+      "grossMarginPct": 57.4,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4169",
+      "name": "泰宗",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 186330,
+      "operatingCost": 97982,
+      "grossProfit": 88348,
+      "grossMarginPct": 47.41,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4171",
+      "name": "瑞基",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 56446,
+      "operatingCost": 17162,
+      "grossProfit": 39284,
+      "grossMarginPct": 69.6,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47600,6 +49613,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4195",
+      "name": "基米-創",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 200580,
+      "operatingCost": 141731,
+      "grossProfit": 58849,
+      "grossMarginPct": 29.34,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4198",
+      "name": "欣大健康",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 56936,
+      "operatingCost": 36327,
+      "grossProfit": 20609,
+      "grossMarginPct": 36.2,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4205",
       "name": "中華食",
       "market": "TPEx",
@@ -47622,6 +49657,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4402",
+      "name": "郡都開發",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 17977,
+      "operatingCost": 16031,
+      "grossProfit": 1946,
+      "grossMarginPct": 10.82,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4406",
       "name": "新昕纖",
       "market": "TPEx",
@@ -47630,6 +49676,17 @@
       "operatingCost": 17670,
       "grossProfit": -544,
       "grossMarginPct": -3.18,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4414",
+      "name": "如興",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 4546229,
+      "operatingCost": 3711299,
+      "grossProfit": 834930,
+      "grossMarginPct": 18.37,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47644,6 +49701,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4419",
+      "name": "皇家美食",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 679800,
+      "operatingCost": 521340,
+      "grossProfit": 158460,
+      "grossMarginPct": 23.31,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4420",
       "name": "光明",
       "market": "TPEx",
@@ -47652,6 +49720,17 @@
       "operatingCost": 264860,
       "grossProfit": 5366,
       "grossMarginPct": 1.99,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4426",
+      "name": "利勤",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 306100,
+      "operatingCost": 276532,
+      "grossProfit": 29568,
+      "grossMarginPct": 9.66,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47677,6 +49756,39 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4439",
+      "name": "冠星-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2471687,
+      "operatingCost": 2048724,
+      "grossProfit": 422963,
+      "grossMarginPct": 17.11,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4440",
+      "name": "宜新實業",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 193828,
+      "operatingCost": 175762,
+      "grossProfit": 18066,
+      "grossMarginPct": 9.32,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4441",
+      "name": "振大環球",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2442229,
+      "operatingCost": 1759181,
+      "grossProfit": 683048,
+      "grossMarginPct": 27.97,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4503",
       "name": "金雨",
       "market": "TPEx",
@@ -47696,6 +49808,17 @@
       "operatingCost": 1084616,
       "grossProfit": 581357,
       "grossMarginPct": 34.9,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4510",
+      "name": "高鋒",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 567456,
+      "operatingCost": 476333,
+      "grossProfit": 91123,
+      "grossMarginPct": 16.06,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47732,6 +49855,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4529",
+      "name": "淳紳",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 7728,
+      "operatingCost": 4679,
+      "grossProfit": 3049,
+      "grossMarginPct": 39.45,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4532",
       "name": "瑞智",
       "market": "TWSE",
@@ -47743,6 +49877,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4534",
+      "name": "慶騰",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 310473,
+      "operatingCost": 260010,
+      "grossProfit": 50463,
+      "grossMarginPct": 16.25,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4538",
       "name": "大詠城",
       "market": "TPEx",
@@ -47751,6 +49896,17 @@
       "operatingCost": 95493,
       "grossProfit": 20840,
       "grossMarginPct": 17.91,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4540",
+      "name": "全球傳動",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 945963,
+      "operatingCost": 722165,
+      "grossProfit": 223798,
+      "grossMarginPct": 23.66,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47798,6 +49954,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4549",
+      "name": "桓達",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 325495,
+      "operatingCost": 126614,
+      "grossProfit": 198881,
+      "grossMarginPct": 61.1,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4550",
       "name": "長佳",
       "market": "TPEx",
@@ -47842,6 +50009,50 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4558",
+      "name": "寶緯",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 519555,
+      "operatingCost": 460239,
+      "grossProfit": 59316,
+      "grossMarginPct": 11.42,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4560",
+      "name": "強信-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 524598,
+      "operatingCost": 363162,
+      "grossProfit": 161436,
+      "grossMarginPct": 30.77,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4561",
+      "name": "健椿",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 345707,
+      "operatingCost": 241905,
+      "grossProfit": 103802,
+      "grossMarginPct": 30.03,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4563",
+      "name": "百德",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 717786,
+      "operatingCost": 475621,
+      "grossProfit": 242165,
+      "grossMarginPct": 33.74,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4564",
       "name": "元翎",
       "market": "TWSE",
@@ -47850,6 +50061,28 @@
       "operatingCost": 270513,
       "grossProfit": -63764,
       "grossMarginPct": -30.84,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4566",
+      "name": "時碩工業",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1817903,
+      "operatingCost": 1397012,
+      "grossProfit": 420891,
+      "grossMarginPct": 23.15,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4568",
+      "name": "科際精密",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 332901,
+      "operatingCost": 250657,
+      "grossProfit": 82244,
+      "grossMarginPct": 24.71,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47886,6 +50119,39 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4580",
+      "name": "捷流閥業",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 643830,
+      "operatingCost": 463239,
+      "grossProfit": 180591,
+      "grossMarginPct": 28.05,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4581",
+      "name": "光隆精密-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 322683,
+      "operatingCost": 212364,
+      "grossProfit": 110319,
+      "grossMarginPct": 34.19,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4582",
+      "name": "聚恆-創",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 367042,
+      "operatingCost": 263412,
+      "grossProfit": 103630,
+      "grossMarginPct": 28.23,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4583",
       "name": "台灣精銳",
       "market": "TWSE",
@@ -47905,6 +50171,17 @@
       "operatingCost": 226734,
       "grossProfit": 101945,
       "grossMarginPct": 31.02,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4585",
+      "name": "達明",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 499549,
+      "operatingCost": 233492,
+      "grossProfit": 266057,
+      "grossMarginPct": 53.26,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47941,6 +50218,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4702",
+      "name": "中美實",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 15799,
+      "operatingCost": 10470,
+      "grossProfit": 5329,
+      "grossMarginPct": 33.73,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4706",
       "name": "大恭",
       "market": "TPEx",
@@ -47949,6 +50237,17 @@
       "operatingCost": 240826,
       "grossProfit": 55024,
       "grossMarginPct": 18.6,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4707",
+      "name": "磐亞",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 239774,
+      "operatingCost": 254531,
+      "grossProfit": -14757,
+      "grossMarginPct": -6.15,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -47963,6 +50262,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4714",
+      "name": "永捷",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 539890,
+      "operatingCost": 400856,
+      "grossProfit": 139034,
+      "grossMarginPct": 25.75,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4716",
       "name": "大立",
       "market": "TPEx",
@@ -47974,6 +50284,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4721",
+      "name": "美琪瑪",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 770999,
+      "operatingCost": 668610,
+      "grossProfit": 102389,
+      "grossMarginPct": 13.28,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4722",
       "name": "國精化",
       "market": "TWSE",
@@ -47982,6 +50303,28 @@
       "operatingCost": 1008595,
       "grossProfit": 225072,
       "grossMarginPct": 18.24,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4726",
+      "name": "永昕",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 308195,
+      "operatingCost": 280517,
+      "grossProfit": 27678,
+      "grossMarginPct": 8.98,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4729",
+      "name": "熒茂",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 298386,
+      "operatingCost": 228404,
+      "grossProfit": 69982,
+      "grossMarginPct": 23.45,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48007,6 +50350,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4741",
+      "name": "泓瀚",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 124386,
+      "operatingCost": 80650,
+      "grossProfit": 43736,
+      "grossMarginPct": 35.16,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4743",
       "name": "合一",
       "market": "TPEx",
@@ -48018,6 +50372,50 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4744",
+      "name": "皇將",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 235671,
+      "operatingCost": 147718,
+      "grossProfit": 87953,
+      "grossMarginPct": 37.32,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4745",
+      "name": "合富-KY",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 817609,
+      "operatingCost": 655237,
+      "grossProfit": 162372,
+      "grossMarginPct": 19.86,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4746",
+      "name": "台耀",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1338371,
+      "operatingCost": 780389,
+      "grossProfit": 557982,
+      "grossMarginPct": 41.69,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4747",
+      "name": "強生*",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 149249,
+      "operatingCost": 92202,
+      "grossProfit": 57047,
+      "grossMarginPct": 38.22,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4749",
       "name": "新應材",
       "market": "TPEx",
@@ -48026,6 +50424,28 @@
       "operatingCost": 697727,
       "grossProfit": 632943,
       "grossMarginPct": 47.57,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4754",
+      "name": "國碳科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 164894,
+      "operatingCost": 75387,
+      "grossProfit": 89507,
+      "grossMarginPct": 54.28,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4755",
+      "name": "三福化",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1332346,
+      "operatingCost": 1025565,
+      "grossProfit": 306781,
+      "grossMarginPct": 23.03,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48062,6 +50482,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4771",
+      "name": "望隼",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1146003,
+      "operatingCost": 679773,
+      "grossProfit": 466230,
+      "grossMarginPct": 40.68,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4772",
       "name": "台特化",
       "market": "TPEx",
@@ -48070,6 +50501,17 @@
       "operatingCost": 485688,
       "grossProfit": 526392,
       "grossMarginPct": 52.01,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4806",
+      "name": "桂田文創",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 46373,
+      "operatingCost": 31459,
+      "grossProfit": 14914,
+      "grossMarginPct": 32.16,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48092,6 +50534,28 @@
       "operatingCost": 4199364,
       "grossProfit": 650808,
       "grossMarginPct": 13.42,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4907",
+      "name": "富宇",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 85249,
+      "operatingCost": 48242,
+      "grossProfit": 37007,
+      "grossMarginPct": 43.41,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4909",
+      "name": "新復興",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 52113,
+      "operatingCost": 66470,
+      "grossProfit": -14357,
+      "grossMarginPct": -27.55,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48150,6 +50614,39 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4933",
+      "name": "友輝",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 502269,
+      "operatingCost": 365552,
+      "grossProfit": 136717,
+      "grossMarginPct": 27.22,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4934",
+      "name": "太極",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 58899,
+      "operatingCost": 79549,
+      "grossProfit": -20650,
+      "grossMarginPct": -35.06,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4938",
+      "name": "和碩",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 389072846,
+      "operatingCost": 371562958,
+      "grossProfit": 17509888,
+      "grossMarginPct": 4.5,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4939",
       "name": "亞電",
       "market": "TPEx",
@@ -48169,6 +50666,17 @@
       "operatingCost": 1056081,
       "grossProfit": 202970,
       "grossMarginPct": 16.12,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "4951",
+      "name": "精拓科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 144467,
+      "operatingCost": 37545,
+      "grossProfit": 106922,
+      "grossMarginPct": 74.01,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48337,6 +50845,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "4989",
+      "name": "榮科",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1134325,
+      "operatingCost": 1060144,
+      "grossProfit": 74181,
+      "grossMarginPct": 6.54,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "4991",
       "name": "環宇-KY",
       "market": "TPEx",
@@ -48392,6 +50911,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5011",
+      "name": "久陽",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 798356,
+      "operatingCost": 736492,
+      "grossProfit": 61864,
+      "grossMarginPct": 7.75,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5014",
+      "name": "建錩",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 4766052,
+      "operatingCost": 4613076,
+      "grossProfit": 152976,
+      "grossMarginPct": 3.21,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5015",
       "name": "華祺",
       "market": "TPEx",
@@ -48400,6 +50941,17 @@
       "operatingCost": 303049,
       "grossProfit": 78191,
       "grossMarginPct": 20.51,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5016",
+      "name": "松和",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 528510,
+      "operatingCost": 461026,
+      "grossProfit": 67484,
+      "grossMarginPct": 12.77,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48458,6 +51010,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5211",
+      "name": "蒙恬",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 81328,
+      "operatingCost": 45537,
+      "grossProfit": 35791,
+      "grossMarginPct": 44.01,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5212",
       "name": "凌網",
       "market": "TPEx",
@@ -48480,6 +51043,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5220",
+      "name": "萬達光電",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 254091,
+      "operatingCost": 203030,
+      "grossProfit": 51061,
+      "grossMarginPct": 20.1,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5222",
       "name": "全訊",
       "market": "TWSE",
@@ -48491,6 +51065,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5223",
+      "name": "安力-KY",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 572483,
+      "operatingCost": 439496,
+      "grossProfit": 132987,
+      "grossMarginPct": 23.23,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5225",
       "name": "東科-KY",
       "market": "TWSE",
@@ -48499,6 +51084,17 @@
       "operatingCost": 3128564,
       "grossProfit": 367458,
       "grossMarginPct": 10.51,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5227",
+      "name": "立凱-KY",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 7843,
+      "operatingCost": 47203,
+      "grossProfit": -39360,
+      "grossMarginPct": -501.85,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48532,6 +51128,17 @@
       "operatingCost": 203209,
       "grossProfit": 296395,
       "grossMarginPct": 59.33,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5244",
+      "name": "弘凱",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 279829,
+      "operatingCost": 196485,
+      "grossProfit": 83344,
+      "grossMarginPct": 29.78,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48576,6 +51183,17 @@
       "operatingCost": 1460993,
       "grossProfit": 3325288,
       "grossMarginPct": 69.48,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5276",
+      "name": "達輝-KY",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 281642,
+      "operatingCost": 208351,
+      "grossProfit": 73291,
+      "grossMarginPct": 26.02,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48656,6 +51274,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5302",
+      "name": "太欣",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 7195,
+      "operatingCost": 4166,
+      "grossProfit": 3029,
+      "grossMarginPct": 42.1,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5309",
       "name": "系統電",
       "market": "TPEx",
@@ -48664,6 +51293,61 @@
       "operatingCost": 790894,
       "grossProfit": 232705,
       "grossMarginPct": 22.73,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5310",
+      "name": "天剛",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 406,
+      "operatingCost": 370,
+      "grossProfit": 36,
+      "grossMarginPct": 8.87,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5312",
+      "name": "寶島科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1115605,
+      "operatingCost": 396539,
+      "grossProfit": 719066,
+      "grossMarginPct": 64.46,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5315",
+      "name": "光聯",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 405386,
+      "operatingCost": 329824,
+      "grossProfit": 75562,
+      "grossMarginPct": 18.64,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5324",
+      "name": "士開",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 152169,
+      "operatingCost": 89124,
+      "grossProfit": 63045,
+      "grossMarginPct": 41.43,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5328",
+      "name": "華容",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 286593,
+      "operatingCost": 219917,
+      "grossProfit": 66676,
+      "grossMarginPct": 23.27,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48755,6 +51439,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5398",
+      "name": "慕康生醫",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 76563,
+      "operatingCost": 34437,
+      "grossProfit": 42126,
+      "grossMarginPct": 55.02,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5403",
       "name": "中菲",
       "market": "TPEx",
@@ -48774,6 +51469,17 @@
       "operatingCost": 844949,
       "grossProfit": 209554,
       "grossMarginPct": 19.87,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5425",
+      "name": "台半",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 5244937,
+      "operatingCost": 3572363,
+      "grossProfit": 1672574,
+      "grossMarginPct": 31.89,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48810,6 +51516,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5438",
+      "name": "東友",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 299219,
+      "operatingCost": 253452,
+      "grossProfit": 45767,
+      "grossMarginPct": 15.3,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5443",
       "name": "均豪",
       "market": "TPEx",
@@ -48832,6 +51549,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5455",
+      "name": "昇益",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1378377,
+      "operatingCost": 979481,
+      "grossProfit": 398896,
+      "grossMarginPct": 28.94,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5460",
       "name": "同協",
       "market": "TPEx",
@@ -48840,6 +51568,50 @@
       "operatingCost": 56279,
       "grossProfit": 36911,
       "grossMarginPct": 39.61,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5464",
+      "name": "霖宏",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 309374,
+      "operatingCost": 299832,
+      "grossProfit": 9542,
+      "grossMarginPct": 3.08,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5465",
+      "name": "富驊",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1258155,
+      "operatingCost": 1100995,
+      "grossProfit": 157160,
+      "grossMarginPct": 12.49,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5469",
+      "name": "瀚宇博",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 20258068,
+      "operatingCost": 16847371,
+      "grossProfit": 3410697,
+      "grossMarginPct": 16.84,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5471",
+      "name": "松翰",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 860265,
+      "operatingCost": 482020,
+      "grossProfit": 378245,
+      "grossMarginPct": 43.97,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48865,6 +51637,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5481",
+      "name": "新華",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 25694,
+      "operatingCost": 11971,
+      "grossProfit": 13723,
+      "grossMarginPct": 53.41,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5484",
+      "name": "慧友",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 137315,
+      "operatingCost": 106711,
+      "grossProfit": 30604,
+      "grossMarginPct": 22.29,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5487",
       "name": "通泰",
       "market": "TPEx",
@@ -48873,6 +51667,17 @@
       "operatingCost": 27627,
       "grossProfit": 15546,
       "grossMarginPct": 36.01,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5488",
+      "name": "松普",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 233192,
+      "operatingCost": 198501,
+      "grossProfit": 34691,
+      "grossMarginPct": 14.88,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48909,6 +51714,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5511",
+      "name": "德昌",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 3075505,
+      "operatingCost": 2343961,
+      "grossProfit": 731544,
+      "grossMarginPct": 23.79,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5514",
       "name": "三豐",
       "market": "TPEx",
@@ -48928,6 +51744,17 @@
       "operatingCost": 249301,
       "grossProfit": 65706,
       "grossMarginPct": 20.86,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5521",
+      "name": "工信",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2472236,
+      "operatingCost": 2178456,
+      "grossProfit": 293780,
+      "grossMarginPct": 11.88,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -48964,6 +51791,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5534",
+      "name": "長虹",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1983819,
+      "operatingCost": 1235085,
+      "grossProfit": 748734,
+      "grossMarginPct": 37.74,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5536",
       "name": "聖暉*",
       "market": "TPEx",
@@ -48972,6 +51810,28 @@
       "operatingCost": 10815132,
       "grossProfit": 3462785,
       "grossMarginPct": 24.25,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5538",
+      "name": "東明-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 3975897,
+      "operatingCost": 3382977,
+      "grossProfit": 592920,
+      "grossMarginPct": 14.91,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5546",
+      "name": "永固-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 495030,
+      "operatingCost": 435338,
+      "grossProfit": 59692,
+      "grossMarginPct": 12.06,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49008,6 +51868,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "5603",
+      "name": "陸海",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 349013,
+      "operatingCost": 306966,
+      "grossProfit": 42047,
+      "grossMarginPct": 12.05,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "5604",
       "name": "中連",
       "market": "TPEx",
@@ -49027,6 +51898,17 @@
       "operatingCost": 662025,
       "grossProfit": 835767,
       "grossMarginPct": 55.8,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5608",
+      "name": "四維航",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1091550,
+      "operatingCost": 720744,
+      "grossProfit": 370806,
+      "grossMarginPct": 33.97,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49071,6 +51953,17 @@
       "operatingCost": 707495,
       "grossProfit": 109297,
       "grossMarginPct": 13.38,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "5878",
+      "name": "台名",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 200256,
+      "operatingCost": 161644,
+      "grossProfit": 38612,
+      "grossMarginPct": 19.28,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49140,6 +52033,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6108",
+      "name": "競國",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1734821,
+      "operatingCost": 1374581,
+      "grossProfit": 360240,
+      "grossMarginPct": 20.77,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6109",
       "name": "亞元",
       "market": "TPEx",
@@ -49206,6 +52110,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6117",
+      "name": "迎廣",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 939824,
+      "operatingCost": 601817,
+      "grossProfit": 338007,
+      "grossMarginPct": 35.96,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6120",
       "name": "達運",
       "market": "TWSE",
@@ -49214,6 +52129,17 @@
       "operatingCost": 3579476,
       "grossProfit": 94591,
       "grossMarginPct": 2.57,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6122",
+      "name": "擎邦",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1190203,
+      "operatingCost": 1054240,
+      "grossProfit": 135963,
+      "grossMarginPct": 11.42,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49261,6 +52187,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6136",
+      "name": "富爾特",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 209984,
+      "operatingCost": 164167,
+      "grossProfit": 45817,
+      "grossMarginPct": 21.82,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6138",
       "name": "茂達",
       "market": "TPEx",
@@ -49269,6 +52206,17 @@
       "operatingCost": 1225524,
       "grossProfit": 749002,
       "grossMarginPct": 37.93,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6139",
+      "name": "亞翔",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 32641541,
+      "operatingCost": 26265115,
+      "grossProfit": 6376426,
+      "grossMarginPct": 19.53,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49335,6 +52283,17 @@
       "operatingCost": 122471,
       "grossProfit": 37401,
       "grossMarginPct": 23.39,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6150",
+      "name": "撼訊",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1702084,
+      "operatingCost": 1478325,
+      "grossProfit": 223759,
+      "grossMarginPct": 13.15,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49426,6 +52385,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6164",
+      "name": "華興",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 191586,
+      "operatingCost": 126303,
+      "grossProfit": 65283,
+      "grossMarginPct": 34.08,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6166",
       "name": "凌華",
       "market": "TWSE",
@@ -49437,6 +52407,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6168",
+      "name": "宏齊",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 626984,
+      "operatingCost": 469996,
+      "grossProfit": 156988,
+      "grossMarginPct": 25.04,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6169",
       "name": "昱泉",
       "market": "TPEx",
@@ -49445,6 +52426,17 @@
       "operatingCost": 1992,
       "grossProfit": -492,
       "grossMarginPct": -32.8,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6170",
+      "name": "統振",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 837291,
+      "operatingCost": 550875,
+      "grossProfit": 286416,
+      "grossMarginPct": 34.21,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49467,6 +52459,17 @@
       "operatingCost": 1075565,
       "grossProfit": 530643,
       "grossMarginPct": 33.04,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6174",
+      "name": "安碁",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 214355,
+      "operatingCost": 131447,
+      "grossProfit": 82908,
+      "grossMarginPct": 38.68,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49500,6 +52503,17 @@
       "operatingCost": 2088566,
       "grossProfit": 1019634,
       "grossMarginPct": 32.8,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6179",
+      "name": "亞通",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 2851561,
+      "operatingCost": 2410252,
+      "grossProfit": 441309,
+      "grossMarginPct": 15.48,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49602,6 +52616,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6194",
+      "name": "育富",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 292854,
+      "operatingCost": 252480,
+      "grossProfit": 40374,
+      "grossMarginPct": 13.79,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6195",
       "name": "詩肯",
       "market": "TPEx",
@@ -49657,6 +52682,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6204",
+      "name": "艾華",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 117781,
+      "operatingCost": 78114,
+      "grossProfit": 39667,
+      "grossMarginPct": 33.68,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6205",
       "name": "詮欣",
       "market": "TWSE",
@@ -49665,6 +52701,17 @@
       "operatingCost": 240195,
       "grossProfit": 152822,
       "grossMarginPct": 38.88,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6208",
+      "name": "日揚",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 460001,
+      "operatingCost": 321790,
+      "grossProfit": 138211,
+      "grossMarginPct": 30.05,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49679,6 +52726,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6212",
+      "name": "理銘",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 344447,
+      "operatingCost": 208202,
+      "grossProfit": 136245,
+      "grossMarginPct": 39.55,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6213",
       "name": "聯茂",
       "market": "TWSE",
@@ -49687,6 +52745,17 @@
       "operatingCost": 10256670,
       "grossProfit": 5360750,
       "grossMarginPct": 34.33,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6214",
+      "name": "精誠",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 19016764,
+      "operatingCost": 16138059,
+      "grossProfit": 2878705,
+      "grossMarginPct": 15.14,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49712,6 +52781,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6220",
+      "name": "岳豐",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 2643509,
+      "operatingCost": 1834981,
+      "grossProfit": 808528,
+      "grossMarginPct": 30.59,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6221",
+      "name": "晉泰",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1360891,
+      "operatingCost": 1105682,
+      "grossProfit": 255209,
+      "grossMarginPct": 18.75,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6223",
       "name": "旺矽",
       "market": "TPEx",
@@ -49723,6 +52814,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6224",
+      "name": "聚鼎",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 915192,
+      "operatingCost": 593277,
+      "grossProfit": 321915,
+      "grossMarginPct": 35.17,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6228",
       "name": "全譜",
       "market": "TPEx",
@@ -49731,6 +52833,17 @@
       "operatingCost": 7012,
       "grossProfit": 3915,
       "grossMarginPct": 35.83,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6230",
+      "name": "尼得科超眾",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2333657,
+      "operatingCost": 2005145,
+      "grossProfit": 328512,
+      "grossMarginPct": 14.08,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49756,6 +52869,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6235",
+      "name": "華孚",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1615606,
+      "operatingCost": 1230402,
+      "grossProfit": 385204,
+      "grossMarginPct": 23.84,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6237",
       "name": "驊訊",
       "market": "TPEx",
@@ -49778,6 +52902,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6242",
+      "name": "立康",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 120988,
+      "operatingCost": 41255,
+      "grossProfit": 79733,
+      "grossMarginPct": 65.9,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6243",
       "name": "迅杰",
       "market": "TWSE",
@@ -49786,6 +52921,28 @@
       "operatingCost": 48675,
       "grossProfit": 47532,
       "grossMarginPct": 49.41,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6244",
+      "name": "茂迪",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 860940,
+      "operatingCost": 725034,
+      "grossProfit": 135906,
+      "grossMarginPct": 15.79,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6245",
+      "name": "立端",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 2655670,
+      "operatingCost": 1906672,
+      "grossProfit": 748998,
+      "grossMarginPct": 28.2,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49808,6 +52965,17 @@
       "operatingCost": 3983335,
       "grossProfit": 2188583,
       "grossMarginPct": 35.46,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6261",
+      "name": "久元",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1157410,
+      "operatingCost": 792656,
+      "grossProfit": 364754,
+      "grossMarginPct": 31.51,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -49899,6 +53067,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6276",
+      "name": "安鈦克",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 167563,
+      "operatingCost": 133804,
+      "grossProfit": 33759,
+      "grossMarginPct": 20.15,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6278",
       "name": "台表科",
       "market": "TWSE",
@@ -49940,6 +53119,17 @@
       "operatingCost": 8412454,
       "grossProfit": 2392984,
       "grossMarginPct": 22.15,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6283",
+      "name": "淳安",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 314773,
+      "operatingCost": 298032,
+      "grossProfit": 16741,
+      "grossMarginPct": 5.32,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50053,6 +53243,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6415",
+      "name": "矽力*-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 7259110,
+      "operatingCost": 3817175,
+      "grossProfit": 3441935,
+      "grossMarginPct": 47.42,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6417",
       "name": "韋僑",
       "market": "TPEx",
@@ -50061,6 +53262,17 @@
       "operatingCost": 334579,
       "grossProfit": 175272,
       "grossMarginPct": 34.38,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6418",
+      "name": "詠昇",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 282882,
+      "operatingCost": 224023,
+      "grossProfit": 58859,
+      "grossMarginPct": 20.81,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50097,6 +53309,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6435",
+      "name": "大中",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 980678,
+      "operatingCost": 716963,
+      "grossProfit": 263715,
+      "grossMarginPct": 26.89,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6441",
       "name": "廣錠",
       "market": "TPEx",
@@ -50105,6 +53328,17 @@
       "operatingCost": 70620,
       "grossProfit": -33238,
       "grossMarginPct": -88.91,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6443",
+      "name": "元晶",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 222502,
+      "operatingCost": 386375,
+      "grossProfit": -163873,
+      "grossMarginPct": -73.65,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50240,6 +53474,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6492",
+      "name": "生華科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 240,
+      "operatingCost": 105,
+      "grossProfit": 135,
+      "grossMarginPct": 56.25,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6494",
       "name": "九齊",
       "market": "TPEx",
@@ -50306,6 +53551,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6508",
+      "name": "惠光",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 263166,
+      "operatingCost": 213680,
+      "grossProfit": 49486,
+      "grossMarginPct": 18.8,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6510",
       "name": "精測",
       "market": "TPEx",
@@ -50328,6 +53584,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6515",
+      "name": "穎崴",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 4556387,
+      "operatingCost": 2708853,
+      "grossProfit": 1847534,
+      "grossMarginPct": 40.55,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6516",
       "name": "勤崴國際",
       "market": "TPEx",
@@ -50336,6 +53603,28 @@
       "operatingCost": 60941,
       "grossProfit": 74619,
       "grossMarginPct": 55.04,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6517",
+      "name": "保勝光學",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 137808,
+      "operatingCost": 85609,
+      "grossProfit": 52199,
+      "grossMarginPct": 37.88,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6523",
+      "name": "達爾膚",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 282363,
+      "operatingCost": 96223,
+      "grossProfit": 186140,
+      "grossMarginPct": 65.92,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50369,6 +53658,17 @@
       "operatingCost": 132119,
       "grossProfit": 89211,
       "grossMarginPct": 40.31,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6530",
+      "name": "創威",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 96512,
+      "operatingCost": 50527,
+      "grossProfit": 45985,
+      "grossMarginPct": 47.65,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50413,6 +53713,17 @@
       "operatingCost": 252946,
       "grossProfit": 247460,
       "grossMarginPct": 49.45,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6541",
+      "name": "泰福-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 158837,
+      "operatingCost": 399615,
+      "grossProfit": -240778,
+      "grossMarginPct": -151.59,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50482,6 +53793,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6560",
+      "name": "欣普羅",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 49707,
+      "operatingCost": 30719,
+      "grossProfit": 18988,
+      "grossMarginPct": 38.2,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6561",
       "name": "是方",
       "market": "TPEx",
@@ -50512,6 +53834,17 @@
       "operatingCost": 228987,
       "grossProfit": 83119,
       "grossMarginPct": 26.63,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6570",
+      "name": "維田",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 298598,
+      "operatingCost": 190768,
+      "grossProfit": 107830,
+      "grossMarginPct": 36.11,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50570,6 +53903,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6584",
+      "name": "南俊國際",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 831265,
+      "operatingCost": 483898,
+      "grossProfit": 347367,
+      "grossMarginPct": 41.79,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6585",
       "name": "鼎基",
       "market": "TWSE",
@@ -50589,6 +53933,17 @@
       "operatingCost": 51954,
       "grossProfit": 35927,
       "grossMarginPct": 40.88,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6589",
+      "name": "台康生技",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 492812,
+      "operatingCost": 276927,
+      "grossProfit": 215885,
+      "grossMarginPct": 43.81,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50614,6 +53969,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6593",
+      "name": "台灣銘板",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 127607,
+      "operatingCost": 105807,
+      "grossProfit": 21800,
+      "grossMarginPct": 17.08,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6597",
       "name": "立誠",
       "market": "TPEx",
@@ -50625,6 +53991,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6598",
+      "name": "ABC-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 184663,
+      "operatingCost": 75648,
+      "grossProfit": 109015,
+      "grossMarginPct": 59.03,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6603",
       "name": "富強鑫",
       "market": "TPEx",
@@ -50633,6 +54010,39 @@
       "operatingCost": 873754,
       "grossProfit": 289868,
       "grossMarginPct": 24.91,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6604",
+      "name": "儒億",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 516657,
+      "operatingCost": 457463,
+      "grossProfit": 59194,
+      "grossMarginPct": 11.46,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6612",
+      "name": "奈米醫材",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 361955,
+      "operatingCost": 230604,
+      "grossProfit": 131351,
+      "grossMarginPct": 36.29,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6613",
+      "name": "朋億*",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 4580361,
+      "operatingCost": 3480201,
+      "grossProfit": 1100160,
+      "grossMarginPct": 24.02,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50677,6 +54087,17 @@
       "operatingCost": 940635,
       "grossProfit": 147512,
       "grossMarginPct": 13.56,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6629",
+      "name": "泰金-KY",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 587268,
+      "operatingCost": 443715,
+      "grossProfit": 143553,
+      "grossMarginPct": 24.44,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50746,6 +54167,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6651",
+      "name": "全宇昕",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 539237,
+      "operatingCost": 338826,
+      "grossProfit": 200411,
+      "grossMarginPct": 37.17,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6654",
       "name": "天正國際",
       "market": "TPEx",
@@ -50754,6 +54186,28 @@
       "operatingCost": 227823,
       "grossProfit": 74616,
       "grossMarginPct": 24.67,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6655",
+      "name": "科定",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 883658,
+      "operatingCost": 460687,
+      "grossProfit": 422971,
+      "grossMarginPct": 47.87,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6657",
+      "name": "華安",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1851,
+      "operatingCost": 454,
+      "grossProfit": 1397,
+      "grossMarginPct": 75.47,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50779,6 +54233,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6664",
+      "name": "群翊",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 826697,
+      "operatingCost": 410600,
+      "grossProfit": 416097,
+      "grossMarginPct": 50.33,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6668",
       "name": "中揚光",
       "market": "TWSE",
@@ -50798,6 +54263,17 @@
       "operatingCost": 396064488,
       "grossProfit": 38553202,
       "grossMarginPct": 8.87,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6670",
+      "name": "復盛應用",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 7396179,
+      "operatingCost": 5643126,
+      "grossProfit": 1753053,
+      "grossMarginPct": 23.7,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50856,6 +54332,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6684",
+      "name": "安格",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 74679,
+      "operatingCost": 33649,
+      "grossProfit": 41030,
+      "grossMarginPct": 54.94,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6689",
       "name": "伊雲谷",
       "market": "TWSE",
@@ -50911,6 +54398,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6697",
+      "name": "東捷資訊",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 345582,
+      "operatingCost": 297288,
+      "grossProfit": 48294,
+      "grossMarginPct": 13.97,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6698",
       "name": "旭暉應材",
       "market": "TWSE",
@@ -50930,6 +54428,17 @@
       "operatingCost": 58350,
       "grossProfit": 263144,
       "grossMarginPct": 81.85,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6715",
+      "name": "嘉基",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 471019,
+      "operatingCost": 309961,
+      "grossProfit": 161058,
+      "grossMarginPct": 34.19,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50955,6 +54464,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6720",
+      "name": "久昌",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 95796,
+      "operatingCost": 46100,
+      "grossProfit": 49696,
+      "grossMarginPct": 51.88,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6721",
+      "name": "信實",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 806176,
+      "operatingCost": 753809,
+      "grossProfit": 52367,
+      "grossMarginPct": 6.5,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6722",
       "name": "輝創",
       "market": "TWSE",
@@ -50963,6 +54494,28 @@
       "operatingCost": 930982,
       "grossProfit": 238815,
       "grossMarginPct": 20.42,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6725",
+      "name": "矽科宏晟",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1001715,
+      "operatingCost": 751641,
+      "grossProfit": 250074,
+      "grossMarginPct": 24.96,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6728",
+      "name": "上洋",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1338615,
+      "operatingCost": 876081,
+      "grossProfit": 462534,
+      "grossMarginPct": 34.55,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -50999,6 +54552,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6735",
+      "name": "美達科技",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 68962,
+      "operatingCost": 38681,
+      "grossProfit": 30281,
+      "grossMarginPct": 43.91,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6739",
       "name": "竹陞科技",
       "market": "TPEx",
@@ -51032,6 +54596,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6753",
+      "name": "龍德造船",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1409918,
+      "operatingCost": 934848,
+      "grossProfit": 475070,
+      "grossMarginPct": 33.69,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6754",
       "name": "匯僑設計",
       "market": "TWSE",
@@ -51040,6 +54615,17 @@
       "operatingCost": 771626,
       "grossProfit": 232957,
       "grossMarginPct": 23.19,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6757",
+      "name": "台灣虎航",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 5296337,
+      "operatingCost": 4036840,
+      "grossProfit": 1259497,
+      "grossMarginPct": 23.78,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51076,6 +54662,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6770",
+      "name": "力積電",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 21342792,
+      "operatingCost": 11194151,
+      "grossProfit": 10148641,
+      "grossMarginPct": 47.55,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6771",
       "name": "平和環保-創",
       "market": "TWSE",
@@ -51109,6 +54706,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6788",
+      "name": "華景電",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 839778,
+      "operatingCost": 343426,
+      "grossProfit": 496352,
+      "grossMarginPct": 59.11,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6789",
       "name": "采鈺",
       "market": "TWSE",
@@ -51117,6 +54725,50 @@
       "operatingCost": 1669198,
       "grossProfit": 1041593,
       "grossMarginPct": 38.42,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6790",
+      "name": "永豐實",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2659564,
+      "operatingCost": 1975958,
+      "grossProfit": 683606,
+      "grossMarginPct": 25.7,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6791",
+      "name": "虎門科技",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 201584,
+      "operatingCost": 125888,
+      "grossProfit": 75696,
+      "grossMarginPct": 37.55,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6792",
+      "name": "詠業",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 391056,
+      "operatingCost": 258659,
+      "grossProfit": 132397,
+      "grossMarginPct": 33.86,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6796",
+      "name": "晉弘",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 215189,
+      "operatingCost": 140064,
+      "grossProfit": 75125,
+      "grossMarginPct": 34.91,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51142,6 +54794,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6804",
+      "name": "明係",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 338982,
+      "operatingCost": 300698,
+      "grossProfit": 38284,
+      "grossMarginPct": 11.29,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6805",
       "name": "富世達",
       "market": "TWSE",
@@ -51153,6 +54816,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6807",
+      "name": "峰源-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1216969,
+      "operatingCost": 924881,
+      "grossProfit": 292088,
+      "grossMarginPct": 24,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6811",
       "name": "宏碁資訊",
       "market": "TPEx",
@@ -51161,6 +54835,28 @@
       "operatingCost": 3444711,
       "grossProfit": 377550,
       "grossMarginPct": 9.88,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6821",
+      "name": "聯寶",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 126394,
+      "operatingCost": 81115,
+      "grossProfit": 45279,
+      "grossMarginPct": 35.82,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6823",
+      "name": "濾能",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 157110,
+      "operatingCost": 138531,
+      "grossProfit": 18579,
+      "grossMarginPct": 11.83,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51183,6 +54879,28 @@
       "operatingCost": 505947,
       "grossProfit": 181631,
       "grossMarginPct": 26.42,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6834",
+      "name": "天二科技",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 770608,
+      "operatingCost": 561939,
+      "grossProfit": 208669,
+      "grossMarginPct": 27.08,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6835",
+      "name": "圓裕",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 544148,
+      "operatingCost": 475848,
+      "grossProfit": 68300,
+      "grossMarginPct": 12.55,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51238,6 +54956,17 @@
       "operatingCost": 172810,
       "grossProfit": 18669,
       "grossMarginPct": 9.75,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6855",
+      "name": "數泓科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 191512,
+      "operatingCost": 95354,
+      "grossProfit": 96158,
+      "grossMarginPct": 50.21,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51351,6 +55080,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6887",
+      "name": "寶綠特-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 872632,
+      "operatingCost": 696239,
+      "grossProfit": 176393,
+      "grossMarginPct": 20.21,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6890",
       "name": "來億-KY",
       "market": "TWSE",
@@ -51392,6 +55132,17 @@
       "operatingCost": 175415,
       "grossProfit": 89707,
       "grossMarginPct": 33.84,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6902",
+      "name": "GOGOLOOK",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 335603,
+      "operatingCost": 35867,
+      "grossProfit": 299736,
+      "grossMarginPct": 89.31,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51472,6 +55223,50 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6918",
+      "name": "愛派司",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 242139,
+      "operatingCost": 72800,
+      "grossProfit": 169339,
+      "grossMarginPct": 69.93,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6922",
+      "name": "宸曜",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 795940,
+      "operatingCost": 460685,
+      "grossProfit": 335255,
+      "grossMarginPct": 42.12,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6923",
+      "name": "中台",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 336377,
+      "operatingCost": 208353,
+      "grossProfit": 128024,
+      "grossMarginPct": 38.06,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6924",
+      "name": "榮惠-KY創",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 720054,
+      "operatingCost": 528458,
+      "grossProfit": 191596,
+      "grossMarginPct": 26.61,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6925",
       "name": "意藍",
       "market": "TPEx",
@@ -51480,6 +55275,17 @@
       "operatingCost": 11469,
       "grossProfit": 44945,
       "grossMarginPct": 79.67,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6929",
+      "name": "佑全",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 811831,
+      "operatingCost": 541933,
+      "grossProfit": 269898,
+      "grossMarginPct": 33.25,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51505,6 +55311,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6934",
+      "name": "心誠鎂",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 34852,
+      "operatingCost": 38143,
+      "grossProfit": -3291,
+      "grossMarginPct": -9.44,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "6937",
       "name": "天虹",
       "market": "TWSE",
@@ -51513,6 +55330,28 @@
       "operatingCost": 491710,
       "grossProfit": 371202,
       "grossMarginPct": 43.02,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6938",
+      "name": "藍新資訊",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 177025,
+      "operatingCost": 123674,
+      "grossProfit": 53351,
+      "grossMarginPct": 30.14,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6949",
+      "name": "沛爾生醫*-創",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 10947,
+      "operatingCost": 14912,
+      "grossProfit": -3965,
+      "grossMarginPct": -36.22,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51535,6 +55374,17 @@
       "operatingCost": 562817,
       "grossProfit": 121128,
       "grossMarginPct": 18.84,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "6953",
+      "name": "家碩",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 489244,
+      "operatingCost": 255318,
+      "grossProfit": 233926,
+      "grossMarginPct": 47.81,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51626,6 +55476,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "6997",
+      "name": "博弘",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1450008,
+      "operatingCost": 1320562,
+      "grossProfit": 129446,
+      "grossMarginPct": 8.93,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "7547",
       "name": "碩網",
       "market": "TPEx",
@@ -51637,6 +55498,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "7556",
+      "name": "意德士科技",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 237010,
+      "operatingCost": 129666,
+      "grossProfit": 107344,
+      "grossMarginPct": 45.29,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "7642",
       "name": "昶瑞機電",
       "market": "TPEx",
@@ -51645,6 +55517,17 @@
       "operatingCost": 136620,
       "grossProfit": 52123,
       "grossMarginPct": 27.62,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7703",
+      "name": "銳澤",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 958224,
+      "operatingCost": 776271,
+      "grossProfit": 181953,
+      "grossMarginPct": 18.99,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51667,6 +55550,17 @@
       "operatingCost": 414078,
       "grossProfit": 366831,
       "grossMarginPct": 46.97,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7709",
+      "name": "榮田",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 175452,
+      "operatingCost": 127936,
+      "grossProfit": 47516,
+      "grossMarginPct": 27.08,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51703,6 +55597,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "7713",
+      "name": "威力德生醫",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 352696,
+      "operatingCost": 229080,
+      "grossProfit": 123616,
+      "grossMarginPct": 35.05,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "7715",
       "name": "裕山",
       "market": "TPEx",
@@ -51722,6 +55627,17 @@
       "operatingCost": 542854,
       "grossProfit": 111189,
       "grossMarginPct": 17,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7718",
+      "name": "友鋮",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 665499,
+      "operatingCost": 534810,
+      "grossProfit": 130689,
+      "grossMarginPct": 19.64,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51758,6 +55674,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "7744",
+      "name": "崴寶",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1348959,
+      "operatingCost": 854351,
+      "grossProfit": 494608,
+      "grossMarginPct": 36.67,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7747",
+      "name": "昕奇雲端",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 429867,
+      "operatingCost": 361421,
+      "grossProfit": 68446,
+      "grossMarginPct": 15.92,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "7749",
       "name": "意騰-KY",
       "market": "TWSE",
@@ -51780,6 +55718,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "7751",
+      "name": "竑騰",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 759653,
+      "operatingCost": 356071,
+      "grossProfit": 403582,
+      "grossMarginPct": 53.13,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "7753",
       "name": "星亞",
       "market": "TPEx",
@@ -51788,6 +55737,17 @@
       "operatingCost": 116875,
       "grossProfit": 82499,
       "grossMarginPct": 41.38,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7760",
+      "name": "享溫馨",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 279204,
+      "operatingCost": 184471,
+      "grossProfit": 94733,
+      "grossMarginPct": 33.93,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51879,6 +55839,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "7788",
+      "name": "松川精密",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2735363,
+      "operatingCost": 1970299,
+      "grossProfit": 765064,
+      "grossMarginPct": 27.97,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "7791",
       "name": "皇家可口",
       "market": "TWSE",
@@ -51898,6 +55869,17 @@
       "operatingCost": 342937,
       "grossProfit": 79304,
       "grossMarginPct": 18.78,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7795",
+      "name": "長廣",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 907857,
+      "operatingCost": 477836,
+      "grossProfit": 430021,
+      "grossMarginPct": 47.37,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51923,6 +55905,61 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "7805",
+      "name": "威聯通",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1758825,
+      "operatingCost": 963140,
+      "grossProfit": 795685,
+      "grossMarginPct": 45.24,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7810",
+      "name": "捷創科技",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 248995,
+      "operatingCost": 104763,
+      "grossProfit": 144232,
+      "grossMarginPct": 57.93,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7812",
+      "name": "稜研科技*-創",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 36785,
+      "operatingCost": 15381,
+      "grossProfit": 21404,
+      "grossMarginPct": 58.19,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7814",
+      "name": "海昌生技",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 29347,
+      "operatingCost": 8310,
+      "grossProfit": 21037,
+      "grossMarginPct": 71.68,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7818",
+      "name": "溢泰實業",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 3303394,
+      "operatingCost": 2485074,
+      "grossProfit": 818320,
+      "grossMarginPct": 24.77,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "7819",
       "name": "精誠金融",
       "market": "TPEx",
@@ -51931,6 +55968,28 @@
       "operatingCost": 40751,
       "grossProfit": 32436,
       "grossMarginPct": 44.32,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7820",
+      "name": "立盈",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 102492,
+      "operatingCost": 47249,
+      "grossProfit": 55243,
+      "grossMarginPct": 53.9,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7821",
+      "name": "神數",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2952995,
+      "operatingCost": 2369872,
+      "grossProfit": 583123,
+      "grossMarginPct": 19.75,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -51989,6 +56048,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "7842",
+      "name": "天能綠電",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1021014,
+      "operatingCost": 950277,
+      "grossProfit": 70737,
+      "grossMarginPct": 6.93,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "7856",
+      "name": "漢測",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1499822,
+      "operatingCost": 936416,
+      "grossProfit": 563406,
+      "grossMarginPct": 37.56,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8011",
       "name": "台通",
       "market": "TWSE",
@@ -52033,6 +56114,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8027",
+      "name": "鈦昇",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 565711,
+      "operatingCost": 407204,
+      "grossProfit": 158507,
+      "grossMarginPct": 28.02,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8033",
+      "name": "雷虎",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 418578,
+      "operatingCost": 233901,
+      "grossProfit": 184677,
+      "grossMarginPct": 44.12,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8034",
       "name": "榮群",
       "market": "TPEx",
@@ -52041,6 +56144,17 @@
       "operatingCost": 66309,
       "grossProfit": 59984,
       "grossMarginPct": 47.5,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8038",
+      "name": "長園科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 169232,
+      "operatingCost": 143111,
+      "grossProfit": 26121,
+      "grossMarginPct": 15.44,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52077,6 +56191,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8045",
+      "name": "達運光電",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 391091,
+      "operatingCost": 268094,
+      "grossProfit": 122997,
+      "grossMarginPct": 31.45,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8046",
       "name": "南電",
       "market": "TWSE",
@@ -52096,6 +56221,17 @@
       "operatingCost": 129405,
       "grossProfit": 130501,
       "grossMarginPct": 50.21,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8048",
+      "name": "德勝",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 330320,
+      "operatingCost": 213887,
+      "grossProfit": 116433,
+      "grossMarginPct": 35.25,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52129,6 +56265,17 @@
       "operatingCost": 1280879,
       "grossProfit": 262305,
       "grossMarginPct": 17,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8059",
+      "name": "凱碩",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 1898453,
+      "operatingCost": 1836767,
+      "grossProfit": 61686,
+      "grossMarginPct": 3.25,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52231,6 +56378,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8085",
+      "name": "福華",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 141240,
+      "operatingCost": 138080,
+      "grossProfit": 3160,
+      "grossMarginPct": 2.24,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8086",
       "name": "宏捷科",
       "market": "TPEx",
@@ -52275,6 +56433,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8096",
+      "name": "擎亞",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 26875537,
+      "operatingCost": 25561223,
+      "grossProfit": 1314314,
+      "grossMarginPct": 4.89,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8102",
+      "name": "傑霖科技",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 121318,
+      "operatingCost": 66247,
+      "grossProfit": 55071,
+      "grossMarginPct": 45.39,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8103",
       "name": "瀚荃",
       "market": "TWSE",
@@ -52283,6 +56463,17 @@
       "operatingCost": 728017,
       "grossProfit": 473963,
       "grossMarginPct": 39.43,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8104",
+      "name": "錸寶",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 851885,
+      "operatingCost": 718193,
+      "grossProfit": 133692,
+      "grossMarginPct": 15.69,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52316,6 +56507,17 @@
       "operatingCost": 320529,
       "grossProfit": 338713,
       "grossMarginPct": 51.38,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8110",
+      "name": "華東",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2263288,
+      "operatingCost": 2010132,
+      "grossProfit": 253156,
+      "grossMarginPct": 11.19,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52371,6 +56573,17 @@
       "operatingCost": 2669865,
       "grossProfit": 789398,
       "grossMarginPct": 22.82,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8147",
+      "name": "正淩",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 655972,
+      "operatingCost": 408454,
+      "grossProfit": 247518,
+      "grossMarginPct": 37.73,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52484,6 +56697,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8234",
+      "name": "新漢",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 2087728,
+      "operatingCost": 1613790,
+      "grossProfit": 473938,
+      "grossMarginPct": 22.7,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8240",
       "name": "華宏",
       "market": "TPEx",
@@ -52492,6 +56716,17 @@
       "operatingCost": 1435691,
       "grossProfit": 213805,
       "grossMarginPct": 12.96,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8249",
+      "name": "菱光",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 994494,
+      "operatingCost": 842828,
+      "grossProfit": 151666,
+      "grossMarginPct": 15.25,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52536,6 +56771,17 @@
       "operatingCost": 38883,
       "grossProfit": 82987,
       "grossMarginPct": 68.09,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8277",
+      "name": "商丞",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 30266,
+      "operatingCost": 21418,
+      "grossProfit": 8848,
+      "grossMarginPct": 29.23,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52602,6 +56848,28 @@
       "operatingCost": 329303,
       "grossProfit": 128312,
       "grossMarginPct": 28.04,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8349",
+      "name": "恒耀國際",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 3181203,
+      "operatingCost": 2560809,
+      "grossProfit": 620394,
+      "grossMarginPct": 19.5,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8354",
+      "name": "冠好",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 158543,
+      "operatingCost": 131199,
+      "grossProfit": 27344,
+      "grossMarginPct": 17.25,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52704,6 +56972,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8411",
+      "name": "福貞-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 3160062,
+      "operatingCost": 2895993,
+      "grossProfit": 264069,
+      "grossMarginPct": 8.36,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8416",
       "name": "實威",
       "market": "TPEx",
@@ -52734,6 +57013,50 @@
       "operatingCost": 73062,
       "grossProfit": 32945,
       "grossMarginPct": 31.08,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8424",
+      "name": "惠普",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 253967,
+      "operatingCost": 173782,
+      "grossProfit": 80185,
+      "grossMarginPct": 31.57,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8426",
+      "name": "紅木-KY",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 677974,
+      "operatingCost": 475380,
+      "grossProfit": 202594,
+      "grossMarginPct": 29.88,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8429",
+      "name": "金麗-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 38017,
+      "operatingCost": 32496,
+      "grossProfit": 5521,
+      "grossMarginPct": 14.52,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8431",
+      "name": "匯鑽科",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 241156,
+      "operatingCost": 227715,
+      "grossProfit": 13441,
+      "grossMarginPct": 5.57,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52836,6 +57159,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8467",
+      "name": "波力-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 743374,
+      "operatingCost": 405091,
+      "grossProfit": 338283,
+      "grossMarginPct": 45.51,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8477",
+      "name": "創業家",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 103945,
+      "operatingCost": 95764,
+      "grossProfit": 8181,
+      "grossMarginPct": 7.87,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8478",
       "name": "東哥遊艇",
       "market": "TWSE",
@@ -52858,6 +57203,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8487",
+      "name": "愛爾達-創",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 501404,
+      "operatingCost": 416615,
+      "grossProfit": 84789,
+      "grossMarginPct": 16.91,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8489",
       "name": "三貝德",
       "market": "TPEx",
@@ -52869,6 +57225,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8499",
+      "name": "鼎炫-KY",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1148007,
+      "operatingCost": 664762,
+      "grossProfit": 483245,
+      "grossMarginPct": 42.09,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8905",
+      "name": "裕國",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 639239,
+      "operatingCost": 576712,
+      "grossProfit": 62527,
+      "grossMarginPct": 9.78,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8906",
       "name": "花王",
       "market": "TPEx",
@@ -52877,6 +57255,17 @@
       "operatingCost": 45761,
       "grossProfit": 3073,
       "grossMarginPct": 6.29,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8908",
+      "name": "欣雄",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 2965603,
+      "operatingCost": 2697153,
+      "grossProfit": 268450,
+      "grossMarginPct": 9.05,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52902,6 +57291,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8921",
+      "name": "沈氏",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 174195,
+      "operatingCost": 169227,
+      "grossProfit": 4968,
+      "grossMarginPct": 2.85,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8923",
+      "name": "時報",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 105179,
+      "operatingCost": 63537,
+      "grossProfit": 41642,
+      "grossMarginPct": 39.59,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "8924",
       "name": "大田",
       "market": "TPEx",
@@ -52910,6 +57321,17 @@
       "operatingCost": 849594,
       "grossProfit": 31803,
       "grossMarginPct": 3.61,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8926",
+      "name": "台汽電",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 19125894,
+      "operatingCost": 17850410,
+      "grossProfit": 1275484,
+      "grossMarginPct": 6.67,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52943,6 +57365,17 @@
       "operatingCost": 795169,
       "grossProfit": 131684,
       "grossMarginPct": 14.21,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8933",
+      "name": "愛地雅",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 808745,
+      "operatingCost": 769509,
+      "grossProfit": 39236,
+      "grossMarginPct": 4.85,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -52990,6 +57423,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "8941",
+      "name": "關中",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 703897,
+      "operatingCost": 491295,
+      "grossProfit": 212602,
+      "grossMarginPct": 30.2,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "8942",
+      "name": "森鉅",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 824640,
+      "operatingCost": 555484,
+      "grossProfit": 269156,
+      "grossMarginPct": 32.64,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "9802",
       "name": "鈺齊-KY",
       "market": "TWSE",
@@ -53023,6 +57478,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "9906",
+      "name": "欣巴巴",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 391463,
+      "operatingCost": 295402,
+      "grossProfit": 96061,
+      "grossMarginPct": 24.54,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "9907",
       "name": "統一實",
       "market": "TWSE",
@@ -53042,6 +57508,17 @@
       "operatingCost": 614198,
       "grossProfit": 182524,
       "grossMarginPct": 22.91,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "9910",
+      "name": "豐泰",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 21205544,
+      "operatingCost": 16825447,
+      "grossProfit": 4380097,
+      "grossMarginPct": 20.66,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -53075,6 +57552,17 @@
       "operatingCost": 5190803,
       "grossProfit": 907515,
       "grossMarginPct": 14.88,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "9917",
+      "name": "中保科",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 4875247,
+      "operatingCost": 3210714,
+      "grossProfit": 1664533,
+      "grossMarginPct": 34.14,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -53144,6 +57632,17 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "9931",
+      "name": "欣高",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 448139,
+      "operatingCost": 373647,
+      "grossProfit": 74492,
+      "grossMarginPct": 16.62,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "9933",
       "name": "中鼎",
       "market": "TWSE",
@@ -53152,6 +57651,50 @@
       "operatingCost": 18922688,
       "grossProfit": 2931176,
       "grossMarginPct": 13.41,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "9934",
+      "name": "成霖",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 3947397,
+      "operatingCost": 2687086,
+      "grossProfit": 1260311,
+      "grossMarginPct": 31.93,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "9935",
+      "name": "慶豐富",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 1384423,
+      "operatingCost": 953266,
+      "grossProfit": 431157,
+      "grossMarginPct": 31.14,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "9937",
+      "name": "全國",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 6146860,
+      "operatingCost": 5547304,
+      "grossProfit": 599556,
+      "grossMarginPct": 9.75,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "9939",
+      "name": "宏全",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 8176042,
+      "operatingCost": 6189464,
+      "grossProfit": 1986578,
+      "grossMarginPct": 24.3,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
@@ -53199,6 +57742,28 @@
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     },
     {
+      "code": "9945",
+      "name": "潤泰新",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 9895051,
+      "operatingCost": 7297052,
+      "grossProfit": 2597999,
+      "grossMarginPct": 26.26,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "9946",
+      "name": "三發地產",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 116307,
+      "operatingCost": 63892,
+      "grossProfit": 52415,
+      "grossMarginPct": 45.07,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
       "code": "9949",
       "name": "琉園",
       "market": "TPEx",
@@ -53230,6 +57795,28 @@
       "grossProfit": -12454,
       "grossMarginPct": -2.78,
       "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "9958",
+      "name": "世紀鋼",
+      "market": "TWSE",
+      "period": "2026-Q3",
+      "revenue": 5695388,
+      "operatingCost": 4609843,
+      "grossProfit": 1085545,
+      "grossMarginPct": 19.06,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
+    },
+    {
+      "code": "9960",
+      "name": "邁達康",
+      "market": "TPEx",
+      "period": "2026-Q3",
+      "revenue": 143857,
+      "operatingCost": 88602,
+      "grossProfit": 55255,
+      "grossMarginPct": 38.41,
+      "basis": "2026-Q3 cumulative statement minus 2026-Q2 cumulative statement"
     }
   ],
   "notApplicable": [
@@ -53260,7 +57847,8 @@
       "market": "TWSE",
       "periods": [
         "2026-Q1",
-        "2026-Q2"
+        "2026-Q2",
+        "2026-Q3"
       ],
       "reason": "MOPS 將此公司列在沒有營業毛利欄位的特殊產業損益表，因此一般產業毛利率 Gate 不適用。"
     },
@@ -53323,7 +57911,8 @@
       "market": "TWSE",
       "periods": [
         "2026-Q1",
-        "2026-Q2"
+        "2026-Q2",
+        "2026-Q3"
       ],
       "reason": "MOPS 將此公司列在沒有營業毛利欄位的特殊產業損益表，因此一般產業毛利率 Gate 不適用。"
     },
@@ -53344,7 +57933,8 @@
       "market": "TWSE",
       "periods": [
         "2026-Q1",
-        "2026-Q2"
+        "2026-Q2",
+        "2026-Q3"
       ],
       "reason": "MOPS 將此公司列在沒有營業毛利欄位的特殊產業損益表，因此一般產業毛利率 Gate 不適用。"
     },
@@ -53537,7 +58127,8 @@
       "market": "TWSE",
       "periods": [
         "2026-Q1",
-        "2026-Q2"
+        "2026-Q2",
+        "2026-Q3"
       ],
       "reason": "MOPS 將此公司列在沒有營業毛利欄位的特殊產業損益表，因此一般產業毛利率 Gate 不適用。"
     },
@@ -53557,7 +58148,8 @@
       "market": "TPEx",
       "periods": [
         "2026-Q1",
-        "2026-Q2"
+        "2026-Q2",
+        "2026-Q3"
       ],
       "reason": "MOPS 將此公司列在沒有營業毛利欄位的特殊產業損益表，因此一般產業毛利率 Gate 不適用。"
     },
@@ -53598,7 +58190,8 @@
       "market": "TPEx",
       "periods": [
         "2026-Q1",
-        "2026-Q2"
+        "2026-Q2",
+        "2026-Q3"
       ],
       "reason": "MOPS 將此公司列在沒有營業毛利欄位的特殊產業損益表，因此一般產業毛利率 Gate 不適用。"
     },
@@ -53651,7 +58244,8 @@
       "market": "TWSE",
       "periods": [
         "2026-Q1",
-        "2026-Q2"
+        "2026-Q2",
+        "2026-Q3"
       ],
       "reason": "MOPS 將此公司列在沒有營業毛利欄位的特殊產業損益表，因此一般產業毛利率 Gate 不適用。"
     },
