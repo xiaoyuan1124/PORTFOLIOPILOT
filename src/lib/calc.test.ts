@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppState } from "./types";
-import { allocationByAccount, dailySnapshotDelta, localDateKey, localTimeKey, officialPriceCoverage, portfolioCashSummary, portfolioSummary, snapshotsForRange, snapshotsThroughDate, withTodaySnapshot } from "./calc";
+import { allocationByAccount, dailySnapshotDelta, localDateKey, localTimeKey, missingSnapshotDays, snapshotChartPoints, officialPriceCoverage, portfolioCashSummary, portfolioSummary, snapshotsForRange, snapshotsThroughDate, withTodaySnapshot } from "./calc";
 
 const state: AppState = {
   usdTwd: 32,
@@ -69,6 +69,28 @@ describe("portfolio calculations", () => {
       { date: "2026-09-29", total: 5000, cost: 4500, gain: 500, usdTwd: 32 },
       { date: "2026-09-30", total: 0, cost: 0, gain: 0, usdTwd: 32 }
     ]);
+  });
+
+  it("counts missing calendar days without fabricating a portfolio value", () => {
+    const rows = [
+      { date: "2026-10-19", total: 1500, cost: 1200, gain: 300, usdTwd: 31 },
+      { date: "2026-11-11", total: 1800, cost: 1200, gain: 600, usdTwd: 31 }
+    ];
+    expect(missingSnapshotDays(rows)).toBe(22);
+    expect(snapshotChartPoints(rows)).toEqual([
+      { label: "10/19", date: "2026-10-19", value: 1500 },
+      { label: "", date: "", value: null },
+      { label: "11/11", date: "2026-11-11", value: 1800 }
+    ]);
+  });
+
+  it("does not mark consecutive dates as missing", () => {
+    const rows = [
+      { date: "2026-10-19", total: 1500, cost: 1200, gain: 300, usdTwd: 31 },
+      { date: "2026-10-20", total: 1600, cost: 1200, gain: 400, usdTwd: 31 }
+    ];
+    expect(missingSnapshotDays(rows)).toBe(0);
+    expect(snapshotChartPoints(rows)).toHaveLength(2);
   });
 
   it("calculates change between the latest two snapshot days", () => {

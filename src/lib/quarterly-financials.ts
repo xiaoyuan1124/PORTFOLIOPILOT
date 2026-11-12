@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { fetchPublishedMarketCache } from "./market-data";
 
 const quarterlyRowSchema = z.object({
   code: z.string().min(1),
@@ -53,10 +54,7 @@ export type QuarterlyMarginGateResult = {
 };
 
 export async function loadBundledQuarterlyMargins(): Promise<QuarterlyMarginCache> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-quarterly-margins.json?ts=${Date.now()}`, {
-    cache: "no-store"
-  });
+  const { response } = await fetchPublishedMarketCache("tw-quarterly-margins.json");
 
   if (!response.ok) {
     throw new Error("尚未取得官方季度毛利率快取。");

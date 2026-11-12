@@ -20,7 +20,7 @@ for (const name of ['PortfolioPilotWidgets.swift', 'Info.plist', 'PortfolioPilot
   copyFileSync(join(sourceDir, name), join(widgetDir, name));
 }
 copyFileSync(join(root, 'native', 'ios', 'App.entitlements'), join(iosRoot, 'App', 'App.entitlements'));
-for (const name of ['PortfolioWidgetSyncPlugin.swift', 'PortfolioWidgetBridgeViewController.swift']) {
+for (const name of ['PortfolioWidgetSyncPlugin.swift', 'PortfolioWidgetBridgeViewController.swift', 'PortfolioDailyRefresh.swift']) {
   copyFileSync(join(sourceDir, name), join(iosRoot, 'App', name));
 }
 
@@ -41,6 +41,36 @@ patchGeneratedFile('Base.lproj/Main.storyboard',
   'customClass="CAPBridgeViewController" customModule="Capacitor"',
   'customClass="PortfolioWidgetBridgeViewController" customModule="App"');
 
+// Keep native background work as a capability of the generated App target;
+// never modify the signed widget extension or share personal records remotely.
+function injectNativeBackgroundRefresh() {
+  const appDelegatePath = join(iosRoot, 'App', 'AppDelegate.swift');
+  let delegate = readFileSync(appDelegatePath, 'utf8');
+  const launchMarker = '// Override point for customization after application launch.';
+  const backgroundMarker = 'func applicationDidEnterBackground(_ application: UIApplication) {';
+  if (delegate.split(launchMarker).length !== 2 || delegate.split(backgroundMarker).length !== 2) {
+    throw new Error('Unexpected AppDelegate layout: cannot register BGTask safely.');
+  }
+  delegate = delegate.replace(launchMarker, 'PortfolioDailyRefresh.register()\n        ' + launchMarker);
+  delegate = delegate.replace(backgroundMarker, backgroundMarker + '\n        PortfolioDailyRefresh.schedule()');
+  writeFileSync(appDelegatePath, delegate);
+
+  const infoPath = join(iosRoot, 'App', 'Info.plist');
+  let info = readFileSync(infoPath, 'utf8');
+  if (info.includes('<key>BGTaskSchedulerPermittedIdentifiers</key>') || info.includes('<key>UIBackgroundModes</key>')) {
+    throw new Error('Background task Info.plist entries already exist; manual merge required.');
+  }
+  const plistClosing = info.lastIndexOf('</dict>');
+  if (plistClosing < 0) throw new Error('Invalid App Info.plist.');
+  info = info.slice(0, plistClosing) +
+    '    <key>BGTaskSchedulerPermittedIdentifiers</key>\n' +
+    '    <array><string>com.sy1124.portfoliopilot.daily-refresh</string></array>\n' +
+    '    <key>UIBackgroundModes</key>\n' +
+    '    <array><string>fetch</string></array>\n' + info.slice(plistClosing);
+  writeFileSync(infoPath, info);
+}
+injectNativeBackgroundRefresh();
+
 let pbx = readFileSync(projectPath, 'utf8');
 const signature = '/* PortfolioPilot WidgetKit V1 generated target */';
 if (pbx.includes(signature)) {
@@ -54,7 +84,8 @@ const ids = {
   resources: id(9), embed: id(10), buildSwift: id(11), buildEmbed: id(12),
   debug: id(13), release: id(14), configList: id(15), proxy: id(16),
   dependency: id(17), bridgeSwift: id(18), pluginSwift: id(19),
-  buildBridge: id(20), buildPlugin: id(21), buildPrivacy: id(22), privacy: id(23)
+  buildBridge: id(20), buildPlugin: id(21), buildPrivacy: id(22), privacy: id(23),
+  refreshSwift: id(24), buildRefresh: id(25)
 };
 for (const name of Object.values(ids)) {
   if (pbx.includes(name)) throw new Error('Widget PBX ID collision: ' + name);
@@ -77,11 +108,13 @@ replaceOnce('\t\t\t\t504EC3061FED79650016851F /* App */,\n',
 replaceOnce('\t\t\t\t9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,\n',
   '\t\t\t\t9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,\n' +
   '\t\t\t\t' + ids.bridgeSwift + ' /* PortfolioWidgetBridgeViewController.swift */,\n' +
-  '\t\t\t\t' + ids.pluginSwift + ' /* PortfolioWidgetSyncPlugin.swift */,\n');
+  '\t\t\t\t' + ids.pluginSwift + ' /* PortfolioWidgetSyncPlugin.swift */,\n' +
+  '\t\t\t\t' + ids.refreshSwift + ' /* PortfolioDailyRefresh.swift */,\n');
 replaceOnce('\t\t\t\t9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,\n',
   '\t\t\t\t9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,\n' +
   '\t\t\t\t' + ids.buildBridge + ' /* PortfolioWidgetBridgeViewController.swift in Sources */,\n' +
-  '\t\t\t\t' + ids.buildPlugin + ' /* PortfolioWidgetSyncPlugin.swift in Sources */,\n');
+  '\t\t\t\t' + ids.buildPlugin + ' /* PortfolioWidgetSyncPlugin.swift in Sources */,\n' +
+  '\t\t\t\t' + ids.buildRefresh + ' /* PortfolioDailyRefresh.swift in Sources */,\n');
 replaceOnce('\t\t\t\t504EC3041FED79650016851F /* App.app */,\n',
   '\t\t\t\t504EC3041FED79650016851F /* App.app */,\n\t\t\t\t' + ids.product + ' /* PortfolioPilotWidgets.appex */,\n');
 replaceOnce('\t\t\t\t' + hostResources + ' /* Resources */,\n',
@@ -179,6 +212,11 @@ const entries = [
   obj('pluginSwift', 'PortfolioWidgetSyncPlugin.swift', [
     'isa = PBXFileReference;', 'lastKnownFileType = sourcecode.swift;',
     'path = PortfolioWidgetSyncPlugin.swift;', 'sourceTree = "<group>";']),
+  obj('buildRefresh', 'PortfolioDailyRefresh.swift in Sources', [
+    'isa = PBXBuildFile;', 'fileRef = ' + ids.refreshSwift + ' /* PortfolioDailyRefresh.swift */;']),
+  obj('refreshSwift', 'PortfolioDailyRefresh.swift', [
+    'isa = PBXFileReference;', 'lastKnownFileType = sourcecode.swift;',
+    'path = PortfolioDailyRefresh.swift;', 'sourceTree = "<group>";']),
   obj('buildSwift', 'PortfolioPilotWidgets.swift in Sources', [
     'isa = PBXBuildFile;', 'fileRef = ' + ids.swift + ' /* PortfolioPilotWidgets.swift */;']),
   obj('buildEmbed', 'PortfolioPilotWidgets.appex in Embed App Extensions', [

@@ -143,6 +143,33 @@ export function snapshotsForRange(snapshots: NetWorthSnapshot[], range: Snapshot
   return sorted.filter((snapshot) => utcDate(snapshot.date) >= start);
 }
 
+/**
+ * Count calendar dates without recorded personal valuations. These are
+ * missing observations, not zero-return or unchanged-market days.
+ * Use UTC for arithmetic so DST or local time does not change the count.
+ */
+export function missingSnapshotDays(snapshots: NetWorthSnapshot[]) {
+  const unique = [...new Set(snapshots.map((item) => item.date))].sort();
+  if (unique.length < 2) return 0;
+  const first = Date.parse(unique[0] + "T00:00:00Z");
+  const last = Date.parse(unique.at(-1)! + "T00:00:00Z");
+  if (!Number.isFinite(first) || !Number.isFinite(last)) return 0;
+  const days = Math.round((last - first) / 86_400_000) + 1;
+  return Math.max(0, days - unique.length);
+}
+
+/** A null in the sequence breaks Recharts lines at unobserved dates. */
+export function snapshotChartPoints(snapshots: NetWorthSnapshot[]) {
+  const sorted = [...snapshots].sort((a, b) => a.date.localeCompare(b.date));
+  return sorted.flatMap((snapshot, index) => {
+    const previous = sorted[index - 1];
+    const gap = previous && Date.parse(snapshot.date + "T00:00:00Z") -
+      Date.parse(previous.date + "T00:00:00Z") > 86_400_000;
+    const point = { label: snapshot.date.slice(5).replace("-", "/"), date: snapshot.date, value: Math.round(snapshot.total) as number | null };
+    return gap ? [{ label: "", date: "", value: null }, point] : [point];
+  });
+}
+
 export function snapshotPeriodDelta(snapshots: NetWorthSnapshot[]) {
   const sorted = [...snapshots].sort((a, b) => a.date.localeCompare(b.date));
   if (sorted.length < 2) return null;
