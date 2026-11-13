@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-12T18:32:01.490Z",
+  "generatedAt": "2026-11-13T17:58:36.942Z",
   "sources": [
     {
       "name": "TWSE",
       "url": "https://openapi.twse.com.tw/v1/opendata/t187ap05_L",
-      "fetchedAt": "2026-11-12T18:32:01.490Z"
+      "fetchedAt": "2026-11-13T17:58:36.942Z"
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap05_O",
-      "fetchedAt": "2026-11-12T18:32:01.490Z"
+      "fetchedAt": "2026-11-13T17:58:36.942Z"
     }
   ],
   "rows": [
@@ -7082,8 +7082,8 @@
       "lastYearRevenue": 32051,
       "momPct": -11.352476515798463,
       "yoyPct": 3.6410720414339646,
-      "cumulativeRevenue": 343762,
-      "cumulativeYoyPct": -15.633152620741617
+      "cumulativeRevenue": 347329,
+      "cumulativeYoyPct": -14.75773141478571
     },
     {
       "code": "2905",
@@ -22433,7 +22433,7 @@
       "period": "2026-10",
       "revenue": 220659,
       "lastYearRevenue": 224085,
-      "momPct": -14.393289856028305,
+      "momPct": -13.440921376258713,
       "yoyPct": -1.5288841287904142,
       "cumulativeRevenue": 2725011,
       "cumulativeYoyPct": 41.45554835735732

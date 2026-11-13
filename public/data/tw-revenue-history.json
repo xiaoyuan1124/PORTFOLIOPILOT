@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T18:32:01.490Z",
+  "generatedAt": "2026-11-13T17:58:36.942Z",
   "periods": [
     "2026-10",
     "2026-09",
@@ -8561,6 +8561,22 @@
       "note": "-"
     },
     {
+      "code": "2816",
+      "name": "旺旺保",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-10",
+      "revenue": 1156077,
+      "previousMonthRevenue": 1366606,
+      "lastYearRevenue": 1298264,
+      "momPct": -15.4,
+      "yoyPct": -10.95,
+      "cumulativeRevenue": 13706342,
+      "lastYearCumulativeRevenue": 12142044,
+      "cumulativeYoyPct": 12.88,
+      "note": "-"
+    },
+    {
       "code": "2820",
       "name": "華票",
       "market": "TWSE",
@@ -8574,6 +8590,22 @@
       "cumulativeRevenue": 3425606,
       "lastYearCumulativeRevenue": 2491162,
       "cumulativeYoyPct": 37.51,
+      "note": "-"
+    },
+    {
+      "code": "2832",
+      "name": "台產",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-10",
+      "revenue": 907088,
+      "previousMonthRevenue": 868102,
+      "lastYearRevenue": 859530,
+      "momPct": 4.49,
+      "yoyPct": 5.53,
+      "cumulativeRevenue": 8990025,
+      "lastYearCumulativeRevenue": 8499718,
+      "cumulativeYoyPct": 5.76,
       "note": "-"
     },
     {
@@ -8689,6 +8721,70 @@
       "note": "今年累計營收較去年同期增加，主因今年泛自營業務操作獲利優於去年同期所致。"
     },
     {
+      "code": "2880",
+      "name": "華南金",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-10",
+      "revenue": 6313733,
+      "previousMonthRevenue": 6206398,
+      "lastYearRevenue": 6012934,
+      "momPct": 1.72,
+      "yoyPct": 5,
+      "cumulativeRevenue": 68112495,
+      "lastYearCumulativeRevenue": 55376975,
+      "cumulativeYoyPct": 22.99,
+      "note": "-"
+    },
+    {
+      "code": "2885",
+      "name": "元大金",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-10",
+      "revenue": 12879708,
+      "previousMonthRevenue": 14927852,
+      "lastYearRevenue": 12501321,
+      "momPct": -13.72,
+      "yoyPct": 3.02,
+      "cumulativeRevenue": 166553285,
+      "lastYearCumulativeRevenue": 87402036,
+      "cumulativeYoyPct": 90.55,
+      "note": "本年營收淨額增加係手續費及佣金淨損益、兌換損益等。"
+    },
+    {
+      "code": "2886",
+      "name": "兆豐金",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-10",
+      "revenue": 6147224,
+      "previousMonthRevenue": 8344036,
+      "lastYearRevenue": 6797342,
+      "momPct": -26.32,
+      "yoyPct": -9.56,
+      "cumulativeRevenue": 77223757,
+      "lastYearCumulativeRevenue": 67775526,
+      "cumulativeYoyPct": 13.94,
+      "note": "-"
+    },
+    {
+      "code": "2887",
+      "name": "台新新光金",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-10",
+      "revenue": 15084492,
+      "previousMonthRevenue": 13620078,
+      "lastYearRevenue": 34375125,
+      "momPct": 10.75,
+      "yoyPct": -56.11,
+      "cumulativeRevenue": 160334650,
+      "lastYearCumulativeRevenue": 123476346,
+      "cumulativeYoyPct": 29.85,
+      "note": "本年度新增新光子公司"
+    },
+    {
       "code": "2889",
       "name": "國票金",
       "market": "TWSE",
@@ -8734,6 +8830,22 @@
       "cumulativeRevenue": 200009853,
       "lastYearCumulativeRevenue": 164191863,
       "cumulativeYoyPct": 21.81,
+      "note": "-"
+    },
+    {
+      "code": "2892",
+      "name": "第一金",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-10",
+      "revenue": 6247755,
+      "previousMonthRevenue": 6110987,
+      "lastYearRevenue": 6223446,
+      "momPct": 2.23,
+      "yoyPct": 0.39,
+      "cumulativeRevenue": 68864748,
+      "lastYearCumulativeRevenue": 60305137,
+      "cumulativeYoyPct": 14.19,
       "note": "-"
     },
     {
@@ -19758,6 +19870,22 @@
       "cumulativeRevenue": 717108,
       "lastYearCumulativeRevenue": 726126,
       "cumulativeYoyPct": -1.24,
+      "note": "-"
+    },
+    {
+      "code": "5880",
+      "name": "合庫金",
+      "market": "TWSE",
+      "industry": "",
+      "period": "2026-10",
+      "revenue": 5293446,
+      "previousMonthRevenue": 5448285,
+      "lastYearRevenue": 5236294,
+      "momPct": -2.84,
+      "yoyPct": 1.09,
+      "cumulativeRevenue": 58862309,
+      "lastYearCumulativeRevenue": 51567471,
+      "cumulativeYoyPct": 14.14,
       "note": "-"
     },
     {
