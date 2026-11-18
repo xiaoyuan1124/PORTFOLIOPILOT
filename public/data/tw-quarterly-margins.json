@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T19:19:15.491Z",
+  "generatedAt": "2026-11-18T19:01:49.672Z",
   "periods": [
     "2026-Q1",
     "2026-Q2",
@@ -12,7 +12,7 @@
       "period": "2026-Q1",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-17T19:19:15.491Z",
+      "fetchedAt": "2026-11-18T19:01:49.672Z",
       "generalRows": 1051,
       "notApplicableRows": 35
     },
@@ -22,7 +22,7 @@
       "period": "2026-Q1",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-17T19:19:15.491Z",
+      "fetchedAt": "2026-11-18T19:01:49.672Z",
       "generalRows": 890,
       "notApplicableRows": 7
     },
@@ -32,7 +32,7 @@
       "period": "2026-Q2",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-17T19:19:15.491Z",
+      "fetchedAt": "2026-11-18T19:01:49.672Z",
       "generalRows": 1053,
       "notApplicableRows": 35
     },
@@ -42,7 +42,7 @@
       "period": "2026-Q2",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-17T19:19:15.491Z",
+      "fetchedAt": "2026-11-18T19:01:49.672Z",
       "generalRows": 890,
       "notApplicableRows": 7
     },
@@ -52,9 +52,9 @@
       "period": "2026-Q3",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-17T19:19:15.491Z",
+      "fetchedAt": "2026-11-18T19:01:49.672Z",
       "generalRows": 1053,
-      "notApplicableRows": 22
+      "notApplicableRows": 23
     },
     {
       "name": "MOPS 公開資訊觀測站－綜合損益表",
@@ -62,7 +62,7 @@
       "period": "2026-Q3",
       "url": "https://mopsov.twse.com.tw/mops/web/ajax_t163sb04",
       "method": "POST",
-      "fetchedAt": "2026-11-17T19:19:15.491Z",
+      "fetchedAt": "2026-11-18T19:01:49.672Z",
       "generalRows": 891,
       "notApplicableRows": 7
     }
@@ -64145,7 +64145,8 @@
       "market": "TWSE",
       "periods": [
         "2026-Q1",
-        "2026-Q2"
+        "2026-Q2",
+        "2026-Q3"
       ],
       "reason": "MOPS 將此公司列在沒有營業毛利欄位的特殊產業損益表，因此一般產業毛利率 Gate 不適用。"
     },

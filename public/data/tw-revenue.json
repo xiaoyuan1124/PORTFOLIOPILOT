@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-16T20:38:21.619Z",
+  "generatedAt": "2026-11-18T18:59:11.605Z",
   "sources": [
     {
       "name": "TWSE",
       "url": "https://openapi.twse.com.tw/v1/opendata/t187ap05_L",
-      "fetchedAt": "2026-11-16T20:38:21.619Z"
+      "fetchedAt": "2026-11-18T18:59:11.605Z"
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap05_O",
-      "fetchedAt": "2026-11-16T20:38:21.619Z"
+      "fetchedAt": "2026-11-18T18:59:11.605Z"
     }
   ],
   "rows": [
@@ -7008,6 +7008,32 @@
       "cumulativeYoyPct": 16.222301233092864
     },
     {
+      "code": "2850",
+      "name": "新產",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-10",
+      "revenue": 2424699,
+      "lastYearRevenue": 2306175,
+      "momPct": 10.475216307710532,
+      "yoyPct": 5.139419168103028,
+      "cumulativeRevenue": 24502187,
+      "cumulativeYoyPct": 7.5725312200305535
+    },
+    {
+      "code": "2851",
+      "name": "中再保",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-10",
+      "revenue": 1169839,
+      "lastYearRevenue": 2244919,
+      "momPct": -15.699187718347535,
+      "yoyPct": -47.88947841770683,
+      "cumulativeRevenue": 18257357,
+      "cumulativeYoyPct": 42.42680164586838
+    },
+    {
       "code": "2852",
       "name": "第一保",
       "market": "TWSE",
@@ -7045,6 +7071,58 @@
       "yoyPct": 5.002532873302783,
       "cumulativeRevenue": 68112495,
       "cumulativeYoyPct": 22.99786147582095
+    },
+    {
+      "code": "2881",
+      "name": "富邦金",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-10",
+      "revenue": 12350757,
+      "lastYearRevenue": 74308320,
+      "momPct": -36.55778612469756,
+      "yoyPct": -83.3790388478706,
+      "cumulativeRevenue": 255443733,
+      "cumulativeYoyPct": 21.536695726171548
+    },
+    {
+      "code": "2882",
+      "name": "國泰金",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-10",
+      "revenue": 22930456,
+      "lastYearRevenue": 59411896,
+      "momPct": 12.3759037920649,
+      "yoyPct": -61.40426826304281,
+      "cumulativeRevenue": 257862766,
+      "cumulativeYoyPct": 12.013282671113776
+    },
+    {
+      "code": "2883",
+      "name": "凱基金",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-10",
+      "revenue": 5445037,
+      "lastYearRevenue": 24184824,
+      "momPct": -28.33664360074266,
+      "yoyPct": -77.4857282401559,
+      "cumulativeRevenue": 97245644,
+      "cumulativeYoyPct": 133.22408523917522
+    },
+    {
+      "code": "2884",
+      "name": "玉山金",
+      "market": "TWSE",
+      "industry": "金融保險業",
+      "period": "2026-10",
+      "revenue": 6846777,
+      "lastYearRevenue": 8153665,
+      "momPct": -20.305850662942596,
+      "yoyPct": -16.028227796947753,
+      "cumulativeRevenue": 87873481,
+      "cumulativeYoyPct": 15.77001400067375
     },
     {
       "code": "2885",
@@ -18670,7 +18748,7 @@
     },
     {
       "code": "6474",
-      "name": "華豫寧",
+      "name": "維夫拉克控股",
       "market": "TPEx",
       "industry": "電子通路業",
       "period": "2026-10",
