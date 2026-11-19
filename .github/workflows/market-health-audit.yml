@@ -1,0 +1,31 @@
+name: Audit Public Market Cache Health
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "public/data/**"
+      - "scripts/audit-market-health.mjs"
+      - "scripts/lib/market-health.mjs"
+      - ".github/workflows/market-health-audit.yml"
+  schedule:
+    # 22:30 Taipei on weekdays. GitHub cron is best-effort, not an SLA.
+    - cron: "30 14 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-public-market-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Test trading-day and cache-status rules
+        run: node --test scripts/lib/market-health.test.mjs
+      - name: Check official quote, benchmark and history dates
+        run: node scripts/audit-market-health.mjs

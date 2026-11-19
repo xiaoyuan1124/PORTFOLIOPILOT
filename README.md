@@ -2,7 +2,7 @@
 
 PortfolioPilot is a **zero-cost, local-first, mobile-first investment portfolio PWA** for personal use on phones and desktop browsers.
 
-## Current self-use build
+For the current feature-by-feature status, limitations, test gates, and active integration branch see [2026-11-20 product capability audit](docs/PRODUCT_CAPABILITY_AUDIT_20261120.md).\n\n## Current self-use build
 
 - Decision-cockpit dashboard with net-worth range controls, cash level, account distribution, top positions and data freshness
 - Global stock/ETF/navigation search (⌘K / Ctrl+K) with direct official Taiwan security research
