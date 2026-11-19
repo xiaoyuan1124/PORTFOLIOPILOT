@@ -1,3 +1,4 @@
+import { fetchMarketDataset } from "./market-data-url";
 import { z } from "zod";
 
 const sourceSchema = z.object({
@@ -28,8 +29,7 @@ export type ValuationRow = z.infer<typeof valuationRowSchema>;
 export type ValuationCache = z.infer<typeof valuationCacheSchema>;
 
 export async function loadBundledValuations(): Promise<ValuationCache> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-valuations.json?ts=${Date.now()}`, { cache: "no-store" });
+  const response = await fetchMarketDataset("tw-valuations.json");
   if (!response.ok) throw new Error("尚未取得官方台股估值快取。");
   return valuationCacheSchema.parse(await response.json());
 }
