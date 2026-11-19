@@ -5,6 +5,7 @@ import { Clock3, RefreshCw } from "lucide-react";
 import { loadBundledTwQuotes, type TwQuoteCache } from "@/lib/market-data";
 import { taiwanMarketStatus } from "@/lib/market-session";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
+import { NATIVE_RESUME_EVENT } from "./native-runtime-bridge";
 
 function toneForPhase(phase: ReturnType<typeof taiwanMarketStatus>["phase"]) {
   if (phase === "closed") return "good" as const;
@@ -34,28 +35,35 @@ export function MarketStatusCenter() {
 
   useEffect(() => {
     let active = true;
-    void loadBundledTwQuotes()
-      .then((value) => {
+    async function refreshQuietly() {
+      try {
+        const next = await loadBundledTwQuotes();
         if (!active) return;
-        setCache(value);
+        setCache(next);
+        setNow(new Date());
         setError("");
-      })
-      .catch((cause) => {
-        if (!active) return;
-        setCache(null);
-        setError(cause instanceof Error ? cause.message : "無法載入官方台股收盤資料。");
-      })
-      .finally(() => {
+      } catch (cause) {
+        if (active) setError(cause instanceof Error ? cause.message : "無法載入官方台股收盤資料。");
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    }
 
-    const timer = window.setInterval(() => {
-      if (active) setNow(new Date());
-    }, 60_000);
+    function onVisible() {
+      if (document.visibilityState === "visible") void refreshQuietly();
+    }
+
+    void refreshQuietly();
+    // An already-open view must refresh its dataset, not merely advance the clock.
+    const timer = window.setInterval(onVisible, 15 * 60_000);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener(NATIVE_RESUME_EVENT, onVisible);
 
     return () => {
       active = false;
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener(NATIVE_RESUME_EVENT, onVisible);
     };
   }, []);
 
