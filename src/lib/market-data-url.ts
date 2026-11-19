@@ -14,10 +14,10 @@ export async function fetchMarketDataset(path: string): Promise<Response> {
   const bundled = () => fetch(base + "/data/" + path + query, { cache: "no-store" });
   if (!Capacitor.isNativePlatform()) return bundled();
 
-  // Native builds carry frozen assets. Prefer the published daily cache instead.
+  // Native builds carry frozen assets. Prefer the main-branch daily cache: Pages deploys can lag commits.
   for (const url of [
-    PUBLIC_PAGES + "/data/" + path + query,
-    PUBLIC_RAW + "/data/" + path + query
+    PUBLIC_RAW + "/data/" + path + query,
+    PUBLIC_PAGES + "/data/" + path + query
   ]) {
     try {
       const response = await fetch(url, { cache: "no-store" });
