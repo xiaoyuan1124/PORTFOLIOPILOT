@@ -1,0 +1,77 @@
+name: Refresh TWSE Index for Market Stress
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/update-benchmarks.mjs"
+      - "scripts/lib/benchmark-data.mjs"
+      - ".github/workflows/benchmark-daily.yml"
+  schedule:
+    # UTC 08:30 / 12:30 = Taiwan 16:30 / 20:30, weekdays.
+    # Retry later because TWSE publication and Actions cron are not guaranteed exact.
+    - cron: "30 8,12 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: taiwan-market-data-writers
+  cancel-in-progress: false
+
+jobs:
+  refresh-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Refresh official TWSE price and total-return index
+        run: node scripts/update-benchmarks.mjs
+      - name: Commit newer verified benchmark
+        id: commit
+        run: |
+          git add public/data/tw-benchmarks.json
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No new TWSE index close." >> "$GITHUB_STEP_SUMMARY"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "data: refresh TWSE benchmark"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install dependencies
+        if: steps.commit.outputs.changed == 'true'
+        run: npm install --legacy-peer-deps
+      - name: Build refreshed public site
+        if: steps.commit.outputs.changed == 'true'
+        run: npm run build
+      - uses: actions/configure-pages@v6
+        if: steps.commit.outputs.changed == 'true'
+      - uses: actions/upload-pages-artifact@v5
+        if: steps.commit.outputs.changed == 'true'
+        with:
+          path: ./out
+
+  deploy:
+    if: needs.refresh-and-build.outputs.changed == 'true'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: refresh-and-build
+    steps:
+      - name: Deploy refreshed market stress inputs
+        id: deployment
+        uses: actions/deploy-pages@v5
