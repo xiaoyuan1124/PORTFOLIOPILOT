@@ -1,3 +1,4 @@
+import { fetchMarketDataset } from "./market-data-url";
 import { z } from "zod";
 
 const institutionalRowSchema = z.object({
@@ -23,10 +24,7 @@ export type InstitutionalRow = z.infer<typeof institutionalRowSchema>;
 export type InstitutionalCache = z.infer<typeof institutionalCacheSchema>;
 
 export async function loadBundledInstitutional10d(): Promise<InstitutionalCache> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-institutional-10d.json?ts=${Date.now()}`, {
-    cache: "no-store"
-  });
+  const response = await fetchMarketDataset("tw-institutional-10d.json");
 
   if (!response.ok) {
     throw new Error("尚未取得官方 10 日法人快取。");
