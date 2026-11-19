@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo,useState } from "react";
+import { useState } from "react";
 import type { AppState } from "@/lib/types";
 import {simulatePortfolioAdjustment,type AdjustmentMode} from "@/lib/portfolio-adjustment-scenario";
 import {money} from "@/lib/utils";
@@ -15,7 +15,7 @@ export function PortfolioAdjustmentPanel({state}:{state:AppState}) {
   const current=securities.find(item=>item.id===from)??securities[0]??null;
   const destination=securities.find(item=>item.id===to)??securities.find(item=>item.id!==current?.id)??null;
   const isSwitch=mode==="switch";
-  const result=useMemo(()=>{
+  const result=(()=>{
     if(!current)return {value:null,error:"尚無可模擬的證券持股"};
     try {
       return {value:simulatePortfolioAdjustment(state.holdings,state.etfCompositions,state.usdTwd,{
@@ -24,7 +24,7 @@ export function PortfolioAdjustmentPanel({state}:{state:AppState}) {
         newContributionTwd:mode==="add"?Number(funds):0
       }),error:""};
     }catch(error){return {value:null,error:error instanceof Error?error.message:"輸入資料不合法"};}
-  },[state.holdings,state.etfCompositions,state.usdTwd,mode,current,destination,isSwitch,shares,funds]);
+  })();
   return <details className="rounded-xl border border-black/8 px-3 py-2 dark:border-white/10" data-ux-role="portfolio-adjustment">
     <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">持有、減碼、換股與加碼情境試算</summary>
     <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
