@@ -1,3 +1,4 @@
+import { fetchMarketDataset } from "./market-data-url";
 import { z } from "zod";
 
 const pointSchema = z.tuple([
@@ -69,8 +70,7 @@ async function loadBucket(market: "TWSE" | "TPEx", symbol: string) {
   if (existing) return existing;
 
   const promise = (async () => {
-    const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-    const response = await fetch(`${base}/data/tw-price-history/${file}?ts=${Date.now()}`, { cache: "no-store" });
+    const response = await fetchMarketDataset("tw-price-history/" + file);
     if (!response.ok) throw new Error("尚未取得此標的的歷史行情快取。");
     return bucketSchema.parse(await response.json());
   })();
@@ -85,8 +85,7 @@ async function loadBucket(market: "TWSE" | "TPEx", symbol: string) {
 }
 
 async function fetchTwPriceHistoryIndex(): Promise<TwPriceHistoryIndex> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-price-history/index.json?ts=${Date.now()}`, { cache: "no-store" });
+  const response = await fetchMarketDataset("tw-price-history/index.json");
   if (!response.ok) throw new Error("尚未建立台股歷史行情快取。");
   return indexSchema.parse(await response.json());
 }
