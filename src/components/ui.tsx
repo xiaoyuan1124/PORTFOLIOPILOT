@@ -6,15 +6,15 @@ import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("pp-card rounded-[24px] border border-black/6 bg-white/88 shadow-[0_14px_40px_rgba(31,51,42,0.06)] backdrop-blur dark:border-white/8 dark:bg-[#151a18]/92", className)} {...props} />;
+  return <div className={cn("pp-card rounded-[20px] border border-black/6 bg-white/88 shadow-[0_14px_40px_rgba(31,51,42,0.06)] backdrop-blur dark:border-white/8 dark:bg-[#151a18]/92", className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("px-5 pt-5 md:px-6 md:pt-6", className)} {...props} />;
+  return <div className={cn("px-4 pt-4 md:px-5 md:pt-5", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("p-5 md:p-6", className)} {...props} />;
+  return <div className={cn("p-4 md:p-5", className)} {...props} />;
 }
 
 export function Button({ className, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
@@ -31,7 +31,7 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
 }
 
 export function Metric({ label, value, helper }: { label: string; value: string; helper?: string }) {
-  return <div><p className="text-xs font-medium tracking-wide text-black/45 dark:text-white/45">{label}</p><p className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">{value}</p>{helper ? <p className="mt-1 text-xs text-black/45 dark:text-white/45">{helper}</p> : null}</div>;
+  return <div><p className="text-xs font-medium tracking-wide text-black/45 dark:text-white/45">{label}</p><p className="mt-1 text-xl font-semibold tracking-tight md:text-2xl tabular-nums">{value}</p>{helper ? <p className="mt-1 text-xs text-black/45 dark:text-white/45">{helper}</p> : null}</div>;
 }
 
 

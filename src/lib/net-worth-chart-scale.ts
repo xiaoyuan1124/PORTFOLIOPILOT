@@ -53,3 +53,18 @@ export function formatNetWorthTick(value: number, step: number): string {
     maximumFractionDigits: decimals
   }).format(value);
 }
+
+/** Full-amount reference axis; explicit zero origin. No synthetic data points. */
+export function netWorthFullScale(values: Array<number | null>): NetWorthChartScale {
+  const real = values.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  if (!real.length) return netWorthChartScale(values);
+  const minimum = Math.min(...real);
+  const maximum = Math.max(...real);
+  const low = Math.min(0, minimum);
+  const spread = Math.max(0.01, maximum - low);
+  const step = niceStep(spread / 4);
+  const high = roundForStep(Math.ceil(maximum / step) * step + step);
+  const count = Math.max(1, Math.min(12, Math.round((high - low) / step)));
+  const ticks = Array.from({ length: count + 1 }, (_, index) => roundForStep(low + step * index));
+  return { domain: [low, high], ticks, step, minimum, maximum, unchanged: minimum === maximum };
+}

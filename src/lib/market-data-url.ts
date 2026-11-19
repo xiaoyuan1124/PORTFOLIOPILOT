@@ -21,7 +21,13 @@ export async function fetchMarketDataset(path: string): Promise<Response> {
   ]) {
     try {
       const response = await fetch(url, { cache: "no-store" });
-      if (response.ok) return response;
+      if (!response.ok) continue;
+      // A GitHub Pages error page can return HTTP 200 HTML; do not pass it off as JSON.
+      // Consume only a clone so the existing per-dataset schema validation remains authoritative.
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!/json|text\/plain|octet-stream/i.test(contentType)) continue;
+      const payload = await response.clone().json().catch(() => null);
+      if (payload && typeof payload === "object" && !Array.isArray(payload)) return response;
     } catch {
       // Offline or network-restricted: continue to the next public source.
     }
