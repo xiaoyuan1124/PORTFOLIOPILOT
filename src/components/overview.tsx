@@ -59,6 +59,9 @@ export function Overview({
   const trend = snapshotTimeline(snapshots);
   const missingTradingDays = trend.filter((point) => point.value === null).length;
   const netWorthScale = netWorthChartScale(trend.map((point) => point.value));
+  const chartMoney = (value: number) => netWorthScale.step < 1
+    ? `NT${formatNetWorthTick(value, netWorthScale.step)}`
+    : money(value);
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -136,7 +139,7 @@ export function Overview({
                     />
                     <Tooltip
                       labelFormatter={(value) => new Date(Number(value)).toISOString().slice(0, 10)}
-                      formatter={(value) => money(Number(value))}
+                      formatter={(value) => chartMoney(Number(value))}
                       contentStyle={{
                         borderRadius: 14,
                         border: "1px solid rgba(0,0,0,.08)",
@@ -160,11 +163,11 @@ export function Overview({
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs tabular-nums">
                 <div className="rounded-lg bg-black/[.025] px-3 py-2 dark:bg-white/[.035]">
                   <span className="text-black/45 dark:text-white/45">區間最低淨值</span>
-                  <p className="mt-0.5 font-semibold">{money(netWorthScale.minimum)}</p>
+                  <p className="mt-0.5 font-semibold">{chartMoney(netWorthScale.minimum)}</p>
                 </div>
                 <div className="rounded-lg bg-black/[.025] px-3 py-2 dark:bg-white/[.035]">
                   <span className="text-black/45 dark:text-white/45">區間最高淨值</span>
-                  <p className="mt-0.5 font-semibold">{money(netWorthScale.maximum)}</p>
+                  <p className="mt-0.5 font-semibold">{chartMoney(netWorthScale.maximum)}</p>
                 </div>
               </div>
             ) : null}
