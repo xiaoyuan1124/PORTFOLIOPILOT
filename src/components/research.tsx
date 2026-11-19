@@ -12,13 +12,14 @@ import { SectorPulseResearch } from "./sector-pulse-research";
 import { Journal } from "./journal";
 import { EtfResearch } from "./etf-research";
 import { Watchlist } from "./watchlist";
+import { MarketStressPanel } from "./market-stress-panel";
 
-type ResearchTab = "snapshot" | "etf" | "materialEvents" | "sectorPulse" | "revenue" | "valuation" | "watchlist" | "scanner" | "journal";
+type ResearchTab = "marketStress" | "snapshot" | "etf" | "materialEvents" | "sectorPulse" | "revenue" | "valuation" | "watchlist" | "scanner" | "journal";
 type ResearchArea = "security" | "market" | "strategy" | "notes";
 
 const areas: Array<{ key: ResearchArea; label: string; defaultTab: ResearchTab }> = [
   { key: "security", label: "標的", defaultTab: "snapshot" },
-  { key: "market", label: "市場", defaultTab: "materialEvents" },
+  { key: "market", label: "市場", defaultTab: "marketStress" },
   { key: "strategy", label: "選股", defaultTab: "watchlist" },
   { key: "notes", label: "筆記", defaultTab: "journal" }
 ];
@@ -29,6 +30,7 @@ const tabsByArea: Record<ResearchArea, Array<{ key: ResearchTab; label: string }
     { key: "etf", label: "ETF 深度" }
   ],
   market: [
+    { key: "marketStress", label: "市場風險" },
     { key: "materialEvents", label: "持股重訊" },
     { key: "sectorPulse", label: "族群脈動" },
     { key: "revenue", label: "公司營收" },
@@ -45,7 +47,7 @@ const tabsByArea: Record<ResearchArea, Array<{ key: ResearchTab; label: string }
 
 function areaForTab(tab: ResearchTab): ResearchArea {
   if (tab === "snapshot" || tab === "etf") return "security";
-  if (tab === "materialEvents" || tab === "sectorPulse" || tab === "revenue" || tab === "valuation") return "market";
+  if (tab === "marketStress" || tab === "materialEvents" || tab === "sectorPulse" || tab === "revenue" || tab === "valuation") return "market";
   if (tab === "watchlist" || tab === "scanner") return "strategy";
   return "notes";
 }
@@ -65,8 +67,8 @@ export function Research({
   onAddHolding?: (candidate: HoldingLookupCandidate) => void;
   onQuantResearch?: (key: string) => void;
 }) {
-  const [tab, setTab] = useState<ResearchTab>(researchType === "etf" ? "etf" : "snapshot");
-  const [snapshotKey, setSnapshotKey] = useState(researchKey);
+  const [tab, setTab] = useState<ResearchTab>(researchKey === "__market_stress__" ? "marketStress" : researchType === "etf" ? "etf" : "snapshot");
+  const [snapshotKey, setSnapshotKey] = useState(researchKey === "__market_stress__" ? undefined : researchKey);
   const [snapshotRequestId, setSnapshotRequestId] = useState(0);
   const [etfRequestedSymbol, setEtfRequestedSymbol] = useState<string | undefined>(
     researchType === "etf" && researchKey ? researchKey.split(":").at(-1) : undefined
@@ -125,6 +127,7 @@ export function Research({
 
       {tab === "snapshot" ? <CompanySnapshotResearch key={snapshotRequestId} state={state} requestedKey={snapshotKey} onQuantResearch={onQuantResearch} /> : null}
       {tab === "etf" ? <EtfResearch key={etfRequestedSymbol ?? "default"} state={state} onOpenStock={openStockFromEtf} requestedSymbol={etfRequestedSymbol} /> : null}
+      {tab === "marketStress" ? <MarketStressPanel /> : null}
       {tab === "materialEvents" ? <MaterialEventsResearch state={state} /> : null}
       {tab === "sectorPulse" ? <SectorPulseResearch state={state} /> : null}
       {tab === "revenue" ? <RevenueResearch state={state} /> : null}
