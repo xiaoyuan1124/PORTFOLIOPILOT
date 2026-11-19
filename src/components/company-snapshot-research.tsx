@@ -15,6 +15,8 @@ import { loadBundledValuations, valuationSource, type ValuationCache } from "@/l
 import { marketPrice, percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 import { SecurityPriceHistoryCard } from "./security-price-history-card";
+import { TradePlanPanel } from "./trade-plan-panel";
+import { localDateKey } from "@/lib/calc";
 
 type Caches = {
   quotes: TwQuoteCache;
@@ -82,7 +84,7 @@ function SectionHeader({ title, detail }: { title: string; detail: string }) {
   return <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-semibold">{title}</h4><span className="text-[11px] text-black/40 dark:text-white/40">{detail}</span></div>;
 }
 
-export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }: { state: AppState; requestedKey?: string; onQuantResearch?: (key: string) => void }) {
+export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, onChange }: { state: AppState; requestedKey?: string; onQuantResearch?: (key: string) => void; onChange?: (state: AppState) => boolean }) {
   const [caches, setCaches] = useState<Caches | null>(null);
   const [query, setQuery] = useState("");
   const [heldOnly, setHeldOnly] = useState(false);
@@ -173,11 +175,9 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
   const valuationMeta = selected && caches ? valuationSource(caches.valuations, selected.market) : null;
 
   return <div className="space-y-4">
-    <div className="rounded-[24px] border border-black/6 bg-[#1f332a] p-5 text-white shadow-sm dark:border-white/8 dark:bg-[#dce9e2] dark:text-[#122018]">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div><h3 className="mt-2 text-xl font-semibold">標的總覽</h3></div>
-        <div className="text-right"><p className="text-3xl font-semibold">{loading ? "…" : error && !caches ? "—" : snapshots.length}</p><p className="text-xs opacity-60">{loading ? "讀取官方資料" : "可研究標的"}</p></div>
-      </div>
+    <div className="flex items-center justify-between gap-2 px-1">
+      <h3 className="text-sm font-semibold">個股研究工作台</h3>
+      <span className="text-xs text-black/45 dark:text-white/45">{loading ? "讀取中" : `${snapshots.length} 檔可研究標的`}</span>
     </div>
 
     <div className="space-y-2">
@@ -202,7 +202,7 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
       </div>
     ) : null}
 
-    {!loading && !error ? <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
+    {!loading && !error && !selectedKey && !query.trim() ? <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
       {visible.slice(0, 16).map((row) => {
         const rowKey = `${row.market}:${row.code}`;
         const active = selected ? `${selected.market}:${selected.code}` === rowKey : false;
@@ -221,7 +221,23 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
     {!loading && !error && !selected && !requestedMissing ? <div className="rounded-2xl border border-black/6 p-8 text-center dark:border-white/8"><Search className="mx-auto text-black/25 dark:text-white/25" size={28} /><p className="mt-3 text-sm font-semibold">選一家公司開始研究</p><p className="mt-1 text-xs text-black/40 dark:text-white/40">有台股持倉時會自動優先顯示持有標的；否則請從上方搜尋或快速選擇。</p></div> : null}
 
     {selected ? <>
-      <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{isHeldCompanySnapshot(selected, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>
+      <Card><CardContent className="p-3 md:p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div><h3 className="text-base font-semibold">{selected.name} <span className="text-xs font-normal text-black/50 dark:text-white/50">{selected.code} · {selected.market}</span></h3>
+          <p className="mt-0.5 text-xs text-black/45 dark:text-white/45">{selected.industry || "未提供產業"} · 收盤日 {selected.quote?.date ?? "—"}</p></div>
+          {selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">資料不足</Badge>}
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+          <div className="mini-metric"><span>參考收盤</span><strong>{selected.quote ? marketPrice(selected.quote.close) : "—"}</strong></div>
+          <div className="mini-metric"><span>PE</span><strong>{selected.type === "etf" ? "不適用" : selected.valuation?.pe !== null && selected.valuation?.pe !== undefined && selected.valuation.pe > 0 ? ratio(selected.valuation.pe) : "不適用／缺值"}</strong></div>
+          <div className="mini-metric"><span>營收 YoY</span><strong>{selected.type === "etf" || selected.revenue?.yoyPct === null || selected.revenue?.yoyPct === undefined ? "—" : percent(selected.revenue.yoyPct,1)}</strong></div>
+          <div className="mini-metric"><span>外資 10D</span><strong>{selected.strategy?.foreignGate.net10d === null || selected.strategy?.foreignGate.net10d === undefined ? "—" : shares(selected.strategy.foreignGate.net10d)}</strong></div>
+          <div className="mini-metric"><span>投信 10D</span><strong>{selected.strategy?.trustGate.net10d === null || selected.strategy?.trustGate.net10d === undefined ? "—" : shares(selected.strategy.trustGate.net10d)}</strong></div>
+          <div className="mini-metric"><span>條件通過</span><strong>{selected.strategy ? `${selected.strategy.passedGateCount}/4` : "—"}</strong></div>
+        </div>
+        {selected.type !== "etf" && (selected.valuation?.pe === null || selected.valuation?.pe === undefined || selected.valuation.pe <= 0) ? <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-300">本益比缺漏或非正值，不用低 PE 當買進依據。</p> : null}
+        <p className="mt-2 text-[11px] text-black/45 dark:text-white/45">估值日 {selected.valuation?.date ?? "—"} · 法人日 {selected.strategy?.foreignGate.dataAsOf ?? "—"} · 日期不同不視為當日訊號</p>
+      </CardContent></Card>
 
       {onQuantResearch ? (
         <button type="button" onClick={() => onQuantResearch(selected.market + ":" + selected.code)}
@@ -231,9 +247,15 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
         </button>
       ) : null}
 
-      <SecurityPriceHistoryCard market={selected.market} symbol={selected.code} />
+      <details className="rounded-xl border border-black/8 p-2 dark:border-white/10">
+        <summary className="min-h-11 cursor-pointer px-2 py-2 text-sm font-semibold">查看歷史價格與技術走勢</summary>
+        <SecurityPriceHistoryCard market={selected.market} symbol={selected.code} />
+      </details>
+      {selected.type === "stock" ? <TradePlanPanel key={selected.market+":"+selected.code} symbol={selected.code} name={selected.name} referenceClose={selected.quote?.close??null} priceDate={selected.quote?.date??null} onSavePlan={(title,thesis,invalidation) => onChange ? onChange({...state,journal:[...state.journal,{id:"plan-"+Date.now()+"-"+Math.random().toString(36).slice(2),date:localDateKey(),symbol:selected.code,title,thesis,invalidation}]}) : false} /> : null}
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <details className="rounded-xl border border-black/8 p-2 dark:border-white/10">
+        <summary className="min-h-11 cursor-pointer px-2 py-2 text-sm font-semibold">展開財報、法人、估值與資料來源</summary>
+        <div className="mt-2 grid gap-3 xl:grid-cols-2">
         <Card><CardContent className="p-4 md:p-5"><SectionHeader title="市場與估值" detail="官方收盤 / 估值快照" /><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"><div className="mini-metric"><span>收盤價</span><strong>{selected.quote ? marketPrice(selected.quote.close, "TWD") : "—"}</strong></div><div className="mini-metric"><span>PE</span><strong>{ratio(selected.valuation?.pe)}</strong></div><div className="mini-metric"><span>PB</span><strong>{ratio(selected.valuation?.pb)}</strong></div><div className="mini-metric"><span>殖利率</span><strong>{yieldPercent(selected.valuation?.dividendYield)}</strong></div></div><div className="mt-4 space-y-1 text-[11px] leading-5 text-black/40 dark:text-white/40"><p>收盤資料日：{selected.quote?.date ?? "—"} {quoteSource ? <a href={quoteSource.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 underline underline-offset-2">{quoteSource.name}<ExternalLink size={10} /></a> : null}</p><p>估值資料日：{selected.valuation?.date ?? "—"} {valuationMeta ? <a href={valuationMeta.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 underline underline-offset-2">{valuationMeta.name}<ExternalLink size={10} /></a> : null}</p></div></CardContent></Card>
 
         <Card><CardContent className="p-4 md:p-5"><SectionHeader title="最新月營收" detail={selected.revenue?.period ?? "ETF 不適用"} />{selected.revenue ? <><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"><div className="mini-metric"><span>營收原始值</span><strong>{rawNumber(selected.revenue.revenue)}</strong></div><div className="mini-metric"><span>MoM</span><strong>{selected.revenue.momPct === null ? "—" : percent(selected.revenue.momPct, 1)}</strong></div><div className="mini-metric"><span>YoY</span><strong>{selected.revenue.yoyPct === null ? "—" : percent(selected.revenue.yoyPct, 1)}</strong></div><div className="mini-metric"><span>累計 YoY</span><strong>{selected.revenue.cumulativeYoyPct === null ? "—" : percent(selected.revenue.cumulativeYoyPct, 1)}</strong></div></div><p className="mt-4 text-[11px] leading-5 text-black/40 dark:text-white/40">金額沿用官方原始值，不自行猜測或換算單位。{revenueSource ? <a href={revenueSource.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 underline underline-offset-2">{revenueSource.name}<ExternalLink size={10} /></a> : null}</p></> : <p className="mt-4 text-sm leading-6 text-black/45 dark:text-white/45">ETF 沒有公司型月營收欄位；本頁不把成分股營收混成 ETF 自身營收。</p>}</CardContent></Card>
@@ -245,7 +267,8 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
         <Card><CardContent className="p-4 md:p-5"><SectionHeader title="法人最近 10 個交易日" detail={selected.strategy?.foreignGate.dataAsOf ?? "—"} />{selected.strategy ? <><div className="mt-4 grid grid-cols-2 gap-2"><div className="mini-metric"><span>外資淨買超（股）</span><strong>{shares(selected.strategy.foreignGate.net10d)}</strong></div><div className="mini-metric"><span>投信淨買超（股）</span><strong>{shares(selected.strategy.trustGate.net10d)}</strong></div></div><div className="mt-3 flex flex-wrap gap-2"><span className="text-xs">外資</span><StatusBadge status={selected.strategy.foreignGate.status} /><span className="ml-2 text-xs">投信</span><StatusBadge status={selected.strategy.trustGate.status} /></div><p className="mt-3 text-[11px] text-black/40 dark:text-white/40"><SourceLinks sources={[...selected.strategy.foreignGate.sources, ...selected.strategy.trustGate.sources]} /></p></> : <p className="mt-4 text-sm text-black/40 dark:text-white/40">{selected.type === "etf" ? "ETF 不適用於此公司型指標。" : "資料不足。"}</p>}</CardContent></Card>
 
         <Card><CardContent className="p-4 md:p-5"><SectionHeader title="四關 Scanner" detail="描述條件，不是買賣建議" />{selected.strategy ? <><div className="mt-4 grid grid-cols-2 gap-2"><div className="rounded-xl border border-black/6 p-3 dark:border-white/8"><p className="text-xs text-black/45 dark:text-white/45">3 月營收</p><div className="mt-2"><StatusBadge status={selected.strategy.revenueGate.status} /></div></div><div className="rounded-xl border border-black/6 p-3 dark:border-white/8"><p className="text-xs text-black/45 dark:text-white/45">3 季毛利率</p><div className="mt-2"><StatusBadge status={selected.strategy.grossMarginGate.status} /></div></div><div className="rounded-xl border border-black/6 p-3 dark:border-white/8"><p className="text-xs text-black/45 dark:text-white/45">外資 10D</p><div className="mt-2"><StatusBadge status={selected.strategy.foreignGate.status} /></div></div><div className="rounded-xl border border-black/6 p-3 dark:border-white/8"><p className="text-xs text-black/45 dark:text-white/45">投信 10D</p><div className="mt-2"><StatusBadge status={selected.strategy.trustGate.status} /></div></div></div><div className="mt-4 flex items-center justify-between rounded-xl bg-black/[0.025] p-3 dark:bg-white/[0.03]"><div><p className="text-xs text-black/45 dark:text-white/45">整體狀態</p><p className="mt-1 text-sm font-semibold">{selected.strategy.passedGateCount} / 4 關通過</p></div><StatusBadge status={selected.strategy.overallStatus} /></div></> : <p className="mt-4 text-sm text-black/40 dark:text-white/40">{selected.type === "etf" ? "ETF 不套用公司型四關 Scanner。" : "策略資料不足。"}</p>}</CardContent></Card>
-      </div>
+        </div>
+      </details>
     </> : null}
   </div>;
 }
