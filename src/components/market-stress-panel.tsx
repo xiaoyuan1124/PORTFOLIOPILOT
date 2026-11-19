@@ -21,6 +21,7 @@ export function MarketStressPanel({ compact = false, onOpen }: Props) {
   const [benchmark, setBenchmark] = useState<BenchmarkCache | null>(null);
   const [quotes, setQuotes] = useState<TwQuoteCache | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshToken, setRefreshToken] = useState(0);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -54,7 +55,7 @@ export function MarketStressPanel({ compact = false, onOpen }: Props) {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener(NATIVE_RESUME_EVENT, onVisible);
     };
-  }, []);
+  }, [refreshToken]);
 
   const rows = useMemo(() => {
     const series = benchmark ? benchmarkById(benchmark, "TWSE:TAIEX-PRICE") : null;
@@ -156,7 +157,7 @@ export function MarketStressPanel({ compact = false, onOpen }: Props) {
             <div className="flex flex-wrap gap-4 text-xs text-black/45 dark:text-white/45">
               <a href={SOURCE_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline underline-offset-2">TWSE 原始指數 <ExternalLink size={13} /></a>
               <a href={REFERENCE_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline underline-offset-2">ToAlpha 完整恐慌度（外部參考） <ExternalLink size={13} /></a>
-              <GhostButton onClick={() => window.location.reload()} className="min-h-8 px-2 text-xs"><RefreshCw size={13} />重新讀取</GhostButton>
+              <GhostButton onClick={() => { setLoading(true); setRefreshToken((value) => value + 1); }} className="min-h-8 px-2 text-xs"><RefreshCw size={13} />重新讀取</GhostButton>
             </div>
           </>
         )}
