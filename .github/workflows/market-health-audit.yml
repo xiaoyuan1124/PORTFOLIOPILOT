@@ -26,6 +26,6 @@ jobs:
         with:
           node-version: 24
       - name: Test trading-day and cache-status rules
-        run: node --test scripts/lib/market-health.test.mjs
+        run: node --test scripts/lib/market-health.check.mjs
       - name: Check official quote, benchmark and history dates
         run: node scripts/audit-market-health.mjs
