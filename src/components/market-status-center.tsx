@@ -137,8 +137,6 @@ export function MarketStatusCenter() {
             <strong>{historyDate ?? "—"}</strong>
           </div>
         </div>
-
-          </div>
         </details>
       </CardContent>
     </Card>
