@@ -25,6 +25,7 @@ import { MarketStatusCenter } from "./market-status-center";
 import { MarketStressPanel } from "./market-stress-panel";
 import { snapshotTimeline } from "@/lib/snapshot-timeline";
 import { formatNetWorthTick, netWorthChartScale, netWorthFullScale } from "@/lib/net-worth-chart-scale";
+import { navCashFlowBridge } from "@/lib/nav-cash-flow-bridge";
 
 const ranges: Array<{ key: SnapshotRange; label: string }> = [
   { key: "1D", label: "1日（已記錄淨值）" },
@@ -58,6 +59,7 @@ export function Overview({
   const snapshots = useMemo(() => snapshotsForRange(currentSnapshots, range), [currentSnapshots, range]);
   const daily = dailySnapshotDelta(currentSnapshots);
   const period = snapshotPeriodDelta(snapshots);
+  const flowBridge = navCashFlowBridge(snapshots, state.activities);
   const priceCoverage = officialPriceCoverage(state.holdings);
 
   const trend = snapshotTimeline(snapshots);
@@ -179,7 +181,18 @@ export function Overview({
               <span>{snapshots.length} 筆紀錄 · {missingWeekdays} 個平日無快照（含可能休市）</span>
               {period ? <span className="tabular-nums">{period.firstDate} 起 {money(period.amount)} · {percent(period.pct)}</span> : null}
             </div>
-            <p className="mt-1 text-[11px] text-black/40 dark:text-white/40">淨值差額包含入出金、估值與匯率；真正投資報酬請看「績效」。</p>
+            {flowBridge ? <details className="mt-2 rounded-lg border border-black/7 px-2.5 py-1.5 text-xs dark:border-white/8" data-ux-role="nav-flow-reconciliation">
+              <summary className="flex min-h-10 cursor-pointer items-center justify-between text-xs font-semibold">區間資金流與損益拆解 <span className="font-normal text-black/40 dark:text-white/40">查看</span></summary>
+              <div className="mt-1 grid grid-cols-2 gap-2 text-[11px] tabular-nums">
+                <span>資產淨值差額 <strong>{money(flowBridge.changeTwd)}</strong></span>
+                <span>期間入金 <strong>{money(flowBridge.depositsTwd)}</strong></span>
+                <span>期間提領 <strong>{money(flowBridge.withdrawalsTwd)}</strong></span>
+                <span>入金減提領 <strong>{money(flowBridge.netCashFlowTwd)}</strong></span>
+                <span className="col-span-2">扣除外部現金流後差額 <strong>{flowBridge.residualTwd === null ? "資料不足" : money(flowBridge.residualTwd)}</strong></span>
+              </div>
+              <p className="mt-2 text-[11px] leading-5 text-black/45 dark:text-white/45">差額不是純投資報酬：仍可能包括匯率變動、手動修改、價格校正與未記錄交易。匯率獨立歸因需完整買賣與歷史匯率成本，請到「績效」核對；不虛構缺漏。</p>
+              {flowBridge.invalidCashFlows>0 ? <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{flowBridge.invalidCashFlows} 筆入出金無法安全換算，暫停差額歸因。</p> : null}
+            </details> : null}
             {futureSnapshotCount > 0 ? (
               <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-[#8b6538] dark:text-[#d4ad7c]">
                 <AlertTriangle className="mt-0.5 shrink-0" size={13} />
