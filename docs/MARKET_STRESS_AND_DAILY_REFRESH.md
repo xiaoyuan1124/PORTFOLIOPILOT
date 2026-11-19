@@ -27,7 +27,7 @@ GitHub Actions pipelines fetch and commit public verified source data:
 
 Date coverage is **per dataset**, not automatically identical. Delayed exchange reporting, GitHub scheduler delays, rate limits, failures and weekends can cause differences. No fake dates, prices or scores are created. The market status card shows per-source as-of dates and warns when sources lag behind the newest verified closing quote.
 
-On iOS, the app's static assets alone would never update after TestFlight installation. `fetchMarketDataset` now prefers public GitHub Pages, then the public GitHub raw-file endpoint, falling back to the bundled copy while offline. This transports **public market datasets only**; local user holdings and transaction data are not uploaded.
+On iOS, the app's static assets alone would never update after TestFlight installation. `fetchMarketDataset` now prefers the public GitHub raw-file endpoint (main branch), then GitHub Pages, falling back to the bundled copy while offline. This transports **public market datasets only**; local user holdings and transaction data are not uploaded.
 
 When the app resumes, market status and research re-read current public datasets. Network-dependent data cannot be displayed on the phone until the phone connects. In all cases official timestamps describe the source, not the time the view was opened.
 
