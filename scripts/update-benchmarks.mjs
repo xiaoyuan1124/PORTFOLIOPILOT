@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import {
   parseTwseBenchmarkJsonText,
   parseTwseTaiexPrice,
@@ -65,11 +65,30 @@ async function fetchPriceMonth(monthStart, allowEmpty = false) {
 async function main() {
   const generatedAt = new Date().toISOString();
   const months = rollingMonthStarts(new Date(), 24);
-  const totalReturnPoints = new Map();
-  const pricePoints = new Map();
-  const monthlySources = [];
+  let previous = null;
+  try {
+    previous = JSON.parse(await readFile("public/data/tw-benchmarks.json", "utf8"));
+  } catch {
+    // First run: seed the complete historical window.
+  }
+  const oldestMonth = months[0].slice(0, 7);
+  const previousPoints = (id) => (previous?.benchmarks ?? [])
+    .find((series) => series.id === id)?.points ?? [];
+  const totalReturnPoints = new Map(previousPoints("TWSE:TAIEX-TR")
+    .filter((point) => point.date.slice(0, 7) >= oldestMonth)
+    .map((point) => [point.date, point]));
+  const pricePoints = new Map(previousPoints("TWSE:TAIEX-PRICE")
+    .filter((point) => point.date.slice(0, 7) >= oldestMonth)
+    .map((point) => [point.date, point]));
+  // Existing history is retained; only the current and previous month need polling.
+  // The previous month is revalidated around month boundaries and source revisions.
+  const fetchMonths = previous?.benchmarks?.length === 2 ? months.slice(-2) : months;
+  const monthlySources = months.flatMap((month) => [
+    { month: month.slice(0, 7), url: twseMonthUrl(month) },
+    { month: month.slice(0, 7), url: twsePriceMonthUrl(month) }
+  ]);
 
-  for (const monthStart of months) {
+  for (const monthStart of fetchMonths) {
     const allowEmpty = monthStart === months.at(-1);
     const [totalReturnResult, priceResult] = await Promise.all([
       fetchTotalReturnMonth(monthStart, allowEmpty),
@@ -77,10 +96,6 @@ async function main() {
     ]);
     for (const row of totalReturnResult.rows) totalReturnPoints.set(row.date, row);
     for (const row of priceResult.rows) pricePoints.set(row.date, row);
-    monthlySources.push(
-      { month: monthStart.slice(0, 7), url: totalReturnResult.url },
-      { month: monthStart.slice(0, 7), url: priceResult.url }
-    );
     await sleep(REQUEST_DELAY_MS);
   }
 
@@ -91,6 +106,17 @@ async function main() {
   }
   if (sortedPrice.length < 300) {
     throw new Error(`Refusing suspiciously small TAIEX Price benchmark set: ${sortedPrice.length} rows`);
+  }
+
+  // A scheduled poll with unchanged official closes should not produce noisy commits.
+  const previousTr = previousPoints("TWSE:TAIEX-TR")
+    .filter((point) => point.date.slice(0, 7) >= oldestMonth);
+  const previousPrice = previousPoints("TWSE:TAIEX-PRICE")
+    .filter((point) => point.date.slice(0, 7) >= oldestMonth);
+  if (JSON.stringify(previousTr) === JSON.stringify(sortedTotalReturn) &&
+      JSON.stringify(previousPrice) === JSON.stringify(sortedPrice)) {
+    console.log("No newer TWSE benchmark closes; preserving prior generatedAt.");
+    return;
   }
 
   const payload = {

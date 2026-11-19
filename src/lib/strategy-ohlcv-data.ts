@@ -1,3 +1,4 @@
+import { fetchMarketDataset } from "./market-data-url";
 import { z } from "zod";
 import type { StrategyCandle } from "./strategy-lab";
 
@@ -42,8 +43,7 @@ export function strategyCandlesFromCache(
   return rows.map(([date, open, high, low, close, volume]) => ({ date, open, high, low, close, volume }));
 }
 export async function loadBundledStrategyOhlcv(): Promise<StrategyOhlcvCache> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(base + "/data/tw-strategy-ohlcv.json?ts=" + Date.now(), { cache: "no-store" });
+  const response = await fetchMarketDataset("tw-strategy-ohlcv.json");
   if (!response.ok) throw new Error("官方 OHLCV 資料尚未建立。");
   return parseStrategyOhlcv(await response.json());
 }

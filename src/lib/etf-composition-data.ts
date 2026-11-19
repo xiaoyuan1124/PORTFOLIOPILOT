@@ -1,3 +1,4 @@
+import { fetchMarketDataset } from "./market-data-url";
 import { z } from "zod";
 import { etfCompositionSchema } from "./schema";
 import type { EtfComposition, Holding } from "./types";
@@ -63,10 +64,7 @@ function sameComposition(a: EtfComposition, b: EtfComposition) {
 }
 
 export async function loadBundledEtfCompositions(): Promise<EtfCompositionCache> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-etf-compositions.json?ts=${Date.now()}`, {
-    cache: "no-store"
-  });
+  const response = await fetchMarketDataset("tw-etf-compositions.json");
 
   if (!response.ok) {
     throw new Error("尚未取得官方 ETF 成份資料快取。");

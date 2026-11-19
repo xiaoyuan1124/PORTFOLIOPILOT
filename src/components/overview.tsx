@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AlertTriangle, ArrowRight, ArrowUpRight, Landmark, Layers3, WalletCards } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import {
@@ -22,6 +22,9 @@ import { calculatePortfolioRisk } from "@/lib/portfolio-risk";
 import { Badge, Card, CardContent, CardHeader, GhostButton, Metric } from "./ui";
 import { DailyPortfolioDrivers } from "./daily-portfolio-drivers";
 import { MarketStatusCenter } from "./market-status-center";
+import { MarketStressPanel } from "./market-stress-panel";
+import { snapshotTimeline } from "@/lib/snapshot-timeline";
+import { formatNetWorthTick, netWorthChartScale } from "@/lib/net-worth-chart-scale";
 
 const ranges: Array<{ key: SnapshotRange; label: string }> = [
   { key: "1M", label: "1月" },
@@ -53,11 +56,12 @@ export function Overview({
   const period = snapshotPeriodDelta(snapshots);
   const priceCoverage = officialPriceCoverage(state.holdings);
 
-  const trend = snapshots.map((snapshot) => ({
-    label: snapshot.date.slice(5).replace("-", "/"),
-    date: snapshot.date,
-    value: Math.round(snapshot.total)
-  }));
+  const trend = snapshotTimeline(snapshots);
+  const missingTradingDays = trend.filter((point) => point.value === null).length;
+  const netWorthScale = netWorthChartScale(trend.map((point) => point.value));
+  const chartMoney = (value: number) => netWorthScale.step < 1
+    ? `NT${formatNetWorthTick(value, netWorthScale.step)}`
+    : money(value);
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -105,21 +109,37 @@ export function Overview({
               {ranges.map((item) => <button key={item.key} onClick={() => setRange(item.key)} className={`min-h-8 whitespace-nowrap rounded-lg px-3 text-xs font-semibold transition ${range === item.key ? "bg-white text-[#1f332a] shadow-sm dark:bg-white/10 dark:text-white" : "text-black/40 dark:text-white/40"}`}>{item.label}</button>)}
             </div>
 
-            <div className="mt-4 h-40">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-black/45 dark:text-white/45">
+              <span>淨值刻度 · 新臺幣（NT$）</span>
+              <span>依可見數值自動放大，縱軸不從 0 起算</span>
+            </div>
+            <div className="mt-2 h-56 md:h-60">
               {trend.length > 1 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trend} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
+                  <AreaChart data={trend} margin={{ top: 10, right: 6, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="networth" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#456b58" stopOpacity={0.28} />
                         <stop offset="100%" stopColor="#456b58" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#78817b" }} minTickGap={24} />
-                    <YAxis hide domain={["dataMin", "dataMax"]} />
+                    <CartesianGrid stroke="currentColor" strokeOpacity={0.08} strokeDasharray="3 4" vertical={false} />
+                    <XAxis type="number" scale="time" dataKey="time" domain={["dataMin", "dataMax"]} tickFormatter={(value) => new Date(Number(value)).toISOString().slice(5, 10).replace("-", "/")} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#78817b" }} minTickGap={24} />
+                    <YAxis
+                      type="number"
+                      domain={netWorthScale.domain}
+                      ticks={netWorthScale.ticks}
+                      tickFormatter={(value) => formatNetWorthTick(Number(value), netWorthScale.step)}
+                      width={netWorthScale.maximum !== null && netWorthScale.maximum >= 1_000_000 ? 86 : 72}
+                      axisLine={false}
+                      tickLine={false}
+                      tickMargin={5}
+                      tick={{ fontSize: 10, fill: "#78817b" }}
+                      allowDecimals={netWorthScale.step < 1}
+                    />
                     <Tooltip
-                      labelFormatter={(_, payload) => payload?.[0]?.payload?.date ?? ""}
-                      formatter={(value) => money(Number(value))}
+                      labelFormatter={(value) => new Date(Number(value)).toISOString().slice(0, 10)}
+                      formatter={(value) => chartMoney(Number(value))}
                       contentStyle={{
                         borderRadius: 14,
                         border: "1px solid rgba(0,0,0,.08)",
@@ -130,17 +150,34 @@ export function Overview({
                       labelStyle={{ color: "#78817b", fontWeight: 500 }}
                       itemStyle={{ color: "#456b58" }}
                     />
-                    <Area type="monotone" dataKey="value" stroke="#456b58" strokeWidth={2.5} fill="url(#networth)" />
+                    <Area type="linear" connectNulls={false} dataKey="value" stroke="#456b58" strokeWidth={2.5} fill="url(#networth)" dot={snapshots.length <= 15 ? { r: 2.5, fill: "#456b58" } : false} activeDot={{ r: 4 }} isAnimationActive={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="grid h-full place-items-center rounded-2xl border border-dashed border-black/10 px-5 text-center text-sm text-black/35 dark:border-white/10 dark:text-white/35">
-                  每日會自動保留一筆真實淨值；累積兩天後即可比較趨勢。
+                  個人淨值需由本機持股與已確認的歷史價格計算；尚未開啟 App 的日期不會捏造快照。
                 </div>
               )}
             </div>
+            {netWorthScale.minimum !== null && netWorthScale.maximum !== null && snapshots.length > 1 ? (
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs tabular-nums">
+                <div className="rounded-lg bg-black/[.025] px-3 py-2 dark:bg-white/[.035]">
+                  <span className="text-black/45 dark:text-white/45">區間最低淨值</span>
+                  <p className="mt-0.5 font-semibold">{chartMoney(netWorthScale.minimum)}</p>
+                </div>
+                <div className="rounded-lg bg-black/[.025] px-3 py-2 dark:bg-white/[.035]">
+                  <span className="text-black/45 dark:text-white/45">區間最高淨值</span>
+                  <p className="mt-0.5 font-semibold">{chartMoney(netWorthScale.maximum)}</p>
+                </div>
+              </div>
+            ) : null}
+            {netWorthScale.unchanged && snapshots.length > 1 ? (
+              <p className="mt-2 text-xs leading-5 text-amber-700 dark:text-amber-300">
+                此期間已記錄的淨值完全相同，放大金額刻度也不會產生真正的波動；請確認持股價格與歷史快照是否已有更新。
+              </p>
+            ) : null}
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-black/40 dark:text-white/40">
-              <span>{snapshots.length} 筆快照 · {range === "ALL" ? "全部期間" : ranges.find((item) => item.key === range)?.label}</span>
+              <span>{snapshots.length} 筆真實快照 · {missingTradingDays} 個交易日缺值 · {range === "ALL" ? "全部期間" : ranges.find((item) => item.key === range)?.label}</span>
               {period ? <span className="tabular-nums">{period.firstDate} 起淨值變動：{percent(period.pct)}</span> : null}
             </div>
             <p className="mt-2 text-[11px] leading-5 text-black/32 dark:text-white/32">淨值含入出金；投資報酬率請看「績效」。</p>
@@ -211,6 +248,8 @@ export function Overview({
       </Card>
 
       <MarketStatusCenter />
+
+      <MarketStressPanel compact onOpen={() => onNavigate?.("research", "__market_stress__")} />
 
       <DailyPortfolioDrivers state={state} onNavigate={onNavigate} />
 

@@ -1,3 +1,4 @@
+import { fetchMarketDataset } from "./market-data-url";
 import { z } from "zod";
 import type { Holding } from "./types";
 import { isOfflineBundleResponse } from "./bundled-data-status";
@@ -25,10 +26,7 @@ const cacheSchema = z.object({
 export type TwQuoteCache = z.infer<typeof cacheSchema> & { offlineFallback?: boolean };
 
 export async function loadBundledTwQuotes(): Promise<TwQuoteCache> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-quotes.json?ts=${Date.now()}`, {
-    cache: "no-store"
-  });
+  const response = await fetchMarketDataset("tw-quotes.json");
 
   if (!response.ok) {
     throw new Error("尚未取得官方台股資料快取。");
