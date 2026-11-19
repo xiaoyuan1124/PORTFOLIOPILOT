@@ -22,6 +22,8 @@ import { calculatePortfolioRisk } from "@/lib/portfolio-risk";
 import { Badge, Card, CardContent, CardHeader, GhostButton, Metric } from "./ui";
 import { DailyPortfolioDrivers } from "./daily-portfolio-drivers";
 import { MarketStatusCenter } from "./market-status-center";
+import { MarketStressPanel } from "./market-stress-panel";
+import { snapshotTimeline } from "@/lib/snapshot-timeline";
 
 const ranges: Array<{ key: SnapshotRange; label: string }> = [
   { key: "1M", label: "1月" },
@@ -53,11 +55,8 @@ export function Overview({
   const period = snapshotPeriodDelta(snapshots);
   const priceCoverage = officialPriceCoverage(state.holdings);
 
-  const trend = snapshots.map((snapshot) => ({
-    label: snapshot.date.slice(5).replace("-", "/"),
-    date: snapshot.date,
-    value: Math.round(snapshot.total)
-  }));
+  const trend = snapshotTimeline(snapshots);
+  const missingTradingDays = trend.filter((point) => point.value === null).length;
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -115,10 +114,10 @@ export function Overview({
                         <stop offset="100%" stopColor="#456b58" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#78817b" }} minTickGap={24} />
+                    <XAxis type="number" scale="time" dataKey="time" domain={["dataMin", "dataMax"]} tickFormatter={(value) => new Date(Number(value)).toISOString().slice(5, 10).replace("-", "/")} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#78817b" }} minTickGap={24} />
                     <YAxis hide domain={["dataMin", "dataMax"]} />
                     <Tooltip
-                      labelFormatter={(_, payload) => payload?.[0]?.payload?.date ?? ""}
+                      labelFormatter={(value) => new Date(Number(value)).toISOString().slice(0, 10)}
                       formatter={(value) => money(Number(value))}
                       contentStyle={{
                         borderRadius: 14,
@@ -130,17 +129,17 @@ export function Overview({
                       labelStyle={{ color: "#78817b", fontWeight: 500 }}
                       itemStyle={{ color: "#456b58" }}
                     />
-                    <Area type="monotone" dataKey="value" stroke="#456b58" strokeWidth={2.5} fill="url(#networth)" />
+                    <Area type="monotone" connectNulls={false} dataKey="value" stroke="#456b58" strokeWidth={2.5} fill="url(#networth)" />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="grid h-full place-items-center rounded-2xl border border-dashed border-black/10 px-5 text-center text-sm text-black/35 dark:border-white/10 dark:text-white/35">
-                  每日會自動保留一筆真實淨值；累積兩天後即可比較趨勢。
+                  個人淨值需由本機持股與已確認的歷史價格計算；尚未開啟 App 的日期不會捏造快照。
                 </div>
               )}
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-black/40 dark:text-white/40">
-              <span>{snapshots.length} 筆快照 · {range === "ALL" ? "全部期間" : ranges.find((item) => item.key === range)?.label}</span>
+              <span>{snapshots.length} 筆真實快照 · {missingTradingDays} 個交易日缺值 · {range === "ALL" ? "全部期間" : ranges.find((item) => item.key === range)?.label}</span>
               {period ? <span className="tabular-nums">{period.firstDate} 起淨值變動：{percent(period.pct)}</span> : null}
             </div>
             <p className="mt-2 text-[11px] leading-5 text-black/32 dark:text-white/32">淨值含入出金；投資報酬率請看「績效」。</p>
@@ -211,6 +210,8 @@ export function Overview({
       </Card>
 
       <MarketStatusCenter />
+
+      <MarketStressPanel compact onOpen={() => onNavigate?.("research", "__market_stress__")} />
 
       <DailyPortfolioDrivers state={state} onNavigate={onNavigate} />
 
