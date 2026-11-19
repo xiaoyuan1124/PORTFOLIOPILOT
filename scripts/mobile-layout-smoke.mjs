@@ -69,6 +69,12 @@ try {
       assert.equal(await page.locator('[data-ux-role="daily-drivers-details"]').count(), 0, "empty portfolio must not show fake daily attribution");
     } else {
       await homeSecondary.waitFor();
+      const navRange = page.getByRole("combobox", { name: "淨值圖時間範圍" });
+      await navRange.selectOption("1W");
+      assert.equal(await navRange.inputValue(), "1W", "calendar-range control must switch without fabricating history");
+      await page.getByRole("button", { name: "完整金額", exact: true }).click();
+      assert.equal(await page.getByRole("button", { name: "完整金額", exact: true }).getAttribute("aria-pressed"), "true", "explicit zero-origin chart mode should be operable");
+      await page.getByRole("button", { name: "放大波動", exact: true }).click();
       assert.equal(await homeSecondary.getAttribute("open"), null, "secondary holdings and sectors should not dominate the first viewport");
       const dailySecondary = page.locator('[data-ux-role="daily-drivers-details"]');
       await dailySecondary.waitFor();

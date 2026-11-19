@@ -202,7 +202,7 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
       </div>
     ) : null}
 
-    {!loading && !error && !selectedKey && !query.trim() ? <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
+    {!loading && !error && (!selectedKey || query.trim()) ? <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
       {visible.slice(0, 16).map((row) => {
         const rowKey = `${row.market}:${row.code}`;
         const active = selected ? `${selected.market}:${selected.code}` === rowKey : false;
