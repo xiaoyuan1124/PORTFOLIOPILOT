@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { fetchPublishedMarketCache } from "./market-data";
 import { twSecurityKey } from "./research-holdings";
 
 const revenueRowSchema = z.object({
@@ -29,10 +30,7 @@ export type RevenueRow = z.infer<typeof revenueRowSchema>;
 export type RevenueCache = z.infer<typeof revenueCacheSchema>;
 
 export async function loadBundledRevenue(): Promise<RevenueCache> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-revenue.json?ts=${Date.now()}`, {
-    cache: "no-store"
-  });
+  const { response } = await fetchPublishedMarketCache("tw-revenue.json");
 
   if (!response.ok) {
     throw new Error("尚未取得官方月營收資料快取。");

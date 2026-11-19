@@ -142,9 +142,7 @@ export function EtfResearch({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h3 className="mt-2 text-xl font-semibold">ETF 成分與績效</h3>
-            <InfoDisclosure summary="資料來源與同步方式" className="mt-3 border-white/15 bg-white/[.06] dark:border-black/10 dark:bg-black/[.04]">
-              成份權重使用目前保存的可追溯資料；支援的持有台灣 ETF 會在「同步最新資料」時同步官方發行人成份。當日歸因只使用同一最新交易日、可唯一匹配的官方台股收盤漲跌，缺資料不補猜。
-            </InfoDisclosure>
+
           </div>
           <GhostButton disabled={loading} onClick={() => void reload()} className="border-white/20 bg-white/10 text-white dark:border-black/10 dark:bg-black/5 dark:text-[#122018]">
             <RefreshCw size={15} className={loading ? "animate-spin" : ""} />

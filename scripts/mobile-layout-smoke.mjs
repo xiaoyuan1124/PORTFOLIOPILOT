@@ -57,6 +57,17 @@ try {
     const nav = page.locator(".app-mobile-nav");
 
     await checkLayout(page, viewport.name, "home");
+    // A single source folder is available from every section; it carries
+    // original publisher URLs and holding price dates instead of page clutter.
+    await page.getByRole("button", { name: "資料來源", exact: true }).click();
+    const sourceHub = page.locator('[data-testid="data-sources-hub"]');
+    await sourceHub.waitFor();
+    await sourceHub.getByText("本機持股價格").waitFor();
+    await sourceHub.getByText("台股收盤價", { exact: true }).waitFor({ timeout: 20000 });
+    await sourceHub.locator("details").filter({ hasText: "台股收盤價" }).first().locator("summary").click();
+    await sourceHub.getByRole("link", { name: "查看本站公開快取" }).first().waitFor();
+    await checkLayout(page, viewport.name, "source-hub");
+    await page.getByRole("button", { name: "關閉", exact: true }).click();
     const onboarding = page.locator('[data-ux-role="home-first-run"]');
     if (await onboarding.count()) {
       assert.equal(await onboarding.locator('[data-ux-role="home-first-run-help"]').getAttribute("open"), null,

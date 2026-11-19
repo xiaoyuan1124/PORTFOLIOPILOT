@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, CircleHelp, Database, ExternalLink, Minus, RefreshCw, Search, X } from "lucide-react";
+import { Check, CircleHelp, Database, Minus, RefreshCw, Search, X } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { loadBundledRevenueHistory, type RevenueHistoryCache } from "@/lib/revenue-history";
 import { loadBundledInstitutional10d, type InstitutionalCache } from "@/lib/institutional-data";
@@ -13,7 +13,6 @@ import {
 import {
   defaultStrategyGateConfig,
   evaluateOfficialStrategy,
-  type SourceRef,
   type StrategyGateConfig
 } from "@/lib/strategy-gates";
 import { isHeldTwSecurity, resolveHeldTwSecurityKeys } from "@/lib/research-holdings";
@@ -63,38 +62,17 @@ function number(value: number | null, maximumFractionDigits = 0) {
   return value.toLocaleString("zh-TW", { maximumFractionDigits });
 }
 
-function SourceLinks({ sources }: { sources: SourceRef[] }) {
-  if (!sources.length) return <span>官方來源：—</span>;
-  return (
-    <span className="inline-flex flex-wrap gap-x-3 gap-y-1">
-      {sources.map((source, index) => (
-        <a
-          key={`${source.name}:${source.url}:${index}`}
-          href={source.url}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 underline decoration-black/20 underline-offset-2 hover:decoration-current dark:decoration-white/20"
-        >
-          {source.name}<ExternalLink size={10} />
-        </a>
-      ))}
-    </span>
-  );
-}
-
 function GateDetail({
   title,
   status,
   reason,
   dataAsOf,
-  sources,
   children
 }: {
   title: string;
   status: GateStatus;
   reason: string;
   dataAsOf: string;
-  sources: SourceRef[];
   children?: React.ReactNode;
 }) {
   return (
@@ -107,7 +85,6 @@ function GateDetail({
       <p className="mt-3 text-xs leading-5 text-black/55 dark:text-white/55">{reason}</p>
       <div className="mt-2 space-y-1 text-[11px] leading-5 text-black/40 dark:text-white/40">
         <p>資料期別：{dataAsOf}</p>
-        <p><SourceLinks sources={sources} /></p>
       </div>
     </div>
   );
@@ -321,25 +298,25 @@ export function Scanner({ state }: { state: AppState }) {
             </div>
 
             <details className="group mt-4 rounded-2xl border border-black/6 dark:border-white/8">
-              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-black/65 dark:text-white/65">查看條件明細與來源</summary>
+              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-black/65 dark:text-white/65">查看條件明細</summary>
               <div className="grid gap-3 border-t border-black/6 p-3 dark:border-white/8">
-                <GateDetail title={`最近 3 個月營收 YoY > ${thresholds.revenueYoyMinPct}%`} status={item.revenueGate.status} reason={item.revenueGate.reason} dataAsOf={item.revenueGate.dataAsOf} sources={item.revenueGate.sources}>
+                <GateDetail title={`最近 3 個月營收 YoY > ${thresholds.revenueYoyMinPct}%`} status={item.revenueGate.status} reason={item.revenueGate.reason} dataAsOf={item.revenueGate.dataAsOf}>
                   <div className="grid grid-cols-3 gap-2">
                     {item.revenueGate.values.map((value) => <div key={value.period} className="mini-metric"><span>{value.period} YoY</span><strong>{value.yoyPct === null ? "—" : percent(value.yoyPct, 1)}</strong></div>)}
                   </div>
                 </GateDetail>
 
-                <GateDetail title="季度毛利率連續改善" status={item.grossMarginGate.status} reason={item.grossMarginGate.reason} dataAsOf={item.grossMarginGate.dataAsOf} sources={item.grossMarginGate.sources}>
+                <GateDetail title="季度毛利率連續改善" status={item.grossMarginGate.status} reason={item.grossMarginGate.reason} dataAsOf={item.grossMarginGate.dataAsOf}>
                   {item.grossMarginGate.values.length ? <div className="grid gap-2 sm:grid-cols-3">
                     {item.grossMarginGate.values.map((value) => <div key={value.period} className="mini-metric"><span>{value.period} 毛利率</span><strong>{percent(value.grossMarginPct, 2)}</strong><small className="mt-1 block font-normal leading-4 text-black/40 dark:text-white/40">營收 {number(value.revenue)}<br />成本 {number(value.operatingCost)}<br />毛利 {number(value.grossProfit)}</small></div>)}
                   </div> : <p className="text-xs text-black/40 dark:text-white/40">沒有可套用的一般產業季度毛利資料。</p>}
                 </GateDetail>
 
-                <GateDetail title={`外資最近 10 個交易日淨買超 > ${number(thresholds.foreignNet10dMin)} 股`} status={item.foreignGate.status} reason={item.foreignGate.reason} dataAsOf={item.foreignGate.dataAsOf} sources={item.foreignGate.sources}>
+                <GateDetail title={`外資最近 10 個交易日淨買超 > ${number(thresholds.foreignNet10dMin)} 股`} status={item.foreignGate.status} reason={item.foreignGate.reason} dataAsOf={item.foreignGate.dataAsOf}>
                   <div className="mini-metric"><span>10D 淨買超（股）</span><strong>{number(item.foreignGate.net10d)}</strong></div>
                 </GateDetail>
 
-                <GateDetail title={`投信最近 10 個交易日淨買超 > ${number(thresholds.trustNet10dMin)} 股`} status={item.trustGate.status} reason={item.trustGate.reason} dataAsOf={item.trustGate.dataAsOf} sources={item.trustGate.sources}>
+                <GateDetail title={`投信最近 10 個交易日淨買超 > ${number(thresholds.trustNet10dMin)} 股`} status={item.trustGate.status} reason={item.trustGate.reason} dataAsOf={item.trustGate.dataAsOf}>
                   <div className="mini-metric"><span>10D 淨買超（股）</span><strong>{number(item.trustGate.net10d)}</strong></div>
                 </GateDetail>
               </div>

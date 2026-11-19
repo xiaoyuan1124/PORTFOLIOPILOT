@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { fetchPublishedMarketCache } from "./market-data";
 
 const benchmarkPointSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -60,10 +61,7 @@ export type BenchmarkWindow = {
 };
 
 export async function loadBundledBenchmarks(): Promise<BenchmarkCache> {
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const response = await fetch(`${base}/data/tw-benchmarks.json?ts=${Date.now()}`, {
-    cache: "no-store"
-  });
+  const { response } = await fetchPublishedMarketCache("tw-benchmarks.json");
   if (!response.ok) throw new Error("尚未取得官方 Benchmark 快取。");
   return benchmarkCacheSchema.parse(await response.json());
 }
