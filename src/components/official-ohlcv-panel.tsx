@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
-import type {StrategyCandle} from "@/lib/strategy-lab";
+import type {DatedCandle} from "@/lib/candle-research";
 import {
  loadBundledStrategyOhlcv,strategyCandlesFromCache,strategyOhlcvMissingMonths,
  type StrategyOhlcvCache
@@ -10,7 +10,7 @@ import {
 } from "@/lib/candle-research";
 import {useResumeRefreshKey} from "./use-resume-refresh-key";
 
-function CandleView({rows}:{rows:StrategyCandle[]}) {
+function CandleView({rows}:{rows:DatedCandle[]}) {
  if(!rows.length)return null;
  const W=700,H=190;
  const low=Math.min(...rows.map(r=>r.low)),high=Math.max(...rows.map(r=>r.high));
@@ -61,13 +61,14 @@ export function OfficialOhlcvPanel({market,symbol,quoteDate}:{
  },[opened,market,resume]);
  const raw=cache?strategyCandlesFromCache(cache,market,symbol):null;
  const missing=cache?strategyOhlcvMissingMonths(cache,market,symbol):[];
- const candles=useMemo(()=>raw?aggregateOfficialCandles(raw,period):[],[raw,period]);
+ const daily=useMemo(()=>raw?aggregateOfficialCandles(raw,"D"):[],[raw]);
+ const candles=useMemo(()=>aggregateOfficialCandles(daily,period),[daily,period]);
  const last24=candles.slice(-24);
  const shown=last24.find(bar=>bar.date===picked)??last24.at(-1)??null;
- const latest=raw?.at(-1)??null;
+ const latest=daily.at(-1)??null;
  const dataBehind=Boolean(latest&&quoteDate&&latest.date<quoteDate);
- const kd=raw&&missing.length===0?officialCandleKD(candles):null;
- const volumeRatio=raw&&missing.length===0?officialDailyVolumeRatio(raw):null;
+ const kd=daily.length&&missing.length===0?officialCandleKD(candles):null;
+ const volumeRatio=daily.length&&missing.length===0?officialDailyVolumeRatio(daily):null;
  return <details className="mt-2 rounded-xl border border-black/8 px-3 py-2 dark:border-white/10" data-ux-role="official-ohlcv" onToggle={e=>{setOpened(e.currentTarget.open);if(e.currentTarget.open)setLoading(true);}}>
   <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">官方開高低收／成交量 K 線（部分上市股）</summary>
   <p className="mt-1 text-[11px] text-black/45 dark:text-white/45">沿用 Strategy Lab 的 TWSE STOCK_DAY 來源，僅對目前已涵蓋的上市證券提供；並非全市場或分時行情。</p>

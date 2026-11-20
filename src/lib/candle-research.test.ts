@@ -21,13 +21,14 @@ describe("official OHLCV price/volume analysis",()=>{
   expect(()=>aggregateOfficialCandles([data[0]!,data[0]!],"D")).toThrow();
  });
  it("keeps KD and volume ratio unavailable until actually supported by the data",()=>{
-  expect(officialCandleKD(data)).toBeNull();
-  expect(officialDailyVolumeRatio(data)).toBeNull();
+  expect(officialCandleKD(aggregateOfficialCandles(data,"D"))).toBeNull();
+  expect(officialDailyVolumeRatio(aggregateOfficialCandles(data,"D"))).toBeNull();
   const rows=Array.from({length:22},(_,i)=>sample(
     new Date(Date.UTC(2026,0,i+1)).toISOString().slice(0,10),10,12,9,11,100+i));
-  const kd=officialCandleKD(rows)!;
+  const verified=aggregateOfficialCandles(rows,"D");
+  const kd=officialCandleKD(verified)!;
   expect(kd.k).toBeGreaterThan(0);
   expect(kd.d).toBeLessThan(100);
-  expect(officialDailyVolumeRatio(rows)).toBeCloseTo(121/(110.5));
+  expect(officialDailyVolumeRatio(verified)).toBeCloseTo(121/(110.5));
  });
 });
