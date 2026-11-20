@@ -86,7 +86,13 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Commit changed caches
         run: |
-          git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-institutional-rolling.json public/data/tw-institutional-history.json public/data/tw-material-events.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json public/data/tw-etf-compositions.json
+          git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-material-events.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json public/data/tw-etf-compositions.json
+          # The rolling archives do not exist before their first successful
+          # core refresh. Do not fail independent ETF/benchmark updates if the
+          # first attempt to fetch MOPS or institutional data is unavailable.
+          for optional_cache in public/data/tw-institutional-rolling.json public/data/tw-institutional-history.json; do
+            if test -f "$optional_cache"; then git add "$optional_cache"; fi
+          done
           if git diff --cached --quiet; then
             echo "No market data changes."
           else
