@@ -12,7 +12,8 @@ const catalogs = [
   { id:"tw-revenue.json",title:"單月營收",method:"MoM／YoY 依官方發布數字比較，缺月份不推估。" },
   { id:"tw-revenue-history.json",title:"營收歷史",method:"比較可驗證的相同月份；樣本不足顯示缺值。" },
   { id:"tw-valuations.json",title:"PE／PB／殖利率",method:"來源日期可能與股價不同；負 EPS 或無值時不推算正 PE。" },
-  { id:"tw-institutional-10d.json",title:"法人累計",method:"10 個官方交易日買賣超是流量，不等於大股東持股存量。" },
+  { id:"tw-institutional-10d.json",title:"法人累計 10D",method:"10 個官方交易日買賣超是流量，不等於大股東持股存量。" },
+  { id:"tw-institutional-rolling.json",title:"法人累計 5／10／20／60D",method:"逐日官方買賣超累計，長期歷史採漸進式真實補齊；資料不足時顯示不可用，不使用插值。" },
   { id:"tw-quarterly-margins.json",title:"季度毛利率",method:"目前資料欄位為季度營收、成本與毛利；沒有 EPS/ROE/自由現金流完整來源。" },
   { id:"tw-material-events.json",title:"重大公告",method:"官方可取得事件摘要，不保證能解釋所有股價波動。" },
   { id:"tw-etf-compositions.json",title:"ETF 成分",method:"僅穿透已驗證成分權重，未知部分保留為未知；主動式 ETF 公布頻率依發行商而異。" }
