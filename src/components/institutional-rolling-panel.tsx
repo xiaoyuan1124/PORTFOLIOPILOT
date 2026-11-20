@@ -16,10 +16,12 @@ export function InstitutionalRollingPanel({market,symbol,quoteDate}:{
  market:"TWSE"|"TPEx";symbol:string;quoteDate:string|null
 }) {
  const [cache,setCache]=useState<InstitutionalRollingCache|null>(null);
+ const [opened,setOpened]=useState(false);
  const [error,setError]=useState("");
  const [loading,setLoading]=useState(true);
  const resume=useResumeRefreshKey();
  useEffect(()=>{
+  if(!opened)return;
   let active=true;
   void loadInstitutionalRolling().then(value=>{
    if(active){setCache(value);setError("");setLoading(false);}
@@ -27,18 +29,18 @@ export function InstitutionalRollingPanel({market,symbol,quoteDate}:{
    if(active){setError(cause instanceof Error?cause.message:"無法讀取法人歷史");setLoading(false);}
   });
   return ()=>{active=false;};
- },[resume]);
+ },[opened,resume]);
  const row=cache?institutionalRollingFor(cache,market,symbol):null;
- return <details className="rounded-xl border border-black/8 px-3 py-2 dark:border-white/10" data-ux-role="institutional-rollup">
+ return <details className="rounded-xl border border-black/8 px-3 py-2 dark:border-white/10" data-ux-role="institutional-rollup" onToggle={event=>setOpened(event.currentTarget.open)}>
   <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">法人 5／10／20／60 日買賣超</summary>
-  {loading?<p className="mt-2 text-xs text-black/45 dark:text-white/45">核對官方逐日快取…</p>:null}
+  {opened&&loading?<p className="mt-2 text-xs text-black/45 dark:text-white/45">核對官方逐日快取…</p>:null}
   {!loading&&!row?<p className="mt-2 text-xs text-black/45 dark:text-white/45">
    {error||"該證券暫無足夠的可核對法人歷史。"} 不推算尚未取得的買賣超。
   </p>:null}
   {row&&cache?<div className="mt-2 space-y-2">
    <p className="text-[11px] text-black/50 dark:text-white/50">
     官方最後交易日 {cache.asOf} · {market} · 單位：股
-    {quoteDate&&cache.asOf<quoteDate?<span className="text-amber-700 dark:text-amber-300"> · 法人資料晚於收盤價更新</span>:null}
+    {quoteDate&&cache.asOf<quoteDate?<span className="text-amber-700 dark:text-amber-300"> · 法人資料落後於收盤價</span>:null}
    </p>
    <div className="grid grid-cols-[auto_1fr_1fr] items-center gap-2 text-xs">
     <span className="text-black/45 dark:text-white/45">期間</span><span>外資淨買超</span><span>投信淨買超</span>

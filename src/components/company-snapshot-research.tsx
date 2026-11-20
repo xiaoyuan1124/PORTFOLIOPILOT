@@ -17,6 +17,7 @@ import { Badge, Card, CardContent, GhostButton } from "./ui";
 import { SecurityPriceHistoryCard } from "./security-price-history-card";
 import { TradePlanPanel } from "./trade-plan-panel";
 import { ValuationScenarioPanel } from "./valuation-scenario-panel";
+import { InstitutionalRollingPanel } from "./institutional-rolling-panel";
 import { localDateKey } from "@/lib/calc";
 
 type Caches = {
@@ -261,6 +262,8 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
           date:localDateKey(),symbol:selected.code,title,thesis,invalidation
         }]}) : false}
       /> : null}
+
+      {selected.type === "stock" ? <InstitutionalRollingPanel key={selected.market+":"+selected.code} market={selected.market} symbol={selected.code} quoteDate={selected.quote?.date??null}/> : null}
 
       <details className="rounded-xl border border-black/8 p-2 dark:border-white/10">
         <summary className="min-h-11 cursor-pointer px-2 py-2 text-sm font-semibold">展開財報、法人、估值與資料來源</summary>
