@@ -16,6 +16,7 @@ import { marketPrice, percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 import { SecurityPriceHistoryCard } from "./security-price-history-card";
 import { TradePlanPanel } from "./trade-plan-panel";
+import { ValuationScenarioPanel } from "./valuation-scenario-panel";
 import { localDateKey } from "@/lib/calc";
 
 type Caches = {
@@ -242,7 +243,7 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
       {onQuantResearch ? (
         <button type="button" onClick={() => onQuantResearch(selected.market + ":" + selected.code)}
           className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-[#315f49]/20 bg-[#e7f1e9] px-4 text-left text-sm font-semibold text-[#245238] dark:border-[#8ec7a3]/25 dark:bg-[#173426] dark:text-[#a9d7b7]">
-          <span>使用 PilotQuant 回測 {selected.code}，查看未來價格情境</span>
+          <span>PilotQuant：歷史回測與情境研究（非未來預測）</span>
           <span aria-hidden>→</span>
         </button>
       ) : null}
@@ -252,6 +253,14 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
         <SecurityPriceHistoryCard market={selected.market} symbol={selected.code} />
       </details>
       {selected.type === "stock" ? <TradePlanPanel key={selected.market+":"+selected.code} symbol={selected.code} name={selected.name} referenceClose={selected.quote?.close??null} priceDate={selected.quote?.date??null} onSavePlan={(title,thesis,invalidation) => onChange ? onChange({...state,journal:[...state.journal,{id:"plan-"+Date.now()+"-"+Math.random().toString(36).slice(2),date:localDateKey(),symbol:selected.code,title,thesis,invalidation}]}) : false} /> : null}
+      {selected.type === "stock" ? <ValuationScenarioPanel key={selected.market+":"+selected.code} symbol={selected.code} name={selected.name}
+        close={selected.quote?.close??null} quoteDate={selected.quote?.date??null}
+        officialPe={selected.valuation?.pe??null} valuationDate={selected.valuation?.date??null}
+        onSave={(title,thesis,invalidation) => onChange ? onChange({...state,journal:[...state.journal,{
+          id:"valuation-"+Date.now()+"-"+Math.random().toString(36).slice(2),
+          date:localDateKey(),symbol:selected.code,title,thesis,invalidation
+        }]}) : false}
+      /> : null}
 
       <details className="rounded-xl border border-black/8 p-2 dark:border-white/10">
         <summary className="min-h-11 cursor-pointer px-2 py-2 text-sm font-semibold">展開財報、法人、估值與資料來源</summary>

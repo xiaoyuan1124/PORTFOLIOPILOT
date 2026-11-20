@@ -39,11 +39,11 @@ export function ValuationScenarioPanel({symbol,name,close,quoteDate,officialPe,v
   </label>
   <div className="mt-2 grid grid-cols-[auto_1fr_1fr] items-center gap-2 text-xs">
    <span className="text-black/45 dark:text-white/45">情境</span><span>EPS 年變動 %</span><span>假設 PE 倍數</span>
-   {labels.map((label,i)=><>
-    <span key={label+"-title"} className="font-medium">{label}</span>
-    <input key={label+"-growth"} aria-label={label+" EPS 成長率"} className="field min-h-11 min-w-0" type="number" step="any" inputMode="decimal" value={growth[i]} onChange={e=>setGrowth(prev=>prev.map((v,j)=>j===i?e.target.value:v))} placeholder="自行輸入"/>
-    <input key={label+"-pe"} aria-label={label+" PE 倍數"} className="field min-h-11 min-w-0" type="number" step="any" inputMode="decimal" value={pes[i]} onChange={e=>setPes(prev=>prev.map((v,j)=>j===i?e.target.value:v))} placeholder="自行輸入"/>
-   </>)}
+   {labels.map((label,i)=><div key={label} className="contents">
+    <span className="font-medium">{label}</span>
+    <input aria-label={label+" EPS 成長率"} className="field min-h-11 min-w-0" type="number" step="any" inputMode="decimal" value={growth[i]} onChange={e=>setGrowth(prev=>prev.map((v,j)=>j===i?e.target.value:v))} placeholder="自行輸入"/>
+    <input aria-label={label+" PE 倍數"} className="field min-h-11 min-w-0" type="number" step="any" inputMode="decimal" value={pes[i]} onChange={e=>setPes(prev=>prev.map((v,j)=>j===i?e.target.value:v))} placeholder="自行輸入"/>
+   </div>)}
   </div>
   {error?<p className="mt-2 text-xs text-amber-700 dark:text-amber-300" role="status">{error}</p>:null}
   {result?<div className="mt-2 grid grid-cols-3 gap-2">
@@ -53,7 +53,7 @@ export function ValuationScenarioPanel({symbol,name,close,quoteDate,officialPe,v
    </div>)}
   </div>:null}
   <p className="mt-2 text-[11px] leading-5 text-black/45 dark:text-white/45">
-   公式：情境價 = 自填近四季 EPS ×（1 + 自填 EPS 成長率）× 自填 PE；上漲空間 = 情境價 ÷ ${close??"收盤價缺值"} − 1。
+   公式：情境價 = 自填近四季 EPS ×（1 + 自填 EPS 成長率）× 自填 PE；上漲空間 = 情境價 ÷ {close??"收盤價缺值"} − 1。
    僅為敏感度試算，不是統計 P10／P50／P90，也不是分析師共識。負 EPS 禁用 PE 模型；景氣循環、現金流與稀釋風險需另行核對。
   </p>
   {result&&onSave?<button className="mt-2 min-h-11 w-full rounded-xl border border-black/10 text-xs font-semibold dark:border-white/10" onClick={save}>將假設保存至本機投資筆記</button>:null}
