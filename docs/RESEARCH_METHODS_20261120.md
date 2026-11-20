@@ -11,8 +11,17 @@ Source: the existing TWSE/TPEx `tw-price-history` dated **unadjusted daily closi
 - MACD: EMA12 − EMA26 (seed each EMA with its initial simple mean); DEA is EMA9 of MACD after nine valid MACD observations; histogram is DIF − DEA. No future close contributes to a historical result.
 - MA20 slope is the difference from five observed closes earlier. Highest/lowest last 60 **closing** prices are not intraday highs/lows.
 - Any conflicting duplicate date fails closed; invalid prices/dates are rejected.
-- This cache does **not** contain independently verified OHLC, turnover, minute bars, adjusted prices or split factors. We therefore do not label charts as complete candlesticks or calculate volume-ratio, stochastic KD or paid/provider-derived analyst data from missing fields.
+- The global price-history cache itself does **not** contain OHLC, turnover, minute bars, adjusted prices or split factors. Its close-only panel therefore never generates synthetic candlesticks, volume-ratio or KD. A **separate, pre-existing Strategy Lab TWSE STOCK_DAY OHLCV cache** can supply actual OHLCV for the six issuer-supported listed symbols currently configured (2317, 2382, 2345, 2449, 3711, 3037); that optional panel reuses verified candles, weekly/monthly aggregation, (9,3,3) KD and daily 20-session volume ratio. Unsupported symbols/TPEx show unavailable, not guessed candles.
 - Raw price performance excludes dividends and corporate actions. Relative TAIEX price performance must not be mistaken for total return.
+
+### Real OHLCV for the supported TWSE Strategy Lab sample
+
+- Day K: verified daily `[date, open, high, low, close, volumeShares]` from TWSE `STOCK_DAY`; Zod validates high >= open/close and low <= open/close, and volume units are **shares**, not lots.
+- Week K: calendar Monday group, first official day's open, highest high, lowest low, last official day's close, sum of verified traded shares.
+- Month K: calendar year-month group with the same real OHLCV aggregation; no fill-forward for non-trading dates.
+- KD (9,3,3): rolling 9-bar RSV (if high=low, RSV=50), K = 2K_prev/3+RSV/3, D = 2D_prev/3+K/3, initial K=D=50. Only after nine bars.
+- Daily volume ratio = latest officially recorded day's traded shares ÷ mean previous 20 recorded sessions' traded shares. Missing required samples => null.
+- Any month marked failed by the OHLCV pipeline inhibits KD/volume signals. Source dates and any mismatch against quote cache are shown; this remains a **small curated TWSE symbol universe**, not all equities.
 
 ## B. EPS × PE user assumptions
 

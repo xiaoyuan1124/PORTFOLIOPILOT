@@ -9,6 +9,7 @@ import { priceHistoryMetrics, relativePerformancePct } from "@/lib/price-history
 import { calculateCloseTechnicals } from "@/lib/technical-indicators";
 import { Card, CardContent, InfoDisclosure } from "./ui";
 import { useResumeRefreshKey } from "./use-resume-refresh-key";
+import { OfficialOhlcvPanel } from "./official-ohlcv-panel";
 
 function signedPct(value: number | null | undefined) {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
@@ -156,6 +157,7 @@ export function SecurityPriceHistoryCard({
               </ResponsiveContainer>
             </div>
             <p className="mt-2 text-[11px] text-black/45 dark:text-white/45">{metrics.firstDate} → {metrics.latestDate} · {metrics.points.length} 筆有效收盤 · 綠色收盤／琥珀 MA20／藍色 MA60</p>
+            <OfficialOhlcvPanel market={market} symbol={symbol} quoteDate={metrics.latestDate} />
             <InfoDisclosure summary="歷史價格口徑" className="mt-3">
               使用 TWSE／TPEx 官方每日收盤價。這是 raw price return，不含現金股利再投資，也沒有自行製作還原價；除權息會直接反映在價格序列，因此不可視為總報酬。「相對加權」使用同期間 TWSE TAIEX Price Index，兩邊都採價格報酬口徑；數值代表相對價格表現，不是投資評級。
             </InfoDisclosure>
