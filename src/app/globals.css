@@ -134,9 +134,9 @@ button {
 }
 
 .app-topbar {
-  padding-top: calc(.75rem + var(--safe-area-top));
+  padding-top: calc(.55rem + var(--safe-area-top));
   padding-right: calc(1rem + var(--safe-area-right));
-  padding-bottom: .75rem;
+  padding-bottom: .55rem;
   padding-left: calc(1rem + var(--safe-area-left));
 }
 
@@ -153,6 +153,12 @@ button {
 .app-page-content {
   padding-right: calc(1rem + var(--safe-area-right));
   padding-left: calc(1rem + var(--safe-area-left));
+}
+
+/* Keep form inputs at 16px on touch devices: smaller iOS inputs trigger
+   unintended Safari zoom on focus, even if surrounding labels are compact. */
+@media (max-width: 767px) and (pointer: coarse) {
+  .field, input, select, textarea { font-size: max(1rem, 16px); }
 }
 
 @media (min-width: 768px) {

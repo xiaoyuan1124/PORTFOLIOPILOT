@@ -353,13 +353,13 @@ export function AppShell() {
         <header className="app-topbar sticky top-0 z-20 border-b border-black/5 bg-[#f4f2ed]/82 backdrop-blur-xl dark:border-white/6 dark:bg-[#101412]/82">
           <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-semibold tracking-tight md:text-2xl">{title.title}</h1>
+              <h1 className="truncate text-lg font-semibold tracking-tight md:text-xl">{title.title}</h1>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => setSearchOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full border border-black/6 bg-white/80 px-3 transition hover:bg-white dark:border-white/8 dark:bg-white/6 dark:hover:bg-white/10" aria-label="快速搜尋" aria-keyshortcuts="Meta+K Control+K">
                 <Search size={17} /><span className="hidden text-xs font-semibold text-black/50 dark:text-white/50 sm:inline">搜尋</span>
               </button>
-              <Badge tone={state.dataMode === "demo" ? "warn" : "neutral"}>{state.dataMode === "demo" ? "DEMO" : "LOCAL"}</Badge>
+              {state.dataMode === "demo" ? <Badge tone="warn">DEMO</Badge> : null}
               <button onClick={toggleTheme} className="app-theme-toggle grid h-11 w-11 place-items-center rounded-full border border-black/6 bg-white/80 transition hover:bg-white dark:border-white/8 dark:bg-white/6 dark:hover:bg-white/10" aria-label="切換外觀模式" title={`目前：${APP_THEME_LABELS[theme]} · 點擊切換至${APP_THEME_LABELS[nextAppTheme(theme)]}`}>
                 {theme === "light" ? <Moon size={18} /> : theme === "dark" ? <Palette size={18} /> : <Sun size={18} />}
               </button>
@@ -367,7 +367,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <div className="app-page-content mx-auto max-w-[1360px] py-5 md:py-8">
+        <div className="app-page-content mx-auto max-w-[1360px] py-3 md:py-5">
           {hasRecoveryBackup || storageWriteBlocked || nativeStorageDegraded ? (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#b98b57]/25 bg-[#f5ece1] px-4 py-3 text-[#6f4c26] dark:border-[#b98b57]/20 dark:bg-[#2a2117] dark:text-[#e0bd8c]">
               <div>

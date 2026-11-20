@@ -1,4 +1,5 @@
 "use client";
+import { DataMethodsCenter } from "./data-methods-center";
 
 import { useRef, useState } from "react";
 import { AlertTriangle, ArrowRight, CircleAlert, DatabaseBackup, Download, ExternalLink, FileSpreadsheet, Info, LifeBuoy, RotateCcw, ShieldCheck, Trash2, Upload } from "lucide-react";
@@ -360,31 +361,6 @@ export function Settings({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Card className="lg:col-span-2">
-        <CardContent className="space-y-3 p-4 md:p-5">
-          <div>
-            <h2 className="text-lg font-semibold">外觀主題</h2>
-          </div>
-          <div className="grid grid-cols-3 gap-2" role="group" aria-label="外觀主題">
-            {APP_THEME_MODES.map((mode) => {
-              const swatch = APP_THEME_SWATCHES[mode];
-              const active = theme === mode;
-              return (
-                <button key={mode} type="button" aria-pressed={active} onClick={() => onThemeChange(mode)}
-                  className={`theme-choice min-w-0 rounded-xl border p-2 text-left transition sm:p-3 ${active ? "border-[#456b58] bg-[#e7f1e9] dark:border-[#a7d8b8]/70 dark:bg-[#173426]" : "border-black/10 bg-black/[.018] hover:border-black/25 dark:border-white/10 dark:bg-white/[.025] dark:hover:border-white/25"}`}>
-                  <span aria-hidden="true" className="flex h-12 items-center gap-2 rounded-lg border border-black/10 px-2 shadow-sm dark:border-white/10" style={{ backgroundColor: swatch.background }}>
-                    <span className="h-7 w-8 rounded-md border border-white/10" style={{ backgroundColor: swatch.surface }} />
-                    <span className="h-1.5 w-5 rounded-full" style={{ backgroundColor: swatch.accent }} />
-                    <span className="ml-auto h-1.5 w-2 rounded-full" style={{ backgroundColor: swatch.positive }} />
-                  </span>
-                  <span className="mt-2 block truncate text-xs font-semibold sm:text-sm">{APP_THEME_LABELS[mode]}</span>
-                  <span className="mt-1 block text-[10px] text-black/45 dark:text-white/45">{active ? "✓ 使用中" : mode === "tradescope" ? "黑金 / 漲綠跌紅" : mode === "dark" ? "墨綠深色" : "柔和淺色"}</span>
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
       {hasRecoveryBackup || storageWriteBlocked || nativeStorageDegraded ? (
         <Card className="lg:col-span-2">
           <CardContent>
@@ -515,6 +491,38 @@ export function Settings({
           </div>
         </CardContent>
       </Card>
+
+      <DataMethodsCenter />
+
+      <details className="lg:col-span-2 rounded-xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-appearance">
+        <summary className="min-h-11 cursor-pointer px-2 py-2 text-sm font-semibold">外觀與字體</summary>
+        <div className="mt-2">      <Card className="lg:col-span-2">
+        <CardContent className="space-y-3 p-4 md:p-5">
+          <div>
+            <h2 className="text-lg font-semibold">外觀主題</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-2" role="group" aria-label="外觀主題">
+            {APP_THEME_MODES.map((mode) => {
+              const swatch = APP_THEME_SWATCHES[mode];
+              const active = theme === mode;
+              return (
+                <button key={mode} type="button" aria-pressed={active} onClick={() => onThemeChange(mode)}
+                  className={`theme-choice min-w-0 rounded-xl border p-2 text-left transition sm:p-3 ${active ? "border-[#456b58] bg-[#e7f1e9] dark:border-[#a7d8b8]/70 dark:bg-[#173426]" : "border-black/10 bg-black/[.018] hover:border-black/25 dark:border-white/10 dark:bg-white/[.025] dark:hover:border-white/25"}`}>
+                  <span aria-hidden="true" className="flex h-12 items-center gap-2 rounded-lg border border-black/10 px-2 shadow-sm dark:border-white/10" style={{ backgroundColor: swatch.background }}>
+                    <span className="h-7 w-8 rounded-md border border-white/10" style={{ backgroundColor: swatch.surface }} />
+                    <span className="h-1.5 w-5 rounded-full" style={{ backgroundColor: swatch.accent }} />
+                    <span className="ml-auto h-1.5 w-2 rounded-full" style={{ backgroundColor: swatch.positive }} />
+                  </span>
+                  <span className="mt-2 block truncate text-xs font-semibold sm:text-sm">{APP_THEME_LABELS[mode]}</span>
+                  <span className="mt-1 block text-[10px] text-black/45 dark:text-white/45">{active ? "✓ 使用中" : mode === "tradescope" ? "黑金 / 漲綠跌紅" : mode === "dark" ? "墨綠深色" : "柔和淺色"}</span>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+        </div>
+      </details>
 
       <details className="lg:col-span-2 rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="settings-device-support">
         <summary className="flex min-h-11 cursor-pointer items-center px-2 text-sm font-semibold">裝置功能、隱私與支援</summary>

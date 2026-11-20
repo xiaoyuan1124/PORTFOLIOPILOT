@@ -108,7 +108,7 @@ export function MarketStatusCenter() {
           </div>
 
           <GhostButton
-            className="min-h-9 rounded-full px-3 text-xs"
+            className="min-h-11 rounded-full px-3 text-xs"
             disabled={loading}
             onClick={() => void reload()}
           >
@@ -117,7 +117,9 @@ export function MarketStatusCenter() {
           </GhostButton>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <details className="mt-2 rounded-lg border border-black/6 px-2 py-1.5 dark:border-white/8">
+          <summary className="min-h-10 cursor-pointer px-1 py-2 text-xs font-medium text-black/55 dark:text-white/55">查看 TWSE／TPEx／大盤／個股歷史的資料日期</summary>
+          <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div className="mini-metric">
             <span>TWSE</span>
             <strong>{status.twseDate ?? "—"}</strong>
@@ -135,10 +137,7 @@ export function MarketStatusCenter() {
             <strong>{historyDate ?? "—"}</strong>
           </div>
         </div>
-
-        <p className="mt-3 text-[11px] leading-5 text-black/35 dark:text-white/35">
-          官方收盤價，非盤中即時報價。不同資料管線分開更新；若日期落後，會顯示實際資料日，不以較新日期偽裝完整。
-        </p>
+        </details>
       </CardContent>
     </Card>
   );

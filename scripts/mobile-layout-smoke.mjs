@@ -64,16 +64,27 @@ try {
       await onboarding.getByRole("button", { name: /新增持股/ }).waitFor();
     }
     const homeSecondary = page.locator('[data-ux-role="home-allocation-details"]');
-    await homeSecondary.waitFor();
-    assert.equal(await homeSecondary.getAttribute("open"), null, "secondary holdings and sectors should not dominate the first viewport");
-    const dailySecondary = page.locator('[data-ux-role="daily-drivers-details"]');
-    await dailySecondary.waitFor();
-    assert.equal(await dailySecondary.getAttribute("open"), null, "daily attribution should be summarized by default");
-    await page.locator('[data-ux-role="daily-key-metrics"]').waitFor();
-    await homeSecondary.locator("summary").click();
-    await page.getByRole("heading", { name: "帳戶分布" }).waitFor();
-    await checkLayout(page, viewport.name, "home-allocations-expanded");
-    await homeSecondary.locator("summary").click();
+    if (await onboarding.count()) {
+      assert.equal(await homeSecondary.count(), 0, "empty portfolio must not show allocation chart");
+      assert.equal(await page.locator('[data-ux-role="daily-drivers-details"]').count(), 0, "empty portfolio must not show fake daily attribution");
+    } else {
+      await homeSecondary.waitFor();
+      const navRange = page.getByRole("combobox", { name: "淨值圖時間範圍" });
+      await navRange.selectOption("1W");
+      assert.equal(await navRange.inputValue(), "1W", "calendar-range control must switch without fabricating history");
+      await page.getByRole("button", { name: "完整金額", exact: true }).click();
+      assert.equal(await page.getByRole("button", { name: "完整金額", exact: true }).getAttribute("aria-pressed"), "true", "explicit zero-origin chart mode should be operable");
+      await page.getByRole("button", { name: "放大波動", exact: true }).click();
+      assert.equal(await homeSecondary.getAttribute("open"), null, "secondary holdings and sectors should not dominate the first viewport");
+      const dailySecondary = page.locator('[data-ux-role="daily-drivers-details"]');
+      await dailySecondary.waitFor();
+      assert.equal(await dailySecondary.getAttribute("open"), null, "daily attribution should be summarized by default");
+      await page.locator('[data-ux-role="daily-key-metrics"]').waitFor();
+      await homeSecondary.locator("summary").click();
+      await page.getByRole("heading", { name: "帳戶分布" }).waitFor();
+      await checkLayout(page, viewport.name, "home-allocations-expanded");
+      await homeSecondary.locator("summary").click();
+    }
 
     await nav.getByRole("button", { name: "投資組合", exact: true }).click();
     await page.getByRole("heading", { name: "投資組合" }).waitFor();
@@ -281,6 +292,7 @@ try {
     await page.getByRole("heading", { name: "設定與資料" }).waitFor();
 
     // Direct selection of any theme also works.
+    await page.locator('[data-ux-role="settings-appearance"] > summary').click();
     const themeGroup = page.getByRole("group", { name: "外觀主題" });
     await themeGroup.getByRole("button", { name: /淺色/ }).click();
     await page.waitForFunction(() => !document.documentElement.classList.contains("dark"));

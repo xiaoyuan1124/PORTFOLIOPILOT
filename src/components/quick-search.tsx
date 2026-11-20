@@ -30,18 +30,20 @@ export function QuickSearch({
   useEffect(() => {
     if (!open || catalog !== null) return;
     let active = true;
-    void Promise.all([loadBundledTwQuotes(), loadBundledRevenue()])
+    void Promise.allSettled([loadBundledTwQuotes(), loadBundledRevenue()])
       .then(([quotes, revenue]) => {
-        if (active) {
-          setCatalog(buildHoldingLookupCatalog(quotes, revenue));
-          setLoadError("");
-        }
-      })
-      .catch(() => {
-        if (active) {
+        if (!active) return;
+        if (quotes.status === "rejected") {
           setCatalog([]);
-          setLoadError("官方台股／ETF 清單載入失敗，可能是網路或資料快取暫時無法取得。");
+          setLoadError("官方行情暫無法載入；仍可搜尋本機持股與快速前往。");
+          return;
         }
+        // Revenue enriches search but must not block an otherwise valid quote catalog.
+        const revenueCache = revenue.status === "fulfilled"
+          ? revenue.value
+          : { generatedAt: "", sources: [], rows: [] };
+        setCatalog(buildHoldingLookupCatalog(quotes.value, revenueCache));
+        setLoadError(revenue.status === "rejected" ? "營收資料未載入，部分股票不在搜尋目錄；已保留 ETF 與本機持股搜尋。" : "");
       });
     return () => { active = false; };
   }, [catalog, open]);

@@ -10,6 +10,7 @@ import { cacheMarketFreshness, loadBundledTwQuotes, type TwQuoteCache } from "@/
 import { Badge, Card, CardContent, GhostButton, InfoDisclosure } from "./ui";
 import { EtfDeepAnalysis } from "./etf-deep-analysis";
 import { EtfCompositionTracker } from "./etf-composition-tracker";
+import { EtfOverlapCompare } from "./etf-overlap-compare";
 
 
 
@@ -138,19 +139,11 @@ export function EtfResearch({
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div className="rounded-[24px] border border-black/6 bg-[#1f332a] p-5 text-white shadow-sm dark:border-white/8 dark:bg-[#dce9e2] dark:text-[#122018]">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h3 className="mt-2 text-xl font-semibold">ETF 成分與績效</h3>
-            <InfoDisclosure summary="資料來源與同步方式" className="mt-3 border-white/15 bg-white/[.06] dark:border-black/10 dark:bg-black/[.04]">
-              成份權重使用目前保存的可追溯資料；支援的持有台灣 ETF 會在「同步最新資料」時同步官方發行人成份。當日歸因只使用同一最新交易日、可唯一匹配的官方台股收盤漲跌，缺資料不補猜。
-            </InfoDisclosure>
-          </div>
-          <GhostButton disabled={loading} onClick={() => void reload()} className="border-white/20 bg-white/10 text-white dark:border-black/10 dark:bg-black/5 dark:text-[#122018]">
-            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-            {loading ? "同步中" : "重新整理"}
-          </GhostButton>
-        </div>
+      <div className="flex items-center justify-between gap-3 px-1">
+        <div><h3 className="text-sm font-semibold">ETF 成分與績效</h3><p className="mt-0.5 text-xs text-black/45 dark:text-white/45">已驗證成分、重疊曝險及調倉變化</p></div>
+        <GhostButton disabled={loading} onClick={() => void reload()} className="min-h-11 shrink-0 px-3 text-xs">
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />{loading ? "同步中" : "重新整理"}
+        </GhostButton>
       </div>
 
       {quoteError || historyError ? (
@@ -187,7 +180,7 @@ export function EtfResearch({
             <button
               key={key}
               onClick={() => setManualSelectedKey(key)}
-              className={`min-w-[150px] rounded-2xl border p-3 text-left transition ${
+              className={`min-w-[122px] rounded-xl border p-2 text-left transition ${
                 active
                   ? "border-[#315f49]/35 bg-[#e7f1e9] dark:border-[#8ec7a3]/30 dark:bg-[#173426]"
                   : "border-black/6 bg-white/60 hover:bg-white dark:border-white/8 dark:bg-white/4 dark:hover:bg-white/7"
@@ -219,14 +212,15 @@ export function EtfResearch({
         </Card>
       ) : null}
 
-      {selected ? (
+      {selected ? <>
+        <EtfOverlapCompare key={compositionKey(selected)} selected={selected} options={compositions} />
         <EtfCompositionTracker
           selected={selected}
           snapshots={[...compositions, ...compositionHistory]}
           loading={loading}
           error={historyError}
         />
-      ) : null}
+      </> : null}
 
       {selected && result ? (
         <>

@@ -89,7 +89,7 @@ export function MarketStressPanel({ compact = false, onOpen }: Props) {
 
         {latest ? (
           <div className="flex flex-wrap items-end gap-3">
-            <strong className="text-4xl font-semibold tabular-nums">{latest.score}<span className="ml-1 text-sm font-normal text-black/40 dark:text-white/40">/ 100</span></strong>
+            <strong className={`${compact ? "text-2xl" : "text-4xl"} font-semibold tabular-nums`}>{latest.score}<span className="ml-1 text-sm font-normal text-black/40 dark:text-white/40">/ 100</span></strong>
             <p className="pb-1 text-xs text-black/55 dark:text-white/55">
               {changed === null ? "等待比較資料" : changed === 0 ? "較前交易日持平" : "較前交易日 " + (changed > 0 ? "+" : "") + changed + " 點"}
               <span className="ml-2">指標日 {latest.date}</span>
@@ -113,10 +113,8 @@ export function MarketStressPanel({ compact = false, onOpen }: Props) {
 
         {compact ? (
           <>
-            <p className="text-xs leading-5 text-black/45 dark:text-white/45">
-              波動率、距一年高點跌幅、近 20 日跌幅的歷史百分位平均；不等於 ToAlpha 恐慌指數，也不是買賣訊號。
-            </p>
-            {onOpen ? <GhostButton className="min-h-10 w-full justify-center" onClick={onOpen}>完整市場風險分析 <ArrowRight size={15} /></GhostButton> : null}
+            <p className="text-[11px] text-black/45 dark:text-white/45">3 因子歷史壓力；非買賣訊號 · 資料日 {latest?.date??"—"}</p>
+            {onOpen ? <GhostButton className="min-h-11 w-full justify-center" onClick={onOpen}>完整市場風險分析 <ArrowRight size={15} /></GhostButton> : null}
           </>
         ) : (
           <>

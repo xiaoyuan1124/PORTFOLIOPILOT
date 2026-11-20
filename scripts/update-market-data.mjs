@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { accumulateOfficialInstitutionalFlows } from "./lib/institutional-rolling.mjs";
 import { parseTpexValuations, parseTwseValuations } from "./lib/valuation-data.mjs";
 import { combineQuoteMarkets, parseTpexQuoteRows, parseTwseQuoteRows } from "./lib/quote-data.mjs";
 
@@ -492,6 +493,7 @@ async function fetchInstitutional10d(latestQuoteDate) {
   }
 
   return {
+    daily: accepted,
     tradingDates: accepted.map((day) => day.date),
     rows: aggregateInstitutionalDays(accepted),
     sources: [
@@ -566,6 +568,27 @@ async function main() {
   if (!latestQuoteDate) throw new Error("Cannot determine latest quote date for institutional lookback.");
   const institutional = await fetchInstitutional10d(latestQuoteDate);
 
+  let previousInstitutionalArchive = null;
+  try {
+    previousInstitutionalArchive = JSON.parse(await readFile("public/data/tw-institutional-history.json", "utf8"));
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  // Official TAIEX dates establish the expected 20/60-session calendar. If
+  // its cache lags, longer windows remain unavailable instead of guessing.
+  let benchmarkTradingPoints = [];
+  try {
+    const benchmarkCache = JSON.parse(await readFile("public/data/tw-benchmarks.json", "utf8"));
+    benchmarkTradingPoints = benchmarkCache?.benchmarks?.find(
+      (row) => row.id === "TWSE:TAIEX-PRICE"
+    )?.points ?? [];
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  const institutionalRolling = accumulateOfficialInstitutionalFlows(
+    previousInstitutionalArchive, institutional.daily, benchmarkTradingPoints, fetchedAt
+  );
+
   const quotePayload = {
     generatedAt: fetchedAt,
     sources: QUOTE_SOURCES.map((source) => ({ ...source, fetchedAt })),
@@ -617,12 +640,15 @@ async function main() {
   await writeFile("public/data/tw-valuations.json", JSON.stringify(valuationPayload, null, 2) + "\n", "utf8");
   await writeFile("public/data/tw-revenue-history.json", JSON.stringify(revenueHistoryPayload, null, 2) + "\n", "utf8");
   await writeFile("public/data/tw-institutional-10d.json", JSON.stringify(institutionalPayload, null, 2) + "\n", "utf8");
+  await writeFile("public/data/tw-institutional-history.json", JSON.stringify(institutionalRolling.archive) + "\n", "utf8");
+  await writeFile("public/data/tw-institutional-rolling.json", JSON.stringify(institutionalRolling.summary) + "\n", "utf8");
 
   console.log(`Wrote ${quotes.length} TWSE/TPEx quotes`);
   console.log(`Wrote ${revenue.length} TWSE/TPEx latest monthly revenue rows`);
   console.log(`Wrote ${valuations.length} TWSE/TPEx official valuation rows`);
   console.log(`Wrote ${history.rows.length} MOPS historical revenue rows for ${history.periods.join(", ")}`);
   console.log(`Wrote ${institutional.rows.length} institutional 10D aggregates for ${institutional.tradingDates.join(", ")}`);
+  console.log(`Institutional 60D archive: ${institutionalRolling.archive.days.length} official sessions; windows: ${JSON.stringify(institutionalRolling.summary.windows)}`);
 }
 
 main().catch((error) => {

@@ -24,11 +24,15 @@ import { DailyPortfolioDrivers } from "./daily-portfolio-drivers";
 import { MarketStatusCenter } from "./market-status-center";
 import { MarketStressPanel } from "./market-stress-panel";
 import { snapshotTimeline } from "@/lib/snapshot-timeline";
-import { formatNetWorthTick, netWorthChartScale } from "@/lib/net-worth-chart-scale";
+import { formatNetWorthTick, netWorthChartScale, netWorthFullScale } from "@/lib/net-worth-chart-scale";
+import { navCashFlowBridge } from "@/lib/nav-cash-flow-bridge";
 
 const ranges: Array<{ key: SnapshotRange; label: string }> = [
+  { key: "1D", label: "1日（已記錄淨值）" },
+  { key: "1W", label: "1週" },
   { key: "1M", label: "1月" },
   { key: "3M", label: "3月" },
+  { key: "6M", label: "6月" },
   { key: "YTD", label: "今年" },
   { key: "1Y", label: "1年" },
   { key: "ALL", label: "全部" }
@@ -42,6 +46,7 @@ export function Overview({
   onNavigate?: (section: "portfolio" | "research" | "lab", researchKey?: string, researchType?: "stock" | "etf") => void;
 }) {
   const [range, setRange] = useState<SnapshotRange>("3M");
+  const [axisMode, setAxisMode] = useState<"zoom" | "full">("zoom");
   const summary = portfolioSummary(state.holdings, state.usdTwd);
   const cash = portfolioCashSummary(state.holdings, state.usdTwd);
   const risk = calculatePortfolioRisk(state.holdings, state.etfCompositions, state.usdTwd);
@@ -54,13 +59,15 @@ export function Overview({
   const snapshots = useMemo(() => snapshotsForRange(currentSnapshots, range), [currentSnapshots, range]);
   const daily = dailySnapshotDelta(currentSnapshots);
   const period = snapshotPeriodDelta(snapshots);
+  const flowBridge = navCashFlowBridge(snapshots, state.activities);
   const priceCoverage = officialPriceCoverage(state.holdings);
 
   const trend = snapshotTimeline(snapshots);
-  const missingTradingDays = trend.filter((point) => point.value === null).length;
-  const netWorthScale = netWorthChartScale(trend.map((point) => point.value));
+  const missingWeekdays = trend.filter((point) => point.value === null).length;
+  const values = trend.map((point) => point.value);
+  const netWorthScale = axisMode === "zoom" ? netWorthChartScale(values) : netWorthFullScale(values);
   const chartMoney = (value: number) => netWorthScale.step < 1
-    ? `NT${formatNetWorthTick(value, netWorthScale.step)}`
+    ? "NT$" + formatNetWorthTick(value, netWorthScale.step)
     : money(value);
 
   return (
@@ -97,23 +104,25 @@ export function Overview({
         </Card>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-4">
+      {state.holdings.length > 0 ? (<section className="grid gap-3 md:grid-cols-4">
         <Card className="md:col-span-2">
           <CardContent>
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <Metric label="總資產淨值" value={money(summary.total)} helper={daily ? `最近一日淨值變動 ${percent(daily.pct)}` : "依目前輸入價格估算"} />
-              <Badge tone={state.dataMode === "demo" ? "warn" : "good"}><ArrowUpRight size={13} /> {state.dataMode === "demo" ? "DEMO" : "本機資料"}</Badge>
+              <Metric label="總資產淨值" value={money(summary.total)} helper={daily ? `最近兩筆記錄差額 ${money(daily.amount)}（${percent(daily.pct)}，含入出金）` : "依本機持股價格估算"} />
+              {state.dataMode === "demo" ? <Badge tone="warn">DEMO</Badge> : null}
             </div>
 
-            <div className="mt-5 flex max-w-full gap-1 overflow-x-auto rounded-xl bg-black/[.025] p-1 dark:bg-white/[.035]">
-              {ranges.map((item) => <button key={item.key} onClick={() => setRange(item.key)} className={`min-h-8 whitespace-nowrap rounded-lg px-3 text-xs font-semibold transition ${range === item.key ? "bg-white text-[#1f332a] shadow-sm dark:bg-white/10 dark:text-white" : "text-black/40 dark:text-white/40"}`}>{item.label}</button>)}
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <label className="sr-only" htmlFor="nav-range">淨值圖時間範圍</label>
+              <select id="nav-range" aria-label="淨值圖時間範圍" className="field min-h-11 min-w-0 max-w-[142px] py-1.5 text-xs" value={range} onChange={(event) => setRange(event.target.value as SnapshotRange)}>
+                {ranges.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+              </select>
+              <div role="group" aria-label="淨值圖金額刻度" className="inline-flex shrink-0 gap-1 rounded-xl bg-black/[.025] p-1 dark:bg-white/[.035]">
+                <button type="button" aria-pressed={axisMode === "zoom"} onClick={() => setAxisMode("zoom")} className={`min-h-9 rounded-lg px-2.5 text-[11px] font-semibold ${axisMode === "zoom" ? "bg-white shadow-sm dark:bg-white/10" : "text-black/45 dark:text-white/45"}`}>放大波動</button>
+                <button type="button" aria-pressed={axisMode === "full"} onClick={() => setAxisMode("full")} className={`min-h-9 rounded-lg px-2.5 text-[11px] font-semibold ${axisMode === "full" ? "bg-white shadow-sm dark:bg-white/10" : "text-black/45 dark:text-white/45"}`}>完整金額</button>
+              </div>
             </div>
-
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-black/45 dark:text-white/45">
-              <span>淨值刻度 · 新臺幣（NT$）</span>
-              <span>依可見數值自動放大，縱軸不從 0 起算</span>
-            </div>
-            <div className="mt-2 h-56 md:h-60">
+            <div className="mt-2 h-40 md:h-48">
               {trend.length > 1 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={trend} margin={{ top: 10, right: 6, left: 0, bottom: 0 }}>
@@ -129,8 +138,8 @@ export function Overview({
                       type="number"
                       domain={netWorthScale.domain}
                       ticks={netWorthScale.ticks}
-                      tickFormatter={(value) => formatNetWorthTick(Number(value), netWorthScale.step)}
-                      width={netWorthScale.maximum !== null && netWorthScale.maximum >= 1_000_000 ? 86 : 72}
+                      tickFormatter={(value) => axisMode === "full" && Math.abs(Number(value)) >= 10000 ? `${Number(value) / 10000}萬` : formatNetWorthTick(Number(value), netWorthScale.step)}
+                      width={axisMode === "full" ? 46 : netWorthScale.maximum !== null && netWorthScale.maximum >= 1_000_000 ? 76 : 68}
                       axisLine={false}
                       tickLine={false}
                       tickMargin={5}
@@ -150,37 +159,40 @@ export function Overview({
                       labelStyle={{ color: "#78817b", fontWeight: 500 }}
                       itemStyle={{ color: "#456b58" }}
                     />
-                    <Area type="linear" connectNulls={false} dataKey="value" stroke="#456b58" strokeWidth={2.5} fill="url(#networth)" dot={snapshots.length <= 15 ? { r: 2.5, fill: "#456b58" } : false} activeDot={{ r: 4 }} isAnimationActive={false} />
+                    <Area type="linear" connectNulls={false} dataKey="value" stroke="#456b58" strokeWidth={2} fill="url(#networth)" dot={snapshots.length <= 10 ? { r: 2, fill: "#456b58" } : false} activeDot={{ r: 4 }} isAnimationActive={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="grid h-full place-items-center rounded-2xl border border-dashed border-black/10 px-5 text-center text-sm text-black/35 dark:border-white/10 dark:text-white/35">
-                  個人淨值需由本機持股與已確認的歷史價格計算；尚未開啟 App 的日期不會捏造快照。
+                <div className="grid h-full place-items-center rounded-xl border border-dashed border-black/10 px-3 text-center text-xs text-black/45 dark:border-white/10 dark:text-white/45">
+                  {snapshots.length === 1 ? "此期間只有一筆真實淨值，無法畫出走勢。" : "目前沒有足夠的已記錄淨值；不補造歷史價格。"}
                 </div>
               )}
             </div>
             {netWorthScale.minimum !== null && netWorthScale.maximum !== null && snapshots.length > 1 ? (
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs tabular-nums">
-                <div className="rounded-lg bg-black/[.025] px-3 py-2 dark:bg-white/[.035]">
-                  <span className="text-black/45 dark:text-white/45">區間最低淨值</span>
-                  <p className="mt-0.5 font-semibold">{chartMoney(netWorthScale.minimum)}</p>
-                </div>
-                <div className="rounded-lg bg-black/[.025] px-3 py-2 dark:bg-white/[.035]">
-                  <span className="text-black/45 dark:text-white/45">區間最高淨值</span>
-                  <p className="mt-0.5 font-semibold">{chartMoney(netWorthScale.maximum)}</p>
-                </div>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] tabular-nums text-black/50 dark:text-white/50">
+                <span>最低 <strong className="text-inherit">{chartMoney(netWorthScale.minimum)}</strong></span>
+                <span>最高 <strong className="text-inherit">{chartMoney(netWorthScale.maximum)}</strong></span>
               </div>
             ) : null}
             {netWorthScale.unchanged && snapshots.length > 1 ? (
-              <p className="mt-2 text-xs leading-5 text-amber-700 dark:text-amber-300">
-                此期間已記錄的淨值完全相同，放大金額刻度也不會產生真正的波動；請確認持股價格與歷史快照是否已有更新。
-              </p>
+              <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-300">已記錄數值持平；放大刻度不會產生不存在的波動。</p>
             ) : null}
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-black/40 dark:text-white/40">
-              <span>{snapshots.length} 筆真實快照 · {missingTradingDays} 個交易日缺值 · {range === "ALL" ? "全部期間" : ranges.find((item) => item.key === range)?.label}</span>
-              {period ? <span className="tabular-nums">{period.firstDate} 起淨值變動：{percent(period.pct)}</span> : null}
+              <span>{snapshots.length} 筆紀錄 · {missingWeekdays} 個平日無快照（含可能休市）</span>
+              {period ? <span className="tabular-nums">{period.firstDate} 起 {money(period.amount)} · {percent(period.pct)}</span> : null}
             </div>
-            <p className="mt-2 text-[11px] leading-5 text-black/32 dark:text-white/32">淨值含入出金；投資報酬率請看「績效」。</p>
+            {flowBridge ? <details className="mt-2 rounded-lg border border-black/7 px-2.5 py-1.5 text-xs dark:border-white/8" data-ux-role="nav-flow-reconciliation">
+              <summary className="flex min-h-10 cursor-pointer items-center justify-between text-xs font-semibold">區間資金流與損益拆解 <span className="font-normal text-black/40 dark:text-white/40">查看</span></summary>
+              <div className="mt-1 grid grid-cols-2 gap-2 text-[11px] tabular-nums">
+                <span>資產淨值差額 <strong>{money(flowBridge.changeTwd)}</strong></span>
+                <span>期間入金 <strong>{money(flowBridge.depositsTwd)}</strong></span>
+                <span>期間提領 <strong>{money(flowBridge.withdrawalsTwd)}</strong></span>
+                <span>入金減提領 <strong>{money(flowBridge.netCashFlowTwd)}</strong></span>
+                <span className="col-span-2">扣除外部現金流後差額 <strong>{flowBridge.residualTwd === null ? "資料不足" : money(flowBridge.residualTwd)}</strong></span>
+              </div>
+              <p className="mt-2 text-[11px] leading-5 text-black/45 dark:text-white/45">差額不是純投資報酬：仍可能包括匯率變動、手動修改、價格校正與未記錄交易。匯率獨立歸因需完整買賣與歷史匯率成本，請到「績效」核對；不虛構缺漏。</p>
+              {flowBridge.invalidCashFlows>0 ? <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{flowBridge.invalidCashFlows} 筆入出金無法安全換算，暫停差額歸因。</p> : null}
+            </details> : null}
             {futureSnapshotCount > 0 ? (
               <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-[#8b6538] dark:text-[#d4ad7c]">
                 <AlertTriangle className="mt-0.5 shrink-0" size={13} />
@@ -193,7 +205,7 @@ export function Overview({
         <Card>
           <CardContent>
             <Metric label="現金水位" value={money(cash.cash)} helper={`占總資產 ${cash.cashPct.toFixed(1)}%`} />
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/8">
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/5 dark:bg-white/8">
               <div className="h-full rounded-full bg-[#456b58]" style={{ width: `${Math.min(100, cash.cashPct)}%` }} />
             </div>
             <p className="mt-3 text-xs text-black/45 dark:text-white/45">已投入資產 {cash.investedPct.toFixed(1)}%</p>
@@ -203,7 +215,7 @@ export function Overview({
         <Card>
           <CardContent>
             <Metric label="未實現損益" value={money(summary.gain)} helper={percent(summary.gainPct)} />
-            <div className="mt-6 flex items-center gap-2 text-xs text-black/50 dark:text-white/50">
+            <div className="mt-3 flex items-center gap-2 text-xs text-black/50 dark:text-white/50">
               <WalletCards size={15} />
               {state.holdings.filter((h) => h.type !== "cash").length} 個投資標的
             </div>
@@ -213,9 +225,9 @@ export function Overview({
             </div>
           </CardContent>
         </Card>
-      </section>
+      </section>) : null}
 
-      <Card className="min-w-0" data-ux-role="home-priority">
+      {state.holdings.length > 0 ? (<Card className="min-w-0" data-ux-role="home-priority">
         <CardContent className="space-y-2.5 p-3.5 md:p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">今天先看這些</h2>
@@ -245,15 +257,15 @@ export function Overview({
             </div>
           </details>
         </CardContent>
-      </Card>
+      </Card>) : null}
 
       <MarketStatusCenter />
 
       <MarketStressPanel compact onOpen={() => onNavigate?.("research", "__market_stress__")} />
 
-      <DailyPortfolioDrivers state={state} onNavigate={onNavigate} />
+      {state.holdings.length > 0 ? <DailyPortfolioDrivers state={state} onNavigate={onNavigate} /> : null}
 
-      <details className="rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="home-allocation-details">
+      {state.holdings.length > 0 ? (<details className="rounded-2xl border border-black/8 p-2 dark:border-white/10" data-ux-role="home-allocation-details">
         <summary className="flex min-h-11 cursor-pointer items-center justify-between px-2 text-sm font-semibold">
           <span>展開帳戶分布、產業曝險與最大持股</span>
           <span className="text-xs font-normal text-black/45 dark:text-white/45">進階配置</span>
@@ -305,7 +317,7 @@ export function Overview({
         </Card>
       </section>
         </div>
-      </details>
+      </details>) : null}
 
 
     </div>

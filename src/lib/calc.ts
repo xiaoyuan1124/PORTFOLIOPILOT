@@ -1,6 +1,6 @@
 import type { AppState, Holding, NetWorthSnapshot } from "./types";
 
-export type SnapshotRange = "1M" | "3M" | "YTD" | "1Y" | "ALL";
+export type SnapshotRange = "1D" | "1W" | "1M" | "3M" | "6M" | "YTD" | "1Y" | "ALL";
 
 export function holdingValueTwd(holding: Holding, usdTwd: number) {
   const fx = holding.currency === "USD" ? usdTwd : 1;
@@ -117,8 +117,11 @@ function utcDate(value: string) {
 }
 
 function addUtcMonths(date: Date, months: number) {
-  const next = new Date(date);
-  next.setUTCMonth(next.getUTCMonth() + months);
+  // Clamp month-end dates: Jan 31 minus 1 month should be Feb 28/29,
+  // not March 2/3 due to Date.setUTCMonth overflow.
+  const next = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1));
+  const lastDay = new Date(Date.UTC(next.getUTCFullYear(), next.getUTCMonth() + 1, 0)).getUTCDate();
+  next.setUTCDate(Math.min(date.getUTCDate(), lastDay));
   return next;
 }
 
@@ -135,8 +138,11 @@ export function snapshotsForRange(snapshots: NetWorthSnapshot[], range: Snapshot
 
   const latestDate = utcDate(latest.date);
   let start: Date;
-  if (range === "1M") start = addUtcMonths(latestDate, -1);
+  if (range === "1D") start = new Date(latestDate.getTime() - 86_400_000);
+  else if (range === "1W") start = new Date(latestDate.getTime() - 7 * 86_400_000);
+  else if (range === "1M") start = addUtcMonths(latestDate, -1);
   else if (range === "3M") start = addUtcMonths(latestDate, -3);
+  else if (range === "6M") start = addUtcMonths(latestDate, -6);
   else if (range === "1Y") start = addUtcMonths(latestDate, -12);
   else start = new Date(Date.UTC(latestDate.getUTCFullYear(), 0, 1));
 

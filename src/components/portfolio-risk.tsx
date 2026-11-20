@@ -6,6 +6,7 @@ import type { AppState } from "@/lib/types";
 import { buildPortfolioRiskNotices, calculatePortfolioRisk, portfolioRiskNoticeThresholds, type RiskSlice } from "@/lib/portfolio-risk";
 import { money } from "@/lib/utils";
 import { Badge, Card, CardContent, InfoDisclosure } from "./ui";
+import { PortfolioAdjustmentPanel } from "./portfolio-adjustment-panel";
 
 function pct(value: number) {
   return `${value.toFixed(2)}%`;
@@ -106,6 +107,8 @@ export function PortfolioRisk({ state }: { state: AppState }) {
           </div>
         </CardContent>
       </Card>
+
+      <PortfolioAdjustmentPanel state={state} />
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Card><CardContent><p className="text-xs text-black/40 dark:text-white/40">最大單一公司</p><p className="mt-2 text-xl font-semibold">{risk.largestCompany ? pct(risk.largestCompany.portfolioPct) : "—"}</p><p className="mt-1 text-xs text-black/35 dark:text-white/35">{risk.largestCompany ? `${risk.largestCompany.name} · ${money(risk.largestCompany.totalValueTwd)}` : "沒有已解析公司曝險"}</p></CardContent></Card>

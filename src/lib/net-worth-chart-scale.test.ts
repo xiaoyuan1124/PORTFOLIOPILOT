@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { formatNetWorthTick, netWorthChartScale } from "./net-worth-chart-scale";
+import { formatNetWorthTick, netWorthChartScale, netWorthFullScale } from "./net-worth-chart-scale";
 
 describe("net-worth chart scale", () => {
+  it("keeps full-money context at zero while zoom focuses on the real spread", () => {
+    const values = [79067, 79210, null, 79100];
+    const full = netWorthFullScale(values);
+    expect(full.domain[0]).toBe(0);
+    expect(full.domain[1]).toBeGreaterThan(79210);
+    expect(netWorthChartScale(values).domain[0]).toBeGreaterThan(78000);
+    expect(full.minimum).toBe(79067);
+  });
   it("zooms around observed values rather than starting at zero", () => {
     const scale = netWorthChartScale([79067, 79210, 79340, 79180]);
     expect(scale.domain[0]).toBeGreaterThan(78000);

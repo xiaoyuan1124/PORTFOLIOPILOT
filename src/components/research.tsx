@@ -125,7 +125,7 @@ export function Research({
         </div>
       ) : null}
 
-      {tab === "snapshot" ? <CompanySnapshotResearch key={snapshotRequestId} state={state} requestedKey={snapshotKey} onQuantResearch={onQuantResearch} /> : null}
+      {tab === "snapshot" ? <CompanySnapshotResearch key={snapshotRequestId} state={state} requestedKey={snapshotKey} onQuantResearch={onQuantResearch} onChange={onChange} /> : null}
       {tab === "etf" ? <EtfResearch key={etfRequestedSymbol ?? "default"} state={state} onOpenStock={openStockFromEtf} requestedSymbol={etfRequestedSymbol} /> : null}
       {tab === "marketStress" ? <MarketStressPanel /> : null}
       {tab === "materialEvents" ? <MaterialEventsResearch state={state} /> : null}

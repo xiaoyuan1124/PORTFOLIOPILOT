@@ -41,6 +41,10 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Test public market cache date/holiday safeguards
+        run: node --test scripts/lib/market-health.check.mjs
+      - name: Test verified official 5/10/20/60D institutional rolling calculations
+        run: node --test scripts/lib/institutional-rolling.check.mjs
       - name: Test official Strategy Lab OHLCV parser
         run: node --test scripts/lib/strategy-ohlcv.check.mjs
       - name: Test PilotQuant v0.2 bundle, sources, close-only and holdout
