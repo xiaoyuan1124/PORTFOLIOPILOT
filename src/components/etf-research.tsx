@@ -140,9 +140,9 @@ export function EtfResearch({
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex items-center justify-between gap-3 px-1">
-        <div><h3 className="text-sm font-semibold">ETF 成分與歷史研究</h3><p className="mt-0.5 text-xs text-black/45 dark:text-white/45">已驗證成分、重疊曝險及調倉變化</p></div>
+        <div><h3 className="text-sm font-semibold">ETF 成分與績效</h3><p className="mt-0.5 text-xs text-black/45 dark:text-white/45">已驗證成分、重疊曝險及調倉變化</p></div>
         <GhostButton disabled={loading} onClick={() => void reload()} className="min-h-11 shrink-0 px-3 text-xs">
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />{loading ? "同步中" : "更新"}
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />{loading ? "同步中" : "重新整理"}
         </GhostButton>
       </div>
 
