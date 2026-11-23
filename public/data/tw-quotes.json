@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-23T16:29:03.848Z",
+  "generatedAt": "2026-11-23T22:10:57.568Z",
   "sources": [
     {
-      "name": "TWSE MI_INDEX",
-      "url": "https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?date=20261123&type=ALLBUT0999&response=json",
-      "fetchedAt": "2026-11-23T16:29:03.848Z"
+      "name": "TWSE",
+      "url": "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL",
+      "fetchedAt": "2026-11-23T22:10:57.568Z"
     },
     {
       "name": "TPEx",
       "url": "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes",
-      "fetchedAt": "2026-11-23T16:29:03.848Z"
+      "fetchedAt": "2026-11-23T22:10:57.568Z"
     }
   ],
   "quotes": [
@@ -739,8 +739,8 @@
       "market": "TWSE",
       "close": 22.16,
       "date": "2026-11-23",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "00682U",
@@ -748,8 +748,8 @@
       "market": "TWSE",
       "close": 21.43,
       "date": "2026-11-23",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "00683L",
@@ -3394,8 +3394,8 @@
       "market": "TWSE",
       "close": 13.58,
       "date": "2026-11-23",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "020031",
@@ -3448,8 +3448,8 @@
       "market": "TWSE",
       "close": 11.25,
       "date": "2026-11-23",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "020038",
@@ -5437,8 +5437,8 @@
       "market": "TWSE",
       "close": 34.85,
       "date": "2026-11-23",
-      "change": null,
-      "changePct": null
+      "change": 0,
+      "changePct": 0
     },
     {
       "code": "1809",
