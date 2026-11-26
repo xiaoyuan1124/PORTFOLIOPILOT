@@ -4,17 +4,37 @@ import {
   bucketPrefix,
   calendarDateAdd,
   historyBucketStats,
+  historyBucketCandleCount,
   mergeHistoryBucket,
   mergeSeriesPoints,
   mapWithConcurrency,
   needsPriceHistoryRefresh,
   PRICE_HISTORY_UNIVERSE_VERSION,
   parseTpexDailyQuotesPayload,
+  parseDailyCandles,
+  mergeCandles,
   toRocDate,
   weekdayDates
 } from "./price-history.mjs";
 
 describe("Taiwan price-history cache helpers", () => {
+  it("extracts full real OHLCV by label for both markets, refuses lots and invalid bars",()=>{
+    for(const market of ["TWSE","TPEx"]){
+      const fields=market==="TWSE"?["證券代號","開盤價","最高價","最低價","收盤價","成交股數"]:["代號","開盤","最高","最低","收盤","成交股數"];
+      const payload={tables:[{fields,data:[["2330","100","105","98","102","12,345"],["2331","100","99","98","102","123"],["2332","--","105","98","102","123"],["2333","100","105","98","102","0"]]}]};
+      expect([...parseDailyCandles(payload,"2026-11-26",market)]).toEqual([["2330",["2026-11-26",100,105,98,102,12345]]]);
+      fields[5]="成交張數";
+      expect(parseDailyCandles(payload,"2026-11-26",market).size).toBe(0);
+    }
+  });
+  it("keeps only candles matching canonical closes and retention window",()=>{
+    const c=["2026-11-26",100,105,98,102,12345];
+    expect(mergeCandles([c],[],[["2026-11-26",102]])).toEqual([c]);
+    expect(mergeCandles([c],[],[["2026-11-26",103]])).toEqual([]);
+    const bucket=mergeHistoryBucket(null,"TWSE","23",[{code:"2330",name:"A",market:"TWSE",date:c[0],close:102,candle:c}],"2026-01-01","now");
+    expect(bucket.securities["2330"].candles).toEqual([c]);
+    expect(historyBucketCandleCount(bucket)).toBe(1);
+  });
   it("parses TPEx dailyQuotes table payload", () => {
     const rows = parseTpexDailyQuotesPayload({
       tables: [{

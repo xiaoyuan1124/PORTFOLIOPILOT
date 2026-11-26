@@ -116,6 +116,34 @@ try {
     await page.getByRole("heading", { name: "研究中心" }).waitFor();
     await page.waitForFunction(() => window.scrollY <= 2);
     await checkLayout(page, viewport.name, "research-tab-at-top");
+    // Exercise the new panel rather than merely checking unrelated views.
+    await page.getByPlaceholder("搜尋股票／ETF 代號、名稱或產業").fill("2330");
+    await page.getByRole("button", { name: /2330.*台積電/ }).first().click({timeout:20000});
+    const decision = page.getByTestId("stock-decision-panel");
+    await decision.getByTestId("stock-decision-result").waitFor({timeout:30000});
+    await checkLayout(page, viewport.name, "stock-decision");
+    await decision.getByRole("button",{name:"長期",exact:true}).click();
+    assert.equal(await decision.getByRole("button",{name:"長期",exact:true}).getAttribute("aria-pressed"),"true");
+    const technicals=decision.getByTestId("stock-decision-technicals");
+    assert.equal(await technicals.getAttribute("open"),null);
+    await technicals.locator("summary").click();
+    await technicals.getByText("240MA",{exact:true}).waitFor();
+    await checkLayout(page,viewport.name,"stock-decision-technicals");
+    await technicals.locator("summary").click();
+    const sizing=decision.getByTestId("stock-decision-sizing");
+    await sizing.locator("summary").click();
+    await sizing.getByText("可用資金（元）",{exact:true}).waitFor();
+    await checkLayout(page,viewport.name,"stock-decision-risk");
+    await sizing.locator("summary").click();
+    await page.getByRole("button",{name:"選股",exact:true}).click();
+    await page.getByRole("button",{name:"選股 Scanner",exact:true}).click();
+    const scan=page.getByTestId("decision-scanner");
+    await scan.waitFor();
+    await scan.getByLabel("掃描範圍").selectOption("watch");
+    await scan.getByRole("button",{name:"開始六面向掃描",exact:true}).click();
+    await scan.getByTestId("decision-scan-result").waitFor({timeout:30000});
+    await checkLayout(page,viewport.name,"decision-scanner-watch");
+    await page.getByRole("button",{name:"標的",exact:true}).click();
     await page.getByRole("button", { name: "ETF 深度", exact: true }).click();
     await page.getByRole("heading", { name: "ETF 成分與績效" }).waitFor();
     // The verbose introduction has been removed; research starts with the actual ETF data.

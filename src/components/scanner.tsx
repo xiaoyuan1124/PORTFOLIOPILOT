@@ -19,6 +19,7 @@ import {
 import { isHeldTwSecurity, resolveHeldTwSecurityKeys } from "@/lib/research-holdings";
 import { percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
+import { DecisionScanner } from "./decision-scanner";
 
 const emptyRevenueHistory: RevenueHistoryCache = { generatedAt: "", periods: [], sources: [], rows: [] };
 const emptyInstitutional: InstitutionalCache = { generatedAt: "", tradingDates: [], sources: [], rows: [] };
@@ -113,7 +114,7 @@ function GateDetail({
   );
 }
 
-export function Scanner({ state }: { state: AppState }) {
+export function Scanner({ state, onOpenStock }: { state: AppState; onOpenStock?: (key: string) => void }) {
   const [revenue, setRevenue] = useState<RevenueHistoryCache | null>(null);
   const [institutional, setInstitutional] = useState<InstitutionalCache | null>(null);
   const [quarterly, setQuarterly] = useState<QuarterlyMarginCache | null>(null);
@@ -230,6 +231,7 @@ export function Scanner({ state }: { state: AppState }) {
         </div>
       </div>
 
+      <DecisionScanner state={state} onOpenStock={onOpenStock} />
       <div className="grid gap-2 md:grid-cols-[1fr_180px_auto]">
         <div className="relative"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/35 dark:text-white/35" size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋代號、名稱或產業" className="field pl-11" /></div>
         <select className="field" value={view} onChange={(event) => setView(event.target.value as "pass" | "near" | "all")}>
@@ -320,6 +322,7 @@ export function Scanner({ state }: { state: AppState }) {
               <Gate status={item.trustGate.status}>投信 10D</Gate>
             </div>
 
+            {onOpenStock ? <button type="button" className="mt-3 min-h-10 w-full rounded-xl border border-black/10 px-3 text-left text-sm font-semibold dark:border-white/10" onClick={()=>onOpenStock(item.market+":"+item.code)}>查看買進評估 →</button> : null}
             <details className="group mt-4 rounded-2xl border border-black/6 dark:border-white/8">
               <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-black/65 dark:text-white/65">查看條件明細與來源</summary>
               <div className="grid gap-3 border-t border-black/6 p-3 dark:border-white/8">

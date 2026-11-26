@@ -5,9 +5,15 @@ const pointSchema = z.tuple([
   z.number().finite().positive()
 ]);
 
+const candleSchema = z.tuple([
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  z.number().finite().positive(),z.number().finite().positive(),z.number().finite().positive(),z.number().finite().positive(),
+  z.number().int().positive().max(Number.MAX_SAFE_INTEGER)
+]).refine(r=>r[2]>=Math.max(r[1],r[4]) && r[3]<=Math.min(r[1],r[4]));
 const securitySchema = z.object({
   name: z.string(),
-  points: z.array(pointSchema)
+  points: z.array(pointSchema),
+  candles: z.array(candleSchema).optional()
 });
 
 const bucketSchema = z.object({
@@ -29,8 +35,8 @@ const indexSchema = z.object({
   endDate: z.string().nullable(),
   targetEndDate: z.string(),
   markets: z.object({
-    TWSE: z.object({ symbols: z.number(), points: z.number(), buckets: z.number() }),
-    TPEx: z.object({ symbols: z.number(), points: z.number(), buckets: z.number() })
+    TWSE: z.object({ symbols: z.number(), points: z.number(), buckets: z.number(), candles: z.number().int().nonnegative().optional() }),
+    TPEx: z.object({ symbols: z.number(), points: z.number(), buckets: z.number(), candles: z.number().int().nonnegative().optional() })
   }),
   failed: z.array(z.object({
     market: z.enum(["TWSE", "TPEx"]),
@@ -138,8 +144,39 @@ export async function loadTwPriceHistory(
     symbol: normalized,
     name: security.name,
     points: security.points,
+    candles: security.candles,
     generatedAt: bucket.generatedAt,
     startDate: bucket.startDate,
     endDate: bucket.endDate
   };
+}
+
+
+// One download per market/prefix, without retaining the entire universe in the single-symbol cache.
+export function groupDecisionSymbols<T extends {market:"TWSE"|"TPEx";code:string}>(symbols:readonly T[]) {
+  const groups = new Map<string,T[]>();
+  for (const s of symbols) {
+    const key=bucketPath(s.market,s.code);
+    const group=groups.get(key)??[];
+    group.push(s);groups.set(key,group);
+  }
+  return [...groups.values()];
+}
+
+export async function loadDecisionHistoryGroup<T extends {market:"TWSE"|"TPEx";code:string}>(symbols:readonly T[], index:TwPriceHistoryIndex, signal?:AbortSignal):Promise<Map<string,TwPriceHistorySeries>> {
+  const first=symbols[0];
+  if(!first)return new Map();
+  const file=bucketPath(first.market,first.code);
+  if(symbols.some(s=>bucketPath(s.market,s.code)!==file))throw new Error("歷史分組不一致");
+  const base=process.env.NEXT_PUBLIC_BASE_PATH??"";
+  const response=await fetch(`${base}/data/tw-price-history/${file}?generation=${encodeURIComponent(index.generatedAt)}`,{cache:"no-store",signal});
+  if(!response.ok)throw new Error("歷史分組無法載入");
+  const bucket=bucketSchema.parse(await response.json());
+  if(bucket.generatedAt!==index.generatedAt || bucket.market!==first.market || bucket.prefix!==prefixForSymbol(first.code))throw new Error("歷史分組版本或市場不一致");
+  const result=new Map<string,TwPriceHistorySeries>();
+  for(const s of symbols){
+    const symbol=s.code.toUpperCase(), security=bucket.securities[symbol];
+    if(security)result.set(s.market+":"+symbol,{...security,market:s.market,symbol,generatedAt:bucket.generatedAt,startDate:bucket.startDate,endDate:bucket.endDate});
+  }
+  return result;
 }

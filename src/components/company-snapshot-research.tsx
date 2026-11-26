@@ -15,6 +15,11 @@ import { loadBundledValuations, valuationSource, type ValuationCache } from "@/l
 import { marketPrice, percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 import { SecurityPriceHistoryCard } from "./security-price-history-card";
+import { StockDecisionPanel } from "./stock-decision-panel";
+import { addToWatchlist, watchlistContains } from "@/lib/watchlist";
+import { localDateKey } from "@/lib/calc";
+import { toast } from "sonner";
+import { cacheMarketFreshness, shouldRejectStaleClosingCache } from "@/lib/market-data";
 
 type Caches = {
   quotes: TwQuoteCache;
@@ -82,7 +87,7 @@ function SectionHeader({ title, detail }: { title: string; detail: string }) {
   return <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-semibold">{title}</h4><span className="text-[11px] text-black/40 dark:text-white/40">{detail}</span></div>;
 }
 
-export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }: { state: AppState; requestedKey?: string; onQuantResearch?: (key: string) => void }) {
+export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, onChange }: { state: AppState; requestedKey?: string; onQuantResearch?: (key: string) => void; onChange?: (state: AppState) => boolean }) {
   const [caches, setCaches] = useState<Caches | null>(null);
   const [query, setQuery] = useState("");
   const [heldOnly, setHeldOnly] = useState(false);
@@ -166,6 +171,15 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
     }
     return snapshots.find((row) => isHeldCompanySnapshot(row, heldKeys)) ?? visible[0] ?? null;
   }, [snapshots, selectedKey, heldKeys, visible]);
+  const watched = selected ? watchlistContains(state.watchlist ?? [], { venue: selected.market, symbol: selected.code }) : false;
+  function addSelectedToWatchlist() {
+    if (!selected?.quote || !onChange || watched) return;
+    const next = addToWatchlist(state.watchlist ?? [], {
+      code:selected.code,name:selected.name,venue:selected.market,industry:selected.industry,type:selected.type,
+      close:selected.quote.close,date:selected.quote.date
+    },localDateKey());
+    if (onChange({...state,watchlist:next})) toast.success("已加入自選清單");
+  }
   const requestedMissing = Boolean(selectedKey && !loading && !error && snapshots.length && !selected);
 
   const quoteSource = selected && caches ? caches.quotes.sources.find((source) => source.name.toUpperCase().includes(selected.market.toUpperCase())) ?? null : null;
@@ -222,6 +236,8 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
 
     {selected ? <>
       <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{isHeldCompanySnapshot(selected, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>
+
+      <StockDecisionPanel onWatch={onChange && selected.quote ? addSelectedToWatchlist : undefined} watched={watched} key={selected.market + ":" + selected.code} snapshot={selected} peers={snapshots} state={state} latestMarketDate={caches ? cacheMarketFreshness(caches.quotes)[selected.market] : null} offline={Boolean(!caches || caches.quotes.offlineFallback || !Number.isFinite(Date.parse(caches.quotes.generatedAt)) || shouldRejectStaleClosingCache(caches.quotes) || error || loading)} />
 
       {onQuantResearch ? (
         <button type="button" onClick={() => onQuantResearch(selected.market + ":" + selected.code)}
