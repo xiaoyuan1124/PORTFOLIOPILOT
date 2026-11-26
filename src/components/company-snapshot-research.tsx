@@ -239,7 +239,7 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
       {workbench?<><div className="flex flex-wrap items-end justify-between gap-2 border-b border-current/10 px-1 pb-3"><div><p className="text-xs opacity-70">官方收盤價 · {selected.quote?.date??"資料不足"}</p><strong className="text-3xl font-semibold tabular-nums">{selected.quote?marketPrice(selected.quote.close,"TWD"):"—"}</strong></div><span className="text-sm tabular-nums">{selected.quote?.changePct!=null?percent(selected.quote.changePct):"—"}</span></div>
         <div className="workbench-tabs" role="group" aria-label="個股研究分類">{[{key:"overview",label:"總覽"},{key:"financial",label:"財務"},{key:"flow",label:"籌碼"},{key:"events",label:"事件"}].map(item=><button type="button" key={item.key} aria-pressed={securityTab===item.key} onClick={()=>setSecurityTab(item.key as typeof securityTab)}>{item.label}</button>)}</div></>:null}
       <div className={workbench&&securityTab!=="overview"?"hidden":"space-y-4"}>
-      {workbench?<SecurityPriceHistoryCard market={selected.market} symbol={selected.code}/>:null}
+      {workbench?<SecurityPriceHistoryCard market={selected.market} symbol={selected.code} workbench/>:null}
       <StockDecisionPanel onRefresh={reload} onWatch={onChange && selected.quote ? addSelectedToWatchlist : undefined} watched={watched} key={selected.market + ":" + selected.code} snapshot={selected} peers={snapshots} state={state} latestMarketDate={caches ? cacheMarketFreshness(caches.quotes)[selected.market] : null} offline={Boolean(!caches || caches.quotes.offlineFallback || !Number.isFinite(Date.parse(caches.quotes.generatedAt)) || shouldRejectStaleClosingCache(caches.quotes) || error || loading)} />
 
       {onQuantResearch ? (

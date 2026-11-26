@@ -111,7 +111,7 @@ export function Research({
     <div className="space-y-4">
       {workbench&&requestedTab==="watchlist"?<div className="flex items-center gap-2 text-sm opacity-75"><Star size={16}/>管理自選股票與 ETF，或批次檢查買進條件。</div>:null}
       {workbench&&requestedTab==="journal"?<button type="button" className="min-h-11 text-sm font-medium" onClick={onOpenRecords}>← 返回交易紀錄</button>:null}
-      {workbench&&researchKey&&onOpenExplore?<button type="button" className="min-h-11 text-sm font-medium" onClick={onOpenExplore}>← 返回探索</button>:null}
+      {workbench&&researchKey&&onOpenExplore?<button type="button" className="min-h-11 text-sm font-medium" onClick={onOpenExplore}>← 返回上一區</button>:null}
       {workbench&&!researchKey&&requestedTab!=="watchlist"&&requestedTab!=="journal"?<div className="workbench-tools" role="group" aria-label="探索工具">
         {tools.map(item=><button key={item.key} type="button" aria-pressed={tab===item.key} onClick={()=>setTab(item.key)}><item.icon size={17}/><span>{item.label}</span></button>)}
         {onOpenLab?<button type="button" onClick={onOpenLab}><FlaskConical size={17}/><span>策略實驗室</span></button>:null}
@@ -153,7 +153,7 @@ export function Research({
       {tab === "sectorPulse" ? <SectorPulseResearch state={state} /> : null}
       {tab === "revenue" ? <RevenueResearch state={state} /> : null}
       {tab === "valuation" ? <ValuationResearch state={state} /> : null}
-      {tab === "watchlist" ? <><Watchlist state={state} onChange={onChange} onOpenResearch={openFromWatchlist} onAddHolding={onAddHolding} workbench={workbench}/>{workbench?<DecisionScanner state={state} onOpenStock={openStockFromEtf} defaultScope="watch"/>:null}</> : null}
+      {tab === "watchlist" ? <><Watchlist state={state} onChange={onChange} onOpenResearch={openFromWatchlist} onAddHolding={onAddHolding} workbench={workbench}/>{workbench?<DecisionScanner key={(state.watchlist??[]).map(w=>w.venue+":"+w.symbol).sort().join("|")} state={state} onOpenStock={openStockFromEtf} defaultScope="watch" trackChanges/>:null}</> : null}
       {tab === "scanner" ? <Scanner state={state} onOpenStock={openStockFromEtf} /> : null}
       {tab === "journal" ? <Journal state={state} onChange={onChange} /> : null}
     </div>

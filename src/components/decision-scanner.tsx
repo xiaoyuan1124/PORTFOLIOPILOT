@@ -15,6 +15,7 @@ import { scanDecisionRow,rankDecisionRows,selectDecisionCandidates,type Decision
 import { calculatePortfolioRisk } from "@/lib/portfolio-risk";
 import type { AppState } from "@/lib/types";
 import { Card,CardContent } from "./ui";
+import {compareWatchReview,parseWatchReview,WATCH_REVIEW_KEY} from "@/lib/watch-review";
 
 const emptyValuations:ValuationCache={generatedAt:"",sources:[],rows:[]};
 const emptyRevenueHistory:RevenueHistoryCache={generatedAt:"",periods:[],sources:[],rows:[]};
@@ -22,7 +23,7 @@ const emptyQuarterly:QuarterlyMarginCache={generatedAt:"",periods:[],sources:[],
 const emptyInstitutional:InstitutionalCache={generatedAt:"",tradingDates:[],sources:[],rows:[]};
 const statusLabels={met:"初步條件符合",wait:"等待",risk:"風險偏高",insufficient:"資料不足"};
 const fmt=(v:number|null,d=0)=>v===null?"—":v.toFixed(d);
-export function DecisionScanner({state,onOpenStock,defaultScope="all"}:{state:AppState;onOpenStock?:(key:string)=>void;defaultScope?:"all"|"watch"}){
+export function DecisionScanner({state,onOpenStock,defaultScope="all",trackChanges=false}:{state:AppState;onOpenStock?:(key:string)=>void;defaultScope?:"all"|"watch";trackChanges?:boolean}){
   const [horizon,setHorizon]=useState<Horizon>("swing");
   const [scope,setScope]=useState<"all"|"watch">(defaultScope);
   const [filter,setFilter]=useState<"all"|DecisionScanRow["status"]>("all");
@@ -32,6 +33,7 @@ export function DecisionScanner({state,onOpenStock,defaultScope="all"}:{state:Ap
   const [progress,setProgress]=useState({done:0,total:0});
   const [result,setResult]=useState<{rows:DecisionScanRow[];horizon:Horizon;scope:string;date:string;failedGroups:number;stale:boolean;missingSources:string[]}|null>(null);
   const [error,setError]=useState("");
+  const [review,setReview]=useState<{changes:{key:string;name:string;asOf:string;from:string;to:string}[];message:string}|null>(null);
   const active=useRef<AbortController|null>(null);
   useEffect(()=>()=>active.current?.abort(),[]);
   const rows=useMemo(()=>rankDecisionRows(result?.rows??[],filter,query),[result,filter,query]);
@@ -40,7 +42,7 @@ export function DecisionScanner({state,onOpenStock,defaultScope="all"}:{state:Ap
     active.current?.abort();
     const controller=new AbortController();active.current=controller;
     const {signal}=controller;
-    setBusy(true);setError("");setResult(null);setProgress({done:0,total:0});setPage(1);setFilter("all");setQuery("");
+    setBusy(true);setError("");setResult(null);setReview(null);setProgress({done:0,total:0});setPage(1);setFilter("all");setQuery("");
     try{
       const missingSources:string[]=[];
       async function optional<T>(label:string,loader:()=>Promise<T>,fallback:T):Promise<T>{
@@ -74,7 +76,19 @@ export function DecisionScanner({state,onOpenStock,defaultScope="all"}:{state:Ap
         // Yield to rendering and cancellation before the next bounded batch.
         await new Promise<void>(resolve=>setTimeout(resolve,0));
       }
-      if(!signal.aborted)setResult({rows:output,horizon,scope,date:index.endDate??"未知",failedGroups,missingSources,stale:offline||!benchmark||latest.TWSE!==benchmark.asOf||latest.TWSE!==index.endDate||latest.TPEx!==index.endDate});
+      if(!signal.aborted){
+        const stale=offline||!benchmark||latest.TWSE!==benchmark.asOf||latest.TWSE!==index.endDate||latest.TPEx!==index.endDate;
+        setResult({rows:output,horizon,scope,date:index.endDate??"未知",failedGroups,missingSources,stale});
+        if(trackChanges&&scope==="watch"){
+          try{
+            const key=WATCH_REVIEW_KEY+":"+horizon,prev=parseWatchReview(localStorage.getItem(key),horizon);
+            const watched=new Set((state.watchlist??[]).filter(w=>w.type==="stock").map(w=>w.venue+":"+w.symbol.trim().toUpperCase()));
+            const compared=compareWatchReview(prev,output,horizon,index.endDate??"",!stale&&!missingSources.length&&!failedGroups,watched);
+            if(compared.next)localStorage.setItem(key,JSON.stringify(compared.next));
+            setReview({changes:compared.changes,message:!compared.next?"資料不同步，未更新觀察基準。":!prev?"已建立本機觀察基準；之後不同交易日的有效評估才會比較。":compared.changes.length?"與上次有效評估相比，發現條件變化。":"未發現可確認的跨交易日狀態變化。"});
+          }catch{setReview({changes:[],message:"瀏覽器無法保存本機觀察基準，掃描結果仍可使用。"});}
+        }
+      }
     }catch(cause){if(!signal.aborted)setError(cause instanceof Error?cause.message:"掃描失敗");}
     finally{if(active.current===controller&&!signal.aborted){active.current=null;setBusy(false);}}
   }
@@ -90,6 +104,8 @@ export function DecisionScanner({state,onOpenStock,defaultScope="all"}:{state:Ap
     <button type="button" className="min-h-11 w-full rounded-xl bg-[#1f332a] px-3 text-sm font-semibold text-white dark:bg-[#dce9e2] dark:text-[#122018]" onClick={()=>busy?cancel():void run()}>{busy?"取消掃描":"開始六面向掃描"}</button>
     {busy?<p role="status" className="text-xs">已處理 {progress.done} / {progress.total||"…"} 檔</p>:null}
     {error?<p role="alert" className="text-xs text-amber-700 dark:text-amber-300">{error}</p>:null}
+    {trackChanges?<details className="text-xs"><summary className="cursor-pointer">本機條件變化提醒</summary><p className="mt-2 leading-5 opacity-75">每次自選掃描後保存同期限有效狀態，僅比較較新的官方交易日。關閉網頁後不會自動掃描或推播。</p><button type="button" className="min-h-10 underline" onClick={()=>{try{for(const h of Object.keys(HORIZON_LABELS))localStorage.removeItem(WATCH_REVIEW_KEY+":"+h);setReview(null);}catch{setError("無法清除本機觀察基準");}}}>清除觀察基準</button></details>:null}
+    {review&&result?<div className="rounded-lg border border-current/15 p-3 text-xs" data-testid="watch-review"><p>{review.message}</p>{review.changes.map(x=><button type="button" key={x.key} onClick={()=>onOpenStock?.(x.key)} className="block min-h-11 w-full border-b border-current/10 text-left">{x.name} · {statusLabels[x.from as keyof typeof statusLabels]} → {statusLabels[x.to as keyof typeof statusLabels]} · {x.asOf}</button>)}</div>:null}
     {result?<div data-testid="decision-scan-result" className="space-y-3">
       <p className="text-xs opacity-70">行情截至 {result.date} · {HORIZON_LABELS[result.horizon]} · {result.rows.length} 檔</p>
       {result.stale?<p className="text-xs text-amber-700 dark:text-amber-300">資料日期可能未同步；不完整的評估不列入符合條件名單。</p>:null}

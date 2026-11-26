@@ -514,3 +514,6 @@ html.layout-workbench .app-page-content{padding-top:1rem;}
 }
 
 .layout-workbench [data-app-layout="workbench"] .workbench-security-data:has(> :not(.hidden)){min-width:0;}
+
+/* Match the existing palette convention; TradeScope uses green up/red down. */
+.wb-price-up{color:#b91c1c}.wb-price-down{color:#15803d}.wb-price-flat{color:currentColor}.dark .wb-price-up{color:#f18b86}.dark .wb-price-down{color:#78d3a0}.theme-tradescope .wb-price-up{color:#2ec990}.theme-tradescope .wb-price-down{color:#ef7777}
