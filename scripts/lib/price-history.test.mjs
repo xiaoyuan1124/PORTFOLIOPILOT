@@ -4,6 +4,7 @@ import {
   bucketPrefix,
   calendarDateAdd,
   historyBucketStats,
+  historyBucketCandleCount,
   mergeHistoryBucket,
   mergeSeriesPoints,
   mapWithConcurrency,
@@ -32,6 +33,7 @@ describe("Taiwan price-history cache helpers", () => {
     expect(mergeCandles([c],[],[["2026-11-26",103]])).toEqual([]);
     const bucket=mergeHistoryBucket(null,"TWSE","23",[{code:"2330",name:"A",market:"TWSE",date:c[0],close:102,candle:c}],"2026-01-01","now");
     expect(bucket.securities["2330"].candles).toEqual([c]);
+    expect(historyBucketCandleCount(bucket)).toBe(1);
   });
   it("parses TPEx dailyQuotes table payload", () => {
     const rows = parseTpexDailyQuotesPayload({

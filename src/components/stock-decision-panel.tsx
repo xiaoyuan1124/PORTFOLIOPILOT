@@ -51,14 +51,14 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
   const sizing=result && result.quoteVerified && result.technical.lastDate === snapshot.quote?.date && result.technical.close === snapshot.quote?.close ? positionRisk({entry:snapshot.quote?.close??0,target:Number(target),stop:Number(stop),available:Number(available),
     riskBudget:Number(riskBudget),feeRate:0.001425,taxRate:0.003,slippageRate:0.001,minimumFee:20}) : null;
   if(type!=="stock") return <Card><CardContent className="p-4 text-sm">ETF 使用 ETF 深度研究，不套用公司型買進評估。</CardContent></Card>;
-  return <Card><CardContent className="space-y-3 p-4">
+  return <Card><CardContent className="space-y-3 p-4"><div data-testid="stock-decision-panel" className="space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-semibold">買進評估</h4><button type="button" className="text-xs underline" onClick={()=>setRetry(v=>v+1)}>更新評估</button></div>
     <div className="grid grid-cols-3 gap-1 rounded-xl bg-black/5 p-1 dark:bg-white/5" role="group" aria-label="研究期限">
       {(Object.keys(HORIZON_LABELS) as Horizon[]).map(h=><button type="button" key={h} aria-pressed={horizon===h}
         onClick={()=>setHorizon(h)} className={`min-h-10 rounded-lg text-sm ${horizon===h?"bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]":""}`}>{HORIZON_LABELS[h]}</button>)}
     </div>
     {!result?<p role="status" className="text-sm opacity-60">讀取官方行情與研究資料…</p>:<>
-      <div className="rounded-xl bg-black/5 p-3 dark:bg-white/5" aria-live="polite">
+      <div data-testid="stock-decision-result" className="rounded-xl bg-black/5 p-3 dark:bg-white/5" aria-live="polite">
         <p className="text-xs opacity-60">研究結果 · {result.asOf}</p><p className="mt-1 text-xl font-semibold">{labels[result.status]}</p>
         <div className="mt-2 grid grid-cols-2 gap-2"><div className="mini-metric"><span>初步指標分數</span><strong>{result.status==="insufficient"?"—":number(result.score," / 100",0)}</strong></div>
           <div className="mini-metric"><span>現有模型覆蓋率</span><strong>{number(result.coverage,"%",0)}</strong></div></div>
@@ -72,7 +72,7 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
       <details><summary className="cursor-pointer py-2 text-sm font-semibold">待改善條件與六面向分析</summary><div className="mb-2 space-y-1">{result.unmetConditions.map(v=><p key={v} className="text-xs leading-5 opacity-75">• {v}</p>)}</div><div className="space-y-2">
         {result.factors.map(f=><div className="rounded-lg bg-black/[0.03] p-2 dark:bg-white/[0.03]" key={f.key}><div className="flex justify-between gap-2 text-sm"><strong>{f.label}</strong><span>{number(f.score," / 100",0)}</span></div><p className="mt-1 text-xs leading-5 opacity-70">{f.detail}</p></div>)}
       </div></details>
-      <details><summary className="cursor-pointer py-2 text-sm font-semibold">均線與技術數據</summary>
+      <details data-testid="stock-decision-technicals"><summary className="cursor-pointer py-2 text-sm font-semibold">均線與技術數據</summary>
         <div className="grid grid-cols-3 gap-1 text-xs"><strong>均線</strong><strong>價格／乖離</strong><strong>5日斜率</strong>
           {result.technical.averages.map(m=><div key={m.period} className="col-span-3 grid grid-cols-3 gap-1 border-t border-black/5 py-1 dark:border-white/10"><span>{m.period}MA</span><span>{number(m.value,"",2)} / {number(m.bias,"%")}</span><span>{number(m.slope,"%")}</span></div>)}
         </div>
@@ -83,7 +83,7 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
           ["乖離歷史樣本",String(result.technical.biasSamples)],["前20日低收",number(result.technical.low20,"",2)],["前20日高收",number(result.technical.high20,"",2)]
         ].map(([name,value])=><div className="mini-metric" key={name}><span>{name}</span><strong>{value}</strong></div>)}</div>
       </details>
-      <details><summary className="cursor-pointer py-2 text-sm font-semibold">部位風險試算</summary>
+      <details data-testid="stock-decision-sizing"><summary className="cursor-pointer py-2 text-sm font-semibold">部位風險試算</summary>
         <p className="mb-2 text-xs opacity-70">現有個股（含 ETF 穿透）曝險：{number(result.exposurePct,"%")}；投資部位穿透覆蓋：{number(result.portfolioCoverage,"%")}。</p>
         <div className="grid grid-cols-2 gap-2">{[
           ["情境目標價",target,setTarget],["退出參考價",stop,setStop],["可用資金（元）",available,setAvailable],["單筆風險額（元）",riskBudget,setRiskBudget]
@@ -97,5 +97,5 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
         <p className="mt-1 text-xs">全市場真實 OHLCV 隨官方行情更新逐步補齊；舊資料僅收盤價。</p><p className="mt-1 text-xs">歷史樣本 {result.technical.rows.length} 筆，行情截至 {result.technical.lastDate??"—"}。</p>
       </details>
     </>}
-  </CardContent></Card>;
+  </div></CardContent></Card>;
 }

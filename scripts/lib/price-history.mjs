@@ -175,6 +175,9 @@ export function mergeHistoryBucket(existing, market, prefix, rows, cutoffDate, g
   };
 }
 
+export function historyBucketCandleCount(bucket) {
+  return Object.values(bucket?.securities ?? {}).reduce((sum,item)=>sum+(Array.isArray(item.candles)?item.candles.length:0),0);
+}
 export function historyBucketStats(bucket) {
   const items = Object.values(bucket?.securities ?? {});
   return {

@@ -8,6 +8,7 @@ import {
   bucketPrefix,
   calendarDateAdd,
   historyBucketStats,
+  historyBucketCandleCount,
   mapWithConcurrency,
   mergeHistoryBucket,
   needsPriceHistoryRefresh,
@@ -293,8 +294,8 @@ async function main() {
   const generatedAt = new Date().toISOString();
   const allFiles = new Set([...existingFiles, ...grouped.keys()]);
   const stats = {
-    TWSE: { symbols: 0, points: 0, buckets: 0 },
-    TPEx: { symbols: 0, points: 0, buckets: 0 }
+    TWSE: { symbols: 0, points: 0, buckets: 0, candles: 0 },
+    TPEx: { symbols: 0, points: 0, buckets: 0, candles: 0 }
   };
   let globalStart = null;
   let globalEnd = null;
@@ -316,6 +317,7 @@ async function main() {
     await writeFile(path, JSON.stringify(bucket), "utf8");
     stats[market].symbols += bucketStats.symbols;
     stats[market].points += bucketStats.points;
+    stats[market].candles += historyBucketCandleCount(bucket);
     stats[market].buckets += 1;
     if (bucket.startDate && (!globalStart || bucket.startDate < globalStart)) globalStart = bucket.startDate;
     if (bucket.endDate && (!globalEnd || bucket.endDate > globalEnd)) globalEnd = bucket.endDate;
@@ -351,6 +353,7 @@ async function main() {
   };
 
   await writeFile(INDEX_PATH, JSON.stringify(index, null, 2) + "\n", "utf8");
+  console.log(`Validated actual OHLCV: TWSE ${stats.TWSE.candles}, TPEx ${stats.TPEx.candles} rows.`);
   console.log(`Wrote ${stats.TWSE.buckets + stats.TPEx.buckets} price-history buckets; TWSE ${stats.TWSE.points} points, TPEx ${stats.TPEx.points} points; unresolved ${unresolved.length}.`);
 }
 

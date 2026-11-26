@@ -9,3 +9,6 @@ Existing daily market-wide fetches now retain explicit validated OHLCV tuples in
 
 ## v1.3 navigation and risk
 Scanner candidates link to the existing security detail assessment. Watchlist additions reuse the same local state transaction and deduplication. Show separate company and timing proxy scores only when component data is present. Extreme unadjusted moves are flagged; they are not identified as corporate actions automatically. Quote freshness also gates sizing.
+
+## Validation
+Mobile layout smoke now explicitly selects 2330, waits for the decision result, toggles horizon, opens technical and sizing disclosures, and checks narrow-screen geometry. Data index reports actual candle counts separately from close counts; migration success is not inferred from a close-only row count.

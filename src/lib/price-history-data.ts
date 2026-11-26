@@ -35,8 +35,8 @@ const indexSchema = z.object({
   endDate: z.string().nullable(),
   targetEndDate: z.string(),
   markets: z.object({
-    TWSE: z.object({ symbols: z.number(), points: z.number(), buckets: z.number() }),
-    TPEx: z.object({ symbols: z.number(), points: z.number(), buckets: z.number() })
+    TWSE: z.object({ symbols: z.number(), points: z.number(), buckets: z.number(), candles: z.number().int().nonnegative().optional() }),
+    TPEx: z.object({ symbols: z.number(), points: z.number(), buckets: z.number(), candles: z.number().int().nonnegative().optional() })
   }),
   failed: z.array(z.object({
     market: z.enum(["TWSE", "TPEx"]),
