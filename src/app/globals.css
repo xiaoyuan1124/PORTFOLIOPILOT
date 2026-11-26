@@ -512,3 +512,5 @@ html.layout-workbench .app-page-content{padding-top:1rem;}
 @media(max-width:374px){
   html.layout-workbench .app-topbar{padding-left:calc(.6rem + var(--safe-area-left));padding-right:calc(.6rem + var(--safe-area-right));}
 }
+
+.layout-workbench [data-app-layout="workbench"] .workbench-security-data:has(> :not(.hidden)){min-width:0;}

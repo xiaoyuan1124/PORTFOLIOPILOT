@@ -447,7 +447,7 @@ export function AppShell() {
               onOpenJournal={()=>openResearchTab("journal")}
             />
           ) : null}
-          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} requestedTab={researchRequestedTab} workbench={workbench} onAddHolding={addWatchlistCandidateToPortfolio} onQuantResearch={openQuantResearch} onOpenLab={()=>navigate("lab")} onOpenRecords={()=>navigateWorkspace("records")} onOpenSecurity={(key,type)=>navigate("research",key,type)} /> : null}
+          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} requestedTab={researchRequestedTab} workbench={workbench} onAddHolding={addWatchlistCandidateToPortfolio} onQuantResearch={openQuantResearch} onOpenLab={()=>navigate("lab")} onOpenRecords={()=>navigateWorkspace("records")} onOpenExplore={()=>navigateWorkspace("explore")} onOpenSecurity={(key,type)=>navigate("research",key,type)} /> : null}
           {workbench&&section==="lab"?<button type="button" className="mb-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium" onClick={()=>navigateWorkspace("explore")}>← 返回探索</button>:null}
           {section === "lab" ? <StrategyLab key={quantRequestId} state={state} onChange={updateState} onOpenResearch={() => workbench?openResearchTab("scanner"):navigate("research")} onOpenRisk={() => navigatePortfolioTab("risk")} quantRequestedKey={quantRequestedKey} /> : null}
           {section === "settings" ? (

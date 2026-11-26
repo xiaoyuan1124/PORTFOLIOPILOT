@@ -369,6 +369,20 @@ try {
     await page.getByRole("button",{name:"選股 Scanner",exact:true}).click();
     await page.getByTestId("decision-scanner").waitFor();
     await checkLayout(page,viewport.name,"workbench-explore");
+    await page.getByRole("button",{name:"個股研究",exact:true}).click();
+    await page.getByPlaceholder("搜尋股票／ETF 代號、名稱或產業").fill("2330");
+    await page.getByRole("button",{name:/2330.*台積電/}).first().click({timeout:20000});
+    const securityTabs=page.getByRole("group",{name:"個股研究分類"});
+    await securityTabs.getByRole("button",{name:"財務",exact:true}).click();
+    await page.getByRole("heading",{name:"市場與估值",exact:true}).waitFor();
+    await securityTabs.getByRole("button",{name:"籌碼",exact:true}).click();
+    await page.getByRole("heading",{name:"法人最近 10 個交易日",exact:true}).waitFor();
+    await securityTabs.getByRole("button",{name:"事件",exact:true}).click();
+    await page.getByRole("heading",{name:"2330 台積電 重大訊息",exact:true}).waitFor();
+    await checkLayout(page,viewport.name,"workbench-stock-events");
+    await securityTabs.getByRole("button",{name:"總覽",exact:true}).click();
+    await page.getByTestId("stock-decision-result").waitFor({timeout:30000});
+    await checkLayout(page,viewport.name,"workbench-stock");
     await nav.getByRole("button",{name:"自選",exact:true}).click();
     await page.getByTestId("decision-scanner").getByLabel("掃描範圍").waitFor();
     assert.equal(await page.getByTestId("decision-scanner").getByLabel("掃描範圍").inputValue(),"watch");
@@ -422,6 +436,13 @@ try {
   }, undefined, { timeout: 2500 });
   assert.ok(desktopPalette.contentWidth <= desktopPalette.viewportWidth + 2, "desktop TradeScope must not horizontally overflow");
   await desktopPage.screenshot({ path: "mobile-artifacts/desktop-tradescope.png", fullPage: false, animations: "disabled" });
+  await desktopPage.locator(".app-desktop-sidebar").getByRole("button",{name:"我的",exact:true}).click();
+  await desktopPage.getByRole("group",{name:"介面版型"}).getByRole("button",{name:/工作台版/}).click();
+  await desktopPage.locator(".app-desktop-sidebar").getByRole("button",{name:"今日",exact:true}).click();
+  await desktopPage.getByTestId("workbench-home").waitFor();
+  assert.equal(await desktopPage.evaluate(()=>document.documentElement.classList.contains("theme-tradescope")),true);
+  assert.ok(await desktopPage.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),"desktop workbench must not overflow");
+  await desktopPage.screenshot({path:"mobile-artifacts/desktop-workbench.png",animations:"disabled"});
   await desktop.close();
 } finally {
   await browser.close();

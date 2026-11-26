@@ -24,7 +24,7 @@ export function WorkbenchHome({state,onNavigate,onAsset,onExplore,onWatch}:{stat
   const positions=topHoldings(state.holdings,state.usdTwd,5);
   const current=useMemo(()=>snapshotsThroughDate(state.snapshots,today),[state.snapshots,today]);
   const daily=dailySnapshotDelta(current);
-  const trend=snapshotsForRange(current,range).map(s=>({date:s.date,value:s.total}));
+  const trend=useMemo(()=>snapshotsForRange(current,range).map(s=>({date:s.date,value:s.total})),[current,range]);
   const mask=(n:number)=>hidden?"••••••":money(n);
   const yDomain=useMemo<[number,number]>(()=>{
     if(!trend.length)return [0,1];
