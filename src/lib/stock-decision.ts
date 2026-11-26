@@ -3,7 +3,7 @@ import type { CompanySnapshot } from "./company-snapshot";
 import type { BenchmarkSeries } from "./benchmark";
 import type { PortfolioRiskResult } from "./portfolio-risk";
 
-export const DECISION_VERSION = "research-v1.2";
+export const DECISION_VERSION = "research-v1.3";
 export const PERIODS = [5, 10, 20, 60, 120, 240] as const;
 export type Horizon = "short" | "swing" | "long";
 export const HORIZON_LABELS: Record<Horizon, string> = { short: "短線", swing: "波段", long: "長期" };
@@ -237,7 +237,20 @@ export function assessStock(input: {
   const covered = factors.filter(f => f.score !== null);
   const coverage = covered.reduce((sum,f)=>sum+weights[f.key],0);
   const score = coverage > 0 ? covered.reduce((sum,f)=>sum+f.score!*weights[f.key],0)/coverage : null;
-  const hardRisk = t.overheat || t.falling || !!(exposure && exposure.portfolioPct >= 20);
+  // Exceptional raw daily moves may be corporate actions, not economic returns.
+  // This is only a guard, not an adjustment or identification of a corporate action.
+  const exceptionalMove = t.rows.slice(-245).some((row,i,rows)=>i>0 && Math.abs(row[1]/rows[i-1]![1]-1)>0.15);
+  if (exceptionalMove) warnings.push("近期未還原收盤有逾15%的單日變動，須確認除權息、減資、拆分或特殊交易。");
+  const weakMargin = marginOK && marginValues[2]! <= 0;
+  if (weakMargin) warnings.push("最新一季毛利率非正值。");
+  const hardRisk = t.overheat || t.falling || weakMargin || exceptionalMove || !!(exposure && exposure.portfolioPct >= 20);
+  const unmetConditions = [
+    ...warnings,
+    ...factors.filter(f=>f.score!==null && f.score<60).map(f=>f.label+"代理指標偏弱，待改善。"),
+    ...factors.filter(f=>f.score===null).map(f=>f.label+"資料待補。")
+  ];
+  const companyScore = quality!==null && growth!==null && valuation!==null ? (quality+growth+valuation)/3 : null;
+  const timingScore = technique!==null && market!==null && flow!==null ? (technique+market+flow)/3 : null;
   const insufficient = !historyOK || !benchmarkAligned || gap || coverage < 80 || technique === null ||
     (horizon !== "short" && (quality === null || growth === null || valuation === null));
   if (coverage < 80) missing.push("現有指標覆蓋率不足80%。");
@@ -245,7 +258,7 @@ export function assessStock(input: {
   const status: Status = s.type === "etf" ? "not_applicable" : insufficient ? "insufficient" :
     hardRisk ? "risk" : score !== null && score >= 70 && technique >= 60 ? "met" : "wait";
   return { version: DECISION_VERSION, asOf, status, factors, coverage, score, technical:t, relative, pe, peRank, peerCount:peerPE.length,
-    warnings, missing, limitations: reasons, exposurePct: exposure?.portfolioPct ?? null,
+    warnings, missing, limitations: reasons, unmetConditions, companyScore, timingScore, quoteVerified:quoteOK, exposurePct: exposure?.portfolioPct ?? null,
     portfolioCoverage: risk?.riskCoveragePct ?? null };
 }
 export function positionRisk(input: { entry: number; target: number; stop: number; available: number; riskBudget: number; feeRate: number; taxRate: number; slippageRate: number; minimumFee: number }) {

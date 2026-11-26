@@ -56,6 +56,19 @@ describe("stock decision",()=>{
     expect(gap.missing.some(m=>m.includes("停牌"))).toBe(true);
     expect(assessStock({...input,points:input.points.slice(0,-1)}).technical.lastDate).not.toBe(input.today);
   });
+  it("does not expose stale quotes as verified for sizing",()=>{
+    const input=sample(series(300));
+    expect(assessStock(input).quoteVerified).toBe(true);
+    expect(assessStock({...input,today:"2026-01-01"}).quoteVerified).toBe(false);
+    expect(assessStock({...input,offline:true}).quoteVerified).toBe(false);
+  });
+  it("flags exceptional unadjusted moves and missing company proxies",()=>{
+    const input=sample(series(300,i=>i<150?100:80));
+    const result=assessStock(input);
+    expect(result.warnings.some(w=>w.includes("逾15%"))).toBe(true);
+    expect(result.companyScore).toBeNull();
+    expect(result.unmetConditions.some(w=>w.includes("基本面"))).toBe(true);
+  });
   it("does not apply stock score to ETF",()=>expect(assessStock(sample(series(300),"etf")).status).toBe("not_applicable"));
   it("accepts three consecutive completed quarters and months, rejects gaps, future data and duplicate peers",()=>{
     const p=series(365,i=>100+0.25*i+Math.sin(i/5)*2), input=sample(p), s=input.snapshot;

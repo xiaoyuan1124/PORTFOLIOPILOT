@@ -14,8 +14,8 @@ import { useResumeRefreshKey } from "./use-resume-refresh-key";
 const labels = { met:"初步研究條件符合", wait:"等待條件改善", risk:"風險偏高", insufficient:"資料不足／待同步", not_applicable:"ETF 不適用" };
 const number = (v:number|null|undefined, suffix="", digits=1) => v == null || !Number.isFinite(v) ? "—" : v.toFixed(digits)+suffix;
 type Loaded = { key:string; history:TwPriceHistorySeries|null; benchmark:BenchmarkSeries|null; ohlcv:StrategyOhlcvCache|null; issues:string[]; error:string };
-export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, offline }: {
-  snapshot:CompanySnapshot; peers:CompanySnapshot[]; state:AppState; latestMarketDate:string|null; offline:boolean;
+export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, offline, onWatch, watched }: {
+  snapshot:CompanySnapshot; peers:CompanySnapshot[]; state:AppState; latestMarketDate:string|null; offline:boolean; onWatch?:()=>void; watched?:boolean;
 }) {
   const [horizon,setHorizon]=useState<Horizon>("swing");
   const [loaded,setLoaded]=useState<Loaded|null>(null);
@@ -48,7 +48,7 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
     ],
     benchmark:current.benchmark,horizon,today:taipeiDate(),latestMarketDate,historyIssues:current.issues,portfolioRisk:portfolio,offline}):null,
     [current,snapshot,peers,market,code,horizon,latestMarketDate,portfolio,offline]);
-  const sizing=result && !offline && result.technical.lastDate === snapshot.quote?.date && result.technical.close === snapshot.quote?.close ? positionRisk({entry:snapshot.quote?.close??0,target:Number(target),stop:Number(stop),available:Number(available),
+  const sizing=result && result.quoteVerified && result.technical.lastDate === snapshot.quote?.date && result.technical.close === snapshot.quote?.close ? positionRisk({entry:snapshot.quote?.close??0,target:Number(target),stop:Number(stop),available:Number(available),
     riskBudget:Number(riskBudget),feeRate:0.001425,taxRate:0.003,slippageRate:0.001,minimumFee:20}) : null;
   if(type!=="stock") return <Card><CardContent className="p-4 text-sm">ETF 使用 ETF 深度研究，不套用公司型買進評估。</CardContent></Card>;
   return <Card><CardContent className="space-y-3 p-4">
@@ -62,12 +62,14 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
         <p className="text-xs opacity-60">研究結果 · {result.asOf}</p><p className="mt-1 text-xl font-semibold">{labels[result.status]}</p>
         <div className="mt-2 grid grid-cols-2 gap-2"><div className="mini-metric"><span>初步指標分數</span><strong>{result.status==="insufficient"?"—":number(result.score," / 100",0)}</strong></div>
           <div className="mini-metric"><span>現有模型覆蓋率</span><strong>{number(result.coverage,"%",0)}</strong></div></div>
+        <div className="mt-2 grid grid-cols-2 gap-2"><div className="mini-metric"><span>公司品質（代理指標）</span><strong>{number(result.companyScore," / 100",0)}</strong></div><div className="mini-metric"><span>進場條件（代理指標）</span><strong>{number(result.timingScore," / 100",0)}</strong></div></div>
         <p className="mt-2 text-xs leading-5 opacity-70">實驗性研究規則，非勝率、目標價或交易指令。覆蓋率僅指本版指標。</p>
+        {onWatch ? <button type="button" disabled={watched} onClick={onWatch} className="mt-2 min-h-10 w-full rounded-lg border border-current/15 px-3 text-sm font-semibold disabled:opacity-60">{watched?"已在自選清單":"加入自選，持續觀察"}</button> : null}
       </div>
       {[...(current?.error?[current.error]:[]),...result.missing,...result.warnings].map((warning,i)=><p key={i} className="rounded-lg border border-amber-600/20 p-2 text-xs leading-5 text-amber-800 dark:text-amber-300">{warning}</p>)}
       <div className="grid grid-cols-2 gap-2"><div className="mini-metric"><span>趨勢</span><strong>{result.technical.trend}</strong></div><div className="mini-metric"><span>月線乖離</span><strong>{number(result.technical.monthly.bias,"%")}</strong></div>
         <div className="mini-metric"><span>歷史乖離百分位</span><strong>{number(result.technical.biasRank,"%",0)}</strong></div><div className="mini-metric"><span>相對加權（{horizon==="short"?"20":"60"}日）</span><strong>{number(result.relative,"%")}</strong></div></div>
-      <details><summary className="cursor-pointer py-2 text-sm font-semibold">六面向分析</summary><div className="space-y-2">
+      <details><summary className="cursor-pointer py-2 text-sm font-semibold">待改善條件與六面向分析</summary><div className="mb-2 space-y-1">{result.unmetConditions.map(v=><p key={v} className="text-xs leading-5 opacity-75">• {v}</p>)}</div><div className="space-y-2">
         {result.factors.map(f=><div className="rounded-lg bg-black/[0.03] p-2 dark:bg-white/[0.03]" key={f.key}><div className="flex justify-between gap-2 text-sm"><strong>{f.label}</strong><span>{number(f.score," / 100",0)}</span></div><p className="mt-1 text-xs leading-5 opacity-70">{f.detail}</p></div>)}
       </div></details>
       <details><summary className="cursor-pointer py-2 text-sm font-semibold">均線與技術數據</summary>
@@ -90,7 +92,7 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
         <p className="mt-2 text-xs leading-5 opacity-60">示範費率：單邊0.1425%、最低20元、股票賣出稅0.3%、單邊滑價0.1%。未保證退出成交，非券商報價。</p>
       </details>
       <details><summary className="cursor-pointer py-2 text-xs opacity-70">資料來源、限制與模型版本</summary>
-        <p className="text-xs leading-5">TWSE／TPEx 官方未還原收盤、MOPS 毛利率與營收、官方估值與法人資料、TWSE 加權指數。{result.version}。</p>
+        <p className="text-xs leading-5">TWSE／TPEx 官方未還原收盤、MOPS 毛利率與營收、官方估值與法人資料、TWSE 加權指數。{result.version}。</p><p className="mt-2 flex flex-wrap gap-3 text-xs"><a className="underline" href="https://openapi.twse.com.tw/" target="_blank" rel="noreferrer">證交所</a><a className="underline" href="https://www.tpex.org.tw/openapi/" target="_blank" rel="noreferrer">櫃買中心</a><a className="underline" href="https://mops.twse.com.tw/" target="_blank" rel="noreferrer">公開資訊觀測站</a></p>
         {result.limitations.map(v=><p key={v} className="mt-1 text-xs leading-5 opacity-70">{v}</p>)}
         <p className="mt-1 text-xs">全市場真實 OHLCV 隨官方行情更新逐步補齊；舊資料僅收盤價。</p><p className="mt-1 text-xs">歷史樣本 {result.technical.rows.length} 筆，行情截至 {result.technical.lastDate??"—"}。</p>
       </details>

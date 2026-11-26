@@ -6,3 +6,6 @@ Remaining work: licensed all-market OHLCV and corporate actions, complete point-
 
 ## v1.2 data migration
 Existing daily market-wide fetches now retain explicit validated OHLCV tuples in optional candle arrays alongside legacy close points. Bounded 45 calendar-day migration on universe version change, incremental accumulation thereafter. No per-symbol calls or guessed volumes. Existing close-only clients remain compatible. Full historical depth and live endpoint coverage must be verified after data refresh. KD requires 21 contiguous true bars. No claim of completed long-history backfill.
+
+## v1.3 navigation and risk
+Scanner candidates link to the existing security detail assessment. Watchlist additions reuse the same local state transaction and deduplication. Show separate company and timing proxy scores only when component data is present. Extreme unadjusted moves are flagged; they are not identified as corporate actions automatically. Quote freshness also gates sizing.

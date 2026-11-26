@@ -113,7 +113,7 @@ function GateDetail({
   );
 }
 
-export function Scanner({ state }: { state: AppState }) {
+export function Scanner({ state, onOpenStock }: { state: AppState; onOpenStock?: (key: string) => void }) {
   const [revenue, setRevenue] = useState<RevenueHistoryCache | null>(null);
   const [institutional, setInstitutional] = useState<InstitutionalCache | null>(null);
   const [quarterly, setQuarterly] = useState<QuarterlyMarginCache | null>(null);
@@ -320,6 +320,7 @@ export function Scanner({ state }: { state: AppState }) {
               <Gate status={item.trustGate.status}>投信 10D</Gate>
             </div>
 
+            {onOpenStock ? <button type="button" className="mt-3 min-h-10 w-full rounded-xl border border-black/10 px-3 text-left text-sm font-semibold dark:border-white/10" onClick={()=>onOpenStock(item.market+":"+item.code)}>查看買進評估 →</button> : null}
             <details className="group mt-4 rounded-2xl border border-black/6 dark:border-white/8">
               <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-black/65 dark:text-white/65">查看條件明細與來源</summary>
               <div className="grid gap-3 border-t border-black/6 p-3 dark:border-white/8">
