@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useResumeRefreshKey } from "./use-resume-refresh-key";
 import { ExternalLink, RefreshCw, Search } from "lucide-react";
 import type { AppState } from "@/lib/types";
 import { buildCompanySnapshots, companySnapshotsForView, isHeldCompanySnapshot } from "@/lib/company-snapshot";
@@ -95,6 +96,8 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [refresh,setRefresh]=useState(0);
+  const resume=useResumeRefreshKey();
 
   async function fetchCaches(previous?: Caches | null) {
     const [quotes, revenue] = await Promise.all([
@@ -129,6 +132,8 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setError("");
     void fetchCaches()
       .then((next) => {
         if (!active) return;
@@ -142,21 +147,9 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [refresh,resume]);
 
-  async function reload() {
-    setLoading(true);
-    setError("");
-    try {
-      const next = await fetchCaches(caches);
-      setCaches(next.caches);
-      setWarnings(next.warnings);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "無法載入官方個股資料。");
-    } finally {
-      setLoading(false);
-    }
-  }
+  function reload() {setRefresh(v=>v+1);}
 
   const strategies = useMemo(() => caches ? evaluateOfficialStrategy(caches.revenueHistory, caches.institutional, caches.quarterly) : [], [caches]);
   const snapshots = useMemo(() => caches ? buildCompanySnapshots({ quotes: caches.quotes, revenue: caches.revenue, valuations: caches.valuations, strategies }) : [], [caches, strategies]);
@@ -237,7 +230,7 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
     {selected ? <>
       <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{isHeldCompanySnapshot(selected, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>
 
-      <StockDecisionPanel onWatch={onChange && selected.quote ? addSelectedToWatchlist : undefined} watched={watched} key={selected.market + ":" + selected.code} snapshot={selected} peers={snapshots} state={state} latestMarketDate={caches ? cacheMarketFreshness(caches.quotes)[selected.market] : null} offline={Boolean(!caches || caches.quotes.offlineFallback || !Number.isFinite(Date.parse(caches.quotes.generatedAt)) || shouldRejectStaleClosingCache(caches.quotes) || error || loading)} />
+      <StockDecisionPanel onRefresh={reload} onWatch={onChange && selected.quote ? addSelectedToWatchlist : undefined} watched={watched} key={selected.market + ":" + selected.code} snapshot={selected} peers={snapshots} state={state} latestMarketDate={caches ? cacheMarketFreshness(caches.quotes)[selected.market] : null} offline={Boolean(!caches || caches.quotes.offlineFallback || !Number.isFinite(Date.parse(caches.quotes.generatedAt)) || shouldRejectStaleClosingCache(caches.quotes) || error || loading)} />
 
       {onQuantResearch ? (
         <button type="button" onClick={() => onQuantResearch(selected.market + ":" + selected.code)}

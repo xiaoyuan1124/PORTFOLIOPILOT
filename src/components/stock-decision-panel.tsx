@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { loadTwPriceHistory, loadTwPriceHistoryIndex, type TwPriceHistorySeries } from "@/lib/price-history-data";
+import { loadDecisionHistoryGroup, loadTwPriceHistoryIndex, type TwPriceHistorySeries } from "@/lib/price-history-data";
 import { loadBundledBenchmarks, benchmarkById, type BenchmarkSeries } from "@/lib/benchmark";
 import { loadBundledStrategyOhlcv, strategyCandlesFromCache, strategyOhlcvMissingMonths, type StrategyOhlcvCache } from "@/lib/strategy-ohlcv-data";
 import { assessStock, HORIZON_LABELS, taipeiDate, positionRisk, type Horizon } from "@/lib/stock-decision";
@@ -15,8 +15,8 @@ import { useResumeRefreshKey } from "./use-resume-refresh-key";
 const labels = { met:"初步研究條件符合", wait:"等待條件改善", risk:"風險偏高", insufficient:"資料不足／待同步", not_applicable:"ETF 不適用" };
 const number = (v:number|null|undefined, suffix="", digits=1) => v == null || !Number.isFinite(v) ? "—" : v.toFixed(digits)+suffix;
 type Loaded = { key:string; history:TwPriceHistorySeries|null; benchmark:BenchmarkSeries|null; ohlcv:StrategyOhlcvCache|null; issues:string[]; error:string };
-export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, offline, onWatch, watched }: {
-  snapshot:CompanySnapshot; peers:CompanySnapshot[]; state:AppState; latestMarketDate:string|null; offline:boolean; onWatch?:()=>void; watched?:boolean;
+export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, offline, onWatch, watched, onRefresh }: {
+  snapshot:CompanySnapshot; peers:CompanySnapshot[]; state:AppState; latestMarketDate:string|null; offline:boolean; onWatch?:()=>void; watched?:boolean; onRefresh?:()=>void;
 }) {
   const [horizon,setHorizon]=useState<Horizon>("swing");
   const [loaded,setLoaded]=useState<Loaded|null>(null);
@@ -32,14 +32,17 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
   useEffect(()=>{
     if(type!=="stock") return;
     let active=true;
-    void Promise.allSettled([loadTwPriceHistory(market,code),loadTwPriceHistoryIndex(),loadBundledBenchmarks(),loadBundledStrategyOhlcv()] as const).then(([history,index,benchmark,ohlcv])=>{
+    const controller=new AbortController();
+    const indexRequest=loadTwPriceHistoryIndex();
+    const historyRequest=indexRequest.then(index=>loadDecisionHistoryGroup([{market,code}],index,controller.signal)).then(group=>group.get(market+":"+code.toUpperCase())??null);
+    void Promise.allSettled([historyRequest,indexRequest,loadBundledBenchmarks(),loadBundledStrategyOhlcv()] as const).then(([history,index,benchmark,ohlcv])=>{
       if(!active)return;
       const h=history.status==="fulfilled"?history.value:null;
       const issues=index.status==="fulfilled"&&h&&index.value.generatedAt===h.generatedAt?index.value.failed.filter(f=>f.market===market&&f.date>=(h.points[0]?.[0]??"")&&f.date<=(h.points.at(-1)?.[0]??"")).map(f=>f.date):["歷史索引未驗證"];
       setLoaded({key,history:h,benchmark:benchmark.status==="fulfilled"?benchmarkById(benchmark.value,"TWSE:TAIEX-PRICE"):null,
         ohlcv:ohlcv.status==="fulfilled"?ohlcv.value:null,issues,error:history.status==="rejected"?"官方歷史行情載入失敗":""});
     });
-    return()=>{active=false;};
+    return()=>{active=false;controller.abort();};
   },[key,market,code,type]);
   const current=loaded?.key===key?loaded:null;
   const portfolio=useMemo(()=>calculatePortfolioRisk(state.holdings,state.etfCompositions,state.usdTwd),[state.holdings,state.etfCompositions,state.usdTwd]);
@@ -51,11 +54,11 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
     benchmark:current.benchmark,horizon,today:taipeiDate(),latestMarketDate,historyIssues:current.issues,portfolioRisk:portfolio,offline}):null,
     [current,snapshot,peers,market,code,horizon,latestMarketDate,portfolio,offline]);
   const study=useMemo(()=>studyOpen&&current&&result?priceConditionStudy(current.history?.points??[],current.benchmark?.points.map(p=>[p.date,p.value] as const)??[],result.asOf,horizon,current.issues):null,[studyOpen,current,result,horizon]);
-  const sizing=result && result.quoteVerified && result.technical.lastDate === snapshot.quote?.date && result.technical.close === snapshot.quote?.close ? positionRisk({entry:snapshot.quote?.close??0,target:Number(target),stop:Number(stop),available:Number(available),
+  const sizing=result && result.quoteVerified && !(current?.issues.length) && result.technical.lastDate === snapshot.quote?.date && result.technical.close === snapshot.quote?.close ? positionRisk({entry:snapshot.quote?.close??0,target:Number(target),stop:Number(stop),available:Number(available),
     riskBudget:Number(riskBudget),feeRate:0.001425,taxRate:0.003,slippageRate:0.001,minimumFee:20}) : null;
   if(type!=="stock") return <Card><CardContent className="p-4 text-sm">ETF 使用 ETF 深度研究，不套用公司型買進評估。</CardContent></Card>;
   return <Card><CardContent className="space-y-3 p-4"><div data-testid="stock-decision-panel" className="space-y-3">
-    <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-semibold">買進評估</h4><button type="button" className="text-xs underline" onClick={()=>setRetry(v=>v+1)}>更新評估</button></div>
+    <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-semibold">買進評估</h4><button type="button" className="text-xs underline" onClick={()=>{onRefresh?.();setRetry(v=>v+1);}}>更新評估</button></div>
     <div className="grid grid-cols-3 gap-1 rounded-xl bg-black/5 p-1 dark:bg-white/5" role="group" aria-label="研究期限">
       {(Object.keys(HORIZON_LABELS) as Horizon[]).map(h=><button type="button" key={h} aria-pressed={horizon===h}
         onClick={()=>setHorizon(h)} className={`min-h-10 rounded-lg text-sm ${horizon===h?"bg-[#1f332a] text-white dark:bg-[#dce9e2] dark:text-[#122018]":""}`}>{HORIZON_LABELS[h]}</button>)}
@@ -105,7 +108,7 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
         <div className="grid grid-cols-2 gap-2">{[
           ["情境目標價",target,setTarget],["退出參考價",stop,setStop],["可用資金（元）",available,setAvailable],["單筆風險額（元）",riskBudget,setRiskBudget]
         ].map(([label,value,set])=><label className="text-xs" key={String(label)}>{String(label)}<input className="field mt-1 w-full min-w-0" type="number" min="0" inputMode="decimal" value={String(value)} onChange={e=>(set as (v:string)=>void)(e.target.value)} /></label>)}</div>
-        {sizing?<div className="mt-2 grid grid-cols-2 gap-2">{[["股數上限",sizing.shares.toLocaleString()],["投入（含費）",number(sizing.invested,"元",0)],["退出情境損失",number(sizing.loss,"元",0)],["淨報酬／風險",number(sizing.ratio,":1",2)]].map(([name,value])=><div className="mini-metric" key={name}><span>{name}</span><strong>{value}</strong></div>)}</div>:<p className="mt-2 text-xs opacity-70">輸入正數且目標價 &gt; 收盤價 &gt; 退出價。</p>}
+        {sizing?<div className="mt-2 grid grid-cols-2 gap-2">{[["股數上限",sizing.shares.toLocaleString()],["投入（含費）",number(sizing.invested,"元",0)],["退出情境損失",number(sizing.loss,"元",0)],["淨報酬／風險",number(sizing.ratio,":1",2)]].map(([name,value])=><div className="mini-metric" key={name}><span>{name}</span><strong>{value}</strong></div>)}</div>:<p className="mt-2 text-xs opacity-70">{!result.quoteVerified||current?.issues.length||result.technical.lastDate!==snapshot.quote?.date||result.technical.close!==snapshot.quote?.close?"官方行情未驗證或未同步，暫停試算。":"輸入正數且目標價 > 收盤價 > 退出價。"}</p>}
         <p className="mt-2 text-xs leading-5 opacity-60">示範費率：單邊0.1425%、最低20元、股票賣出稅0.3%、單邊滑價0.1%。未保證退出成交，非券商報價。</p>
       </details>
       <details><summary className="cursor-pointer py-2 text-xs opacity-70">資料來源、限制與模型版本</summary>

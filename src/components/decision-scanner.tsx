@@ -2,20 +2,24 @@
 import { useEffect,useMemo,useRef,useState } from "react";
 import { loadBundledTwQuotes,cacheMarketFreshness,shouldRejectStaleClosingCache } from "@/lib/market-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
-import { loadBundledValuations } from "@/lib/valuation-data";
-import { loadBundledRevenueHistory } from "@/lib/revenue-history";
-import { loadBundledQuarterlyMargins } from "@/lib/quarterly-financials";
-import { loadBundledInstitutional10d } from "@/lib/institutional-data";
+import { loadBundledValuations,type ValuationCache } from "@/lib/valuation-data";
+import { loadBundledRevenueHistory,type RevenueHistoryCache } from "@/lib/revenue-history";
+import { loadBundledQuarterlyMargins,type QuarterlyMarginCache } from "@/lib/quarterly-financials";
+import { loadBundledInstitutional10d,type InstitutionalCache } from "@/lib/institutional-data";
 import { loadBundledBenchmarks,benchmarkById } from "@/lib/benchmark";
 import { evaluateOfficialStrategy } from "@/lib/strategy-gates";
 import { buildCompanySnapshots } from "@/lib/company-snapshot";
 import { groupDecisionSymbols,loadDecisionHistoryGroup,loadTwPriceHistoryIndex } from "@/lib/price-history-data";
 import { HORIZON_LABELS,taipeiDate,type Horizon } from "@/lib/stock-decision";
-import { scanDecisionRow,rankDecisionRows,type DecisionScanRow } from "@/lib/decision-scan";
+import { scanDecisionRow,rankDecisionRows,selectDecisionCandidates,type DecisionScanRow } from "@/lib/decision-scan";
 import { calculatePortfolioRisk } from "@/lib/portfolio-risk";
 import type { AppState } from "@/lib/types";
 import { Card,CardContent } from "./ui";
 
+const emptyValuations:ValuationCache={generatedAt:"",sources:[],rows:[]};
+const emptyRevenueHistory:RevenueHistoryCache={generatedAt:"",periods:[],sources:[],rows:[]};
+const emptyQuarterly:QuarterlyMarginCache={generatedAt:"",periods:[],sources:[],rows:[],notApplicable:[]};
+const emptyInstitutional:InstitutionalCache={generatedAt:"",tradingDates:[],sources:[],rows:[]};
 const statusLabels={met:"初步條件符合",wait:"等待",risk:"風險偏高",insufficient:"資料不足"};
 const fmt=(v:number|null,d=0)=>v===null?"—":v.toFixed(d);
 export function DecisionScanner({state,onOpenStock}:{state:AppState;onOpenStock?:(key:string)=>void}){
@@ -26,7 +30,7 @@ export function DecisionScanner({state,onOpenStock}:{state:AppState;onOpenStock?
   const [page,setPage]=useState(1);
   const [busy,setBusy]=useState(false);
   const [progress,setProgress]=useState({done:0,total:0});
-  const [result,setResult]=useState<{rows:DecisionScanRow[];horizon:Horizon;scope:string;date:string;failedGroups:number;stale:boolean}|null>(null);
+  const [result,setResult]=useState<{rows:DecisionScanRow[];horizon:Horizon;scope:string;date:string;failedGroups:number;stale:boolean;missingSources:string[]}|null>(null);
   const [error,setError]=useState("");
   const active=useRef<AbortController|null>(null);
   useEffect(()=>()=>active.current?.abort(),[]);
@@ -36,18 +40,23 @@ export function DecisionScanner({state,onOpenStock}:{state:AppState;onOpenStock?
     active.current?.abort();
     const controller=new AbortController();active.current=controller;
     const {signal}=controller;
-    setBusy(true);setError("");setResult(null);setProgress({done:0,total:0});setPage(1);
+    setBusy(true);setError("");setResult(null);setProgress({done:0,total:0});setPage(1);setFilter("all");setQuery("");
     try{
+      const missingSources:string[]=[];
+      async function optional<T>(label:string,loader:()=>Promise<T>,fallback:T):Promise<T>{
+        try{return await loader();}catch{missingSources.push(label);return fallback;}
+      }
       const [quotes,revenue,valuations,revenueHistory,quarterly,institutional,benchmarks,index]=await Promise.all([
-        loadBundledTwQuotes(),loadBundledRevenue(),loadBundledValuations(),loadBundledRevenueHistory(),loadBundledQuarterlyMargins(),loadBundledInstitutional10d(),loadBundledBenchmarks(),loadTwPriceHistoryIndex()
+        loadBundledTwQuotes(),loadBundledRevenue(),optional("估值",loadBundledValuations,emptyValuations),
+        optional("營收歷史",loadBundledRevenueHistory,emptyRevenueHistory),optional("季度財報",loadBundledQuarterlyMargins,emptyQuarterly),
+        optional("法人",loadBundledInstitutional10d,emptyInstitutional),optional("大盤基準",loadBundledBenchmarks,null),loadTwPriceHistoryIndex()
       ]);
       if(signal.aborted)return;
       const today=taipeiDate(),latest=cacheMarketFreshness(quotes);
       const offline=Boolean(quotes.offlineFallback||!Number.isFinite(Date.parse(quotes.generatedAt))||shouldRejectStaleClosingCache(quotes));
       const peers=buildCompanySnapshots({quotes,revenue,valuations,strategies:evaluateOfficialStrategy(revenueHistory,institutional,quarterly)});
-      const watched=new Set((state.watchlist??[]).filter(s=>s.type==="stock").map(s=>s.venue+":"+s.symbol.toUpperCase()));
-      const selected=peers.filter(s=>s.type==="stock"&&(scope==="all"||watched.has(s.market+":"+s.code)));
-      const groups=groupDecisionSymbols(selected), benchmark=benchmarkById(benchmarks,"TWSE:TAIEX-PRICE");
+      const selected=selectDecisionCandidates(peers,state.watchlist??[],scope);
+      const groups=groupDecisionSymbols(selected), benchmark=benchmarks?benchmarkById(benchmarks,"TWSE:TAIEX-PRICE"):null;
       const portfolioRisk=calculatePortfolioRisk(state.holdings,state.etfCompositions,state.usdTwd);
       const output:DecisionScanRow[]=[];let failedGroups=0;
       setProgress({done:0,total:selected.length});
@@ -65,7 +74,7 @@ export function DecisionScanner({state,onOpenStock}:{state:AppState;onOpenStock?
         // Yield to rendering and cancellation before the next bounded batch.
         await new Promise<void>(resolve=>setTimeout(resolve,0));
       }
-      if(!signal.aborted)setResult({rows:output,horizon,scope,date:index.endDate??"未知",failedGroups,stale:offline||!benchmark||latest.TWSE!==benchmark.asOf||latest.TWSE!==index.endDate||latest.TPEx!==index.endDate});
+      if(!signal.aborted)setResult({rows:output,horizon,scope,date:index.endDate??"未知",failedGroups,missingSources,stale:offline||!benchmark||latest.TWSE!==benchmark.asOf||latest.TWSE!==index.endDate||latest.TPEx!==index.endDate});
     }catch(cause){if(!signal.aborted)setError(cause instanceof Error?cause.message:"掃描失敗");}
     finally{if(active.current===controller&&!signal.aborted){active.current=null;setBusy(false);}}
   }
@@ -84,9 +93,11 @@ export function DecisionScanner({state,onOpenStock}:{state:AppState;onOpenStock?
     {result?<div data-testid="decision-scan-result" className="space-y-3">
       <p className="text-xs opacity-70">行情截至 {result.date} · {HORIZON_LABELS[result.horizon]} · {result.rows.length} 檔</p>
       {result.stale?<p className="text-xs text-amber-700 dark:text-amber-300">資料日期可能未同步；不完整的評估不列入符合條件名單。</p>:null}
+      {result.missingSources.length?<p className="text-xs text-amber-700 dark:text-amber-300">部分來源無法讀取：{result.missingSources.join("、")}。缺值不補猜。</p>:null}
       {result.failedGroups?<p className="text-xs text-amber-700 dark:text-amber-300">{result.failedGroups} 個行情分組未載入，相關股票標為資料不足。</p>:null}
       <div className="grid grid-cols-2 gap-2">{Object.entries(statusLabels).map(([k,label])=><button type="button" key={k} aria-pressed={filter===k} className="rounded-lg border border-current/15 p-2 text-left text-xs" onClick={()=>{setFilter(k as DecisionScanRow["status"]);setPage(1);}}>{label}<strong className="block text-lg">{counts[k]??0}</strong></button>)}</div>
       <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>{setFilter("all");setPage(1);}} className="min-h-10 rounded-lg border border-current/15 px-3 text-xs" aria-pressed={filter==="all"}>全部</button><input className="field min-w-0 flex-1" placeholder="搜尋掃描結果" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/></div>
+      {!result.rows.length?<p className="text-sm opacity-70">此範圍沒有可掃描股票。若選擇自選股票，請先加入個股（ETF 不適用）。</p>:rows.length===0?<p className="text-sm opacity-70">沒有符合目前篩選的股票。</p>:null}
       <p className="text-xs opacity-70">顯示 {shown.length} / {rows.length} 檔。分數為尚未校準的研究指標，非上漲機率。</p>
       {shown.map(r=><button type="button" key={r.key} disabled={!onOpenStock} onClick={()=>onOpenStock?.(r.key)} className="w-full rounded-lg border border-current/10 p-2 text-left">
         <div className="flex items-start justify-between gap-2"><strong className="min-w-0 break-words text-sm">{r.code} · {r.name}</strong><span className="shrink-0 text-xs">{statusLabels[r.status]}</span></div><p className="mt-1 text-xs opacity-70">評分 {fmt(r.score)} · 覆蓋 {r.coverage}% · 月線乖離 {fmt(r.bias,1)}{r.bias===null?"":"%"}</p><p className="mt-1 break-words text-xs opacity-65">{r.reason}</p>

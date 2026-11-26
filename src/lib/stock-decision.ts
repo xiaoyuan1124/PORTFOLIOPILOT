@@ -3,7 +3,7 @@ import type { CompanySnapshot } from "./company-snapshot";
 import type { BenchmarkSeries } from "./benchmark";
 import type { PortfolioRiskResult } from "./portfolio-risk";
 
-export const DECISION_VERSION = "research-v1.4";
+export const DECISION_VERSION = "research-v1.5.1";
 export const PERIODS = [5, 10, 20, 60, 120, 240] as const;
 export type Horizon = "short" | "swing" | "long";
 export const HORIZON_LABELS: Record<Horizon, string> = { short: "短線", swing: "波段", long: "長期" };
@@ -79,7 +79,7 @@ export function technicalSnapshot(points: readonly Point[], asOf: string, candle
   for (const c of candles) {
     if (!validDate(c.date) || c.date > asOf || !positive(c.close)) continue;
     const prior = candleMap.get(c.date);
-    if (prior && (prior.close !== c.close || prior.high !== c.high || prior.low !== c.low || prior.volume !== c.volume)) candleConflicts.add(c.date);
+    if (prior && (prior.close !== c.close || prior.high !== c.high || prior.low !== c.low || prior.volume !== c.volume || (prior.open!==undefined && c.open!==undefined && prior.open!==c.open))) candleConflicts.add(c.date);
     candleMap.set(c.date, c);
   }
   for (const date of candleConflicts) candleMap.delete(date);
@@ -153,7 +153,7 @@ export function assessStock(input: {
   const warnings: string[] = [];
   const missing: string[] = [];
   const reasons: string[] = [];
-  const quoteOK = Boolean(s.quote && validDate(date) && date <= today && positive(s.quote.close) &&
+  const quoteOK = Boolean(s.quote && s.quote.code===s.code && s.quote.market===s.market && validDate(date) && date <= today && positive(s.quote.close) &&
     date === latestMarketDate && daysBetween(date, today) <= 7 && !input.offline);
   const historyOK = quoteOK && t.lastDate === date && t.close === s.quote?.close &&
     !t.conflicts.length && !(input.historyIssues?.length);
@@ -164,10 +164,11 @@ export function assessStock(input: {
   const bm = normalizeDecisionPoints(benchmark?.points.map(p => [p.date, p.value] as const) ?? [], asOf);
   const bmMap = new Map(bm.points);
   // A broad TWSE calendar is also a conservative proxy for TPEx; do not fill gaps.
-  const recentStart = t.rows.at(-245)?.[0] ?? t.rows[0]?.[0];
+  // Bias ranks and momentum use more than the last 245 sessions. Validate the entire input window.
+  const recentStart = t.rows[0]?.[0];
   const stockDates = new Set(t.rows.map(p => p[0]));
   const benchmarkAligned = bm.points.at(-1)?.[0] === date && !!recentStart && bm.points[0]![0] <= recentStart && !bm.conflicts.length;
-  const gap = benchmarkAligned && bm.points.some(([d]) => d >= recentStart! && !stockDates.has(d));
+  const gap = benchmarkAligned && (bm.points.some(([d]) => d >= recentStart! && !stockDates.has(d)) || t.rows.some(([d])=>!bmMap.has(d)));
   if (gap) missing.push("近期官方交易日有缺值或停牌，暫停訊號。");
   if (!benchmarkAligned) missing.push("市場基準尚未與個股資料對齊。");
   const benchmarkTechnical = technicalSnapshot(bm.points, asOf);
@@ -252,7 +253,10 @@ export function assessStock(input: {
   const netLoss = latestFinancial && finite(latestFinancial.netIncome) && latestFinancial.netIncome<0;
   if (operatingLoss) warnings.push("最新單季營業利益為負，核心業務虧損。");
   if (netLoss) warnings.push("最新單季本期淨利為負，須檢查一次性或持續性因素。");
-  const hardRisk = t.overheat || t.falling || weakMargin || exceptionalMove || operatingLoss || netLoss || !!(exposure && exposure.portfolioPct >= 20);
+  // A non-positive published P/E is not cheap; loss-making valuations must not earn a short-term pass.
+  const nonPositivePE = s.valuation?.date===date && s.valuation.code===s.code && s.valuation.market===s.market && finite(s.valuation.pe) && s.valuation.pe<=0;
+  if(nonPositivePE)warnings.push("官方本益比非正值，不能當成低估。");
+  const hardRisk = t.overheat || t.falling || weakMargin || exceptionalMove || operatingLoss || netLoss || nonPositivePE || !!(exposure && exposure.portfolioPct >= 20);
   const unmetConditions = [
     ...warnings,
     ...factors.filter(f=>f.score!==null && f.score<60).map(f=>f.label+"代理指標偏弱，待改善。"),
@@ -277,6 +281,8 @@ export function positionRisk(input: { entry: number; target: number; stop: numbe
       [feeRate,taxRate,slippageRate].some(v=>v<0||v>=1) || minimumFee < 0) return null;
   const buy = entry*(1+slippageRate), exit = stop*(1-slippageRate), take = target*(1-slippageRate);
   if (![buy,exit,take].every(positive) || !Number.isFinite(Math.max(buy,take)*Math.min(Math.floor(available/buy),Number.MAX_SAFE_INTEGER))) return null;
+  // Keep the entire arithmetic in a safe monetary range, including fees.
+  if(available>Number.MAX_SAFE_INTEGER||riskBudget>Number.MAX_SAFE_INTEGER||minimumFee>Number.MAX_SAFE_INTEGER||take>Number.MAX_SAFE_INTEGER)return null;
   const fee = (gross:number) => Math.max(minimumFee,gross*feeRate);
   const cost = (n:number) => n===0?0:n*buy+fee(n*buy);
   const proceeds = (n:number, p:number) => n===0?0:n*p*(1-taxRate)-fee(n*p);

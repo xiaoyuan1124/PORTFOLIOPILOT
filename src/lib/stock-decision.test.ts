@@ -56,6 +56,15 @@ describe("stock decision",()=>{
     expect(gap.missing.some(m=>m.includes("停牌"))).toBe(true);
     expect(assessStock({...input,points:input.points.slice(0,-1)}).technical.lastDate).not.toBe(input.today);
   });
+  it("rejects a quote for a different issuer or venue and gaps in either direction",()=>{
+    const input=sample(series(300));
+    expect(assessStock({...input,snapshot:{...input.snapshot,quote:{...input.snapshot.quote!,code:"2317"}}}).quoteVerified).toBe(false);
+    expect(assessStock({...input,snapshot:{...input.snapshot,quote:{...input.snapshot.quote!,market:"TPEx"}}}).quoteVerified).toBe(false);
+    const earlyGap=assessStock({...input,points:input.points.filter((_,i)=>i!==20)});
+    expect(earlyGap.missing.some(m=>m.includes("停牌"))).toBe(true);
+    const benchmarkGap=assessStock({...input,benchmark:{...input.benchmark,points:input.benchmark.points.filter((_,i)=>i!==200)}});
+    expect(benchmarkGap.missing.some(m=>m.includes("停牌"))).toBe(true);
+  });
   it("does not expose stale quotes as verified for sizing",()=>{
     const input=sample(series(300));
     expect(assessStock(input).quoteVerified).toBe(true);
@@ -117,5 +126,7 @@ describe("stock decision",()=>{
     expect(positionRisk({...input,stop:101})).toBeNull();
     expect(positionRisk({...input,entry:NaN})).toBeNull();
     expect(positionRisk({...input,feeRate:-1})).toBeNull();
+    expect(positionRisk({...input,available:1e30})).toBeNull();
+    expect(positionRisk({...input,minimumFee:1e30})).toBeNull();
   });
 });
