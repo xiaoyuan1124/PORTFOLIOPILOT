@@ -150,3 +150,33 @@ export async function loadTwPriceHistory(
     endDate: bucket.endDate
   };
 }
+
+
+// One download per market/prefix, without retaining the entire universe in the single-symbol cache.
+export function groupDecisionSymbols<T extends {market:"TWSE"|"TPEx";code:string}>(symbols:readonly T[]) {
+  const groups = new Map<string,T[]>();
+  for (const s of symbols) {
+    const key=bucketPath(s.market,s.code);
+    const group=groups.get(key)??[];
+    group.push(s);groups.set(key,group);
+  }
+  return [...groups.values()];
+}
+
+export async function loadDecisionHistoryGroup<T extends {market:"TWSE"|"TPEx";code:string}>(symbols:readonly T[], index:TwPriceHistoryIndex, signal?:AbortSignal):Promise<Map<string,TwPriceHistorySeries>> {
+  const first=symbols[0];
+  if(!first)return new Map();
+  const file=bucketPath(first.market,first.code);
+  if(symbols.some(s=>bucketPath(s.market,s.code)!==file))throw new Error("歷史分組不一致");
+  const base=process.env.NEXT_PUBLIC_BASE_PATH??"";
+  const response=await fetch(`${base}/data/tw-price-history/${file}?generation=${encodeURIComponent(index.generatedAt)}`,{cache:"no-store",signal});
+  if(!response.ok)throw new Error("歷史分組無法載入");
+  const bucket=bucketSchema.parse(await response.json());
+  if(bucket.generatedAt!==index.generatedAt || bucket.market!==first.market || bucket.prefix!==prefixForSymbol(first.code))throw new Error("歷史分組版本或市場不一致");
+  const result=new Map<string,TwPriceHistorySeries>();
+  for(const s of symbols){
+    const symbol=s.code.toUpperCase(), security=bucket.securities[symbol];
+    if(security)result.set(s.market+":"+symbol,{...security,market:s.market,symbol,generatedAt:bucket.generatedAt,startDate:bucket.startDate,endDate:bucket.endDate});
+  }
+  return result;
+}

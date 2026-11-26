@@ -135,6 +135,15 @@ try {
     await sizing.getByText("可用資金（元）",{exact:true}).waitFor();
     await checkLayout(page,viewport.name,"stock-decision-risk");
     await sizing.locator("summary").click();
+    await page.getByRole("button",{name:"選股",exact:true}).click();
+    await page.getByRole("button",{name:"選股 Scanner",exact:true}).click();
+    const scan=page.getByTestId("decision-scanner");
+    await scan.waitFor();
+    await scan.getByLabel("掃描範圍").selectOption("watch");
+    await scan.getByRole("button",{name:"開始六面向掃描",exact:true}).click();
+    await scan.getByTestId("decision-scan-result").waitFor({timeout:30000});
+    await checkLayout(page,viewport.name,"decision-scanner-watch");
+    await page.getByRole("button",{name:"標的",exact:true}).click();
     await page.getByRole("button", { name: "ETF 深度", exact: true }).click();
     await page.getByRole("heading", { name: "ETF 成分與績效" }).waitFor();
     // The verbose introduction has been removed; research starts with the actual ETF data.
