@@ -132,11 +132,15 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError("");
-    void fetchCaches()
+    // Start asynchronous synchronization without a synchronous state cascade in the effect.
+    void Promise.resolve().then(async () => {
+      if (!active) return null;
+      setLoading(true);
+      setError("");
+      return fetchCaches();
+    })
       .then((next) => {
-        if (!active) return;
+        if (!active || !next) return;
         setCaches(next.caches);
         setWarnings(next.warnings);
         setError("");
@@ -149,7 +153,7 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
     return () => { active = false; };
   }, [refresh,resume]);
 
-  function reload() {setRefresh(v=>v+1);}
+  function reload() {setLoading(true);setError("");setRefresh(v=>v+1);}
 
   const strategies = useMemo(() => caches ? evaluateOfficialStrategy(caches.revenueHistory, caches.institutional, caches.quarterly) : [], [caches]);
   const snapshots = useMemo(() => caches ? buildCompanySnapshots({ quotes: caches.quotes, revenue: caches.revenue, valuations: caches.valuations, strategies }) : [], [caches, strategies]);
