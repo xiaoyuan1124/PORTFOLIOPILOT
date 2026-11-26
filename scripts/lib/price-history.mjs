@@ -14,6 +14,10 @@ export function needsPriceHistoryRefresh(previousIndex, targetEndDate, hasExisti
   return failed.length > 0;
 }
 
+// Empty response pairs on a verified trading date are a source failure, not a holiday.
+export function isPossibleMarketClosure(date,twseCount,tpexCount,knownTradingDates) {
+  return twseCount===0 && tpexCount===0 && !knownTradingDates.has(date);
+}
 function plainCell(value) {
   return String(value ?? "")
     .replace(/<[^>]+>/g, "")

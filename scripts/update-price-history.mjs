@@ -9,6 +9,7 @@ import {
   calendarDateAdd,
   historyBucketStats,
   historyBucketCandleCount,
+  isPossibleMarketClosure,
   mapWithConcurrency,
   mergeHistoryBucket,
   needsPriceHistoryRefresh,
@@ -125,6 +126,9 @@ async function main() {
   const targetEndDate = quotes.map((row) => String(row.date ?? "")).filter(Boolean).sort().at(-1);
   if (!targetEndDate) throw new Error("Cannot determine latest Taiwan quote date.");
   const cutoffDate = calendarDateAdd(targetEndDate, -HISTORY_DAYS);
+  const benchmarkCache=await readJson("public/data/tw-benchmarks.json",null);
+  const benchmarkPoints=benchmarkCache?.benchmarks?.find(b=>b.id==="TWSE:TAIEX-PRICE")?.points??[];
+  const knownTradingDates=new Set([...quotes.map(q=>q.date),...benchmarkPoints.map(p=>p.date)].filter(d=>typeof d==="string"));
 
   await mkdir(OUTPUT_DIR, { recursive: true });
   const previousIndex = await readJson(INDEX_PATH, null);
@@ -210,11 +214,7 @@ async function main() {
 
     const twseCount = twseRows?.length ?? -1;
     const tpexCount = tpexRows?.length ?? -1;
-    const bothClosed =
-      twseResult?.status === "fulfilled" &&
-      tpexResult?.status === "fulfilled" &&
-      twseCount === 0 &&
-      tpexCount === 0;
+    const bothClosed = isPossibleMarketClosure(date,twseCount,tpexCount,knownTradingDates);
 
     if (bothClosed) {
       failed.delete(failureKey("TWSE", date));

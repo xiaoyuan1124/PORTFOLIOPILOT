@@ -21,3 +21,5 @@ Existing Scanner now supports opt-in full listed/OTC stock or local watchlist sc
 
 ## Production regression audit v1.5.1
 Fix mismatched market buckets, race between separate history and index loads, full two-way session alignment, quote identity, refresh of parent caches on browser resume/manual retry, fail-closed sizing, missing optional scanner sources and absent watchlist members. Reject nonpositive published P/E as risk. Browser smoke now adds a real stock to the local watchlist and checks its scan result instead of accepting an empty scan. No new dependencies or paid services.
+
+Second regression pass: distinguish dual empty market payloads from possible holiday using known quote/benchmark sessions; keep failures for retry. Add a network-free real-data regression verifying every published bucket, canonical close, actual OHLCV row, index generation and aggregate counts. This test validates cache integrity, not exchange correctness or complete adjusted histories.
