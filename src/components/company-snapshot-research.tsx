@@ -15,6 +15,8 @@ import { loadBundledValuations, valuationSource, type ValuationCache } from "@/l
 import { marketPrice, percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 import { SecurityPriceHistoryCard } from "./security-price-history-card";
+import { StockDecisionPanel } from "./stock-decision-panel";
+import { cacheMarketFreshness } from "@/lib/market-data";
 
 type Caches = {
   quotes: TwQuoteCache;
@@ -222,6 +224,8 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch }
 
     {selected ? <>
       <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{isHeldCompanySnapshot(selected, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>
+
+      <StockDecisionPanel key={selected.market + ":" + selected.code} snapshot={selected} peers={snapshots} state={state} latestMarketDate={caches ? cacheMarketFreshness(caches.quotes)[selected.market] : null} offline={Boolean(caches?.quotes.offlineFallback || warnings.length || error || loading)} />
 
       {onQuantResearch ? (
         <button type="button" onClick={() => onQuantResearch(selected.market + ":" + selected.code)}
