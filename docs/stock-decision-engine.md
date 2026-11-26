@@ -12,3 +12,6 @@ Scanner candidates link to the existing security detail assessment. Watchlist ad
 
 ## Validation
 Mobile layout smoke now explicitly selects 2330, waits for the decision result, toggles horizon, opens technical and sizing disclosures, and checks narrow-screen geometry. Data index reports actual candle counts separately from close counts; migration success is not inferred from a close-only row count.
+
+## v1.4 no incremental service cost
+The existing MOPS income statement fetch now preserves explicit optional operating income, total net income and cumulative basic EPS columns. Quarterly additive amounts are derived only with both cumulative observations; EPS is never differenced. Negative operating/net income blocks a positive research condition. Optional fields remain absent in old caches. A local price-only event study uses fixed rules, next-session close, nonoverlapping fixed holding periods, proportional costs and aligned index dates. It does not replay current fundamental data or claim a full point-in-time backtest. No new packages, external services, credentials, scheduled workflows or runners were added. Account billing limits remain the owner's control. Full cash flow, balance sheet, corporate actions, point-in-time multi-factor testing remain outstanding.

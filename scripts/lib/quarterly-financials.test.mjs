@@ -28,6 +28,18 @@ describe("MOPS quarterly statement parser", () => {
 });
 
 describe("single-quarter derivation", () => {
+  it("extracts optional explicit profit and EPS columns, excluding ambiguous continuing-operation profit",()=>{
+    const html='<table><tr>'+["公司代號","公司名稱","營業收入","營業成本","營業毛利（毛損）","營業利益（損失）","本期淨利（淨損）","基本每股盈餘（元）"].map(v=>'<th>'+v+'</th>').join("")+'</tr><tr>'+["2330","測試","1000","600","400","200","(50)","-0.50"].map(v=>'<td>'+v+'</td>').join("")+'</tr></table>';
+    expect(parseMopsQuarterlyHtml(html).generalRows[0]).toMatchObject({operatingIncome:200,netIncome:-50,cumulativeEps:-0.5});
+    expect(parseMopsQuarterlyHtml(html.replace("本期淨利（淨損）","繼續營業單位本期淨利")).generalRows[0].netIncome).toBeUndefined();
+  });
+  it("derives additive profits but never subtracts cumulative EPS; missing prior stays unknown",()=>{
+    const current={code:"2330",name:"A",revenue:250,operatingCost:150,grossProfit:100,operatingIncome:30,netIncome:15,cumulativeEps:1.8};
+    const previous={code:"2330",name:"A",revenue:100,operatingCost:60,grossProfit:40,operatingIncome:10,netIncome:20,cumulativeEps:2};
+    const row=deriveSingleQuarterRows({currentRows:[current],previousRows:[previous],period:"2026-Q2",market:"TWSE"})[0];
+    expect(row).toMatchObject({operatingIncome:20,netIncome:-5,operatingMarginPct:13.33,netMarginPct:-3.33,cumulativeEps:1.8});
+    expect(deriveSingleQuarterRows({currentRows:[current],previousRows:[{...previous,operatingIncome:null}],period:"2026-Q2",market:"TWSE"})[0].operatingIncome).toBeUndefined();
+  });
   it("uses Q1 cumulative figures directly", () => {
     const rows = deriveSingleQuarterRows({
       currentRows: [{ code: "2330", name: "台積電", revenue: 100, operatingCost: 60, grossProfit: 40 }],

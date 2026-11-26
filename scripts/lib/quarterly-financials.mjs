@@ -82,6 +82,9 @@ export function parseMopsQuarterlyHtml(html) {
     const revenueIndex = findIndex(header, GENERAL_FIELDS.revenue);
     const costIndex = findIndex(header, GENERAL_FIELDS.operatingCost);
     const grossIndex = findIndex(header, GENERAL_FIELDS.grossProfit);
+    const operatingIndex = findIndex(header, ["營業利益（損失）","營業利益（損益）","營業利益","營業淨利（淨損）","營業淨利"]);
+    const netIndex = findIndex(header, ["本期淨利（淨損）","本期淨利（損失）","本期淨利"]);
+    const epsIndex = findIndex(header, ["基本每股盈餘（元）","基本每股盈餘"]);
     const isGeneralIndustry = grossIndex >= 0;
 
     if (!isGeneralIndustry) {
@@ -105,7 +108,11 @@ export function parseMopsQuarterlyHtml(html) {
       const operatingCost = parseFinancialNumber(cells[costIndex]);
       const grossProfit = parseFinancialNumber(cells[grossIndex]);
       if (!code || !name) continue;
-      generalRows.push({ code, name, revenue, operatingCost, grossProfit });
+      const optional = {};
+      for (const [key,index] of [["operatingIncome",operatingIndex],["netIncome",netIndex],["cumulativeEps",epsIndex]]) {
+        if (index >= 0) optional[key] = parseFinancialNumber(cells[index]);
+      }
+      generalRows.push({ code, name, revenue, operatingCost, grossProfit, ...optional });
     }
   }
 
@@ -162,7 +169,20 @@ export function deriveSingleQuarterRows({ currentRows, previousRows, period, mar
 
     if (!Number.isFinite(revenue) || revenue <= 0 || !Number.isFinite(operatingCost) || !Number.isFinite(grossProfit)) continue;
 
+    const optional = {};
+    for (const field of ["operatingIncome","netIncome"]) {
+      if (Number.isFinite(current[field]) && (!previous || Number.isFinite(previous[field]))) {
+        const value = current[field] - (previous ? previous[field] : 0);
+        if (Number.isFinite(value)) {
+          optional[field] = value;
+          optional[field === "operatingIncome" ? "operatingMarginPct" : "netMarginPct"] = Math.round(value / revenue * 10000) / 100;
+        }
+      }
+    }
+    // Do not subtract EPS between quarters: weighted share count may change.
+    if (Number.isFinite(current.cumulativeEps)) optional.cumulativeEps = current.cumulativeEps;
     rows.push({
+      ...optional,
       code: current.code,
       name: current.name,
       market,

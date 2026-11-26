@@ -3,7 +3,7 @@ import type { CompanySnapshot } from "./company-snapshot";
 import type { BenchmarkSeries } from "./benchmark";
 import type { PortfolioRiskResult } from "./portfolio-risk";
 
-export const DECISION_VERSION = "research-v1.3";
+export const DECISION_VERSION = "research-v1.4";
 export const PERIODS = [5, 10, 20, 60, 120, 240] as const;
 export type Horizon = "short" | "swing" | "long";
 export const HORIZON_LABELS: Record<Horizon, string> = { short: "短線", swing: "波段", long: "長期" };
@@ -181,7 +181,12 @@ export function assessStock(input: {
   const marginOK = consecutiveCompleted(margins.map(r=>r.period), currentQuarter, quarterIndex, 2) &&
     margins.every(r => finite(r.grossMarginPct) && r.market === s.market && r.code === s.code && positive(r.revenue));
   const marginValues = [...margins].sort((a,b) => a.period.localeCompare(b.period)).map(r => r.grossMarginPct);
-  const quality = marginOK ? clamp(50 + (marginValues[2]! - marginValues[0]!) * 4 + (marginValues[2]! > 0 ? 10 : -30)) : null;
+  const financialRows = marginOK ? [...margins].sort((a,b)=>a.period.localeCompare(b.period)) : [];
+  const latestFinancial = financialRows.at(-1) ?? null;
+  const operatingComplete = financialRows.length===3 && financialRows.every(r=>finite(r.operatingMarginPct));
+  const marginProxy = marginOK ? clamp(50 + (marginValues[2]! - marginValues[0]!) * 4 + (marginValues[2]! > 0 ? 10 : -30)) : null;
+  const operatingProxy = operatingComplete ? clamp(50 + (financialRows[2]!.operatingMarginPct! - financialRows[0]!.operatingMarginPct!)*4 + (financialRows[2]!.operatingMarginPct!>0?10:-30)) : null;
+  const quality = marginProxy!==null && operatingProxy!==null ? (marginProxy+operatingProxy)/2 : marginProxy;
   const revenues = g?.revenueGate.values ?? [];
   const revOK = consecutiveCompleted(revenues.map(r=>r.period), currentMonth, monthIndex, 2) &&
     revenues.every(r => finite(r.yoyPct) && positive(r.revenue));
@@ -214,7 +219,7 @@ export function assessStock(input: {
   const market = benchmarkAligned && benchmarkTechnical.quarterly.bias !== null && benchmarkTechnical.quarterly.slope !== null
     ? clamp(50 + (benchmarkTechnical.quarterly.bias > 0 ? 25 : -25) + (benchmarkTechnical.quarterly.slope > 0 ? 25 : -25)) : null;
   const factors: Factor[] = [
-    { key:"quality", label:"基本面", score:quality, detail: marginOK ? "僅三季毛利率變化；未包含 EPS、ROIC、現金流及負債。" : "三季毛利率不足或不適用。" },
+    { key:"quality", label:"基本面", score:quality, detail: marginOK ? (operatingComplete?"三季毛利率及營業利益率代理指標。":"僅三季毛利率變化，營業利益率未齊。")+" EPS 為公告累計值（若有），未納入 ROIC、現金流及負債。" : "三季毛利率不足或不適用。" },
     { key:"growth", label:"成長面", score:growth, detail:revOK ? "三月營收年增率平均 " + fmt(mean(revenues.map(r=>r.yoyPct!))) + "%；非獲利預測。" : "三月營收歷史不足。" },
     { key:"valuation", label:"估值面", score:valuation, detail:peRank !== null ? "同產業正本益比 " + fmt(pe) + " 倍，第 " + fmt(peRank,0) + " 百分位（同業 " + peerPE.length + " 家）。" : "缺少同日正本益比或足夠同業；不以零倍當便宜。" },
     { key:"technical", label:"技術面", score:technique, detail:t.trend + "；月線乖離 " + fmt(t.monthly.bias) + "%；原始價格、未還原權息。" },
@@ -243,7 +248,11 @@ export function assessStock(input: {
   if (exceptionalMove) warnings.push("近期未還原收盤有逾15%的單日變動，須確認除權息、減資、拆分或特殊交易。");
   const weakMargin = marginOK && marginValues[2]! <= 0;
   if (weakMargin) warnings.push("最新一季毛利率非正值。");
-  const hardRisk = t.overheat || t.falling || weakMargin || exceptionalMove || !!(exposure && exposure.portfolioPct >= 20);
+  const operatingLoss = latestFinancial && finite(latestFinancial.operatingIncome) && latestFinancial.operatingIncome<0;
+  const netLoss = latestFinancial && finite(latestFinancial.netIncome) && latestFinancial.netIncome<0;
+  if (operatingLoss) warnings.push("最新單季營業利益為負，核心業務虧損。");
+  if (netLoss) warnings.push("最新單季本期淨利為負，須檢查一次性或持續性因素。");
+  const hardRisk = t.overheat || t.falling || weakMargin || exceptionalMove || operatingLoss || netLoss || !!(exposure && exposure.portfolioPct >= 20);
   const unmetConditions = [
     ...warnings,
     ...factors.filter(f=>f.score!==null && f.score<60).map(f=>f.label+"代理指標偏弱，待改善。"),
@@ -258,7 +267,7 @@ export function assessStock(input: {
   const status: Status = s.type === "etf" ? "not_applicable" : insufficient ? "insufficient" :
     hardRisk ? "risk" : score !== null && score >= 70 && technique >= 60 ? "met" : "wait";
   return { version: DECISION_VERSION, asOf, status, factors, coverage, score, technical:t, relative, pe, peRank, peerCount:peerPE.length,
-    warnings, missing, limitations: reasons, unmetConditions, companyScore, timingScore, quoteVerified:quoteOK, exposurePct: exposure?.portfolioPct ?? null,
+    warnings, missing, limitations: reasons, unmetConditions, companyScore, timingScore, financialRows, quoteVerified:quoteOK, exposurePct: exposure?.portfolioPct ?? null,
     portfolioCoverage: risk?.riskCoveragePct ?? null };
 }
 export function positionRisk(input: { entry: number; target: number; stop: number; available: number; riskBudget: number; feeRate: number; taxRate: number; slippageRate: number; minimumFee: number }) {

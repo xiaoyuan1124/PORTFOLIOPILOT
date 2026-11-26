@@ -85,6 +85,11 @@ describe("stock decision",()=>{
     expect(r.peerCount).toBe(5);
     expect(r.coverage).toBe(100);
     expect(r.status).not.toBe("insufficient");
+    for (const row of s.strategy.grossMarginGate.values) {row.operatingIncome=-1;row.operatingMarginPct=-1;row.netIncome=-2;row.cumulativeEps=-0.5;}
+    const loss=assessStock({...input,peers});
+    expect(loss.warnings.some(w=>w.includes("核心業務虧損"))).toBe(true);
+    expect(loss.status).toBe("risk");
+    expect(loss.financialRows.at(-1)?.cumulativeEps).toBe(-0.5);
     s.strategy.grossMarginGate.values[1]!.period="2024-Q4";
     expect(assessStock({...input,peers}).status).toBe("insufficient");
     s.strategy.grossMarginGate.values[1]!.period="2025-Q2";

@@ -6,6 +6,7 @@ import { loadBundledBenchmarks, benchmarkById, type BenchmarkSeries } from "@/li
 import { loadBundledStrategyOhlcv, strategyCandlesFromCache, strategyOhlcvMissingMonths, type StrategyOhlcvCache } from "@/lib/strategy-ohlcv-data";
 import { assessStock, HORIZON_LABELS, taipeiDate, positionRisk, type Horizon } from "@/lib/stock-decision";
 import { calculatePortfolioRisk } from "@/lib/portfolio-risk";
+import { priceConditionStudy } from "@/lib/decision-price-study";
 import type { CompanySnapshot } from "@/lib/company-snapshot";
 import type { AppState } from "@/lib/types";
 import { Card, CardContent } from "./ui";
@@ -20,6 +21,7 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
   const [horizon,setHorizon]=useState<Horizon>("swing");
   const [loaded,setLoaded]=useState<Loaded|null>(null);
   const [retry,setRetry]=useState(0);
+  const [studyOpen,setStudyOpen]=useState(false);
   const [target,setTarget]=useState("");
   const [stop,setStop]=useState("");
   const [available,setAvailable]=useState("");
@@ -48,6 +50,7 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
     ],
     benchmark:current.benchmark,horizon,today:taipeiDate(),latestMarketDate,historyIssues:current.issues,portfolioRisk:portfolio,offline}):null,
     [current,snapshot,peers,market,code,horizon,latestMarketDate,portfolio,offline]);
+  const study=useMemo(()=>studyOpen&&current&&result?priceConditionStudy(current.history?.points??[],current.benchmark?.points.map(p=>[p.date,p.value] as const)??[],result.asOf,horizon,current.issues):null,[studyOpen,current,result,horizon]);
   const sizing=result && result.quoteVerified && result.technical.lastDate === snapshot.quote?.date && result.technical.close === snapshot.quote?.close ? positionRisk({entry:snapshot.quote?.close??0,target:Number(target),stop:Number(stop),available:Number(available),
     riskBudget:Number(riskBudget),feeRate:0.001425,taxRate:0.003,slippageRate:0.001,minimumFee:20}) : null;
   if(type!=="stock") return <Card><CardContent className="p-4 text-sm">ETF 使用 ETF 深度研究，不套用公司型買進評估。</CardContent></Card>;
@@ -72,6 +75,12 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
       <details><summary className="cursor-pointer py-2 text-sm font-semibold">待改善條件與六面向分析</summary><div className="mb-2 space-y-1">{result.unmetConditions.map(v=><p key={v} className="text-xs leading-5 opacity-75">• {v}</p>)}</div><div className="space-y-2">
         {result.factors.map(f=><div className="rounded-lg bg-black/[0.03] p-2 dark:bg-white/[0.03]" key={f.key}><div className="flex justify-between gap-2 text-sm"><strong>{f.label}</strong><span>{number(f.score," / 100",0)}</span></div><p className="mt-1 text-xs leading-5 opacity-70">{f.detail}</p></div>)}
       </div></details>
+      <details><summary className="cursor-pointer py-2 text-sm font-semibold">季度獲利與 EPS</summary>
+        {result.financialRows.length ? <div className="space-y-2">{result.financialRows.map(r=><div key={r.period} className="rounded-lg border border-current/10 p-2"><strong className="text-sm">{r.period}</strong><div className="mt-1 grid grid-cols-2 gap-2">{[
+          ["毛利率",number(r.grossMarginPct,"%")],["營業利益率",number(r.operatingMarginPct,"%")],["淨利率",number(r.netMarginPct,"%")],["公告年初至今 EPS",number(r.cumulativeEps,"",2)]
+        ].map(([name,value])=><div key={name} className="mini-metric"><span>{name}</span><strong>{value}</strong></div>)}</div></div>)}</div>:<p className="text-xs opacity-70">缺少適用的連續季度資料。</p>}
+        <p className="mt-2 text-xs opacity-65">沿用 MOPS 綜合損益表，不新增資料請求。EPS 為原始公告累計值，不相減、不年化；缺欄位顯示 —。</p>
+      </details>
       <details data-testid="stock-decision-technicals"><summary className="cursor-pointer py-2 text-sm font-semibold">均線與技術數據</summary>
         <div className="grid grid-cols-3 gap-1 text-xs"><strong>均線</strong><strong>價格／乖離</strong><strong>5日斜率</strong>
           {result.technical.averages.map(m=><div key={m.period} className="col-span-3 grid grid-cols-3 gap-1 border-t border-black/5 py-1 dark:border-white/10"><span>{m.period}MA</span><span>{number(m.value,"",2)} / {number(m.bias,"%")}</span><span>{number(m.slope,"%")}</span></div>)}
@@ -82,6 +91,14 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
           ["14日平均真實波幅",number(result.technical.atr14,"",2)],["20日量比",number(result.technical.indicators.volumeRatio20,"倍",2)],
           ["乖離歷史樣本",String(result.technical.biasSamples)],["前20日低收",number(result.technical.low20,"",2)],["前20日高收",number(result.technical.high20,"",2)]
         ].map(([name,value])=><div className="mini-metric" key={name}><span>{name}</span><strong>{value}</strong></div>)}</div>
+      </details>
+      <details onToggle={event=>setStudyOpen(event.currentTarget.open)}><summary className="cursor-pointer py-2 text-sm font-semibold">歷史技術條件驗證（實驗）</summary>
+        {study ? <><p className="text-xs leading-5 opacity-70">{study.reason}</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">{[
+            ["已完成非重疊樣本",String(study.count)],["平均淨價格報酬",number(study.meanNetPct,"%")],["同期超額價格報酬",number(study.meanExcessPct,"%")],["最差樣本報酬",number(study.worstPct,"%")]
+          ].map(([name,value])=><div key={name} className="mini-metric"><span>{name}</span><strong>{value}</strong></div>)}</div>
+          <p className="mt-2 text-xs opacity-65">訊號後一日收盤假設成交、固定持有 {study.holdDays} 個交易日；比例成本含手續費、稅、滑價，不含最低手續費或成交限制。原始股價未還原，非完整六面向回測、不代表未來績效。</p>
+        </>:<p className="text-xs opacity-65">展開後本機運算。</p>}
       </details>
       <details data-testid="stock-decision-sizing"><summary className="cursor-pointer py-2 text-sm font-semibold">部位風險試算</summary>
         <p className="mb-2 text-xs opacity-70">現有個股（含 ETF 穿透）曝險：{number(result.exposurePct,"%")}；投資部位穿透覆蓋：{number(result.portfolioCoverage,"%")}。</p>

@@ -9,6 +9,11 @@ const quarterlyRowSchema = z.object({
   operatingCost: z.number().finite(),
   grossProfit: z.number().finite(),
   grossMarginPct: z.number().finite(),
+  operatingIncome: z.number().finite().optional(),
+  netIncome: z.number().finite().optional(),
+  operatingMarginPct: z.number().finite().optional(),
+  netMarginPct: z.number().finite().optional(),
+  cumulativeEps: z.number().finite().optional(),
   basis: z.string().min(1)
 });
 
