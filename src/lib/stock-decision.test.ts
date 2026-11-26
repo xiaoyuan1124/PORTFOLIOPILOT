@@ -57,6 +57,36 @@ describe("stock decision",()=>{
     expect(assessStock({...input,points:input.points.slice(0,-1)}).technical.lastDate).not.toBe(input.today);
   });
   it("does not apply stock score to ETF",()=>expect(assessStock(sample(series(300),"etf")).status).toBe("not_applicable"));
+  it("accepts three consecutive completed quarters and months, rejects gaps, future data and duplicate peers",()=>{
+    const p=series(365,i=>100+0.25*i+Math.sin(i/5)*2), input=sample(p), s=input.snapshot;
+    const gate={status:"pass" as const, reason:"fixture",dataAsOf:"2025-12-31",sources:[]};
+    s.strategy={code:s.code,name:s.name,market:s.market,industry:s.industry,overallStatus:"pass",passedGateCount:4,
+      grossMarginGate:{...gate,values:["2025-Q1","2025-Q2","2025-Q3"].map((period,i)=>({period,code:s.code,name:s.name,market:s.market,revenue:100,operatingCost:70-i*5,grossProfit:30+i*5,grossMarginPct:30+i*5,basis:"fixture"}))},
+      revenueGate:{...gate,values:["2025-09","2025-10","2025-11"].map(period=>({period,yoyPct:30,revenue:100}))},
+      foreignGate:{...gate,net10d:100,observedDays:10},trustGate:{...gate,net10d:100,observedDays:10}};
+    s.valuation={code:s.code,name:s.name,market:s.market,date:input.today,pe:10,pb:2,dividendYield:3};
+    const peers=Array.from({length:5},(_,i)=>({...s,code:String(2400+i),valuation:{...s.valuation!,code:String(2400+i),pe:20+i}}));
+    const r=assessStock({...input,peers});
+    expect(r.factors.find(f=>f.key==="quality")?.score).toBe(100);
+    expect(r.factors.find(f=>f.key==="growth")?.score).toBe(95);
+    expect(r.peerCount).toBe(5);
+    expect(r.coverage).toBe(100);
+    expect(r.status).not.toBe("insufficient");
+    s.strategy.grossMarginGate.values[1]!.period="2024-Q4";
+    expect(assessStock({...input,peers}).status).toBe("insufficient");
+    s.strategy.grossMarginGate.values[1]!.period="2025-Q2";
+    s.strategy.revenueGate.values[2]!.period="2025-12";
+    expect(assessStock({...input,peers}).status).toBe("insufficient");
+    s.strategy.revenueGate.values[2]!.period="2025-11";
+    expect(assessStock({...input,peers:[peers[0]!,peers[0]!,peers[0]!,peers[0]!,peers[0]!]}).peRank).toBeNull();
+    s.valuation.pe=0;
+    expect(assessStock({...input,peers}).peRank).toBeNull();
+  });
+  it("conflicting real candles cannot generate ATR",()=>{
+    const p=series(50), candles=p.map(([date,close])=>({date,close,high:103,low:98,volume:100}));
+    candles.push({...candles.at(-1)!,high:110});
+    expect(technicalSnapshot(p,p.at(-1)![0],candles).atr14).toBeNull();
+  });
   it("risk sizing respects fees, capital and risk budget",()=>{
     const input={entry:100,target:125,stop:90,available:100000,riskBudget:1000,feeRate:0.001425,taxRate:0.003,slippageRate:0.001,minimumFee:20};
     const r=positionRisk(input)!;expect(r.shares).toBeGreaterThan(0);expect(r.loss).toBeLessThanOrEqual(1000);expect(r.invested).toBeLessThanOrEqual(100000);

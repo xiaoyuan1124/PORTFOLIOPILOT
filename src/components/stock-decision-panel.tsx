@@ -26,7 +26,7 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
   const [riskBudget,setRiskBudget]=useState("");
   const resume=useResumeRefreshKey();
   const { market, code, type } = snapshot;
-  const key=market+":"+code+":"+(snapshot.quote?.date??"")+":"+retry+":"+resume;
+  const key=market+":"+code+":"+(snapshot.quote?.date??"")+":"+(snapshot.quote?.close??"")+":"+retry+":"+resume;
   useEffect(()=>{
     if(type!=="stock") return;
     let active=true;
@@ -45,8 +45,8 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
     candles:strategyOhlcvMissingMonths(current.ohlcv,market,code).length?[]:strategyCandlesFromCache(current.ohlcv,market,code)??[],
     benchmark:current.benchmark,horizon,today:taipeiDate(),latestMarketDate,historyIssues:current.issues,portfolioRisk:portfolio,offline}):null,
     [current,snapshot,peers,market,code,horizon,latestMarketDate,portfolio,offline]);
-  const sizing=positionRisk({entry:snapshot.quote?.close??0,target:Number(target),stop:Number(stop),available:Number(available),
-    riskBudget:Number(riskBudget),feeRate:0.001425,taxRate:0.003,slippageRate:0.001,minimumFee:20});
+  const sizing=result && !offline && result.technical.lastDate === snapshot.quote?.date && result.technical.close === snapshot.quote?.close ? positionRisk({entry:snapshot.quote?.close??0,target:Number(target),stop:Number(stop),available:Number(available),
+    riskBudget:Number(riskBudget),feeRate:0.001425,taxRate:0.003,slippageRate:0.001,minimumFee:20}) : null;
   if(type!=="stock") return <Card><CardContent className="p-4 text-sm">ETF 使用 ETF 深度研究，不套用公司型買進評估。</CardContent></Card>;
   return <Card><CardContent className="space-y-3 p-4">
     <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-semibold">買進評估</h4><button type="button" className="text-xs underline" onClick={()=>setRetry(v=>v+1)}>更新評估</button></div>

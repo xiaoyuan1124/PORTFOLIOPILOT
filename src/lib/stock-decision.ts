@@ -3,7 +3,7 @@ import type { CompanySnapshot } from "./company-snapshot";
 import type { BenchmarkSeries } from "./benchmark";
 import type { PortfolioRiskResult } from "./portfolio-risk";
 
-export const DECISION_VERSION = "research-v1.0";
+export const DECISION_VERSION = "research-v1.1";
 export const PERIODS = [5, 10, 20, 60, 120, 240] as const;
 export type Horizon = "short" | "swing" | "long";
 export const HORIZON_LABELS: Record<Horizon, string> = { short: "短線", swing: "波段", long: "長期" };
@@ -74,7 +74,15 @@ export function technicalSnapshot(points: readonly Point[], asOf: string, candle
     history.push((prices[i]! / avg - 1) * 100);
   }
   const biasRank = history.length >= 120 && monthly.bias !== null ? midrankPercentile(history, monthly.bias) : null;
-  const candleMap = new Map(candles.map(c => [c.date, c]));
+  const candleMap = new Map<string, StrategyCandle>();
+  const candleConflicts = new Set<string>();
+  for (const c of candles) {
+    if (!validDate(c.date) || c.date > asOf || !positive(c.close)) continue;
+    const prior = candleMap.get(c.date);
+    if (prior && (prior.close !== c.close || prior.high !== c.high || prior.low !== c.low || prior.volume !== c.volume)) candleConflicts.add(c.date);
+    candleMap.set(c.date, c);
+  }
+  for (const date of candleConflicts) candleMap.delete(date);
   // Only attach real high/low/volume to an identical official close.
   const bars = rows.map(([date, price]) => {
     const c = candleMap.get(date);
@@ -103,17 +111,22 @@ export function technicalSnapshot(points: readonly Point[], asOf: string, candle
   return { rows, close, lastDate, averages, monthly, quarterly, yearly, biasRank, biasSamples: history.length,
     trend, overheat, falling, low20, high20, atr14, indicators: ind, conflicts: normalized.conflicts };
 }
-function periodRecent(period: string, asOf: string, maxMonths: number) {
+function monthIndex(period: string) {
   const m = /^(\d{4})-(\d{2})$/.exec(period);
-  if (!m || Number(m[2]) < 1 || Number(m[2]) > 12) return false;
-  const delta = (Number(asOf.slice(0, 4)) - Number(m[1])) * 12 + Number(asOf.slice(5, 7)) - Number(m[2]);
-  return delta >= 0 && delta <= maxMonths;
+  return m && Number(m[2]) >= 1 && Number(m[2]) <= 12 ? Number(m[1]) * 12 + Number(m[2]) : null;
 }
-function quarterRecent(period: string, asOf: string) {
+function quarterIndex(period: string) {
   const m = /^(\d{4})-Q([1-4])$/.exec(period);
-  if (!m) return false;
-  const delta = (Number(asOf.slice(0, 4)) - Number(m[1])) * 4 + Math.ceil(Number(asOf.slice(5, 7)) / 3) - Number(m[2]);
-  return delta >= 0 && delta <= 2;
+  return m ? Number(m[1]) * 4 + Number(m[2]) : null;
+}
+function consecutiveCompleted(periods: string[], current: number, parse: (period: string) => number | null, latestMaxAge: number) {
+  if (periods.length !== 3) return false;
+  const indices = periods.map(parse);
+  if (indices.some(v => v === null)) return false;
+  const sorted = (indices as number[]).sort((a,b)=>a-b);
+  const latest = sorted[2]!;
+  return sorted[1] === sorted[0]! + 1 && latest === sorted[1]! + 1 &&
+    current - latest >= 1 && current - latest <= latestMaxAge;
 }
 export function assessStock(input: {
   snapshot: CompanySnapshot; peers: readonly CompanySnapshot[]; points: readonly Point[];
@@ -149,19 +162,30 @@ export function assessStock(input: {
   const start = t.rows.at(horizon === "short" ? -21 : -61);
   const relative = start && t.close && positive(bmMap.get(start[0])) && positive(bmMap.get(date)) && benchmarkAligned
     ? ((t.close / start[1]) / (bmMap.get(date)! / bmMap.get(start[0])!) - 1) * 100 : null;
-  const g = s.strategy;
+  const g = s.strategy?.code === s.code && s.strategy.market === s.market ? s.strategy : null;
+  const currentMonth = Number(asOf.slice(0,4)) * 12 + Number(asOf.slice(5,7));
+  const currentQuarter = Number(asOf.slice(0,4)) * 4 + Math.ceil(Number(asOf.slice(5,7)) / 3);
   const margins = g?.grossMarginGate.values ?? [];
-  const marginOK = margins.length === 3 && new Set(margins.map(r => r.period)).size === 3 &&
-    margins.every(r => finite(r.grossMarginPct) && r.market === s.market && r.code === s.code && quarterRecent(r.period, asOf));
+  const marginOK = consecutiveCompleted(margins.map(r=>r.period), currentQuarter, quarterIndex, 2) &&
+    margins.every(r => finite(r.grossMarginPct) && r.market === s.market && r.code === s.code && positive(r.revenue));
   const marginValues = [...margins].sort((a,b) => a.period.localeCompare(b.period)).map(r => r.grossMarginPct);
   const quality = marginOK ? clamp(50 + (marginValues[2]! - marginValues[0]!) * 4 + (marginValues[2]! > 0 ? 10 : -30)) : null;
   const revenues = g?.revenueGate.values ?? [];
-  const revOK = revenues.length === 3 && new Set(revenues.map(r => r.period)).size === 3 &&
-    revenues.every(r => finite(r.yoyPct) && periodRecent(r.period, asOf, 4));
+  const revOK = consecutiveCompleted(revenues.map(r=>r.period), currentMonth, monthIndex, 2) &&
+    revenues.every(r => finite(r.yoyPct) && positive(r.revenue));
   const growth = revOK ? clamp(50 + mean(revenues.map(r => r.yoyPct!)) * 1.5) : null;
-  const pe = s.valuation?.date === date && positive(s.valuation.pe) ? s.valuation.pe : null;
-  const peerPE = s.industry ? input.peers.filter(p => p.code !== s.code && p.type === "stock" && p.industry === s.industry &&
-    p.valuation?.date === date && positive(p.valuation.pe)).map(p => p.valuation!.pe!) : [];
+  const pe = s.valuation?.date === date && s.valuation.code === s.code && s.valuation.market === s.market && positive(s.valuation.pe) ? s.valuation.pe : null;
+  const peerMap = new Map<string, number>();
+  const peerConflicts = new Set<string>();
+  for (const p of input.peers) {
+    if (!s.industry || (p.code === s.code && p.market === s.market) || p.type !== "stock" || p.industry !== s.industry ||
+        p.valuation?.date !== date || p.valuation.code !== p.code || p.valuation.market !== p.market || !positive(p.valuation.pe)) continue;
+    const key = p.market + ":" + p.code;
+    if (peerMap.has(key) && peerMap.get(key) !== p.valuation.pe) peerConflicts.add(key);
+    peerMap.set(key,p.valuation.pe);
+  }
+  for (const key of peerConflicts) peerMap.delete(key);
+  const peerPE = [...peerMap.values()];
   const peRank = pe !== null && peerPE.length >= 5 ? midrankPercentile(peerPE, pe) : null;
   const valuation = peRank === null ? null : 100 - peRank;
   const requiredMA = horizon === "short" ? t.monthly : horizon === "swing" ? t.quarterly : t.yearly;
@@ -171,6 +195,7 @@ export function assessStock(input: {
       (relative > 0 ? 8 : -8) - (t.overheat ? 25 : 0) - (t.falling ? 20 : 0)) : null;
   const foreign = g?.foreignGate, trust = g?.trustGate;
   const flowOK = foreign && trust && foreign.observedDays === 10 && trust.observedDays === 10 &&
+    foreign.status !== "insufficient" && foreign.status !== "not_applicable" && trust.status !== "insufficient" && trust.status !== "not_applicable" &&
     foreign.dataAsOf.endsWith(date) && trust.dataAsOf.endsWith(date) && finite(foreign.net10d) && finite(trust.net10d);
   const flow = flowOK ? 50 + (foreign.net10d! > 0 ? 25 : foreign.net10d! < 0 ? -25 : 0) +
     (trust.net10d! > 0 ? 25 : trust.net10d! < 0 ? -25 : 0) : null;
@@ -201,8 +226,11 @@ export function assessStock(input: {
   const coverage = covered.reduce((sum,f)=>sum+weights[f.key],0);
   const score = coverage > 0 ? covered.reduce((sum,f)=>sum+f.score!*weights[f.key],0)/coverage : null;
   const hardRisk = t.overheat || t.falling || !!(exposure && exposure.portfolioPct >= 20);
-  const status: Status = s.type === "etf" ? "not_applicable" : !historyOK || !benchmarkAligned || gap || coverage < 80 || technique === null ||
-    (horizon !== "short" && (quality === null || growth === null || valuation === null)) ? "insufficient" :
+  const insufficient = !historyOK || !benchmarkAligned || gap || coverage < 80 || technique === null ||
+    (horizon !== "short" && (quality === null || growth === null || valuation === null));
+  if (coverage < 80) missing.push("現有指標覆蓋率不足80%。");
+  if (horizon !== "short" && (quality === null || growth === null || valuation === null)) missing.push("波段／長期需要完整三季毛利、三月營收與同業估值。");
+  const status: Status = s.type === "etf" ? "not_applicable" : insufficient ? "insufficient" :
     hardRisk ? "risk" : score !== null && score >= 70 && technique >= 60 ? "met" : "wait";
   return { version: DECISION_VERSION, asOf, status, factors, coverage, score, technical:t, relative, pe, peRank, peerCount:peerPE.length,
     warnings, missing, limitations: reasons, exposurePct: exposure?.portfolioPct ?? null,
@@ -214,6 +242,7 @@ export function positionRisk(input: { entry: number; target: number; stop: numbe
       !(target > entry && entry > stop && stop > 0 && available > 0 && riskBudget > 0) ||
       [feeRate,taxRate,slippageRate].some(v=>v<0||v>=1) || minimumFee < 0) return null;
   const buy = entry*(1+slippageRate), exit = stop*(1-slippageRate), take = target*(1-slippageRate);
+  if (![buy,exit,take].every(positive) || !Number.isFinite(Math.max(buy,take)*Math.min(Math.floor(available/buy),Number.MAX_SAFE_INTEGER))) return null;
   const fee = (gross:number) => Math.max(minimumFee,gross*feeRate);
   const cost = (n:number) => n===0?0:n*buy+fee(n*buy);
   const proceeds = (n:number, p:number) => n===0?0:n*p*(1-taxRate)-fee(n*p);
