@@ -76,6 +76,19 @@ describe("Taiwan price-history client cache", () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
+  it("rejects a bucket returned for the wrong market and retries rather than caching it",async()=>{
+    let wrong=true;
+    vi.stubGlobal("fetch",vi.fn(async(input:RequestInfo|URL)=>({ok:true,json:async()=>String(input).includes("/index.json")?indexPayload("g"):{...bucketPayload("g",100),market:wrong?"TPEx":"TWSE"}} as Response)));
+    const {loadTwPriceHistory}=await import("./price-history-data");
+    await expect(loadTwPriceHistory("TWSE","2330")).rejects.toThrow("市場或分組");
+    wrong=false;
+    expect((await loadTwPriceHistory("TWSE","2330")).points[0]?.[1]).toBe(100);
+  });
+  it("rejects mixed-generation scan buckets",async()=>{
+    vi.stubGlobal("fetch",vi.fn(async()=>({ok:true,json:async()=>bucketPayload("g2",100)} as Response)));
+    const {loadDecisionHistoryGroup}=await import("./price-history-data");
+    await expect(loadDecisionHistoryGroup([{market:"TWSE",code:"2330"}],indexPayload("g1") as Parameters<typeof loadDecisionHistoryGroup>[1])).rejects.toThrow("版本或市場");
+  });
   it("throttles failed generation probes while still using the cached bucket offline", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-01T00:00:00Z"));

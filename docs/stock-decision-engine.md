@@ -18,3 +18,8 @@ The existing MOPS income statement fetch now preserves explicit optional operati
 
 ## Web-first scanner
 Existing Scanner now supports opt-in full listed/OTC stock or local watchlist scans using the same decision engine. Groups are fetched by market/prefix in batches of three, generation and market are validated, and failures count as insufficient rather than disappearing. Results are filtered and paged locally. No new data vendors, package dependencies, scheduled jobs, account or server. No background scan when the browser closes. Mobile browser smoke covers the watchlist scan. Full-market performance still requires measurement on real devices.
+
+## Production regression audit v1.5.1
+Fix mismatched market buckets, race between separate history and index loads, full two-way session alignment, quote identity, refresh of parent caches on browser resume/manual retry, fail-closed sizing, missing optional scanner sources and absent watchlist members. Reject nonpositive published P/E as risk. Browser smoke now adds a real stock to the local watchlist and checks its scan result instead of accepting an empty scan. No new dependencies or paid services.
+
+Second regression pass: distinguish dual empty market payloads from possible holiday using known quote/benchmark sessions; keep failures for retry. Add a network-free real-data regression verifying every published bucket, canonical close, actual OHLCV row, index generation and aggregate counts. This test validates cache integrity, not exchange correctness or complete adjusted histories.

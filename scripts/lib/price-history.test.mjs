@@ -5,6 +5,7 @@ import {
   calendarDateAdd,
   historyBucketStats,
   historyBucketCandleCount,
+  isPossibleMarketClosure,
   mergeHistoryBucket,
   mergeSeriesPoints,
   mapWithConcurrency,
@@ -18,6 +19,12 @@ import {
 } from "./price-history.mjs";
 
 describe("Taiwan price-history cache helpers", () => {
+  it("does not classify empty payloads on verified trading days as holidays",()=>{
+    const known=new Set(["2026-11-26"]);
+    expect(isPossibleMarketClosure("2026-11-26",0,0,known)).toBe(false);
+    expect(isPossibleMarketClosure("2026-11-27",-1,0,known)).toBe(false);
+    expect(isPossibleMarketClosure("2026-11-28",0,0,known)).toBe(true);
+  });
   it("extracts full real OHLCV by label for both markets, refuses lots and invalid bars",()=>{
     for(const market of ["TWSE","TPEx"]){
       const fields=market==="TWSE"?["證券代號","開盤價","最高價","最低價","收盤價","成交股數"]:["代號","開盤","最高","最低","收盤","成交股數"];

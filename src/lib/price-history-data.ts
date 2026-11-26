@@ -78,14 +78,16 @@ async function loadBucket(market: "TWSE" | "TPEx", symbol: string) {
     const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
     const response = await fetch(`${base}/data/tw-price-history/${file}?ts=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) throw new Error("尚未取得此標的的歷史行情快取。");
-    return bucketSchema.parse(await response.json());
+    const bucket=bucketSchema.parse(await response.json());
+    if(bucket.market!==market||bucket.prefix!==prefixForSymbol(symbol))throw new Error("歷史行情市場或分組不一致");
+    return bucket;
   })();
 
   bucketPromises.set(file, promise);
   try {
     return await promise;
   } catch (error) {
-    bucketPromises.delete(file);
+    if(bucketPromises.get(file)===promise)bucketPromises.delete(file);
     throw error;
   }
 }
@@ -175,7 +177,7 @@ export async function loadDecisionHistoryGroup<T extends {market:"TWSE"|"TPEx";c
   if(bucket.generatedAt!==index.generatedAt || bucket.market!==first.market || bucket.prefix!==prefixForSymbol(first.code))throw new Error("歷史分組版本或市場不一致");
   const result=new Map<string,TwPriceHistorySeries>();
   for(const s of symbols){
-    const symbol=s.code.toUpperCase(), security=bucket.securities[symbol];
+    const symbol=s.code.trim().toUpperCase(), security=bucket.securities[symbol];
     if(security)result.set(s.market+":"+symbol,{...security,market:s.market,symbol,generatedAt:bucket.generatedAt,startDate:bucket.startDate,endDate:bucket.endDate});
   }
   return result;

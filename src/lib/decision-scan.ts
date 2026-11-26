@@ -3,6 +3,7 @@ import type { CompanySnapshot } from "./company-snapshot";
 import type { BenchmarkSeries } from "./benchmark";
 import type { TwPriceHistoryIndex,TwPriceHistorySeries } from "./price-history-data";
 import type { PortfolioRiskResult } from "./portfolio-risk";
+import type { WatchlistItem } from "./types";
 
 export type DecisionScanRow={key:string;code:string;name:string;market:CompanySnapshot["market"];industry:string;status:"met"|"wait"|"risk"|"insufficient";score:number|null;coverage:number;bias:number|null;asOf:string;reason:string};
 export function scanDecisionRow(input:{snapshot:CompanySnapshot;peers:readonly CompanySnapshot[];history:TwPriceHistorySeries|null;index:TwPriceHistoryIndex;benchmark:BenchmarkSeries|null;today:string;latestMarketDate:string|null;horizon:Horizon;offline:boolean;portfolioRisk?:PortfolioRiskResult|null}):DecisionScanRow {
@@ -17,4 +18,17 @@ export function rankDecisionRows(rows:readonly DecisionScanRow[], filter:"all"|D
   const needle=query.trim().toLowerCase();
   const order={met:0,wait:1,risk:2,insufficient:3};
   return rows.filter(r=>(filter==="all"||r.status===filter)&&(!needle||[r.code,r.name,r.industry,r.market].join(" ").toLowerCase().includes(needle))).sort((a,b)=>order[a.status]-order[b.status]||(b.score??-1)-(a.score??-1)||a.key.localeCompare(b.key));
+}
+
+export function selectDecisionCandidates(peers:readonly CompanySnapshot[],watchlist:readonly WatchlistItem[],scope:"all"|"watch"):CompanySnapshot[]{
+  const stocks=new Map<string,CompanySnapshot>();
+  for(const s of peers)if(s.type==="stock")stocks.set(s.market+":"+s.code.toUpperCase(),s);
+  if(scope==="all")return [...stocks.values()];
+  const result=new Map<string,CompanySnapshot>();
+  for(const item of watchlist){
+    if(item.type!=="stock")continue;
+    const code=item.symbol.trim().toUpperCase(),key=item.venue+":"+code;
+    result.set(key,stocks.get(key)??{code,name:item.name,market:item.venue,industry:item.industry,type:"stock",quote:null,valuation:null,revenue:null,strategy:null});
+  }
+  return [...result.values()];
 }

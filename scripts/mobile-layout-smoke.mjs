@@ -135,6 +135,11 @@ try {
     await sizing.getByText("可用資金（元）",{exact:true}).waitFor();
     await checkLayout(page,viewport.name,"stock-decision-risk");
     await sizing.locator("summary").click();
+    await decision.getByRole("button",{name:"更新評估",exact:true}).click();
+    await decision.getByTestId("stock-decision-result").waitFor({timeout:30000});
+    const watchButton=decision.getByRole("button",{name:"加入自選，持續觀察",exact:true});
+    if(await watchButton.count())await watchButton.click();
+    await decision.getByRole("button",{name:"已在自選清單",exact:true}).waitFor();
     await page.getByRole("button",{name:"選股",exact:true}).click();
     await page.getByRole("button",{name:"選股 Scanner",exact:true}).click();
     const scan=page.getByTestId("decision-scanner");
@@ -142,6 +147,7 @@ try {
     await scan.getByLabel("掃描範圍").selectOption("watch");
     await scan.getByRole("button",{name:"開始六面向掃描",exact:true}).click();
     await scan.getByTestId("decision-scan-result").waitFor({timeout:30000});
+    await scan.getByRole("button",{name:/2330.*台積電/}).waitFor();
     await checkLayout(page,viewport.name,"decision-scanner-watch");
     await page.getByRole("button",{name:"標的",exact:true}).click();
     await page.getByRole("button", { name: "ETF 深度", exact: true }).click();
