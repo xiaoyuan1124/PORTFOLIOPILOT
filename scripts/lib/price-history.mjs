@@ -1,7 +1,7 @@
 import { cleanQuoteNumber, isTpexWarrantCode } from "./quote-data.mjs";
 
 export const PRICE_HISTORY_VERSION = 1;
-export const PRICE_HISTORY_UNIVERSE_VERSION = 2;
+export const PRICE_HISTORY_UNIVERSE_VERSION = 3;
 export const DEFAULT_HISTORY_CALENDAR_DAYS = 400;
 
 export function needsPriceHistoryRefresh(previousIndex, targetEndDate, hasExistingHistory = true) {
@@ -25,6 +25,47 @@ function fieldIndex(fields, candidates) {
   return fields.findIndex((field) => candidates.includes(plainCell(field)));
 }
 
+// Retain legacy close-only data independently of full OHLCV; volume must explicitly be shares.
+export function parseDailyCandles(payload, date, market) {
+  if (!payload || (market !== "TWSE" && market !== "TPEx")) return new Map();
+  if (market === "TWSE" && payload.stat && String(payload.stat).toUpperCase() !== "OK") return new Map();
+  const tables = [...(Array.isArray(payload.tables) ? payload.tables : [])];
+  if (Array.isArray(payload.fields9) && Array.isArray(payload.data9)) tables.push({ fields:payload.fields9,data:payload.data9 });
+  const keys = [["證券代號","股票代號","代號"],["開盤價","開盤"],["最高價","最高"],["最低價","最低"],["收盤價","收盤"],["成交股數"]];
+  const result = new Map(), conflicts = new Set();
+  for (const table of tables) {
+    if (!Array.isArray(table?.fields) || !Array.isArray(table.data)) continue;
+    const ix = keys.map(names=>fieldIndex(table.fields,names));
+    if (ix.some(i=>i<0)) continue;
+    for (const row of table.data) {
+      if (!Array.isArray(row)) continue;
+      const code=plainCell(row[ix[0]]).toUpperCase();
+      if (!code || (market==="TPEx" && isTpexWarrantCode(code))) continue;
+      const candle=[date,...ix.slice(1).map(i=>cleanQuoteNumber(plainCell(row[i])))];
+      if (!validCandle(candle)) continue;
+      if (result.has(code) && JSON.stringify(result.get(code)) !== JSON.stringify(candle)) conflicts.add(code);
+      result.set(code,candle);
+    }
+    // Only the first matching full-market table; other tables may summarize special trades.
+    break;
+  }
+  for (const code of conflicts) result.delete(code);
+  return result;
+}
+function validCandle(row) {
+  if (!Array.isArray(row) || row.length!==6) return false;
+  const [date,o,h,l,c,v]=row;
+  return typeof date==="string" && /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+    [o,h,l,c].every(x=>typeof x==="number" && Number.isFinite(x) && x>0) &&
+    Number.isSafeInteger(v) && v>0 && h>=Math.max(o,c) && l<=Math.min(o,c);
+}
+export function mergeCandles(previous, incoming, points) {
+  const closes=new Map(points), rows=new Map();
+  for (const row of [...(previous??[]),...(incoming??[])]) {
+    if (validCandle(row) && closes.get(row[0])===row[4]) rows.set(row[0],row);
+  }
+  return [...rows.values()].sort((a,b)=>a[0].localeCompare(b[0]));
+}
 export function parseTpexDailyQuotesPayload(payload, date) {
   if (!payload || typeof payload !== "object") return [];
   const tables = Array.isArray(payload.tables) ? payload.tables : [];
@@ -97,7 +138,8 @@ export function mergeHistoryBucket(existing, market, prefix, rows, cutoffDate, g
     if (!points.length) continue;
     securities[code] = {
       name: String(item?.name ?? code),
-      points
+      points,
+      candles: mergeCandles(item?.candles, [], points)
     };
   }
 
@@ -105,9 +147,10 @@ export function mergeHistoryBucket(existing, market, prefix, rows, cutoffDate, g
   for (const row of rows) {
     if (row.market !== market || bucketPrefix(row.code) !== prefix) continue;
     if (market === "TPEx" && isTpexWarrantCode(row.code)) continue;
-    const current = grouped.get(row.code) ?? { name: row.name, points: [] };
+    const current = grouped.get(row.code) ?? { name: row.name, points: [], candles: [] };
     current.name = row.name || current.name;
     current.points.push([row.date, row.close]);
+    if (validCandle(row.candle) && row.candle[0]===row.date && row.candle[4]===row.close) current.candles.push(row.candle);
     grouped.set(row.code, current);
   }
 
@@ -115,7 +158,7 @@ export function mergeHistoryBucket(existing, market, prefix, rows, cutoffDate, g
     const previousItem = securities[code];
     const points = mergeSeriesPoints(previousItem?.points ?? [], item.points, cutoffDate);
     if (!points.length) continue;
-    securities[code] = { name: item.name || previousItem?.name || code, points };
+    securities[code] = { name: item.name || previousItem?.name || code, points, candles: mergeCandles(previousItem?.candles,item.candles,points) };
   }
 
   const allPoints = Object.values(securities).flatMap((item) => item.points);

@@ -3,7 +3,7 @@ import type { CompanySnapshot } from "./company-snapshot";
 import type { BenchmarkSeries } from "./benchmark";
 import type { PortfolioRiskResult } from "./portfolio-risk";
 
-export const DECISION_VERSION = "research-v1.1";
+export const DECISION_VERSION = "research-v1.2";
 export const PERIODS = [5, 10, 20, 60, 120, 240] as const;
 export type Horizon = "short" | "swing" | "long";
 export const HORIZON_LABELS: Record<Horizon, string> = { short: "短線", swing: "波段", long: "長期" };
@@ -89,6 +89,18 @@ export function technicalSnapshot(points: readonly Point[], asOf: string, candle
     return c && c.close === price ? c : { date, close: price };
   });
   const ind = computeStrategyIndicators(bars, DEFAULT_STRATEGY_PROFILE);
+  // Close-only history can calculate momentum, but KD must start with a contiguous actual OHLC segment.
+  let startOHLC=bars.length;
+  while(startOHLC>0) {
+    const bar=bars[startOHLC-1]!;
+    if(!("high" in bar) || !("low" in bar) || !positive(bar.high) || !positive(bar.low) || bar.high<bar.close || bar.low>bar.close) break;
+    startOHLC--;
+  }
+  const kd=computeStrategyIndicators(bars.slice(startOHLC),DEFAULT_STRATEGY_PROFILE);
+  // Require warm-up for the seeded stochastic smoother.
+  ind.kdK=bars.length-startOHLC>=21?kd.kdK:null;
+  ind.kdD=bars.length-startOHLC>=21?kd.kdD:null;
+  ind.kdPreviousK=bars.length-startOHLC>=22?kd.kdPreviousK:null;
   const tail = bars.slice(-15);
   const trs: number[] = [];
   if (tail.length === 15) for (let i = 1; i < tail.length; i++) {

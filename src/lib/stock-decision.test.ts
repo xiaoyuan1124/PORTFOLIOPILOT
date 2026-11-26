@@ -82,6 +82,11 @@ describe("stock decision",()=>{
     s.valuation.pe=0;
     expect(assessStock({...input,peers}).peRank).toBeNull();
   });
+  it("computes KD only after a contiguous real OHLC warm-up",()=>{
+    const p=series(300), candles=p.slice(-25).map(([date,close])=>({date,close,high:103,low:98,volume:100}));
+    expect(technicalSnapshot(p,p.at(-1)![0],candles).indicators.kdK).not.toBeNull();
+    expect(technicalSnapshot(p,p.at(-1)![0],candles.slice(-10)).indicators.kdK).toBeNull();
+  });
   it("conflicting real candles cannot generate ATR",()=>{
     const p=series(50), candles=p.map(([date,close])=>({date,close,high:103,low:98,volume:100}));
     candles.push({...candles.at(-1)!,high:110});

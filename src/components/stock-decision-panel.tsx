@@ -33,7 +33,7 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
     void Promise.allSettled([loadTwPriceHistory(market,code),loadTwPriceHistoryIndex(),loadBundledBenchmarks(),loadBundledStrategyOhlcv()] as const).then(([history,index,benchmark,ohlcv])=>{
       if(!active)return;
       const h=history.status==="fulfilled"?history.value:null;
-      const issues=index.status==="fulfilled"&&h?index.value.failed.filter(f=>f.market===market&&f.date>=(h.points[0]?.[0]??"")&&f.date<=(h.points.at(-1)?.[0]??"")).map(f=>f.date):["歷史索引未驗證"];
+      const issues=index.status==="fulfilled"&&h&&index.value.generatedAt===h.generatedAt?index.value.failed.filter(f=>f.market===market&&f.date>=(h.points[0]?.[0]??"")&&f.date<=(h.points.at(-1)?.[0]??"")).map(f=>f.date):["歷史索引未驗證"];
       setLoaded({key,history:h,benchmark:benchmark.status==="fulfilled"?benchmarkById(benchmark.value,"TWSE:TAIEX-PRICE"):null,
         ohlcv:ohlcv.status==="fulfilled"?ohlcv.value:null,issues,error:history.status==="rejected"?"官方歷史行情載入失敗":""});
     });
@@ -42,7 +42,10 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
   const current=loaded?.key===key?loaded:null;
   const portfolio=useMemo(()=>calculatePortfolioRisk(state.holdings,state.etfCompositions,state.usdTwd),[state.holdings,state.etfCompositions,state.usdTwd]);
   const result=useMemo(()=>current?assessStock({snapshot,peers,points:current.history?.points??[],
-    candles:strategyOhlcvMissingMonths(current.ohlcv,market,code).length?[]:strategyCandlesFromCache(current.ohlcv,market,code)??[],
+    candles:[
+      ...(strategyOhlcvMissingMonths(current.ohlcv,market,code).length?[]:strategyCandlesFromCache(current.ohlcv,market,code)??[]),
+      ...(current.history?.candles??[]).map(([date,open,high,low,close,volume])=>({date,open,high,low,close,volume}))
+    ],
     benchmark:current.benchmark,horizon,today:taipeiDate(),latestMarketDate,historyIssues:current.issues,portfolioRisk:portfolio,offline}):null,
     [current,snapshot,peers,market,code,horizon,latestMarketDate,portfolio,offline]);
   const sizing=result && !offline && result.technical.lastDate === snapshot.quote?.date && result.technical.close === snapshot.quote?.close ? positionRisk({entry:snapshot.quote?.close??0,target:Number(target),stop:Number(stop),available:Number(available),
@@ -89,7 +92,7 @@ export function StockDecisionPanel({ snapshot, peers, state, latestMarketDate, o
       <details><summary className="cursor-pointer py-2 text-xs opacity-70">資料來源、限制與模型版本</summary>
         <p className="text-xs leading-5">TWSE／TPEx 官方未還原收盤、MOPS 毛利率與營收、官方估值與法人資料、TWSE 加權指數。{result.version}。</p>
         {result.limitations.map(v=><p key={v} className="mt-1 text-xs leading-5 opacity-70">{v}</p>)}
-        <p className="mt-1 text-xs">歷史樣本 {result.technical.rows.length} 筆，行情截至 {result.technical.lastDate??"—"}。</p>
+        <p className="mt-1 text-xs">全市場真實 OHLCV 隨官方行情更新逐步補齊；舊資料僅收盤價。</p><p className="mt-1 text-xs">歷史樣本 {result.technical.rows.length} 筆，行情截至 {result.technical.lastDate??"—"}。</p>
       </details>
     </>}
   </CardContent></Card>;

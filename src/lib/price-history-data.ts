@@ -5,9 +5,15 @@ const pointSchema = z.tuple([
   z.number().finite().positive()
 ]);
 
+const candleSchema = z.tuple([
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  z.number().finite().positive(),z.number().finite().positive(),z.number().finite().positive(),z.number().finite().positive(),
+  z.number().int().positive().max(Number.MAX_SAFE_INTEGER)
+]).refine(r=>r[2]>=Math.max(r[1],r[4]) && r[3]<=Math.min(r[1],r[4]));
 const securitySchema = z.object({
   name: z.string(),
-  points: z.array(pointSchema)
+  points: z.array(pointSchema),
+  candles: z.array(candleSchema).optional()
 });
 
 const bucketSchema = z.object({
@@ -138,6 +144,7 @@ export async function loadTwPriceHistory(
     symbol: normalized,
     name: security.name,
     points: security.points,
+    candles: security.candles,
     generatedAt: bucket.generatedAt,
     startDate: bucket.startDate,
     endDate: bucket.endDate

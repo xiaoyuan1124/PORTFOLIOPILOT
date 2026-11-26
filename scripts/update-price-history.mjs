@@ -12,6 +12,7 @@ import {
   mergeHistoryBucket,
   needsPriceHistoryRefresh,
   parseTpexDailyQuotesPayload,
+  parseDailyCandles,
   toRocDate,
   weekdayDates
 } from "./lib/price-history.mjs";
@@ -73,16 +74,19 @@ function tpexUrl(date) {
 async function fetchMarketDay(date, market) {
   if (market === "TWSE") {
     const payload = await fetchObject(twseUrl(date), `TWSE MI_INDEX ${date}`);
+    const candles=parseDailyCandles(payload,date,market);
     return parseTwseMiIndexPayload(payload, date).map((row) => ({
       code: row.code,
       name: row.name,
       market: "TWSE",
       date,
-      close: row.close
+      close: row.close,
+      candle: candles.get(row.code.toUpperCase())
     }));
   }
   const payload = await fetchObject(tpexUrl(date), `TPEx dailyQuotes ${date}`);
-  return parseTpexDailyQuotesPayload(payload, date);
+  const candles=parseDailyCandles(payload,date,market);
+  return parseTpexDailyQuotesPayload(payload, date).map(row=>({...row,candle:candles.get(row.code)}));
 }
 
 async function readJson(path, fallback) {
@@ -141,7 +145,11 @@ async function main() {
   const retryDates = Array.isArray(previousIndex?.failed)
     ? previousIndex.failed.map((item) => String(item?.date ?? "")).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= cutoffDate && date <= targetEndDate)
     : [];
-  const dates = [...new Set([...normalDates, ...retryDates])].sort();
+  // One bounded migration fetch reuses the existing market-wide daily endpoints.
+  // No per-symbol requests. Later runs accumulate complete candles incrementally.
+  const migrationDates=hasExistingHistory && previousIndex?.universeVersion !== PRICE_HISTORY_UNIVERSE_VERSION
+    ? weekdayDates(calendarDateAdd(targetEndDate,-45),targetEndDate) : [];
+  const dates = [...new Set([...normalDates, ...retryDates, ...migrationDates])].sort();
 
   const allowed = allowedUniverse(quotes);
   const incoming = [];
