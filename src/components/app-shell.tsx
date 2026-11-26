@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { BarChart3, BriefcaseBusiness, FlaskConical, Home, Moon, Palette, Search, Settings as SettingsIcon, Sun } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, FlaskConical, Home, Moon, Palette, Search, Settings as SettingsIcon, Sun, LayoutDashboard, Wallet, Compass, Star, ReceiptText } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import type { AppState } from "@/lib/types";
+import {APP_LAYOUT_KEY,APP_LAYOUT_LABELS,parseAppLayout,workbenchPage,type AppLayout,type WorkbenchPage} from "@/lib/app-layout";
 import { APP_THEME_LABELS, nextAppTheme, parseAppTheme, themeClassState, type AppTheme } from "@/lib/app-theme";
 import type { HoldingLookupCandidate } from "@/lib/holding-autofill";
 import { emptyState } from "@/lib/demo-data";
@@ -25,7 +26,8 @@ import { syncNativeSmartAlerts } from "@/lib/native-notifications";
 import { syncNativeWidgetSnapshot } from "@/lib/native-widget-sync";
 import { Overview } from "./overview";
 import { Portfolio, type PortfolioTab } from "./portfolio";
-import { Research } from "./research";
+import { Research,type ResearchTab } from "./research";
+import { WorkbenchHome } from "./workbench-home";
 import { StrategyLab } from "./strategy-lab";
 import { Settings } from "./settings";
 import { QuickSearch, type AppSection } from "./quick-search";
@@ -42,6 +44,14 @@ const nav = [
   { key: "settings" as const, label: "我的", icon: SettingsIcon }
 ];
 
+const workspaceNav=[
+  {key:"today" as const,label:"今日",icon:LayoutDashboard},
+  {key:"assets" as const,label:"資產",icon:Wallet},
+  {key:"explore" as const,label:"探索",icon:Compass},
+  {key:"watch" as const,label:"自選",icon:Star},
+  {key:"records" as const,label:"紀錄",icon:ReceiptText}
+];
+const workspaceTitles:Record<WorkbenchPage,string>={today:"今日",assets:"我的資產",explore:"探索市場",watch:"自選",records:"交易紀錄"};
 const titles: Record<Section, { title: string; eyebrow: string }> = {
   home: { title: "投資總覽", eyebrow: "Portfolio Overview" },
   portfolio: { title: "投資組合", eyebrow: "Holdings" },
@@ -54,6 +64,9 @@ export function AppShell() {
   const [section, setSection] = useState<Section>("home");
   const [state, setState] = useState<AppState>(emptyState);
   const [theme, setTheme] = useState<AppTheme>("light");
+  const [layout,setLayout]=useState<AppLayout>("classic");
+  const workbench=layout==="workbench";
+  const [researchRequestedTab,setResearchRequestedTab]=useState<ResearchTab|undefined>();
   const [searchOpen, setSearchOpen] = useState(false);
   const [researchKey, setResearchKey] = useState<string | undefined>();
   const [researchType, setResearchType] = useState<"stock" | "etf" | undefined>();
@@ -68,6 +81,10 @@ export function AppShell() {
   const [portfolioHoldingCandidate, setPortfolioHoldingCandidate] = useState<HoldingLookupCandidate | undefined>();
   const [portfolioRequestId, setPortfolioRequestId] = useState(0);
   const title = useMemo(() => titles[section], [section]);
+  const workspace=workbenchPage(section,portfolioRequestedTab,researchRequestedTab);
+  const displayTitle=workbench&&workspace&&section!=="lab"?workspaceTitles[workspace]:title.title;
+  const navigation=workbench?workspaceNav:nav;
+  const activeNavigation=workbench?workspace:section;
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +129,10 @@ export function AppShell() {
           }
           const initialTheme = parseAppTheme(saved, window.matchMedia("(prefers-color-scheme: dark)").matches);
           setTheme(initialTheme);
+          let storedLayout:AppLayout="classic";
+          try{storedLayout=parseAppLayout(window.localStorage.getItem(APP_LAYOUT_KEY));}catch{}
+          setLayout(storedLayout);
+          document.documentElement.classList.toggle("layout-workbench",storedLayout==="workbench");
           const classes = themeClassState(initialTheme);
           document.documentElement.classList.toggle("dark", classes.dark);
           document.documentElement.classList.toggle("theme-tradescope", classes.tradescope);
@@ -183,6 +204,7 @@ export function AppShell() {
         return;
       }
 
+      setResearchRequestedTab(undefined);
       setResearchKey(target.researchKey);
       setResearchType(target.researchType);
       setResearchRequestId((value) => value + 1);
@@ -249,11 +271,13 @@ export function AppShell() {
   }
 
   function navigate(next: Section, nextResearchKey?: string, nextResearchType?: "stock" | "etf") {
-    if (next === "research" && nextResearchKey) {
+    if (next === "research") {
+      setResearchRequestedTab(undefined);
       setResearchKey(nextResearchKey);
-      setResearchType(nextResearchType);
+      setResearchType(nextResearchKey?nextResearchType:undefined);
       setResearchRequestId((value) => value + 1);
     }
+    if(next==="lab"){setQuantRequestedKey(undefined);setQuantRequestId(v=>v+1);}
     if (next === "portfolio") {
       setPortfolioRequestedTab(undefined);
       setPortfolioHoldingCandidate(undefined);
@@ -266,6 +290,25 @@ export function AppShell() {
     window.requestAnimationFrame(() => {
       window.scrollTo(0, 0);
     });
+  }
+
+  function openResearchTab(tab:ResearchTab){
+    setResearchRequestedTab(tab);setResearchKey(undefined);setResearchType(undefined);
+    setResearchRequestId(v=>v+1);setSection("research");
+    window.requestAnimationFrame(()=>window.scrollTo(0,0));
+  }
+  function navigateWorkspace(page:WorkbenchPage){
+    if(page==="today")navigate("home");
+    else if(page==="assets")navigatePortfolioTab("holdings");
+    else if(page==="explore")openResearchTab("sectorPulse");
+    else if(page==="watch")openResearchTab("watchlist");
+    else navigatePortfolioTab("activity");
+  }
+  function chooseLayout(next:AppLayout){
+    setLayout(next);
+    document.documentElement.classList.toggle("layout-workbench",next==="workbench");
+    try{window.localStorage.setItem(APP_LAYOUT_KEY,next);}
+    catch{toast.info("版型已套用，但瀏覽器無法記住偏好。");}
   }
 
   function openQuantResearch(key: string) {
@@ -320,7 +363,7 @@ export function AppShell() {
   }
 
   return (
-    <div className="min-h-dvh text-[#1b241f] dark:text-[#e7eee9]">
+    <div className="min-h-dvh text-[#1b241f] dark:text-[#e7eee9]" data-app-layout={layout}>
       <Toaster
         theme={theme === "light" ? "light" : "dark"}
         position="top-center"
@@ -329,7 +372,7 @@ export function AppShell() {
         richColors
         closeButton
       />
-      <QuickSearch state={state} open={searchOpen} onOpenChange={setSearchOpen} onNavigate={navigate} />
+      <QuickSearch state={state} open={searchOpen} onOpenChange={setSearchOpen} onNavigate={navigate} workbench={workbench} onWorkspace={navigateWorkspace} />
 
       <aside className="app-desktop-sidebar fixed inset-y-0 left-0 z-30 hidden w-[248px] border-r border-black/6 bg-[#efeee9]/85 px-4 backdrop-blur-xl dark:border-white/7 dark:bg-[#0d1210]/90 md:flex md:flex-col">
         <div className="flex items-center gap-3 px-2">
@@ -342,10 +385,11 @@ export function AppShell() {
           <kbd className="rounded-md bg-black/5 px-1.5 py-0.5 text-[10px] dark:bg-white/8">⌘K</kbd>
         </button>
         <nav className="mt-3 space-y-1">
-          {nav.map((item) => {
+          {navigation.map((item) => {
             const Icon = item.icon;
-            return <button key={item.key} aria-current={section === item.key ? "page" : undefined} onClick={() => navigate(item.key)} className={cn("flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold transition", section === item.key ? "bg-white text-[#1f332a] shadow-sm dark:bg-white/10 dark:text-white" : "text-black/45 hover:bg-white/60 hover:text-black dark:text-white/45 dark:hover:bg-white/5 dark:hover:text-white")}><Icon size={18} />{item.label}</button>;
+            return <button key={item.key} aria-current={activeNavigation === item.key ? "page" : undefined} onClick={() => workbench?navigateWorkspace(item.key as WorkbenchPage):navigate(item.key as Section)} className={cn("flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold transition", activeNavigation === item.key ? "bg-white text-[#1f332a] shadow-sm dark:bg-white/10 dark:text-white" : "text-black/45 hover:bg-white/60 hover:text-black dark:text-white/45 dark:hover:bg-white/5 dark:hover:text-white")}><Icon size={18} />{item.label}</button>;
           })}
+          {workbench?<button type="button" onClick={()=>navigate("settings")} aria-current={section==="settings"?"page":undefined} className="mt-4 flex min-h-11 w-full items-center gap-3 rounded-xl border-t border-current/10 px-3 text-left text-sm"><SettingsIcon size={18}/>設定與資料</button>:null}
         </nav>
       </aside>
 
@@ -353,13 +397,14 @@ export function AppShell() {
         <header className="app-topbar sticky top-0 z-20 border-b border-black/5 bg-[#f4f2ed]/82 backdrop-blur-xl dark:border-white/6 dark:bg-[#101412]/82">
           <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-semibold tracking-tight md:text-2xl">{title.title}</h1>
+              <h1 className="truncate text-xl font-semibold tracking-tight md:text-2xl">{displayTitle}</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <button onClick={() => setSearchOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-full border border-black/6 bg-white/80 px-3 transition hover:bg-white dark:border-white/8 dark:bg-white/6 dark:hover:bg-white/10" aria-label="快速搜尋" aria-keyshortcuts="Meta+K Control+K">
                 <Search size={17} /><span className="hidden text-xs font-semibold text-black/50 dark:text-white/50 sm:inline">搜尋</span>
               </button>
               <Badge tone={state.dataMode === "demo" ? "warn" : "neutral"}>{state.dataMode === "demo" ? "DEMO" : "LOCAL"}</Badge>
+              {workbench?<button type="button" aria-label="設定與資料" title="設定、版型與資料" onClick={()=>navigate("settings")} className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-black/8 dark:border-white/10"><SettingsIcon size={18}/></button>:null}
               <button onClick={toggleTheme} className="app-theme-toggle grid h-11 w-11 place-items-center rounded-full border border-black/6 bg-white/80 transition hover:bg-white dark:border-white/8 dark:bg-white/6 dark:hover:bg-white/10" aria-label="切換外觀模式" title={`目前：${APP_THEME_LABELS[theme]} · 點擊切換至${APP_THEME_LABELS[nextAppTheme(theme)]}`}>
                 {theme === "light" ? <Moon size={18} /> : theme === "dark" ? <Palette size={18} /> : <Sun size={18} />}
               </button>
@@ -389,7 +434,7 @@ export function AppShell() {
               <button onClick={() => setSection("settings")} className="min-h-10 rounded-xl border border-current/20 px-3 text-sm font-semibold">前往處理</button>
             </div>
           ) : null}
-          {section === "home" ? <Overview state={state} onNavigate={(target, key) => navigate(target, key)} /> : null}
+          {section === "home" ? workbench?<WorkbenchHome state={state} onNavigate={navigate} onAsset={navigatePortfolioTab} onExplore={()=>navigateWorkspace("explore")} onWatch={()=>navigateWorkspace("watch")} />:<Overview state={state} onNavigate={(target, key,type) => navigate(target, key,type)} /> : null}
           {section === "portfolio" ? (
             <Portfolio
               key={portfolioRequestId}
@@ -398,16 +443,21 @@ export function AppShell() {
               onResearch={(key, type) => navigate("research", key, type)}
               requestedTab={portfolioRequestedTab}
               requestedHoldingCandidate={portfolioHoldingCandidate}
+              workbench={workbench}
+              onOpenJournal={()=>openResearchTab("journal")}
             />
           ) : null}
-          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} onAddHolding={addWatchlistCandidateToPortfolio} onQuantResearch={openQuantResearch} /> : null}
-          {section === "lab" ? <StrategyLab key={quantRequestId} state={state} onChange={updateState} onOpenResearch={() => navigate("research")} onOpenRisk={() => navigatePortfolioTab("risk")} quantRequestedKey={quantRequestedKey} /> : null}
+          {section === "research" ? <Research key={researchRequestId} state={state} onChange={updateState} researchKey={researchKey} researchType={researchType} requestedTab={researchRequestedTab} workbench={workbench} onAddHolding={addWatchlistCandidateToPortfolio} onQuantResearch={openQuantResearch} onOpenLab={()=>navigate("lab")} onOpenRecords={()=>navigateWorkspace("records")} onOpenSecurity={(key,type)=>navigate("research",key,type)} /> : null}
+          {workbench&&section==="lab"?<button type="button" className="mb-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium" onClick={()=>navigateWorkspace("explore")}>← 返回探索</button>:null}
+          {section === "lab" ? <StrategyLab key={quantRequestId} state={state} onChange={updateState} onOpenResearch={() => workbench?openResearchTab("scanner"):navigate("research")} onOpenRisk={() => navigatePortfolioTab("risk")} quantRequestedKey={quantRequestedKey} /> : null}
           {section === "settings" ? (
             <Settings
               state={state}
               onChange={updateState}
               theme={theme}
               onThemeChange={chooseTheme}
+              layout={layout}
+              onLayoutChange={chooseLayout}
               hasRecoveryBackup={hasRecoveryBackup}
               onRecoveryBackupCleared={() => setHasRecoveryBackup(false)}
               storageWriteBlocked={storageWriteBlocked}
@@ -420,11 +470,11 @@ export function AppShell() {
 
       <nav className="app-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-black/7 bg-[#f7f5f0]/94 pt-2 backdrop-blur-xl dark:border-white/8 dark:bg-[#0f1412]/94 md:hidden">
         <div className="grid grid-cols-5">
-          {nav.map((item) => {
+          {navigation.map((item) => {
             const Icon = item.icon;
-            const active = section === item.key;
+            const active = activeNavigation === item.key;
             return (
-              <button key={item.key} aria-current={active ? "page" : undefined} onClick={() => navigate(item.key)} className={cn("flex min-h-[54px] flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold transition", active ? "text-[#1f5b40] dark:text-[#a7d8b8]" : "text-black/38 dark:text-white/38")}>
+              <button key={item.key} aria-current={active ? "page" : undefined} onClick={() => workbench?navigateWorkspace(item.key as WorkbenchPage):navigate(item.key as Section)} className={cn("flex min-h-[54px] flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold transition", active ? "text-[#1f5b40] dark:text-[#a7d8b8]" : "text-black/38 dark:text-white/38")}>
                 <Icon size={20} strokeWidth={active ? 2.4 : 2} />
                 {item.label}
               </button>

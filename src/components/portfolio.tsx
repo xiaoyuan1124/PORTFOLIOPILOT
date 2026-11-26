@@ -53,20 +53,29 @@ export function Portfolio({
   onChange,
   onResearch,
   requestedTab,
-  requestedHoldingCandidate
+  requestedHoldingCandidate,
+  workbench=false,
+  onOpenJournal
 }: {
   state: AppState;
   onChange: (state: AppState) => boolean;
   onResearch?: (researchKey: string, researchType: "stock" | "etf") => void;
   requestedTab?: PortfolioTab;
   requestedHoldingCandidate?: HoldingLookupCandidate;
+  workbench?:boolean;
+  onOpenJournal?:()=>void;
 }) {
   const [tab, setTab] = useState<PortfolioTab>(requestedTab ?? "holdings");
   const area = useMemo(() => areaForTab(tab), [tab]);
+  const recordMode=workbench&&(requestedTab==="activity"||requestedTab==="dividends");
+  const workspaceArea=tab==="lookthrough"||tab==="targets"?"allocation":tab==="performance"||tab==="report"?"performance":tab==="risk"?"risk":"holdings";
+  const workspaceTabs=[{key:"holdings",label:"持股",tab:"holdings"},{key:"performance",label:"績效",tab:"performance"},{key:"allocation",label:"配置",tab:"targets"},{key:"risk",label:"風險",tab:"risk"}] as const;
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-1 rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
+      {workbench?<div className="workbench-tabs" role="group" aria-label={recordMode?"紀錄分類":"資產分類"}>
+        {recordMode?<>{[{key:"activity",label:"交易／現金流"},{key:"dividends",label:"股息"}] .map(item=><button type="button" key={item.key} aria-pressed={tab===item.key} onClick={()=>setTab(item.key as PortfolioTab)}>{item.label}</button>)}{onOpenJournal?<button type="button" onClick={onOpenJournal}>投資筆記</button>:null}</>:workspaceTabs.map(item=><button type="button" key={item.key} aria-pressed={workspaceArea===item.key} onClick={()=>setTab(item.tab)}>{item.label}</button>)}
+      </div>:<div className="grid grid-cols-4 gap-1 rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
         {areas.map((item) => {
           const active = area === item.key;
           return (
@@ -80,9 +89,13 @@ export function Portfolio({
             </button>
           );
         })}
-      </div>
+      </div>}
 
-      {tabsByArea[area].length > 1 ? (
+      {workbench&&!recordMode&&(workspaceArea==="allocation"||workspaceArea==="performance")?<div className="workbench-subtabs" role="group" aria-label="資產細項">
+        {(workspaceArea==="allocation"?[{key:"targets",label:"配置目標"},{key:"lookthrough",label:"ETF 穿透"}]:[{key:"performance",label:"績效分析"},{key:"report",label:"投資報告"}]).map(item=><button type="button" key={item.key} aria-pressed={tab===item.key} onClick={()=>setTab(item.key as PortfolioTab)}>{item.label}</button>)}
+      </div>:null}
+
+      {!workbench&&tabsByArea[area].length > 1 ? (
         <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
           {tabsByArea[area].map((item) => (
             <button
@@ -97,7 +110,7 @@ export function Portfolio({
         </div>
       ) : null}
 
-      {tab === "holdings" ? <HoldingsPanel state={state} onChange={onChange} onResearch={onResearch} onOpenEtfLookthrough={() => setTab("lookthrough")} requestedCandidate={requestedHoldingCandidate} /> : null}
+      {tab === "holdings" ? <HoldingsPanel state={state} onChange={onChange} onResearch={onResearch} onOpenEtfLookthrough={() => setTab("lookthrough")} requestedCandidate={requestedHoldingCandidate} workbench={workbench} /> : null}
       {tab === "lookthrough" ? <EtfLookThrough state={state} onChange={onChange} /> : null}
       {tab === "risk" ? <PortfolioRisk state={state} /> : null}
       {tab === "targets" ? <AllocationTargets state={state} onChange={onChange} /> : null}

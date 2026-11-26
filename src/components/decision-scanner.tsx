@@ -22,9 +22,9 @@ const emptyQuarterly:QuarterlyMarginCache={generatedAt:"",periods:[],sources:[],
 const emptyInstitutional:InstitutionalCache={generatedAt:"",tradingDates:[],sources:[],rows:[]};
 const statusLabels={met:"初步條件符合",wait:"等待",risk:"風險偏高",insufficient:"資料不足"};
 const fmt=(v:number|null,d=0)=>v===null?"—":v.toFixed(d);
-export function DecisionScanner({state,onOpenStock}:{state:AppState;onOpenStock?:(key:string)=>void}){
+export function DecisionScanner({state,onOpenStock,defaultScope="all"}:{state:AppState;onOpenStock?:(key:string)=>void;defaultScope?:"all"|"watch"}){
   const [horizon,setHorizon]=useState<Horizon>("swing");
-  const [scope,setScope]=useState<"all"|"watch">("all");
+  const [scope,setScope]=useState<"all"|"watch">(defaultScope);
   const [filter,setFilter]=useState<"all"|DecisionScanRow["status"]>("all");
   const [query,setQuery]=useState("");
   const [page,setPage]=useState(1);

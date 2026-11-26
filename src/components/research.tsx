@@ -12,8 +12,10 @@ import { SectorPulseResearch } from "./sector-pulse-research";
 import { Journal } from "./journal";
 import { EtfResearch } from "./etf-research";
 import { Watchlist } from "./watchlist";
+import { DecisionScanner } from "./decision-scanner";
+import { Star,ChartNoAxesCombined,ScanSearch,Search,Layers3,FileText,TrendingUp,Scale,FlaskConical } from "lucide-react";
 
-type ResearchTab = "snapshot" | "etf" | "materialEvents" | "sectorPulse" | "revenue" | "valuation" | "watchlist" | "scanner" | "journal";
+export type ResearchTab = "snapshot" | "etf" | "materialEvents" | "sectorPulse" | "revenue" | "valuation" | "watchlist" | "scanner" | "journal";
 type ResearchArea = "security" | "market" | "strategy" | "notes";
 
 const areas: Array<{ key: ResearchArea; label: string; defaultTab: ResearchTab }> = [
@@ -56,7 +58,12 @@ export function Research({
   researchKey,
   researchType,
   onAddHolding,
-  onQuantResearch
+  onQuantResearch,
+  requestedTab,
+  workbench=false,
+  onOpenLab,
+  onOpenRecords,
+  onOpenSecurity
 }: {
   state: AppState;
   onChange: (state: AppState) => boolean;
@@ -64,8 +71,13 @@ export function Research({
   researchType?: "stock" | "etf";
   onAddHolding?: (candidate: HoldingLookupCandidate) => void;
   onQuantResearch?: (key: string) => void;
+  requestedTab?:ResearchTab;
+  workbench?:boolean;
+  onOpenLab?:()=>void;
+  onOpenRecords?:()=>void;
+  onOpenSecurity?:(key:string,type:"stock"|"etf")=>void;
 }) {
-  const [tab, setTab] = useState<ResearchTab>(researchType === "etf" ? "etf" : "snapshot");
+  const [tab, setTab] = useState<ResearchTab>(requestedTab??(researchType === "etf" ? "etf" : "snapshot"));
   const [snapshotKey, setSnapshotKey] = useState(researchKey);
   const [snapshotRequestId, setSnapshotRequestId] = useState(0);
   const [etfRequestedSymbol, setEtfRequestedSymbol] = useState<string | undefined>(
@@ -74,12 +86,14 @@ export function Research({
   const area = useMemo(() => areaForTab(tab), [tab]);
 
   function openStockFromEtf(key: string) {
+    if(workbench&&onOpenSecurity){onOpenSecurity(key,"stock");return;}
     setSnapshotKey(key);
     setSnapshotRequestId((value) => value + 1);
     setTab("snapshot");
   }
 
   function openFromWatchlist(key: string, type: "stock" | "etf") {
+    if(workbench&&onOpenSecurity){onOpenSecurity(key,type);return;}
     if (type === "etf") {
       setEtfRequestedSymbol(key.split(":").at(-1));
       setTab("etf");
@@ -90,9 +104,16 @@ export function Research({
     setTab("snapshot");
   }
 
+  const tools=[{key:"sectorPulse",label:"產業強弱",icon:TrendingUp},{key:"scanner",label:"選股 Scanner",icon:ScanSearch},{key:"snapshot",label:"個股研究",icon:Search},{key:"etf",label:"ETF 深度",icon:Layers3},{key:"materialEvents",label:"持股重訊",icon:FileText},{key:"revenue",label:"公司營收",icon:ChartNoAxesCombined},{key:"valuation",label:"市場估值",icon:Scale}] as const;
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-1 rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
+      {workbench&&requestedTab==="watchlist"?<div className="flex items-center gap-2 text-sm opacity-75"><Star size={16}/>管理自選股票與 ETF，或批次檢查買進條件。</div>:null}
+      {workbench&&requestedTab==="journal"?<button type="button" className="min-h-11 text-sm font-medium" onClick={onOpenRecords}>← 返回交易紀錄</button>:null}
+      {workbench&&requestedTab!=="watchlist"&&requestedTab!=="journal"?<div className="workbench-tools" role="group" aria-label="探索工具">
+        {tools.map(item=><button key={item.key} type="button" aria-pressed={tab===item.key} onClick={()=>setTab(item.key)}><item.icon size={17}/><span>{item.label}</span></button>)}
+        {onOpenLab?<button type="button" onClick={onOpenLab}><FlaskConical size={17}/><span>策略實驗室</span></button>:null}
+      </div>:null}
+      {!workbench?<div className="grid grid-cols-4 gap-1 rounded-2xl border border-black/6 bg-white/70 p-1 dark:border-white/8 dark:bg-white/4">
         {areas.map((item) => {
           const active = area === item.key;
           return (
@@ -106,9 +127,9 @@ export function Research({
             </button>
           );
         })}
-      </div>
+      </div>:null}
 
-      {tabsByArea[area].length > 1 ? (
+      {!workbench&&tabsByArea[area].length > 1 ? (
         <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
           {tabsByArea[area].map((item) => (
             <button
@@ -123,13 +144,13 @@ export function Research({
         </div>
       ) : null}
 
-      {tab === "snapshot" ? <CompanySnapshotResearch key={snapshotRequestId} state={state} requestedKey={snapshotKey} onQuantResearch={onQuantResearch} onChange={onChange} /> : null}
+      {tab === "snapshot" ? <CompanySnapshotResearch key={snapshotRequestId} state={state} requestedKey={snapshotKey} onQuantResearch={onQuantResearch} onChange={onChange} workbench={workbench} /> : null}
       {tab === "etf" ? <EtfResearch key={etfRequestedSymbol ?? "default"} state={state} onOpenStock={openStockFromEtf} requestedSymbol={etfRequestedSymbol} /> : null}
       {tab === "materialEvents" ? <MaterialEventsResearch state={state} /> : null}
       {tab === "sectorPulse" ? <SectorPulseResearch state={state} /> : null}
       {tab === "revenue" ? <RevenueResearch state={state} /> : null}
       {tab === "valuation" ? <ValuationResearch state={state} /> : null}
-      {tab === "watchlist" ? <Watchlist state={state} onChange={onChange} onOpenResearch={openFromWatchlist} onAddHolding={onAddHolding} /> : null}
+      {tab === "watchlist" ? <><Watchlist state={state} onChange={onChange} onOpenResearch={openFromWatchlist} onAddHolding={onAddHolding}/>{workbench?<DecisionScanner state={state} onOpenStock={openStockFromEtf} defaultScope="watch"/>:null}</> : null}
       {tab === "scanner" ? <Scanner state={state} onOpenStock={openStockFromEtf} /> : null}
       {tab === "journal" ? <Journal state={state} onChange={onChange} /> : null}
     </div>

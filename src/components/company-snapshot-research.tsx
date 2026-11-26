@@ -88,7 +88,7 @@ function SectionHeader({ title, detail }: { title: string; detail: string }) {
   return <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="font-semibold">{title}</h4><span className="text-[11px] text-black/40 dark:text-white/40">{detail}</span></div>;
 }
 
-export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, onChange }: { state: AppState; requestedKey?: string; onQuantResearch?: (key: string) => void; onChange?: (state: AppState) => boolean }) {
+export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, onChange,workbench=false }: { state: AppState; requestedKey?: string; onQuantResearch?: (key: string) => void; onChange?: (state: AppState) => boolean; workbench?:boolean }) {
   const [caches, setCaches] = useState<Caches | null>(null);
   const [query, setQuery] = useState("");
   const [heldOnly, setHeldOnly] = useState(false);
@@ -234,6 +234,7 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
     {selected ? <>
       <Card><CardContent className="p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-xl font-semibold">{selected.name}</h3><span className="text-sm text-black/40 dark:text-white/40">{selected.code}</span>{isHeldCompanySnapshot(selected, heldKeys) ? <Badge tone="good">持有</Badge> : null}</div><p className="mt-1 text-sm text-black/45 dark:text-white/45">{selected.industry || "官方產業分類未帶入"} · {selected.market}</p></div>{selected.type === "etf" ? <Badge>ETF</Badge> : selected.strategy ? <StatusBadge status={selected.strategy.overallStatus} /> : <Badge tone="warn">策略資料不足</Badge>}</div></CardContent></Card>
 
+      {workbench?<SecurityPriceHistoryCard market={selected.market} symbol={selected.code}/>:null}
       <StockDecisionPanel onRefresh={reload} onWatch={onChange && selected.quote ? addSelectedToWatchlist : undefined} watched={watched} key={selected.market + ":" + selected.code} snapshot={selected} peers={snapshots} state={state} latestMarketDate={caches ? cacheMarketFreshness(caches.quotes)[selected.market] : null} offline={Boolean(!caches || caches.quotes.offlineFallback || !Number.isFinite(Date.parse(caches.quotes.generatedAt)) || shouldRejectStaleClosingCache(caches.quotes) || error || loading)} />
 
       {onQuantResearch ? (
@@ -244,9 +245,9 @@ export function CompanySnapshotResearch({ state, requestedKey, onQuantResearch, 
         </button>
       ) : null}
 
-      <SecurityPriceHistoryCard market={selected.market} symbol={selected.code} />
+      {!workbench?<SecurityPriceHistoryCard market={selected.market} symbol={selected.code} />:null}
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className={workbench?"workbench-security-data grid gap-3 xl:grid-cols-2":"grid gap-4 xl:grid-cols-2"}>
         <Card><CardContent className="p-4 md:p-5"><SectionHeader title="市場與估值" detail="官方收盤 / 估值快照" /><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"><div className="mini-metric"><span>收盤價</span><strong>{selected.quote ? marketPrice(selected.quote.close, "TWD") : "—"}</strong></div><div className="mini-metric"><span>PE</span><strong>{ratio(selected.valuation?.pe)}</strong></div><div className="mini-metric"><span>PB</span><strong>{ratio(selected.valuation?.pb)}</strong></div><div className="mini-metric"><span>殖利率</span><strong>{yieldPercent(selected.valuation?.dividendYield)}</strong></div></div><div className="mt-4 space-y-1 text-[11px] leading-5 text-black/40 dark:text-white/40"><p>收盤資料日：{selected.quote?.date ?? "—"} {quoteSource ? <a href={quoteSource.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 underline underline-offset-2">{quoteSource.name}<ExternalLink size={10} /></a> : null}</p><p>估值資料日：{selected.valuation?.date ?? "—"} {valuationMeta ? <a href={valuationMeta.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 underline underline-offset-2">{valuationMeta.name}<ExternalLink size={10} /></a> : null}</p></div></CardContent></Card>
 
         <Card><CardContent className="p-4 md:p-5"><SectionHeader title="最新月營收" detail={selected.revenue?.period ?? "ETF 不適用"} />{selected.revenue ? <><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"><div className="mini-metric"><span>營收原始值</span><strong>{rawNumber(selected.revenue.revenue)}</strong></div><div className="mini-metric"><span>MoM</span><strong>{selected.revenue.momPct === null ? "—" : percent(selected.revenue.momPct, 1)}</strong></div><div className="mini-metric"><span>YoY</span><strong>{selected.revenue.yoyPct === null ? "—" : percent(selected.revenue.yoyPct, 1)}</strong></div><div className="mini-metric"><span>累計 YoY</span><strong>{selected.revenue.cumulativeYoyPct === null ? "—" : percent(selected.revenue.cumulativeYoyPct, 1)}</strong></div></div><p className="mt-4 text-[11px] leading-5 text-black/40 dark:text-white/40">金額沿用官方原始值，不自行猜測或換算單位。{revenueSource ? <a href={revenueSource.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 underline underline-offset-2">{revenueSource.name}<ExternalLink size={10} /></a> : null}</p></> : <p className="mt-4 text-sm leading-6 text-black/45 dark:text-white/45">ETF 沒有公司型月營收欄位；本頁不把成分股營收混成 ETF 自身營收。</p>}</CardContent></Card>

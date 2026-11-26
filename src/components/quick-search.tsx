@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { BriefcaseBusiness, FlaskConical, Home, Search, Settings, X } from "lucide-react";
 import type { AppState } from "@/lib/types";
+import type {WorkbenchPage} from "@/lib/app-layout";
+import {Star,ReceiptText} from "lucide-react";
 import { loadBundledRevenue } from "@/lib/revenue-data";
 import { loadBundledTwQuotes } from "@/lib/market-data";
 import { buildHoldingLookupCatalog, searchHoldingLookupCatalog, type HoldingLookupCandidate } from "@/lib/holding-autofill";
@@ -16,12 +18,16 @@ export function QuickSearch({
   state,
   open,
   onOpenChange,
-  onNavigate
+  onNavigate,
+  workbench=false,
+  onWorkspace
 }: {
   state: AppState;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onNavigate: (section: AppSection, researchKey?: string, researchType?: "stock" | "etf") => void;
+  workbench?:boolean;
+  onWorkspace?:(page:WorkbenchPage)=>void;
 }) {
   const [query, setQuery] = useState("");
   const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
@@ -113,6 +119,7 @@ export function QuickSearch({
               <div>
                 <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[.14em] text-black/35 dark:text-white/35">快速前往</p>
                 <div className="grid gap-1 sm:grid-cols-2">
+                  {workbench&&onWorkspace?<>{[{key:"watch",label:"自選",icon:Star},{key:"records",label:"紀錄",icon:ReceiptText}] .map(item=><button type="button" key={item.key} className="flex min-h-14 items-center gap-3 rounded-xl px-3 text-left text-sm" onClick={()=>{setOpen(false);onWorkspace(item.key as WorkbenchPage);}}><item.icon size={18}/>{item.label}</button>)}</>:null}
                   {[
                     { section: "home" as const, label: "投資總覽", detail: "淨值、資金水位、配置", icon: Home },
                     { section: "portfolio" as const, label: "投資組合", detail: "持股、帳戶、績效", icon: BriefcaseBusiness },

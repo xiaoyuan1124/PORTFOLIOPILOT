@@ -21,6 +21,7 @@ import { buildHoldingLookupCatalog } from "@/lib/holding-autofill";
 import { loadBundledTwQuotes } from "@/lib/market-data";
 import { loadBundledRevenue } from "@/lib/revenue-data";
 import type { AppState, Market } from "@/lib/types";
+import {APP_LAYOUT_MODES,APP_LAYOUT_LABELS,type AppLayout} from "@/lib/app-layout";
 import { APP_THEME_LABELS, APP_THEME_MODES, APP_THEME_SWATCHES, type AppTheme } from "@/lib/app-theme";
 import {
   csvTemplate,
@@ -65,6 +66,8 @@ export function Settings({
   onChange,
   theme,
   onThemeChange,
+  layout,
+  onLayoutChange,
   hasRecoveryBackup = false,
   onRecoveryBackupCleared,
   storageWriteBlocked = false,
@@ -75,6 +78,8 @@ export function Settings({
   onChange: (state: AppState) => boolean;
   theme: AppTheme;
   onThemeChange: (theme: AppTheme) => void;
+  layout:AppLayout;
+  onLayoutChange:(layout:AppLayout)=>void;
   hasRecoveryBackup?: boolean;
   onRecoveryBackupCleared?: () => void;
   storageWriteBlocked?: boolean;
@@ -382,6 +387,22 @@ export function Settings({
                 </button>
               );
             })}
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="lg:col-span-2">
+        <CardContent className="space-y-3 p-4 md:p-5">
+          <h2 className="text-lg font-semibold">介面版型</h2>
+          <p className="text-xs leading-5 opacity-65">只改變畫面與導覽，保留持股、交易、自選、配色及所有設定。可隨時切回。</p>
+          <div role="group" aria-label="介面版型" className="grid grid-cols-2 gap-2">
+            {APP_LAYOUT_MODES.map(mode=><button key={mode} type="button" aria-pressed={layout===mode} onClick={()=>onLayoutChange(mode)} className="layout-choice min-w-0 rounded-xl border border-current/15 p-3 text-left" data-layout-choice={mode}>
+              <span aria-hidden="true" className="layout-preview">
+                <span className="layout-preview-header"/><span className={mode==="workbench"?"layout-preview-workbench":"layout-preview-classic"}><i/><i/><i/></span><span className="layout-preview-nav"><i/><i/><i/><i/><i/></span>
+              </span>
+              <span className="mt-2 block font-semibold">{APP_LAYOUT_LABELS[mode]}</span>
+              <span className="mt-1 block text-xs leading-5 opacity-70">{mode==="classic"?"原有功能分類與卡片":"今日、資產、探索、自選、紀錄"}</span>
+              <span className="mt-1 block text-xs font-medium">{layout===mode?"✓ 使用中":"選用此版型"}</span>
+            </button>)}
           </div>
         </CardContent>
       </Card>
