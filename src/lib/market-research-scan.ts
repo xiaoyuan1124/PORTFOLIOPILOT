@@ -32,9 +32,9 @@ export function scanTechnical(c:Candidate,history:TwPriceHistorySeries|null,cale
  const dates=calendar.filter(d=>d<=c.date).slice(-need);
  const rows=normalizeDecisionPoints(history.points,c.date);
  const byDate=new Map(rows.points);
- if(dates.length!==need||dates.at(-1)!==c.date||dates.some(d=>!byDate.has(d)||issues.includes(d))||rows.conflicts.some(d=>dates.includes(d))||byDate.get(c.date)!==c.close)return missing("官方交易日／收盤未對齊");
+ if(dates.length!==need||new Set(dates).size!==dates.length||dates.at(-1)!==c.date||dates.some(d=>!byDate.has(d)||issues.includes(d))||rows.conflicts.some(d=>dates.includes(d))||byDate.get(c.date)!==c.close)return missing("官方交易日／收盤未對齊");
  const points=dates.map(d=>[d,byDate.get(d)!] as const);
- const t=technicalSnapshot(points,c.date);
+ const t=technicalSnapshot(points,c.date); // RSI is explicitly seeded on the verified 60-bar technical window.
  base.returnPct=(c.close/byDate.get(dates.at(-rule.period-1)!)!-1)*100;
  base.bias=t.monthly.bias;base.rsi=t.indicators.rsi;base.aboveMA60=t.quarterly.value===null?null:c.close>=t.quarterly.value;
  const required=dates.slice(-rule.period);
@@ -49,6 +49,7 @@ export function scanTechnical(c:Candidate,history:TwPriceHistorySeries|null,cale
   const vs=required.map(d=>volumes.get(d));if(vs.some(v=>typeof v!=="number"))return {...base,reason:"成交量缺值，無法計算淨買超占比"};
   const total=(vs as number[]).reduce((s,v)=>s+v,0);
   base.flowPct=100*base.net/total;
+  if(!Number.isFinite(base.flowPct)||Math.abs(base.flowPct)>100)return {...base,flowPct:null,reason:"法人淨買超超過成交量，來源口徑可能不一致"};
  }
  if(base.bias===null||base.returnPct===null||(mode==="technical"&&base.rsi===null))return {...base,reason:"均線或RSI暖機不足"};
  const fails:string[]=[];

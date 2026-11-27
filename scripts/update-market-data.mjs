@@ -574,7 +574,33 @@ async function main() {
     if (archived.version !== 1 || !Array.isArray(archived.days)) throw new Error("Invalid institutional archive");
     previousInstitutional = archived.days;
   } catch (error) { if (error?.code !== "ENOENT") throw error; }
-  const institutionalHistory = {version:1, generatedAt:fetchedAt, sources:institutional.sources, days:mergeInstitutionalHistory(previousInstitutional,institutional.accepted)};
+  let archivedDays=mergeInstitutionalHistory(previousInstitutional,institutional.accepted);
+  // Initial 20-session radar backfill: use the previously verified benchmark
+  // calendar plus today's fetched institutional dates. At most 10 extra
+  // market-wide requests per exchange, never per symbol. Failure is optional:
+  // preserve the normal ten-session aggregate and explicitly incomplete archive.
+  let benchmarkCalendar=[];
+  try {
+    const cache=JSON.parse(await readFile("public/data/tw-benchmarks.json","utf8"));
+    benchmarkCalendar=(cache.benchmarks?.find(b=>b.id==="TWSE:TAIEX-PRICE")?.points??[]).map(p=>p.date).filter(d=>typeof d==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&d<=latestQuoteDate);
+  } catch { /* no verified calendar means no speculative backfill */ }
+  const knownDates=[...new Set([...benchmarkCalendar,...institutional.tradingDates])].sort().slice(-20);
+  const archivedDates=new Set(archivedDays.map(d=>d.date));
+  const extraDates=knownDates.filter(d=>!archivedDates.has(d)).slice(-10);
+  const extraStart=Date.now();
+  for(const date of extraDates){
+    if(Date.now()-extraStart>90_000){console.warn("Institutional backfill time budget reached");break;}
+    try{
+      const twseUrl=`https://www.twse.com.tw/rwd/zh/fund/T86?date=${twseDateParam(date)}&selectType=ALLBUT0999&response=json`;
+      const tpexUrl=`https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?type=Daily&sect=AL&date=${encodeURIComponent(tpexDateParam(date))}&response=json`;
+      const twse=parseTwseInstitutional(await fetchObject(twseUrl,"TWSE institutional backfill"),date);
+      const tpex=parseTpexInstitutional(await fetchObject(tpexUrl,"TPEx institutional backfill"),date);
+      if(twse.length<100||tpex.length<100)throw new Error("Incomplete official institutional rows");
+      archivedDays=mergeInstitutionalHistory(archivedDays,[{date,twse,tpex}]);
+      await new Promise(resolve=>setTimeout(resolve,250));
+    }catch(error){console.warn("Optional institutional backfill failed for "+date+": "+String(error));break;}
+  }
+  const institutionalHistory = {version:1, generatedAt:fetchedAt, sources:institutional.sources, days:archivedDays};
 
   const quotePayload = {
     generatedAt: fetchedAt,
