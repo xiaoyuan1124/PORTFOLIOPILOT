@@ -42,6 +42,20 @@ async function checkLayout(page, screen, section) {
   await page.screenshot({ path: `mobile-artifacts/${screen}-${section}.png`, animations: "disabled" });
 }
 
+async function clickWithinContent(page, locator) {
+  await locator.waitFor({state:"visible"});
+  await locator.evaluate(el=>{
+    const header=document.querySelector(".app-topbar");
+    const nav=document.querySelector(".app-mobile-nav");
+    const top=Math.max(0,header?.getBoundingClientRect().bottom??0);
+    const navRect=nav?.getBoundingClientRect();
+    const bottom=navRect&&navRect.height>0?Math.min(innerHeight,navRect.top):innerHeight;
+    const rect=el.getBoundingClientRect();
+    window.scrollBy({top:rect.top+rect.height/2-(top+bottom)/2,behavior:"instant"});
+  });
+  await locator.click();
+}
+
 try {
   for (const viewport of viewports) {
     const context = await browser.newContext({
@@ -167,12 +181,16 @@ try {
     // and percentage-point strings must not widen the document viewport.
     const historySummary = page.getByText("展開進階歷史成份異動圖表", { exact: true });
     await historySummary.waitFor({ timeout: 20000 });
-    await historySummary.click();
+    // Use the visible content region, excluding fixed navigation, just as a
+    // person would scroll a disclosure into reach before tapping it. A real
+    // pointer hit is still required; do not force or bypass the click.
+    await clickWithinContent(page,historySummary);
+
     await page.getByText("歷史快照與成份異動／調倉線索", { exact: true }).waitFor();
     await checkLayout(page, viewport.name, "etf-history-expanded");
     const fullChanges = page.locator("summary").filter({ hasText: /^查看全部 \d+ 筆成份變化$/ });
     if (await fullChanges.count()) {
-      await fullChanges.click();
+      await clickWithinContent(page,fullChanges);
       await checkLayout(page, viewport.name, "etf-history-full-changes");
     }
 
