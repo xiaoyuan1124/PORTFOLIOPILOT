@@ -159,6 +159,11 @@ try {
     const scan=page.getByTestId("decision-scanner");
     await scan.waitFor();
     await scan.getByLabel("掃描範圍").selectOption("watch");
+    const marketResearch=page.getByTestId("market-research-scanner");
+    await marketResearch.locator("summary").click();
+    await marketResearch.getByRole("button",{name:"技術條件選股",exact:true}).click();
+    await marketResearch.getByRole("button",{name:"開始市場研究掃描",exact:true}).waitFor();
+    await marketResearch.locator("summary").click();
     await scan.getByRole("button",{name:"開始六面向掃描",exact:true}).click();
     await scan.getByTestId("decision-scan-result").waitFor({timeout:30000});
     await scan.getByRole("button",{name:/2330.*台積電/}).waitFor();

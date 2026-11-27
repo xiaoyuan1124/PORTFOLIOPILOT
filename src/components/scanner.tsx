@@ -20,6 +20,7 @@ import { isHeldTwSecurity, resolveHeldTwSecurityKeys } from "@/lib/research-hold
 import { percent } from "@/lib/utils";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 import { DecisionScanner } from "./decision-scanner";
+import { MarketResearchScanner } from "./market-research-scanner";
 
 const emptyRevenueHistory: RevenueHistoryCache = { generatedAt: "", periods: [], sources: [], rows: [] };
 const emptyInstitutional: InstitutionalCache = { generatedAt: "", tradingDates: [], sources: [], rows: [] };
@@ -232,6 +233,7 @@ export function Scanner({ state, onOpenStock }: { state: AppState; onOpenStock?:
       </div>
 
       <DecisionScanner state={state} onOpenStock={onOpenStock} />
+      <MarketResearchScanner onOpenStock={onOpenStock}/>
       <div className="grid gap-2 md:grid-cols-[1fr_180px_auto]">
         <div className="relative"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/35 dark:text-white/35" size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋代號、名稱或產業" className="field pl-11" /></div>
         <select className="field" value={view} onChange={(event) => setView(event.target.value as "pass" | "near" | "all")}>
