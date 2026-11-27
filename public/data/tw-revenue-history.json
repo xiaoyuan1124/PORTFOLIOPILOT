@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T19:45:59.078Z",
+  "generatedAt": "2026-11-27T19:36:37.593Z",
   "periods": [
     "2026-10",
     "2026-09",
@@ -13334,12 +13334,12 @@
       "market": "TWSE",
       "industry": "電子零組件業",
       "period": "2026-10",
-      "revenue": 60250,
+      "revenue": 54083,
       "previousMonthRevenue": 64458,
       "lastYearRevenue": 69502,
-      "momPct": -6.52,
-      "yoyPct": -13.31,
-      "cumulativeRevenue": 561252,
+      "momPct": -16.09,
+      "yoyPct": -22.18,
+      "cumulativeRevenue": 561254,
       "lastYearCumulativeRevenue": 964722,
       "cumulativeYoyPct": -41.82,
       "note": "-"
