@@ -755,13 +755,15 @@ export function HoldingsPanel({
   onChange,
   onResearch,
   onOpenEtfLookthrough,
-  requestedCandidate
+  requestedCandidate,
+  workbench=false
 }: {
   state: AppState;
   onChange: (state: AppState) => boolean;
   onResearch?: (researchKey: string, researchType: "stock" | "etf") => void;
   onOpenEtfLookthrough?: () => void;
   requestedCandidate?: HoldingLookupCandidate;
+  workbench?:boolean;
 }) {
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(Boolean(requestedCandidate));
@@ -1095,7 +1097,8 @@ export function HoldingsPanel({
         </div>
       </div>
 
-      <div className="grid gap-3">
+      <div className={workbench?"workbench-holdings":"grid gap-3"}>
+        {workbench&&sorted.length?<div className="workbench-holding-head"><span>標的／帳戶</span><span>市值（TWD）</span><span>未實現報酬</span><span className="sr-only">操作</span></div>:null}
         {sorted.map((holding) => {
           const value = holdingValueTwd(holding, state.usdTwd);
           const cost = holdingCostTwd(holding, state.usdTwd);
@@ -1104,6 +1107,20 @@ export function HoldingsPanel({
           const pct = summary.total ? (value / summary.total) * 100 : 0;
           const isCash = holding.type === "cash";
           const nativeCashBalance = isCash ? holding.quantity * holding.price : 0;
+          if(workbench)return <div key={holding.id} className="workbench-holding-row">
+            <div className="workbench-holding-main">
+              <div className="min-w-0"><strong className="block break-words text-sm">{isCash?holding.currency+" 現金":holding.symbol+" "+holding.name}</strong><span className="block truncate text-xs opacity-65">{accountName(holding.account)} · {isCash?"現金":holding.quantity.toLocaleString()+" 股"}</span></div>
+              <strong className="text-right text-sm tabular-nums">{money(value)}</strong>
+              <strong className="text-right text-sm tabular-nums">{isCash?"—":cost>0?percent(gainPct):"—"}</strong>
+              <HoldingActions holding={holding} state={state} onChange={onChange} onSave={upsert} onResearch={onResearch}/>
+            </div>
+            <details className="workbench-holding-details"><summary>價格、成本與配置明細</summary><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="mini-metric"><span>{isCash?"原幣餘額":"數量"}</span><strong>{isCash?holding.currency+" "+nativeCashBalance.toLocaleString("zh-TW",{maximumFractionDigits:2}):holding.quantity.toLocaleString()}</strong></div>
+              <div className="mini-metric"><span>{isCash?"台幣換算":"成本（TWD）"}</span><strong>{money(isCash?value:cost)}</strong></div>
+              <div className="mini-metric"><span>未實現損益</span><strong>{isCash?"不計算":money(gain)}</strong></div>
+              <div className="mini-metric"><span>總資產占比</span><strong>{pct.toFixed(1)}%</strong></div>
+            </div><p className="mt-2 text-xs opacity-70">{holding.sector} · {holding.market} · {holding.currency}{!isCash&&holding.priceSource&&holding.priceAsOf?" · "+holding.priceSource+" · "+closingPriceStatusLabel(holding.priceAsOf):""}</p></details>
+          </div>;
           return (
             <Card key={holding.id}>
               <CardContent className="p-4 md:p-5">

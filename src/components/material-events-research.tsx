@@ -7,12 +7,13 @@ import {
   latestMaterialEventDate,
   loadBundledMaterialEvents,
   materialEventsForHoldings,
+  materialEventsForSecurity,
   materialEventSource,
   type MaterialEventCache
 } from "@/lib/material-events-data";
 import { Badge, Card, CardContent, GhostButton } from "./ui";
 
-export function MaterialEventsResearch({ state }: { state: AppState }) {
+export function MaterialEventsResearch({ state,security }: { state: AppState;security?:{market:"TWSE"|"TPEx";code:string;name:string} }) {
   const [cache, setCache] = useState<MaterialEventCache | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -50,8 +51,8 @@ export function MaterialEventsResearch({ state }: { state: AppState }) {
   }, []);
 
   const visible = useMemo(
-    () => cache ? materialEventsForHoldings(cache, state.holdings) : [],
-    [cache, state.holdings]
+    () => cache ? security?materialEventsForSecurity(cache,security.market,security.code):materialEventsForHoldings(cache, state.holdings) : [],
+    [cache, state.holdings,security]
   );
 
   const twHoldingCount = useMemo(
@@ -72,15 +73,15 @@ export function MaterialEventsResearch({ state }: { state: AppState }) {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[.14em] text-black/40 dark:text-white/40">Official Material Events · TWSE + TPEx</p>
-              <h3 className="mt-1 text-xl font-semibold">持股重大訊息</h3>
+              <h3 className="mt-1 text-xl font-semibold">{security?security.code+" "+security.name+" 重大訊息":"持股重大訊息"}</h3>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-black/55 dark:text-white/55">
-                只整理你目前持有台灣標的可對應到的官方重大訊息。顯示公司原始主旨、發言時間、事實發生日與說明，不做情緒分類、利多利空標籤或買賣評分。
+                {security?"僅顯示所選公司在官方快取期間的公告。":"只整理目前持有台灣標的可對應到的官方重大訊息。"}顯示原始主旨、發言時間及說明，不做利多利空評分。
               </p>
             </div>
           </div>
           <div className="text-right text-sm text-black/45 dark:text-white/45">
-            <p>台灣投資部位 {twHoldingCount}</p>
-            <p>近期持股公告 {visible.length}</p>
+            {security?<p>標的 {security.market}:{security.code}</p>:<p>台灣投資部位 {twHoldingCount}</p>}
+            <p>近期公告 {visible.length}</p>
             <p>{latestDate ? `cache 最新公告日 ${latestDate}` : "尚無公告日期"}</p>
           </div>
         </div>
@@ -119,7 +120,7 @@ export function MaterialEventsResearch({ state }: { state: AppState }) {
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold">{row.name || row.code}</p>
                       <span className="text-xs text-black/40 dark:text-white/40">{row.code}</span>
-                      <Badge tone="good">持有</Badge>
+                      {!security?<Badge tone="good">持有</Badge>:null}
                       <Badge>{row.market}</Badge>
                     </div>
                     <p className="mt-3 text-sm font-semibold leading-6">{row.subject}</p>
@@ -171,7 +172,7 @@ export function MaterialEventsResearch({ state }: { state: AppState }) {
       {!loading && !error && !seededOnly && visible.length === 0 ? (
         <div className="py-14 text-center">
           <p className="text-sm text-black/40 dark:text-white/40">
-            {twHoldingCount === 0
+            {security?"目前快取期間內沒有此標的官方重大訊息。":twHoldingCount === 0
               ? "目前沒有台灣股票／ETF 部位，因此沒有持股重大訊息可顯示。"
               : "目前快取期間內沒有可對應到你持股的官方重大訊息。"}
           </p>

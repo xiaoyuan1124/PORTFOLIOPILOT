@@ -23,12 +23,14 @@ export function Watchlist({
   state,
   onChange,
   onOpenResearch,
-  onAddHolding
+  onAddHolding,
+  workbench=false
 }: {
   state: AppState;
   onChange: (state: AppState) => boolean;
   onOpenResearch?: (researchKey: string, researchType: "stock" | "etf") => void;
   onAddHolding?: (candidate: HoldingLookupCandidate) => void;
+  workbench?:boolean;
 }) {
   const watched = state.watchlist ?? [];
   const [catalog, setCatalog] = useState<HoldingLookupCandidate[] | null>(null);
@@ -88,13 +90,13 @@ export function Watchlist({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[24px] border border-black/6 bg-[#1f332a] p-5 text-white shadow-sm dark:border-white/8 dark:bg-[#dce9e2] dark:text-[#122018]">
+      {!workbench?<div className="rounded-[24px] border border-black/6 bg-[#1f332a] p-5 text-white shadow-sm dark:border-white/8 dark:bg-[#dce9e2] dark:text-[#122018]">
         <p className="text-xs font-semibold uppercase tracking-[.14em] opacity-55">Watchlist · Local-first</p>
         <h3 className="mt-2 text-xl font-semibold">先追蹤，再決定要不要買</h3>
         <p className="mt-2 max-w-3xl text-sm leading-6 opacity-70">
           自選清單只存在你的裝置。台股與 ETF 身分、最近官方收盤價及資料日使用 PortfolioPilot 現有官方快取，不建立帳號、不上傳你的清單。
         </p>
-      </div>
+      </div>:null}
 
       <Card>
         <CardContent>
@@ -170,10 +172,18 @@ export function Watchlist({
         {watched.length ? <Badge>{watched.length} 檔</Badge> : null}
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className={workbench?"divide-y divide-black/10 border-y border-black/10 dark:divide-white/10 dark:border-white/10":"grid gap-3 lg:grid-cols-2"}>
         {watched.map((item) => {
           const current = lookup.get(watchlistKey(item));
           const held = heldSymbols.has(item.symbol.trim().toUpperCase());
+          if(workbench)return <div key={item.id} className="space-y-1 py-3">
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={()=>onOpenResearch?.(item.venue+":"+item.symbol,item.type)} className="min-w-0 flex-1 text-left"><strong className="block break-words text-sm">{item.symbol} · {item.name}</strong><span className="block text-xs opacity-65">{item.type==="etf"?"ETF":item.industry} · {item.venue}{held?" · 持有":""}</span></button>
+              <div className="shrink-0 text-right"><strong className="block text-sm tabular-nums">{current?current.close.toLocaleString():"—"}</strong><span className="text-xs opacity-65">{current?.date??"資料不足"}</span></div>
+              <GhostButton type="button" className="h-10 min-h-10 w-10 shrink-0 px-0" aria-label={"移除 "+item.name} onClick={()=>remove(item.venue,item.symbol,item.name)}><Trash2 size={14}/></GhostButton>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-1"><p className="text-xs opacity-65">加入 {item.addedAt}{!current?" · 官方資料暫缺，已保留":" · 官方收盤"}</p>{!held&&current&&onAddHolding?<GhostButton type="button" className="min-h-9 px-2 text-xs" onClick={()=>onAddHolding(current)}><Plus size={14}/>轉成持股</GhostButton>:null}</div>
+          </div>;
           return (
             <Card key={item.id}>
               <CardContent className="p-4">

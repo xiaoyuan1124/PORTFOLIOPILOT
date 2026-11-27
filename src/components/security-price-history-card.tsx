@@ -8,6 +8,8 @@ import { loadTwPriceHistory, type TwPriceHistorySeries } from "@/lib/price-histo
 import { priceHistoryMetrics, relativePerformancePct } from "@/lib/price-history";
 import { Card, CardContent, InfoDisclosure } from "./ui";
 import { useResumeRefreshKey } from "./use-resume-refresh-key";
+import {WorkbenchPriceChart} from "./workbench-price-chart";
+import {loadDecisionHistoryGroup,loadTwPriceHistoryIndex} from "@/lib/price-history-data";
 
 function signedPct(value: number | null | undefined) {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
@@ -16,10 +18,12 @@ function signedPct(value: number | null | undefined) {
 
 export function SecurityPriceHistoryCard({
   market,
-  symbol
+  symbol,
+  workbench=false
 }: {
   market: "TWSE" | "TPEx";
   symbol: string;
+  workbench?:boolean;
 }) {
   const requestKey = `${market}:${symbol.trim().toUpperCase()}`;
   const [loadState, setLoadState] = useState<{
@@ -32,7 +36,9 @@ export function SecurityPriceHistoryCard({
 
   useEffect(() => {
     let active = true;
-    void loadTwPriceHistory(market, symbol)
+    const controller=new AbortController();
+    const request=workbench?loadTwPriceHistoryIndex().then(index=>loadDecisionHistoryGroup([{market,code:symbol}],index,controller.signal)).then(group=>{const h=group.get(requestKey);if(!h)throw new Error("此標的沒有同版本歷史行情");return h;}):loadTwPriceHistory(market, symbol);
+    void request
       .then((value) => {
         if (!active) return;
         setLoadState({ key: requestKey, history: value, error: "" });
@@ -45,8 +51,8 @@ export function SecurityPriceHistoryCard({
           error: cause instanceof Error ? cause.message : "歷史行情暫時不可用。"
         });
       });
-    return () => { active = false; };
-  }, [market, requestKey, resumeRefreshKey, symbol]);
+    return () => { active = false;controller.abort(); };
+  }, [market, requestKey, resumeRefreshKey, symbol,workbench]);
 
   useEffect(() => {
     let active = true;
@@ -98,6 +104,7 @@ export function SecurityPriceHistoryCard({
 
         {metrics ? (
           <>
+            {workbench&&history?<WorkbenchPriceChart key={requestKey} history={history}/>:null}
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
               <div className="mini-metric"><span>1M</span><strong>{signedPct(metrics.oneMonth?.returnPct)}</strong><small className="mt-1 block font-normal text-black/38 dark:text-white/38">相對加權 {signedPct(relative?.oneMonth)}</small></div>
               <div className="mini-metric"><span>3M</span><strong>{signedPct(metrics.threeMonth?.returnPct)}</strong><small className="mt-1 block font-normal text-black/38 dark:text-white/38">相對加權 {signedPct(relative?.threeMonth)}</small></div>
@@ -106,7 +113,7 @@ export function SecurityPriceHistoryCard({
               <div className="mini-metric"><span>最大回撤</span><strong>{signedPct(metrics.maxDrawdownPct)}</strong></div>
               <div className="mini-metric"><span>年化波動度</span><strong>{signedPct(metrics.annualizedVolatilityPct)}</strong></div>
             </div>
-            <div className="mt-4 h-[210px] w-full">
+            {!workbench?<div className="mt-4 h-[210px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={metrics.points.map(([date, close]) => ({ date, close }))} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
                   <XAxis dataKey="date" axisLine={false} tickLine={false} minTickGap={32} tick={{ fontSize: 10 }} tickFormatter={(value) => String(value).slice(5)} />
@@ -119,7 +126,7 @@ export function SecurityPriceHistoryCard({
                   <Area type="monotone" dataKey="close" stroke="#456b58" strokeWidth={2} fill="#456b58" fillOpacity={0.12} />
                 </AreaChart>
               </ResponsiveContainer>
-            </div>
+            </div>:null}
             <p className="mt-2 text-[11px] text-black/35 dark:text-white/35">{metrics.firstDate} → {metrics.latestDate} · {metrics.points.length} 個交易日</p>
             <InfoDisclosure summary="歷史價格口徑" className="mt-3">
               使用 TWSE／TPEx 官方每日收盤價。這是 raw price return，不含現金股利再投資，也沒有自行製作還原價；除權息會直接反映在價格序列，因此不可視為總報酬。「相對加權」使用同期間 TWSE TAIEX Price Index，兩邊都採價格報酬口徑；數值代表相對價格表現，不是投資評級。

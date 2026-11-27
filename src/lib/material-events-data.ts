@@ -76,3 +76,8 @@ export function materialEventSource(cache: MaterialEventCache, market: MaterialE
 export function latestMaterialEventDate(cache: MaterialEventCache) {
   return cache.rows.map((row) => row.publishedDate).sort().at(-1) ?? null;
 }
+
+export function materialEventsForSecurity(cache:MaterialEventCache,market:MaterialEventRow["market"],code:string,limit=80){
+  const key=twSecurityKey(market,code);
+  return cache.rows.filter(row=>twSecurityKey(row.market,row.code)===key).sort((a,b)=>b.publishedDate.localeCompare(a.publishedDate)||b.publishedTime.localeCompare(a.publishedTime)).slice(0,limit);
+}
