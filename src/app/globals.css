@@ -20,6 +20,18 @@ html.dark {
 html {
   min-height: 100%;
   background: #f4f2ed;
+  /* Keep browser-driven focus/scrollIntoView clear of the sticky header. */
+  scroll-padding-top: calc(5.5rem + var(--safe-area-top));
+  scroll-padding-bottom: calc(6rem + var(--safe-area-bottom));
+}
+
+@media (min-width: 768px) and (min-height: 501px) {
+  html { scroll-padding-top: calc(6rem + var(--safe-area-top)); scroll-padding-bottom: calc(1.5rem + var(--safe-area-bottom)); }
+}
+
+/* The scroll padding is a reserved viewing region, not extra page height. */
+.app-page-content :is(button, summary, input, select, textarea, a[href]) {
+  scroll-margin-block: .5rem;
 }
 
 html.dark {

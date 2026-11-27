@@ -42,6 +42,20 @@ async function checkLayout(page, screen, section) {
   await page.screenshot({ path: `mobile-artifacts/${screen}-${section}.png`, animations: "disabled" });
 }
 
+async function clickWithinContent(page, locator) {
+  await locator.waitFor({state:"visible"});
+  await locator.evaluate(el=>{
+    const header=document.querySelector(".app-topbar");
+    const nav=document.querySelector(".app-mobile-nav");
+    const top=Math.max(0,header?.getBoundingClientRect().bottom??0);
+    const navRect=nav?.getBoundingClientRect();
+    const bottom=navRect&&navRect.height>0?Math.min(innerHeight,navRect.top):innerHeight;
+    const rect=el.getBoundingClientRect();
+    window.scrollBy({top:rect.top+rect.height/2-(top+bottom)/2,behavior:"instant"});
+  });
+  await locator.click();
+}
+
 try {
   for (const viewport of viewports) {
     const context = await browser.newContext({
@@ -145,6 +159,11 @@ try {
     const scan=page.getByTestId("decision-scanner");
     await scan.waitFor();
     await scan.getByLabel("掃描範圍").selectOption("watch");
+    const marketResearch=page.getByTestId("market-research-scanner");
+    await marketResearch.locator("summary").click();
+    await marketResearch.getByRole("button",{name:"技術條件選股",exact:true}).click();
+    await marketResearch.getByRole("button",{name:"開始市場研究掃描",exact:true}).waitFor();
+    await marketResearch.locator("summary").click();
     await scan.getByRole("button",{name:"開始六面向掃描",exact:true}).click();
     await scan.getByTestId("decision-scan-result").waitFor({timeout:30000});
     await scan.getByRole("button",{name:/2330.*台積電/}).waitFor();
@@ -167,12 +186,16 @@ try {
     // and percentage-point strings must not widen the document viewport.
     const historySummary = page.getByText("展開進階歷史成份異動圖表", { exact: true });
     await historySummary.waitFor({ timeout: 20000 });
-    await historySummary.click();
+    // Use the visible content region, excluding fixed navigation, just as a
+    // person would scroll a disclosure into reach before tapping it. A real
+    // pointer hit is still required; do not force or bypass the click.
+    await clickWithinContent(page,historySummary);
+
     await page.getByText("歷史快照與成份異動／調倉線索", { exact: true }).waitFor();
     await checkLayout(page, viewport.name, "etf-history-expanded");
     const fullChanges = page.locator("summary").filter({ hasText: /^查看全部 \d+ 筆成份變化$/ });
     if (await fullChanges.count()) {
-      await fullChanges.click();
+      await clickWithinContent(page,fullChanges);
       await checkLayout(page, viewport.name, "etf-history-full-changes");
     }
 
@@ -388,11 +411,49 @@ try {
     await page.getByTestId("stock-decision-result").waitFor({timeout:30000});
     const priceChart=page.getByTestId("workbench-price-chart");
     await priceChart.waitFor({timeout:30000});
-    await priceChart.getByRole("button",{name:"週K",exact:true}).click();
-    await priceChart.getByRole("button",{name:"月K",exact:true}).click();
-    await priceChart.getByRole("button",{name:"收盤線",exact:true}).click();
-    await priceChart.getByRole("slider",{name:"查看圖表日期"}).fill("0");
+    // Preserve the shared chart contract, and exercise the new chart instead
+    // of merely falling back to the old implementation.
+    const proChart=priceChart.getByTestId("technical-analysis");
+    await proChart.waitFor();
+    await proChart.getByRole("img",{name:"互動歷史價格主圖"}).waitFor();
+    for(const period of ["週K","月K","日K"]){
+      const button=proChart.getByRole("button",{name:period,exact:true});
+      await button.click();
+      assert.equal(await button.getAttribute("aria-pressed"),"true");
+    }
+    const closeButton=proChart.getByRole("button",{name:"收盤線",exact:true});
+    await closeButton.click();
+    assert.equal(await closeButton.getAttribute("aria-pressed"),"true");
+    const dateSlider=proChart.getByRole("slider",{name:"查看圖表日期"});
+    const dateValue=proChart.getByTestId("technical-selected-date");
+    const lastDate=await dateValue.innerText();
+    await dateSlider.fill("0");
+    assert.equal(await dateSlider.inputValue(),"0");
+    assert.ok(await dateValue.innerText() < lastDate,"date slider must select an earlier visible candle");
+    await proChart.getByRole("img",{name:"MACD歷史曲線",exact:true}).waitFor();
+    await proChart.getByRole("img",{name:"RSI歷史曲線",exact:true}).waitFor();
+    const patternPanel=proChart.getByTestId("technical-pattern-research");
+    await patternPanel.waitFor();
+    await patternPanel.getByRole("button",{name:"指標背離",exact:true}).click();
+    assert.equal(await patternPanel.getByRole("button",{name:"指標背離",exact:true}).getAttribute("aria-pressed"),"true");
+    await patternPanel.getByRole("button",{name:"全部訊號",exact:true}).click();
+    await proChart.getByRole("button",{name:"開始重播",exact:true}).click();
+    await proChart.getByText(/已揭露 .* 根；/).waitFor();
+    const replayBefore=await proChart.getByText(/已揭露 .* 根；/).innerText();
+    await proChart.getByRole("button",{name:"下一根",exact:true}).click();
+    assert.notEqual(await proChart.getByText(/已揭露 .* 根；/).innerText(),replayBefore);
+    await proChart.getByRole("button",{name:"結束",exact:true}).click();
+    await proChart.getByRole("button",{name:"全螢幕",exact:true}).click();
+    await proChart.getByRole("button",{name:"退出全螢幕",exact:true}).click();
     await checkLayout(page,viewport.name,"workbench-stock");
+    await priceChart.getByRole("button",{name:"切換簡易圖",exact:true}).click();
+    const simpleChart=priceChart.getByTestId("simple-workbench-price-chart");
+    await simpleChart.waitFor();
+    await simpleChart.getByRole("button",{name:"週K",exact:true}).click();
+    await simpleChart.getByRole("slider",{name:"查看圖表日期"}).fill("0");
+    await priceChart.getByRole("button",{name:"開啟專業技術分析",exact:true}).click();
+    await proChart.waitFor();
+    await checkLayout(page,viewport.name,"workbench-stock-restored");
     await nav.getByRole("button",{name:"自選",exact:true}).click();
     await page.getByTestId("decision-scanner").getByLabel("掃描範圍").waitFor();
     assert.equal(await page.getByTestId("decision-scanner").getByLabel("掃描範圍").inputValue(),"watch");

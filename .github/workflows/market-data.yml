@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "scripts/update-market-data.mjs"
+      - "scripts/lib/institutional-history.mjs"
       - "scripts/update-etf-compositions.mjs"
       - "scripts/lib/etf-composition-data.mjs"
       - "scripts/lib/etf-composition-history.mjs"
@@ -85,7 +86,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Commit changed caches
         run: |
-          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-material-events.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json public/data/tw-etf-compositions.json; then
+          if test -f public/data/tw-institutional-history.json; then git add public/data/tw-institutional-history.json; fi
+          if git diff --cached --quiet && git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-material-events.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json public/data/tw-etf-compositions.json; then
             echo "No market data changes."
           else
             git config user.name "github-actions[bot]"
