@@ -54,7 +54,8 @@ describe("stock decision",()=>{
     expect(assessStock({...input,today:"2026-01-01"}).status).toBe("insufficient");
     const gap=assessStock({...input,points:input.points.filter((_,i)=>i!==280)});
     expect(gap.missing.some(m=>m.includes("停牌"))).toBe(true);
-    expect(assessStock({...input,points:input.points.slice(0,-1)}).technical.lastDate).not.toBe(input.today);
+    expect(assessStock({...input,points:input.points.slice(0,-2)}).technical.lastDate).not.toBe(input.today);
+    expect(assessStock({...input,points:input.points.slice(0,-1)}).latestCloseBridged).toBe(true);
   });
   it("rejects a quote for a different issuer or venue and gaps in either direction",()=>{
     const input=sample(series(300));
@@ -64,6 +65,23 @@ describe("stock decision",()=>{
     expect(earlyGap.missing.some(m=>m.includes("停牌"))).toBe(true);
     const benchmarkGap=assessStock({...input,benchmark:{...input.benchmark,points:input.benchmark.points.filter((_,i)=>i!==200)}});
     expect(benchmarkGap.missing.some(m=>m.includes("停牌"))).toBe(true);
+  });
+  it("bridges only one verified terminal close without fabricating OHLC or hiding gaps",()=>{
+    const input=sample(series(300));
+    const result=assessStock({...input,points:input.points.slice(0,-1)});
+    expect(result.latestCloseBridged).toBe(true);
+    expect(result.technical.lastDate).toBe(input.today);
+    expect(result.technical.atr14).toBeNull();
+    expect(result.technical.indicators.volumeRatio20).toBeNull();
+    expect(assessStock({...input,points:input.points.slice(0,-2)}).latestCloseBridged).toBe(false);
+    expect(assessStock({...input,points:input.points.slice(0,-1),offline:true}).latestCloseBridged).toBe(false);
+    expect(assessStock({...input,points:input.points.slice(0,-1),historyIssues:[input.today]}).latestCloseBridged).toBe(false);
+    expect(assessStock({...input,points:input.points.slice(0,-1),benchmark:null}).latestCloseBridged).toBe(false);
+    const gap=assessStock({...input,points:input.points.filter((_,i)=>i!==100&&i!==299)});
+    expect(gap.status).toBe("insufficient");
+    expect(gap.missing.some(m=>m.includes("停牌"))).toBe(true);
+    const conflict=assessStock({...input,points:[...input.points.slice(0,-1),[input.today,1]]});
+    expect(conflict.latestCloseBridged).toBe(false);expect(conflict.status).toBe("insufficient");
   });
   it("does not expose stale quotes as verified for sizing",()=>{
     const input=sample(series(300));
@@ -94,6 +112,14 @@ describe("stock decision",()=>{
     expect(r.peerCount).toBe(5);
     expect(r.coverage).toBe(100);
     expect(r.status).not.toBe("insufficient");
+    const previous=p.at(-2)![0];
+    const priorSnapshot={...s,valuation:{...s.valuation!,date:previous}};
+    const priorPeers=peers.map(x=>({...x,valuation:{...x.valuation!,date:previous}}));
+    const lagged=assessStock({...input,snapshot:priorSnapshot,peers:priorPeers});
+    expect(lagged.valuationDate).toBe(previous);expect(lagged.peRank).toBe(r.peRank);
+    expect(lagged.warnings.some(w=>w.includes("落後一個"))).toBe(true);
+    expect(assessStock({...input,snapshot:priorSnapshot,peers}).peRank).toBeNull();
+    expect(assessStock({...input,snapshot:{...priorSnapshot,valuation:{...priorSnapshot.valuation,date:p.at(-3)![0]}},peers:priorPeers}).peRank).toBeNull();
     for (const row of s.strategy.grossMarginGate.values) {row.operatingIncome=-1;row.operatingMarginPct=-1;row.netIncome=-2;row.cumulativeEps=-0.5;}
     const loss=assessStock({...input,peers});
     expect(loss.warnings.some(w=>w.includes("核心業務虧損"))).toBe(true);

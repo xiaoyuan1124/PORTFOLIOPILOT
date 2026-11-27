@@ -3,7 +3,7 @@ import type { CompanySnapshot } from "./company-snapshot";
 import type { BenchmarkSeries } from "./benchmark";
 import type { PortfolioRiskResult } from "./portfolio-risk";
 
-export const DECISION_VERSION = "research-v1.5.1";
+export const DECISION_VERSION = "research-v1.5.2";
 export const PERIODS = [5, 10, 20, 60, 120, 240] as const;
 export type Horizon = "short" | "swing" | "long";
 export const HORIZON_LABELS: Record<Horizon, string> = { short: "短線", swing: "波段", long: "長期" };
@@ -149,19 +149,26 @@ export function assessStock(input: {
   const { snapshot: s, horizon, today, latestMarketDate } = input;
   const date = s.quote?.date ?? "";
   const asOf = validDate(date) && date <= today ? date : today;
-  const t = technicalSnapshot(input.points, asOf, input.candles);
   const warnings: string[] = [];
   const missing: string[] = [];
   const reasons: string[] = [];
   const quoteOK = Boolean(s.quote && s.quote.code===s.code && s.quote.market===s.market && validDate(date) && date <= today && positive(s.quote.close) &&
     date === latestMarketDate && daysBetween(date, today) <= 7 && !input.offline);
+  const benchmark = input.benchmark;
+  const bm = normalizeDecisionPoints(benchmark?.points.map(p => [p.date, p.value] as const) ?? [], asOf);
+  const original = normalizeDecisionPoints(input.points, asOf);
+  // A separately verified official close may supply exactly one missing final
+  // trading session. Never fill an internal gap, replace a conflicting price,
+  // bridge multiple sessions, or invent high/low/volume.
+  const latestCloseBridged = Boolean(quoteOK && !input.historyIssues?.length && !original.conflicts.length && !bm.conflicts.length && original.points.length > 0 && (original.points.at(-1)?.[0]??date) < date && bm.points.at(-1)?.[0] === date && bm.points.at(-2)?.[0] === original.points.at(-1)?.[0]);
+  const analysisPoints: readonly Point[] = latestCloseBridged ? [...input.points,[date,s.quote!.close] as const] : input.points;
+  const t = technicalSnapshot(analysisPoints, asOf, input.candles);
+  if(latestCloseBridged) warnings.push("最新官方收盤已補入最後一個交易日；歷史分桶待更新，缺少的 OHLC／成交量不推算。");
   const historyOK = quoteOK && t.lastDate === date && t.close === s.quote?.close &&
     !t.conflicts.length && !(input.historyIssues?.length);
   if (!quoteOK) missing.push("官方收盤資料過期、無效或離線，待同步。");
   if (!historyOK) missing.push("歷史價格與最新官方收盤尚未完整對齊。");
   if (input.historyIssues?.length) missing.push("歷史行情存在未補齊的交易日。");
-  const benchmark = input.benchmark;
-  const bm = normalizeDecisionPoints(benchmark?.points.map(p => [p.date, p.value] as const) ?? [], asOf);
   const bmMap = new Map(bm.points);
   // A broad TWSE calendar is also a conservative proxy for TPEx; do not fill gaps.
   // Bias ranks and momentum use more than the last 245 sessions. Validate the entire input window.
@@ -192,12 +199,19 @@ export function assessStock(input: {
   const revOK = consecutiveCompleted(revenues.map(r=>r.period), currentMonth, monthIndex, 2) &&
     revenues.every(r => finite(r.yoyPct) && positive(r.revenue));
   const growth = revOK ? clamp(50 + mean(revenues.map(r => r.yoyPct!)) * 1.5) : null;
-  const pe = s.valuation?.date === date && s.valuation.code === s.code && s.valuation.market === s.market && positive(s.valuation.pe) ? s.valuation.pe : null;
+  const valuationDate = s.valuation?.date ?? "";
+  // Compare the official valuation with peers from the same valuation date.
+  // One prior trading session is allowed only if the index calendar confirms
+  // both dates. Do not estimate a fresh P/E from a price ratio or label it today.
+  const valuationDateOK = validDate(valuationDate) && (valuationDate === date || (valuationDate < date && !bm.conflicts.length && bm.points.at(-1)?.[0]===date && bm.points.at(-2)?.[0]===valuationDate));
+  const ownValuationOK = valuationDateOK && s.valuation?.code===s.code && s.valuation.market===s.market;
+  const pe = ownValuationOK && positive(s.valuation?.pe) ? s.valuation!.pe : null;
+  if(ownValuationOK && valuationDate!==date) warnings.push("官方估值截至 "+valuationDate+"（較收盤落後一個已驗證交易日）；與同日同業比較，非最新收盤本益比。");
   const peerMap = new Map<string, number>();
   const peerConflicts = new Set<string>();
   for (const p of input.peers) {
     if (!s.industry || (p.code === s.code && p.market === s.market) || p.type !== "stock" || p.industry !== s.industry ||
-        p.valuation?.date !== date || p.valuation.code !== p.code || p.valuation.market !== p.market || !positive(p.valuation.pe)) continue;
+        p.valuation?.date !== valuationDate || p.valuation.code !== p.code || p.valuation.market !== p.market || !positive(p.valuation.pe)) continue;
     const key = p.market + ":" + p.code;
     if (peerMap.has(key) && peerMap.get(key) !== p.valuation.pe) peerConflicts.add(key);
     peerMap.set(key,p.valuation.pe);
@@ -222,7 +236,7 @@ export function assessStock(input: {
   const factors: Factor[] = [
     { key:"quality", label:"基本面", score:quality, detail: marginOK ? (operatingComplete?"三季毛利率及營業利益率代理指標。":"僅三季毛利率變化，營業利益率未齊。")+" EPS 為公告累計值（若有），未納入 ROIC、現金流及負債。" : "三季毛利率不足或不適用。" },
     { key:"growth", label:"成長面", score:growth, detail:revOK ? "三月營收年增率平均 " + fmt(mean(revenues.map(r=>r.yoyPct!))) + "%；非獲利預測。" : "三月營收歷史不足。" },
-    { key:"valuation", label:"估值面", score:valuation, detail:peRank !== null ? "同產業正本益比 " + fmt(pe) + " 倍，第 " + fmt(peRank,0) + " 百分位（同業 " + peerPE.length + " 家）。" : "缺少同日正本益比或足夠同業；不以零倍當便宜。" },
+    { key:"valuation", label:"估值面", score:valuation, detail:peRank !== null ? "官方估值日 " + valuationDate + "；同產業正本益比 " + fmt(pe) + " 倍，第 " + fmt(peRank,0) + " 百分位（同業 " + peerPE.length + " 家）。" : "缺少最近一個已驗證交易日內的正本益比，或同估值日足夠同業；不以零倍當便宜。" },
     { key:"technical", label:"技術面", score:technique, detail:t.trend + "；月線乖離 " + fmt(t.monthly.bias) + "%；原始價格、未還原權息。" },
     { key:"flow", label:"籌碼面", score:flow, detail:flowOK ? "近十日外資及投信方向；未含融資、流動性及持股分級。" : "缺少同日完整十日法人資料。" },
     { key:"market", label:"市場面", score:market, detail:"加權指數季線位置與斜率；上櫃個股僅作大盤參考。" }
@@ -254,7 +268,7 @@ export function assessStock(input: {
   if (operatingLoss) warnings.push("最新單季營業利益為負，核心業務虧損。");
   if (netLoss) warnings.push("最新單季本期淨利為負，須檢查一次性或持續性因素。");
   // A non-positive published P/E is not cheap; loss-making valuations must not earn a short-term pass.
-  const nonPositivePE = s.valuation?.date===date && s.valuation.code===s.code && s.valuation.market===s.market && finite(s.valuation.pe) && s.valuation.pe<=0;
+  const nonPositivePE = ownValuationOK && finite(s.valuation?.pe) && s.valuation!.pe!<=0;
   if(nonPositivePE)warnings.push("官方本益比非正值，不能當成低估。");
   const hardRisk = t.overheat || t.falling || weakMargin || exceptionalMove || operatingLoss || netLoss || nonPositivePE || !!(exposure && exposure.portfolioPct >= 20);
   const unmetConditions = [
@@ -271,7 +285,7 @@ export function assessStock(input: {
   const status: Status = s.type === "etf" ? "not_applicable" : insufficient ? "insufficient" :
     hardRisk ? "risk" : score !== null && score >= 70 && technique >= 60 ? "met" : "wait";
   return { version: DECISION_VERSION, asOf, status, factors, coverage, score, technical:t, relative, pe, peRank, peerCount:peerPE.length,
-    warnings, missing, limitations: reasons, unmetConditions, companyScore, timingScore, financialRows, quoteVerified:quoteOK, exposurePct: exposure?.portfolioPct ?? null,
+    warnings, missing, limitations: reasons, unmetConditions, companyScore, timingScore, financialRows, quoteVerified:quoteOK, latestCloseBridged, valuationDate:ownValuationOK?valuationDate:null, exposurePct: exposure?.portfolioPct ?? null,
     portfolioCoverage: risk?.riskCoveragePct ?? null };
 }
 export function positionRisk(input: { entry: number; target: number; stop: number; available: number; riskBudget: number; feeRate: number; taxRate: number; slippageRate: number; minimumFee: number }) {

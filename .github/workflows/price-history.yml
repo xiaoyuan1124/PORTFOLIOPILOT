@@ -13,6 +13,8 @@ on:
     # Run after the final closing-quote attempt; the second slot is a delayed-cron fallback.
     # The updater exits early when history already matches tw-quotes, avoiding cache churn.
     - cron: "47 15,17 * * 1-5"
+    # Saturday UTC catch-up (Taiwan Saturday morning) for Friday closing data.
+    - cron: "15 0 * * 6"
   workflow_dispatch:
 
 permissions:
@@ -28,6 +30,8 @@ jobs:
   refresh-and-build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      pages_artifact_name: ${{ steps.pages_name.outputs.name }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -53,8 +57,12 @@ jobs:
       - name: Build site with refreshed price history
         run: npm run build
       - uses: actions/configure-pages@v6
+      - name: Choose unique Pages artifact name
+        id: pages_name
+        run: echo "name=github-pages-${{ github.run_attempt }}" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-pages-artifact@v5
         with:
+          name: ${{ steps.pages_name.outputs.name }}
           path: ./out
 
   deploy:
@@ -67,3 +75,5 @@ jobs:
       - name: Deploy refreshed price history
         id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          artifact_name: ${{ needs.refresh-and-build.outputs.pages_artifact_name }}
