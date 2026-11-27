@@ -1,11 +1,11 @@
 {
   "version": 1,
   "universeVersion": 3,
-  "generatedAt": "2026-11-26T17:44:13.534Z",
+  "generatedAt": "2026-11-27T19:57:13.484Z",
   "calendarDays": 400,
-  "startDate": "2025-10-22",
-  "endDate": "2026-11-26",
-  "targetEndDate": "2026-11-26",
+  "startDate": "2025-10-23",
+  "endDate": "2026-11-27",
+  "targetEndDate": "2026-11-27",
   "sources": [
     {
       "market": "TWSE",
@@ -21,15 +21,15 @@
   "markets": {
     "TWSE": {
       "symbols": 1397,
-      "points": 355900,
+      "points": 355989,
       "buckets": 67,
-      "candles": 43760
+      "candles": 45144
     },
     "TPEx": {
       "symbols": 1025,
-      "points": 256186,
+      "points": 256249,
       "buckets": 60,
-      "candles": 31314
+      "candles": 32295
     }
   },
   "failed": []
