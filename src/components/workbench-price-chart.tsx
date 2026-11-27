@@ -10,7 +10,7 @@ const maColors={ma20:"#c08a34",ma60:"#7999d8",ma240:"#a98bc9"};
 const fmt=(n:number|null)=>n===null?"—":n.toLocaleString("zh-TW",{maximumFractionDigits:2});
 export function WorkbenchPriceChart({history}:{history:TwPriceHistorySeries}){
  const [pro,setPro]=useState(true);
- return <div className="space-y-2"><button type="button" className="min-h-11 rounded border border-current/20 px-3 text-sm" onClick={()=>setPro(v=>!v)}>{pro?"切換簡易圖":"開啟專業技術分析"}</button>{pro?<TechnicalAnalysis key={history.market+":"+history.symbol} history={history}/>:<SimpleWorkbenchPriceChart history={history}/>}</div>;
+ return <div className="space-y-2 min-w-0" data-testid="workbench-price-chart"><button type="button" className="min-h-11 rounded border border-current/20 px-3 text-sm" onClick={()=>setPro(v=>!v)}>{pro?"切換簡易圖":"開啟專業技術分析"}</button>{pro?<TechnicalAnalysis key={history.market+":"+history.symbol} history={history}/>:<SimpleWorkbenchPriceChart history={history}/>}</div>;
 }
 function SimpleWorkbenchPriceChart({history}:{history:TwPriceHistorySeries}){
  const [period,setPeriod]=useState<ChartPeriod>("day");
@@ -32,7 +32,7 @@ function SimpleWorkbenchPriceChart({history}:{history:TwPriceHistorySeries}){
  const series=(key:"close"|typeof maKeys[number])=>{let d="",prev=false;rows.forEach((b,i)=>{const v=b[key];if(v===null){prev=false;return;}d+=(prev?" L":" M")+x(i)+" "+y(v);prev=true;});return d;};
  const selectedIndex=selected?rows.indexOf(selected):-1;
  if(!rows.length)return <p role="status" className="p-3 text-xs">歷史價格缺少有效資料或存在衝突，暫不繪圖。</p>;
- return <section className="space-y-2" data-testid="workbench-price-chart">
+ return <section className="space-y-2" data-testid="simple-workbench-price-chart">
   <div className="flex flex-wrap items-center justify-between gap-2">
    <div role="group" aria-label="K線週期" className="workbench-subtabs">{periods.map(([key,label])=><button type="button" key={key} aria-pressed={period===key} onClick={()=>{setPeriod(key);setCursor(null);}}>{label}K</button>)}</div>
    <div role="group" aria-label="圖表類型" className="workbench-subtabs">{[["candle","K線"],["close","收盤線"]].map(([key,label])=><button type="button" key={key} aria-pressed={mode===key} onClick={()=>setMode(key as typeof mode)}>{label}</button>)}</div>

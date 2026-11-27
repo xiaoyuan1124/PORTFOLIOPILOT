@@ -388,11 +388,44 @@ try {
     await page.getByTestId("stock-decision-result").waitFor({timeout:30000});
     const priceChart=page.getByTestId("workbench-price-chart");
     await priceChart.waitFor({timeout:30000});
-    await priceChart.getByRole("button",{name:"週K",exact:true}).click();
-    await priceChart.getByRole("button",{name:"月K",exact:true}).click();
-    await priceChart.getByRole("button",{name:"收盤線",exact:true}).click();
-    await priceChart.getByRole("slider",{name:"查看圖表日期"}).fill("0");
+    // Preserve the shared chart contract, and exercise the new chart instead
+    // of merely falling back to the old implementation.
+    const proChart=priceChart.getByTestId("technical-analysis");
+    await proChart.waitFor();
+    await proChart.getByRole("img",{name:"互動歷史價格主圖"}).waitFor();
+    for(const period of ["週K","月K","日K"]){
+      const button=proChart.getByRole("button",{name:period,exact:true});
+      await button.click();
+      assert.equal(await button.getAttribute("aria-pressed"),"true");
+    }
+    const closeButton=proChart.getByRole("button",{name:"收盤線",exact:true});
+    await closeButton.click();
+    assert.equal(await closeButton.getAttribute("aria-pressed"),"true");
+    const dateSlider=proChart.getByRole("slider",{name:"查看圖表日期"});
+    const dateValue=proChart.getByTestId("technical-selected-date");
+    const lastDate=await dateValue.innerText();
+    await dateSlider.fill("0");
+    assert.equal(await dateSlider.inputValue(),"0");
+    assert.ok(await dateValue.innerText() < lastDate,"date slider must select an earlier visible candle");
+    await proChart.getByRole("img",{name:"MACD歷史曲線",exact:true}).waitFor();
+    await proChart.getByRole("img",{name:"RSI歷史曲線",exact:true}).waitFor();
+    await proChart.getByRole("button",{name:"開始重播",exact:true}).click();
+    await proChart.getByText(/已揭露 .* 根；/).waitFor();
+    const replayBefore=await proChart.getByText(/已揭露 .* 根；/).innerText();
+    await proChart.getByRole("button",{name:"下一根",exact:true}).click();
+    assert.notEqual(await proChart.getByText(/已揭露 .* 根；/).innerText(),replayBefore);
+    await proChart.getByRole("button",{name:"結束",exact:true}).click();
+    await proChart.getByRole("button",{name:"全螢幕",exact:true}).click();
+    await proChart.getByRole("button",{name:"退出全螢幕",exact:true}).click();
     await checkLayout(page,viewport.name,"workbench-stock");
+    await priceChart.getByRole("button",{name:"切換簡易圖",exact:true}).click();
+    const simpleChart=priceChart.getByTestId("simple-workbench-price-chart");
+    await simpleChart.waitFor();
+    await simpleChart.getByRole("button",{name:"週K",exact:true}).click();
+    await simpleChart.getByRole("slider",{name:"查看圖表日期"}).fill("0");
+    await priceChart.getByRole("button",{name:"開啟專業技術分析",exact:true}).click();
+    await proChart.waitFor();
+    await checkLayout(page,viewport.name,"workbench-stock-restored");
     await nav.getByRole("button",{name:"自選",exact:true}).click();
     await page.getByTestId("decision-scanner").getByLabel("掃描範圍").waitFor();
     assert.equal(await page.getByTestId("decision-scanner").getByLabel("掃描範圍").inputValue(),"watch");
