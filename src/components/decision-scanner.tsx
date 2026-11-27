@@ -31,7 +31,7 @@ export function DecisionScanner({state,onOpenStock,defaultScope="all",trackChang
   const [page,setPage]=useState(1);
   const [busy,setBusy]=useState(false);
   const [progress,setProgress]=useState({done:0,total:0});
-  const [result,setResult]=useState<{rows:DecisionScanRow[];horizon:Horizon;scope:string;date:string;failedGroups:number;stale:boolean;missingSources:string[]}|null>(null);
+  const [result,setResult]=useState<{rows:DecisionScanRow[];horizon:Horizon;scope:string;date:string;historyDate:string;benchmarkDate:string;quoteDates:string;failedGroups:number;stale:boolean;missingSources:string[]}|null>(null);
   const [error,setError]=useState("");
   const [review,setReview]=useState<{changes:{key:string;name:string;asOf:string;from:string;to:string}[];message:string}|null>(null);
   const active=useRef<AbortController|null>(null);
@@ -78,7 +78,7 @@ export function DecisionScanner({state,onOpenStock,defaultScope="all",trackChang
       }
       if(!signal.aborted){
         const stale=offline||!benchmark||latest.TWSE!==benchmark.asOf||latest.TWSE!==index.endDate||latest.TPEx!==index.endDate;
-        setResult({rows:output,horizon,scope,date:index.endDate??"未知",failedGroups,missingSources,stale});
+        setResult({rows:output,horizon,scope,date:[latest.TWSE,latest.TPEx].filter(Boolean).sort().at(-1)??"未知",historyDate:index.endDate??"未知",benchmarkDate:benchmark?.asOf??"未知",quoteDates:`上市 ${latest.TWSE??"—"}／上櫃 ${latest.TPEx??"—"}`,failedGroups,missingSources,stale});
         if(trackChanges&&scope==="watch"){
           try{
             const key=WATCH_REVIEW_KEY+":"+horizon,prev=parseWatchReview(localStorage.getItem(key),horizon);
@@ -108,7 +108,8 @@ export function DecisionScanner({state,onOpenStock,defaultScope="all",trackChang
     {review&&result?<div className="rounded-lg border border-current/15 p-3 text-xs" data-testid="watch-review"><p>{review.message}</p>{review.changes.map(x=><button type="button" key={x.key} onClick={()=>onOpenStock?.(x.key)} className="block min-h-11 w-full border-b border-current/10 text-left">{x.name} · {statusLabels[x.from as keyof typeof statusLabels]} → {statusLabels[x.to as keyof typeof statusLabels]} · {x.asOf}</button>)}</div>:null}
     {result?<div data-testid="decision-scan-result" className="space-y-3">
       <p className="text-xs opacity-70">行情截至 {result.date} · {HORIZON_LABELS[result.horizon]} · {result.rows.length} 檔</p>
-      {result.stale?<p className="text-xs text-amber-700 dark:text-amber-300">資料日期可能未同步；不完整的評估不列入符合條件名單。</p>:null}
+      {result.stale?<p className="text-xs text-amber-700 dark:text-amber-300">資料尚未完全同步；若有同日官方收盤與大盤日曆確認，僅補一個末日收盤，不補內部缺日或OHLC。未通過資料驗證的評估不列入符合條件名單。</p>:null}
+      <div className="text-xs opacity-75" data-testid="scan-source-dates">收盤：{result.quoteDates}｜歷史：{result.historyDate}｜大盤：{result.benchmarkDate}</div>
       {result.missingSources.length?<p className="text-xs text-amber-700 dark:text-amber-300">部分來源無法讀取：{result.missingSources.join("、")}。缺值不補猜。</p>:null}
       {result.failedGroups?<p className="text-xs text-amber-700 dark:text-amber-300">{result.failedGroups} 個行情分組未載入，相關股票標為資料不足。</p>:null}
       <div className="grid grid-cols-2 gap-2">{Object.entries(statusLabels).map(([k,label])=><button type="button" key={k} aria-pressed={filter===k} className="rounded-lg border border-current/15 p-2 text-left text-xs" onClick={()=>{setFilter(k as DecisionScanRow["status"]);setPage(1);}}>{label}<strong className="block text-lg">{counts[k]??0}</strong></button>)}</div>

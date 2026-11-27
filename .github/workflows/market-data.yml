@@ -83,14 +83,24 @@ jobs:
             echo ""
             echo "The official TWSE benchmark history request failed. The existing public/data/tw-benchmarks.json is preserved, and any independent verified market-data updates can still be published. Benchmark dates in the UI reflect the previous successful data source, not this failed attempt."
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Align official price history with refreshed closing quotes
+        id: price_history
+        continue-on-error: true
+        run: timeout 360s node scripts/update-price-history.mjs
+      - name: Report history refresh fallback
+        if: steps.price_history.outcome == 'failure'
+        run: |
+          git restore -- public/data/tw-price-history
+          git clean -f -- public/data/tw-price-history
+          echo "::warning::Official history refresh failed; previous history retained. Six-factor analysis will report dates and fail closed where not verified."
       - name: Commit changed caches
         run: |
-          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-material-events.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json public/data/tw-etf-compositions.json; then
+          if git diff --quiet -- public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-material-events.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json public/data/tw-etf-compositions.json public/data/tw-price-history; then
             echo "No market data changes."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-material-events.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json public/data/tw-etf-compositions.json
+            git add public/data/tw-quotes.json public/data/tw-revenue.json public/data/tw-valuations.json public/data/tw-revenue-history.json public/data/tw-institutional-10d.json public/data/tw-material-events.json public/data/tw-quarterly-margins.json public/data/tw-benchmarks.json public/data/tw-etf-compositions.json public/data/tw-price-history
             git commit -m "data: refresh Taiwan market data"
             git push
           fi
