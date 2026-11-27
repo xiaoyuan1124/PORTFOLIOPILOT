@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mergeInstitutionalHistory } from "./lib/institutional-history.mjs";
 import { parseTpexValuations, parseTwseValuations } from "./lib/valuation-data.mjs";
 import { combineQuoteMarkets, parseTpexQuoteRows, parseTwseQuoteRows } from "./lib/quote-data.mjs";
 
@@ -494,6 +495,7 @@ async function fetchInstitutional10d(latestQuoteDate) {
   return {
     tradingDates: accepted.map((day) => day.date),
     rows: aggregateInstitutionalDays(accepted),
+    accepted,
     sources: [
       {
         name: "TWSE T86",
@@ -566,6 +568,14 @@ async function main() {
   if (!latestQuoteDate) throw new Error("Cannot determine latest quote date for institutional lookback.");
   const institutional = await fetchInstitutional10d(latestQuoteDate);
 
+  let previousInstitutional = [];
+  try {
+    const archived = JSON.parse(await readFile("public/data/tw-institutional-history.json", "utf8"));
+    if (archived.version !== 1 || !Array.isArray(archived.days)) throw new Error("Invalid institutional archive");
+    previousInstitutional = archived.days;
+  } catch (error) { if (error?.code !== "ENOENT") throw error; }
+  const institutionalHistory = {version:1, generatedAt:fetchedAt, sources:institutional.sources, days:mergeInstitutionalHistory(previousInstitutional,institutional.accepted)};
+
   const quotePayload = {
     generatedAt: fetchedAt,
     sources: QUOTE_SOURCES.map((source) => ({ ...source, fetchedAt })),
@@ -618,6 +628,7 @@ async function main() {
   await writeFile("public/data/tw-revenue-history.json", JSON.stringify(revenueHistoryPayload, null, 2) + "\n", "utf8");
   await writeFile("public/data/tw-institutional-10d.json", JSON.stringify(institutionalPayload, null, 2) + "\n", "utf8");
 
+  await writeFile("public/data/tw-institutional-history.json", JSON.stringify(institutionalHistory) + "\n", "utf8");
   console.log(`Wrote ${quotes.length} TWSE/TPEx quotes`);
   console.log(`Wrote ${revenue.length} TWSE/TPEx latest monthly revenue rows`);
   console.log(`Wrote ${valuations.length} TWSE/TPEx official valuation rows`);

@@ -1,0 +1,4 @@
+import {describe,it,expect} from "vitest";
+import {stockFlows,type InstitutionalHistory} from "./institutional-history";
+const cache:InstitutionalHistory={version:1,generatedAt:"",sources:[],days:[{date:"2026-11-25",rows:[["TWSE","2330",1000,-500]]},{date:"2026-11-26",rows:[["TWSE","2330",2000,500]]},{date:"2026-11-27",rows:[["TWSE","2330",9000,9000]]}]};
+describe("institutional history",()=>{it("excludes future data and preserves units",()=>{const x=stockFlows(cache,"TWSE","2330","2026-11-26",2);expect(x.foreignTotal).toBe(3000);expect(x.trustTotal).toBe(0);expect(x.foreignBuyDays).toBe(2);});it("does not pretend partial observations cover full window",()=>{expect(stockFlows(cache,"TWSE","2330","2026-11-26",20).foreignTotal).toBeNull();expect(stockFlows(cache,"TPEx","2330","2026-11-26",2).observed).toBe(0);});});
