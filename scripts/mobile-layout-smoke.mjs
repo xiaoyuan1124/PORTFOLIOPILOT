@@ -409,6 +409,11 @@ try {
     assert.ok(await dateValue.innerText() < lastDate,"date slider must select an earlier visible candle");
     await proChart.getByRole("img",{name:"MACD歷史曲線",exact:true}).waitFor();
     await proChart.getByRole("img",{name:"RSI歷史曲線",exact:true}).waitFor();
+    const patternPanel=proChart.getByTestId("technical-pattern-research");
+    await patternPanel.waitFor();
+    await patternPanel.getByRole("button",{name:"指標背離",exact:true}).click();
+    assert.equal(await patternPanel.getByRole("button",{name:"指標背離",exact:true}).getAttribute("aria-pressed"),"true");
+    await patternPanel.getByRole("button",{name:"全部訊號",exact:true}).click();
     await proChart.getByRole("button",{name:"開始重播",exact:true}).click();
     await proChart.getByText(/已揭露 .* 根；/).waitFor();
     const replayBefore=await proChart.getByText(/已揭露 .* 根；/).innerText();

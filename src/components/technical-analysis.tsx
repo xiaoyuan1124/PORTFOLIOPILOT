@@ -1,5 +1,6 @@
 "use client";
 import {useMemo,useState,useRef,type PointerEvent} from "react";
+import {PatternResearch} from "./pattern-research";
 import {InstitutionalHistoryPanel} from "./institutional-history-panel";
 import type {TwPriceHistorySeries} from "@/lib/price-history-data";
 import {buildWorkbenchBars,type ChartPeriod} from "@/lib/workbench-chart";
@@ -94,6 +95,7 @@ export function TechnicalAnalysis({history}:{history:TwPriceHistorySeries}){
   </svg></div>;})}
   <div className="border-t border-current/15 pt-3 space-y-2"><strong className="text-sm">關鍵價位（已確認局部轉折）</strong>{levels.length?levels.map((l,i)=><div key={i} className="flex justify-between text-xs"><span>{l.kind==="support"?"支撐":"壓力"} {l.date}</span><span>{fmt(l.price)} 元 · {fmt((l.price/visible.at(-1)!.close-1)*100)}%</span></div>):<p className="text-xs">完整高低價或已確認轉折不足。</p>}</div>
   <div className="border-t border-current/15 pt-3 space-y-2"><strong className="text-sm">歷史行情重播（只分析，不下單）</strong><div className="flex flex-wrap gap-2"><button className={btn} disabled={bars.length<2} onClick={()=>{setReplay(Math.min(40,bars.length-1));setOffset(0);setCursor(null);setHidden(true);}}>開始重播</button><button className={btn} disabled={replay===null||replay>=bars.length} onClick={()=>{setReplay(r=>r===null?null:Math.min(bars.length,r+1));setOffset(0);setCursor(null);}}>下一根</button><button className={btn} disabled={replay===null} onClick={()=>{setReplay(null);setOffset(0);setCursor(null);}}>結束</button></div>{replay!==null&&<p className="text-xs">已揭露 {visible.length} / {bars.length} 根；指標與轉折僅使用已揭露資料。</p>}</div>
+  <PatternResearch bars={visible} onDate={date=>{const i=visible.findIndex(r=>r.date===date);if(i>=0){setOffset(Math.max(0,visible.length-1-i));setCursor(date);}}}/>
   {replay===null&&<InstitutionalHistoryPanel market={history.market} symbol={history.symbol} asOf={bars.at(-1)!.date}/>}
   <p className="text-xs opacity-65">只使用官方歷史行情快取；未還原權息，無分鐘行情、五檔或券商API。畫線可按標的讀取保存；技術訊號不是報酬預測。</p>
  </section>;
