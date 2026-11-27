@@ -1,5 +1,6 @@
 "use client";
 import {useMemo,useState} from "react";
+import {TechnicalAnalysis} from "./technical-analysis";
 import type {TwPriceHistorySeries} from "@/lib/price-history-data";
 import {buildWorkbenchBars,type ChartPeriod} from "@/lib/workbench-chart";
 import {taipeiDate} from "@/lib/stock-decision";
@@ -8,6 +9,10 @@ const maKeys=["ma20","ma60","ma240"] as const;
 const maColors={ma20:"#c08a34",ma60:"#7999d8",ma240:"#a98bc9"};
 const fmt=(n:number|null)=>n===null?"—":n.toLocaleString("zh-TW",{maximumFractionDigits:2});
 export function WorkbenchPriceChart({history}:{history:TwPriceHistorySeries}){
+ const [pro,setPro]=useState(true);
+ return <div className="space-y-2"><button type="button" className="min-h-11 rounded border border-current/20 px-3 text-sm" onClick={()=>setPro(v=>!v)}>{pro?"切換簡易圖":"開啟專業技術分析"}</button>{pro?<TechnicalAnalysis key={history.market+":"+history.symbol} history={history}/>:<SimpleWorkbenchPriceChart history={history}/>}</div>;
+}
+function SimpleWorkbenchPriceChart({history}:{history:TwPriceHistorySeries}){
  const [period,setPeriod]=useState<ChartPeriod>("day");
  const [mode,setMode]=useState<"close"|"candle">("candle");
  const [count,setCount]=useState(60);
